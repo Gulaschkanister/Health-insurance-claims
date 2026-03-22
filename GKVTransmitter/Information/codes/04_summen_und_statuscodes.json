@@ -1,0 +1,17 @@
+{
+  "ges_statuscodes": [
+    {
+      "code": "00",
+      "beschreibung": "Gesamtsumme aller Status"
+    },
+    {
+      "code": "99",
+      "beschreibung": "Nicht zuzuordnende Status (wenn vom Pruefer gefordert)"
+    }
+  ],
+  "berechnungsregeln": {
+    "bes": "ENF.Menge x ENF.Einzelbetrag (+ ggf. MWS)",
+    "ges_00": "Summe aller BES",
+    "ges_99": "gemaess Pruefvorgabe; in Testdatei identisch zu GES 00"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "nachrichtentypen": [
+    {
+      "code": "SLGA",
+      "beschreibung": "Summen-/Begleitdaten"
+    },
+    {
+      "code": "SLLA",
+      "beschreibung": "Falldaten/Leistungsdaten"
+    }
+  ],
+  "wichtige_segmente": [
+    {
+      "segment": "UNB",
+      "funktion": "Interchange-Kopf"
+    },
+    {
+      "segment": "UNH",
+      "funktion": "Nachrichtenkopf"
+    },
+    {
+      "segment": "UNT",
+      "funktion": "Nachrichtenabschluss mit Segmentanzahl"
+    },
+    {
+      "segment": "UNZ",
+      "funktion": "Interchange-Abschluss mit Nachrichtenanzahl"
+    },
+    {
+      "segment": "FKT",
+      "funktion": "IK-Bezug und Verarbeitungskennzeichen"
+    },
+    {
+      "segment": "REC",
+      "funktion": "Rechnungsnummer, Rechnungsdatum, Rechnungsart"
+    },
+    {
+      "segment": "INV",
+      "funktion": "Versicherten- und Belegbezug"
+    },
+    {
+      "segment": "NAD",
+      "funktion": "Name/Adresse der versicherten Person"
+    },
+    {
+      "segment": "ENF",
+      "funktion": "Leistungszeile"
+    },
+    {
+      "segment": "BES",
+      "funktion": "Fallsumme"
+    },
+    {
+      "segment": "GES",
+      "funktion": "Gesamtsummen in SLGA"
+    },
+    {
+      "segment": "UST",
+      "funktion": "Summenstatus-Block"
+    }
+  ]
+}

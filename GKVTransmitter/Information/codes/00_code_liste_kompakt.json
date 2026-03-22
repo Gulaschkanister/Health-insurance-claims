@@ -1,0 +1,33 @@
+{
+  "nachrichtentypen": [
+    { "code": "SLGA", "beschreibung": "Summen-/Begleitdaten" },
+    { "code": "SLLA", "beschreibung": "Falldaten/Leistungsdaten" }
+  ],
+  "segmente": [
+    { "code": "UNB", "beschreibung": "Interchange-Kopf" },
+    { "code": "UNH", "beschreibung": "Nachrichtenkopf" },
+    { "code": "UNT", "beschreibung": "Nachrichtenabschluss" },
+    { "code": "UNZ", "beschreibung": "Interchange-Abschluss" },
+    { "code": "FKT", "beschreibung": "IK-Bezug und Verarbeitungskennzeichen" },
+    { "code": "REC", "beschreibung": "Rechnungsdaten" },
+    { "code": "INV", "beschreibung": "Versicherten- und Belegbezug" },
+    { "code": "NAD", "beschreibung": "Name/Adresse" },
+    { "code": "ENF", "beschreibung": "Leistungszeile" },
+    { "code": "BES", "beschreibung": "Fallsumme" },
+    { "code": "GES", "beschreibung": "Gesamtsummen" },
+    { "code": "UST", "beschreibung": "Summenstatus" }
+  ],
+  "verarbeitungskennzeichen_fkt": [
+    { "code": "01", "beschreibung": "Normale Abrechnung" }
+  ],
+  "rechnungsarten_rec": [
+    { "code": "1", "beschreibung": "Rechnungsart laut Schluesseltabelle" }
+  ],
+  "abrechnungscodes": [
+    { "code": "61", "bereich": "SGS H", "beschreibung": "Rehabilitationssport" }
+  ],
+  "ges_statuscodes": [
+    { "code": "00", "beschreibung": "Gesamtsumme aller Status" },
+    { "code": "99", "beschreibung": "Nicht zuzuordnende Status" }
+  ]
+}

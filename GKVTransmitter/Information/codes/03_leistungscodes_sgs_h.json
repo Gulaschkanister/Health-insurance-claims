@@ -1,0 +1,25 @@
+{
+  "leistungszeile_enf": {
+    "abrechnungscode": {
+      "code": "61",
+      "bereich": "SGS H",
+      "beschreibung": "Abrechnungscode fuer Rehabilitationssport"
+    },
+    "tarifkennzeichen": {
+      "format": "5-stellig numerisch",
+      "beispiel": "00000"
+    },
+    "leistungserbringergruppe_komposit": {
+      "format": "Abrechnungscode:Tarifkennzeichen",
+      "beispiel": "61:00000"
+    },
+    "positionsnummer": {
+      "beispiel": "306050601",
+      "hinweis": "Muss vertraglich/fachlich gueltig sein"
+    },
+    "identifikationsnummer": {
+      "format": "numerisch",
+      "beispiel": "01"
+    }
+  }
+}

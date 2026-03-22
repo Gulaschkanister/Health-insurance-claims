@@ -1,0 +1,18 @@
+{
+  "fkt_verarbeitungskennzeichen": [
+    {
+      "code": "01",
+      "beschreibung": "Normale Abrechnung"
+    }
+  ],
+  "rechnungsarten_rec_feld_4": [
+    {
+      "code": "1",
+      "beschreibung": "Rechnungsart gemaess verwendeter Schluesseltabelle (Beispieldatei)"
+    }
+  ],
+  "rechnungsnummer_format": {
+    "format": "Sammel:Einzel",
+    "beispiel": "00000000:0"
+  }
+}

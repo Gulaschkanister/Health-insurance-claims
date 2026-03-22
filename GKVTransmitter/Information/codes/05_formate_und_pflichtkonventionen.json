@@ -1,0 +1,19 @@
+{
+  "datumsformat": {
+    "pattern": "yyyyMMdd",
+    "beispiel": "20240301"
+  },
+  "dezimalformat": {
+    "trennzeichen": ",",
+    "nachkommastellen": 2,
+    "beispiele": ["08,00", "15000,00", "0,00"]
+  },
+  "zaehler_und_laengen": {
+    "unt_segmentanzahl": "6-stellig",
+    "unz_nachrichtenanzahl": "6-stellig"
+  },
+  "pflichtkonventionen": [
+    "Wenn INV-Status fehlt, NAD mit kompletter Anschrift liefern",
+    "Keine Feldverschiebung in ENF; Doppelpunkt nur im Kompositfeld Abrechnungscode:Tarifkennzeichen"
+  ]
+}
