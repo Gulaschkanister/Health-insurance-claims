@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "codeType": "Verarbeitungskennzeichen",
+  "description": "Gültige Verarbeitungskennzeichen für FKT-Segment (Position 1)",
+  "note": "2-stelliger numerischer Code zur Kennzeichnung der Abrechnung",
+  "codes": [
+    {
+      "code": "01",
+      "beschreibung": "Normale Abrechnung",
+      "hinweis": "Standardfall für reguläre Abrechnung"
+    }
+  ]
+}

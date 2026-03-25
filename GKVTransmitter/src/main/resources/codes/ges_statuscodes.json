@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "codeType": "GES Statuscodes",
+  "description": "Gültige Statuscodes für GES-Segmente (Gesamtsummen in SLGA)",
+  "note": "Mindestens Status 00 und 99 erforderlich pro SLGA-Nachricht",
+  "codes": [
+    {
+      "code": "00",
+      "beschreibung": "Gesamtsumme aller Leistungen",
+      "mandatory": true,
+      "position": "first"
+    },
+    {
+      "code": "99",
+      "beschreibung": "Finalsumme / Nicht zuzuordnende Summen",
+      "mandatory": true,
+      "position": "last"
+    }
+  ]
+}

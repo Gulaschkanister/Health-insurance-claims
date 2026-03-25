@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "codeType": "Abrechnungscodes",
+  "description": "Gültige Abrechnungscodes für Leistungszeilen (ENF-Feld 2)",
+  "note": "Codes nach SGS H (Rehabilitationssport und ähnliche Leistungen)",
+  "codes": [
+    {
+      "code": "61",
+      "bereich": "SGS H",
+      "beschreibung": "Abrechnungscode für Rehabilitationssport",
+      "hinweis": "Wird mit 5-stelligem Tarifkennzeichen kombiniert (z.B. 61:00000)"
+    }
+  ]
+}

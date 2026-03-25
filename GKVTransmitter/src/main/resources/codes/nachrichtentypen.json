@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "codeType": "Nachrichtentypen",
+  "description": "Gültige Nachrichtentypen für UNH-Segment (Composite MessageType)",
+  "note": "Definiert die Struktur der Abrechnung pro UNH...UNT Block",
+  "codes": [
+    {
+      "code": "SLGA",
+      "description": "Summen-/Begleitdaten",
+      "version": "21",
+      "release": "0",
+      "controlAgency": "0",
+      "hinweis": "Aggregate Abrechnung mit Gesamtsummen (GES-Segmente)"
+    },
+    {
+      "code": "SLLA",
+      "description": "Falldaten/Leistungsdaten",
+      "version": "21",
+      "release": "0",
+      "controlAgency": "0",
+      "hinweis": "Detaillierte Abrechnung mit Einzelleistungen (ENF-Segmente pro Fall/INV)"
+    }
+  ]
+}
