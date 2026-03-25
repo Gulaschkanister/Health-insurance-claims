@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "UNH",
+  "description": "Nachrichtenkopf",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Nachrichten-Referenznummer",
+      "type": "AN",
+      "maxLength": 14,
+      "mandatory": true,
+      "example": "00001",
+      "description": "Fortlaufende Nummer der Nachricht zwischen UNB und UNZ"
+    },
+    {
+      "position": 2,
+      "name": "Nachrichtentyp",
+      "description": "Nachrichtentyp mit Version und Release",
+      "type": "COMPOSITE",
+      "mandatory": true,
+      "components": [
+        {
+          "position": 1,
+          "name": "Nachrichttyp-Code",
+          "type": "AN",
+          "maxLength": 6,
+          "mandatory": true,
+          "example": "SLGA",
+          "validation": {
+            "values": {
+              "SLGA": "Summen-/Begleitdaten",
+              "SLLA": "Falldaten/Leistungsdaten"
+            }
+          }
+        },
+        {
+          "position": 2,
+          "name": "Nachrichtentyp-Version",
+          "type": "N",
+          "maxLength": 3,
+          "mandatory": true,
+          "example": "21",
+          "description": "Version des Nachrichtentyps"
+        },
+        {
+          "position": 3,
+          "name": "Release",
+          "type": "N",
+          "maxLength": 3,
+          "mandatory": true,
+          "example": "0",
+          "description": "Release-Nummer"
+        },
+        {
+          "position": 4,
+          "name": "Controlling Agency",
+          "type": "AN",
+          "maxLength": 2,
+          "mandatory": true,
+          "example": "0",
+          "description": "Kontrollstelle"
+        }
+      ]
+    }
+  ]
+}

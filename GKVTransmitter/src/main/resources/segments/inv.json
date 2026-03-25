@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "INV",
+  "description": "Versicherten- und Belegbezug (je Abrechnungsfall/Verordnung)",
+  "note": "Nur für SLLA (Falldaten/Leistungsdaten) - wiederholt pro Fall",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Versichertennummer",
+      "type": "AN",
+      "maxLength": 12,
+      "mandatory": true,
+      "example": "012345678901",
+      "description": "Versicherungsnummer (KV-Nummerngruppe)",
+      "fieldArt": "M"
+    },
+    {
+      "position": 2,
+      "name": "Versichertenstatus",
+      "type": "AN",
+      "maxLength": 1,
+      "mandatory": false,
+      "example": "",
+      "description": "Status-Kennzeichen (wenn leer: muss NAD mit kompletter Anschrift folgen)",
+      "fieldArt": "K"
+    },
+    {
+      "position": 3,
+      "name": "Beleginformation",
+      "type": "N",
+      "maxLength": 1,
+      "mandatory": true,
+      "example": "1",
+      "validation": {
+        "pattern": "[0-9]"
+      },
+      "fieldArt": "M"
+    },
+    {
+      "position": 4,
+      "name": "Belegnummer",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": true,
+      "example": "HEB2403001",
+      "description": "Verordnungs- oder Belegnummer (z.B. Herausgeber-Bearbeitungs-Nummer für SGS H)",
+      "fieldArt": "M"
+    }
+  ]
+}

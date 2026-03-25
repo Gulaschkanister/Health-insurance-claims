@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "UNZ",
+  "description": "Interchange-Abschluss mit Nachrichtenanzahl",
+  "note": "Letztes Segment der Datei. Markiert das Ende der kompletten UNB...UNZ Austausch-Einheit",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Nachrichtenanzahl",
+      "type": "N",
+      "maxLength": 6,
+      "mandatory": true,
+      "example": "000002",
+      "validation": {
+        "pattern": "^[0-9]{6}$",
+        "description": "6-stellige Anzahl der Nachrichten (UNH...UNT Blöcke) in dieser Datei"
+      },
+      "fieldArt": "M"
+    },
+    {
+      "position": 2,
+      "name": "Interchange-Reference",
+      "type": "AN",
+      "maxLength": 14,
+      "mandatory": true,
+      "example": "00001",
+      "validation": {
+        "description": "MUSS mit Datenaustauschreferenz aus UNB (Position 5) übereinstimmen"
+      },
+      "fieldArt": "M"
+    }
+  ]
+}

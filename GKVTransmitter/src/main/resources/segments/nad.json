@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "NAD",
+  "description": "Name/Adresse der versicherten Person (detailliert, nur für SLLA)",
+  "note": "Folgt auf INV. Wenn INV-Status leer ist: NAD-Anschrift ist vollständig erforderlich",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Nachname",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": true,
+      "example": "MUSTERMANN",
+      "description": "Familienname des Versicherten",
+      "fieldArt": "M"
+    },
+    {
+      "position": 2,
+      "name": "Vorname",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": true,
+      "example": "ANNA",
+      "description": "Vorname des Versicherten",
+      "fieldArt": "M"
+    },
+    {
+      "position": 3,
+      "name": "Geburtsdatum",
+      "type": "N",
+      "maxLength": 8,
+      "mandatory": true,
+      "example": "19900101",
+      "format": "YYYYMMDD",
+      "description": "Geburtsdatum des Versicherten",
+      "fieldArt": "M"
+    },
+    {
+      "position": 4,
+      "name": "Straße",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": true,
+      "example": "MUSTERSTRASSE 1",
+      "description": "Postanschrift: Straßenname und Hausnummer",
+      "fieldArt": "M"
+    },
+    {
+      "position": 5,
+      "name": "Postleitzahl",
+      "type": "AN",
+      "maxLength": 10,
+      "mandatory": true,
+      "example": "12345",
+      "description": "Postleitzahl",
+      "fieldArt": "M"
+    },
+    {
+      "position": 6,
+      "name": "Stadt",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": true,
+      "example": "MUSTERSTADT",
+      "description": "Ort/Stadt",
+      "fieldArt": "M"
+    }
+  ],
+  "validationRule": "Wenn INV.Versichertenstatus (Pos 2) leer ist, dann muss NAD mit kompletter Adresse geliefert werden"
+}

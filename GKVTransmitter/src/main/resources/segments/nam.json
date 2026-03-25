@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "NAM",
+  "description": "Name/Adresse (reduziert, vererkürzte Version, nur für SLGA)",
+  "note": "Konditional - in SLGA: Ansprechpartner/Leistungserbringerbezug im Kopf. Optional wenn nicht benötigt",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Nachname",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": false,
+      "example": "MUSTERMANN",
+      "description": "Familienname",
+      "fieldArt": "K"
+    },
+    {
+      "position": 2,
+      "name": "Vorname",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": false,
+      "example": "MARIA",
+      "description": "Vorname",
+      "fieldArt": "K"
+    },
+    {
+      "position": 3,
+      "name": "Titel",
+      "type": "AN",
+      "maxLength": 35,
+      "mandatory": false,
+      "example": "DR",
+      "description": "Akademischer Titel oder Anrede (optional)",
+      "fieldArt": "K"
+    }
+  ]
+}

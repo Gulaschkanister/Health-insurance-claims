@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "UNT",
+  "description": "Nachrichtenabschluss mit Segmentanzahl",
+  "note": "Markiert Ende einer Nachricht. Die Segmentanzahl muss alle Segmente zwischen UNH und UNT (inklusive) zählen",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Segmentanzahl",
+      "type": "N",
+      "maxLength": 6,
+      "mandatory": true,
+      "example": "000008",
+      "validation": {
+        "pattern": "^[0-9]{6}$",
+        "description": "6-stellige Anzahl der Segmente in dieser Nachricht (UNH, FKT, REC, ... alle bis UNT einschließlich)"
+      },
+      "fieldArt": "M"
+    },
+    {
+      "position": 2,
+      "name": "Nachrichten-Referenznummer",
+      "type": "AN",
+      "maxLength": 14,
+      "mandatory": true,
+      "example": "00001",
+      "validation": {
+        "description": "MUSS mit Referenznummer aus UNH Übereinstimmen"
+      },
+      "fieldArt": "M"
+    }
+  ]
+}

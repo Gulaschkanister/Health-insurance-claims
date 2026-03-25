@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "profileId": "SLGA-v21",
+  "description": "Summen-/Begleitdaten - Profil für Sammelabrechnung",
+  "version": "V21",
+  "nachrichtentyp": "SLGA",
+  "segments": [
+    {
+      "name": "UNB",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 1,
+      "description": "Kopfsegment der Nutzdatendatei"
+    },
+    {
+      "name": "UNH",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 2,
+      "description": "Nachrichtenkopf pro Nachricht"
+    },
+    {
+      "name": "FKT",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 3,
+      "description": "IK-Bezug und Verarbeitungskennzeichen"
+    },
+    {
+      "name": "REC",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 4,
+      "description": "Rechnungsdaten"
+    },
+    {
+      "name": "UST",
+      "mandatory": false,
+      "repeatable": false,
+      "position": 5,
+      "description": "Umsatzsteuer-Informationen (optional)"
+    },
+    {
+      "name": "GES",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 6,
+      "description": "Summen (mind. 2x: Status 00 und 99)"
+    },
+    {
+      "name": "NAM",
+      "mandatory": false,
+      "repeatable": false,
+      "position": 7,
+      "description": "Name/Adresse des Versicherten (reduziert)"
+    },
+    {
+      "name": "UNT",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 8,
+      "description": "Nachrichtenabschluss"
+    },
+    {
+      "name": "UNZ",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 9,
+      "description": "Interchange-Abschluss"
+    }
+  ],
+  "validationRules": [
+    {
+      "rule": "GES-Status-Codes",
+      "description": "Mindestens ein GES mit Status 99 muss vorhanden sein",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "UNT-Segmentcount",
+      "description": "UNT.segmentanzahl muss Anzahl aller Segmente zwischen UNH und UNT entsprechen",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "UNZ-Nachrichtencount",
+      "description": "UNZ.nachrichtenanzahl muss Anzahl aller UNH/UNT-Paare entsprechen",
+      "severity": "ERROR"
+    }
+  ]
+}

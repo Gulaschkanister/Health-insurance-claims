@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "FKT",
+  "description": "Funktion - IK-Bezug und Verarbeitungskennzeichen",
+  "note": "Das Segment ist je Nachricht einmal zu übermitteln",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Verarbeitungskennzeichen",
+      "type": "N",
+      "maxLength": 2,
+      "mandatory": true,
+      "example": "01",
+      "validation": {
+        "reference": "Anlage 3 Abschnitt 8.1.7",
+        "description": "Siehe Schlüssel Verarbeitungskennzeichen"
+      }
+    },
+    {
+      "position": 2,
+      "name": "Freifeld",
+      "type": "AN",
+      "maxLength": 1,
+      "mandatory": false,
+      "example": "",
+      "description": "Konditional, kann leer sein"
+    },
+    {
+      "position": 3,
+      "name": "IK des Leistungserbringers",
+      "type": "N",
+      "maxLength": 9,
+      "mandatory": true,
+      "example": "123456789",
+      "validation": {
+        "pattern": "^[0-9]{9}$",
+        "description": "Muss übereinstimmen mit SLGA.FKT.Leistungserbringer der zugehörigen SLGA-Nachricht"
+      }
+    },
+    {
+      "position": 4,
+      "name": "IK des Kostenträgers",
+      "type": "N",
+      "maxLength": 9,
+      "mandatory": true,
+      "example": "987654321",
+      "validation": {
+        "pattern": "^[0-9]{9}$",
+        "description": "IK des Kostenträgers, auf den die KV-Karte verweist. Identisch mit SLGA.FKT.IK Kostenträger"
+      }
+    },
+    {
+      "position": 5,
+      "name": "IK der Krankenkasse (von KV-Karte bzw. ärztlicher Verordnung)",
+      "type": "N",
+      "maxLength": 9,
+      "mandatory": true,
+      "example": "987654321",
+      "validation": {
+        "pattern": "^[0-9]{9}$",
+        "description": "Zwingend anzugeben. Identisch mit SLGA.FKT.IK Krankenkasse"
+      }
+    },
+    {
+      "position": 6,
+      "name": "IK des Rechnungsstellers",
+      "type": "N",
+      "maxLength": 9,
+      "mandatory": false,
+      "example": "123456789",
+      "validation": {
+        "pattern": "^[0-9]{9}$",
+        "description": "Konditional: Nur anzugeben, wenn Abrechnung durch Abrechnungsstelle mit Inkassovollmacht. Muss übereinstimmen mit SLGA.FKT.Rechnungssteller"
+      }
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "1.0",
+  "profileId": "SLLA-v21",
+  "description": "Falldaten/Leistungsdaten - Profil für Einzelabrechnung",
+  "version": "V21",
+  "nachrichtentyp": "SLLA",
+  "segments": [
+    {
+      "name": "UNB",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 1,
+      "description": "Kopfsegment der Nutzdatendatei"
+    },
+    {
+      "name": "UNH",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 2,
+      "description": "Nachrichtenkopf pro Nachricht"
+    },
+    {
+      "name": "FKT",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 3,
+      "description": "IK-Bezug und Verarbeitungskennzeichen"
+    },
+    {
+      "name": "REC",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 4,
+      "description": "Rechnungsdaten"
+    },
+    {
+      "name": "INV",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 5,
+      "description": "Versicherten- und Belegbezug pro Fall"
+    },
+    {
+      "name": "NAD",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 6,
+      "description": "Name/Adresse der versicherten Person (detailliert)"
+    },
+    {
+      "name": "ENF",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 7,
+      "description": "Leistungszeilen (mind. 1 pro Fall)"
+    },
+    {
+      "name": "BES",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 8,
+      "description": "Betrag/Summe pro Fall"
+    },
+    {
+      "name": "UNT",
+      "mandatory": true,
+      "repeatable": true,
+      "position": 9,
+      "description": "Nachrichtenabschluss"
+    },
+    {
+      "name": "UNZ",
+      "mandatory": true,
+      "repeatable": false,
+      "position": 10,
+      "description": "Interchange-Abschluss"
+    }
+  ],
+  "validationRules": [
+    {
+      "rule": "INV-pro-Fall",
+      "description": "Pro Fall (zwischen INV und nächstem INV oder UNT) genau 1 INV",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "NAD-pro-Fall",
+      "description": "Nach INV muss NAD folgen",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "ENF-pro-Fall",
+      "description": "Nach NAD muss mindestens 1 ENF folgen",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "BES-nach-ENF",
+      "description": "Nach all ENF muss BES folgen",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "UNT-Segmentcount",
+      "description": "UNT.segmentanzahl muss Anzahl aller Segmente zwischen UNH und UNT entsprechen",
+      "severity": "ERROR"
+    },
+    {
+      "rule": "UNZ-Nachrichtencount",
+      "description": "UNZ.nachrichtenanzahl muss Anzahl aller UNH/UNT-Paare entsprechen",
+      "severity": "ERROR"
+    }
+  ]
+}

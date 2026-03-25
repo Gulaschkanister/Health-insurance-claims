@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "UST",
+  "description": "Umsatzsteuer-Informationen (optional, nur für SLGA)",
+  "note": "Konditional - wird nur gebraucht wenn Umsatzsteuer relevant für die Abrechnung",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Umsatzsteuersatz",
+      "type": "N",
+      "maxLength": 3,
+      "mandatory": false,
+      "example": "19",
+      "validation": {
+        "pattern": "^[0-9]{1,3}$",
+        "description": "Prozentsatz als Zahl (z.B. 19 für 19%)"
+      },
+      "fieldArt": "K"
+    }
+  ]
+}

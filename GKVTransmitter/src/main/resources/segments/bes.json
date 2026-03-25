@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "BES",
+  "description": "Besoldung/Betrag (Summe pro Fall/Beleg)",
+  "note": "Folgt nach ENF zur Abrechnung pro Abrechnungsfall. Vor UNT",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Gesamtbetrag",
+      "type": "DECIMAL",
+      "maxLength": 13,
+      "mandatory": true,
+      "example": "120000,00",
+      "format": "X,XX",
+      "description": "Bruttosumme aller Leistungen für diesen Fall/Beleg (= Summe aller ENF)",
+      "fieldArt": "M"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "GES",
+  "description": "Summen- und Statuscodes (je Nachrichtentyp mehrfach, nur für SLGA)",
+  "note": "Mandatory: Mindestens 2x GES (Status 00 + 99) erforderlich. Vor NAM",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Status/Summen-Code",
+      "type": "AN",
+      "maxLength": 2,
+      "mandatory": true,
+      "example": "00",
+      "validation": {
+        "values": {
+          "00": "Kostenträger-Summen",
+          "99": "Endsummen des Satzes (nicht zuzuordnend)"
+        }
+      },
+      "description": "Summen-Statuscode (Anlage 3, Schlüssel 8.1.6)",
+      "fieldArt": "M"
+    },
+    {
+      "position": 2,
+      "name": "Summe Leistung",
+      "type": "DECIMAL",
+      "maxLength": 13,
+      "mandatory": true,
+      "example": "120000,00",
+      "format": "X,XX",
+      "description": "Summe in Euro mit Komma als Trennzeichen",
+      "fieldArt": "M"
+    },
+    {
+      "position": 3,
+      "name": "Summe Gesamtbetrag",
+      "type": "DECIMAL",
+      "maxLength": 13,
+      "mandatory": true,
+      "example": "120000,00",
+      "format": "X,XX",
+      "description": "Gesamtsumme in Euro mit Komma als Trennzeichen",
+      "fieldArt": "M"
+    }
+  ],
+  "repeatable": true,
+  "validationRule": "Mindestens GES mit Status 00 und Status 99 müssen vorhanden sein"
+}
