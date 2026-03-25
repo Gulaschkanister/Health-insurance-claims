@@ -1,7 +1,5 @@
 package de.gkvtransmitter.domain;
 
-import java.util.List;
-
 import lombok.Getter;
 
 /**
