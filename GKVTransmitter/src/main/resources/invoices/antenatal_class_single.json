@@ -1,0 +1,78 @@
+{
+    "schemaVersion": "1.0",
+    "version": "V21",
+    "segments": [
+        {
+            "position": 1,
+            "segmentType": "UNB"
+        },
+        {
+            "position": 2,
+            "segmentType": "UNH"
+        },
+        {
+            "position": 3,
+            "segmentType": "FKT"
+        },
+        {
+            "position": 4,
+            "segmentType": "REC"
+        },
+        {
+            "position": 5,
+            "segmentType": "UST"
+        },
+        {
+            "position": 6,
+            "segmentType": "GES"
+        },
+        {
+            "position": 7,
+            "segmentType": "GES"
+        },
+        {
+            "position": 8,
+            "segmentType": "NAM"
+        },
+        {
+            "position": 9,
+            "segmentType": "UNT"
+        },
+        {
+            "position": 10,
+            "segmentType": "UNH"
+        },
+        {
+            "position": 11,
+            "segmentType": "FKT"
+        },
+        {
+            "position": 12,
+            "segmentType": "REC"
+        },
+        {
+            "position": 13,
+            "segmentType": "INV"
+        },
+        {
+            "position": 14,
+            "segmentType": "NAD"
+        },
+        {
+            "position": 15,
+            "segmentType": "ENF"
+        },
+        {
+            "position": 16,
+            "segmentType": "BES"
+        },
+        {
+            "position": 17,
+            "segmentType": "UNT"
+        },
+        {
+            "position": 18,
+            "segmentType": "UNZ"
+        }
+    ]
+}
