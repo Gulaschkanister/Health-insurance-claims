@@ -1,0 +1,19 @@
+{
+    "version": "V21",
+    "attachment": "1",
+    "date": "2026-01-15",
+    "valueList": [
+        {
+            "value": 0,
+            "description": "Testdatei"
+        },
+        {
+            "value": 1,
+            "description": "Erprobungsdatei"
+        },
+        {
+            "value": 2,
+            "description": "Echtdatei"
+        }
+    ]
+}

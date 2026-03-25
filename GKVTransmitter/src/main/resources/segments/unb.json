@@ -1,0 +1,108 @@
+{
+    "version": "V21",
+    "attachment": "1",
+    "date": "2026-01-15",
+    "segmentType": "UNB",
+    "description": "Kopfsegment der Nutzdatendatei",
+    "fields": [
+        {
+            "position": 1,
+            "name": "Syntax",
+            "components": [
+                {
+                    "position": 1,
+                    "name": "Syntax-Kennung",
+                    "type": "AN",
+                    "mandatory": true,
+                    "maxLength": 4
+                },
+                {
+                    "position": 2,
+                    "name": "Syntax-Versionsnummer",
+                    "type": "N",
+                    "mandatory": true,
+                    "maxLength": 1
+                }
+            ]
+        },
+        {
+            "position": 2,
+            "name": "Absender Datei",
+            "components": [
+                {
+                    "position": 1,
+                    "name": "Absenderbezeichnung",
+                    "type": "AN",
+                    "mandatory": true,
+                    "maxLength": 35
+                }
+            ]
+        },
+        {
+            "position": 3,
+            "name": "Empfänger Datei",
+            "components": [
+                {
+                    "position": 1,
+                    "name": "Empfängerbezeichnung",
+                    "type": "AN",
+                    "mandatory": true,
+                    "maxLength": 35
+                }
+            ]
+        },
+        {
+            "position": 4,
+            "name": "Datum/Uhrzeit",
+            "components": [
+                {
+                    "position": 1,
+                    "name": "Datum",
+                    "type": "N",
+                    "mandatory": true,
+                    "maxLength": 8
+                },
+                {
+                    "position": 2,
+                    "name": "Uhrzeit",
+                    "type": "N",
+                    "mandatory": true,
+                    "maxLength": 4
+                }
+            ]
+        },
+        {
+            "position": 5,
+            "name": "Datenaustauschreferenz",
+            "components": [
+                {
+                    "position": 1,
+                    "name": "Referenz",
+                    "type": "AN",
+                    "mandatory": true,
+                    "maxLength": 14
+                }
+            ]
+        },
+        {
+            "position": 6,
+            "name": "Leistungsbereich",
+            "components": [
+                {
+                    "position": 1,
+                    "name": "Anwendungsreferenz",
+                    "type": "AN",
+                    "mandatory": true,
+                    "maxLength": 14
+                },
+                {
+                    "position": 2,
+                    "name": "Testindikator",
+                    "type": "N",
+                    "mandatory": true,
+                    "maxLength": 1
+                }
+            ]
+        }
+    ]
+}
