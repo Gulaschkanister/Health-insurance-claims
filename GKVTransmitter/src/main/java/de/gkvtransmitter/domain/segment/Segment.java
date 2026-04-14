@@ -1,7 +1,8 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.domain.segment;
 
 import java.util.List;
 
+import de.gkvtransmitter.domain.segment.field.FieldValue;
 import lombok.Getter;
 
 /**
@@ -10,8 +11,8 @@ import lombok.Getter;
  */
 @Getter
 public class Segment {
-    private List<FieldValue> fieldValues;
-    private SegmentDefinition definition;
+    private final List<FieldValue> fieldValues;
+    private final SegmentDefinition definition;
 
     public Segment(List<FieldValue> fieldValues, SegmentDefinition definition) {
         this.fieldValues = fieldValues;

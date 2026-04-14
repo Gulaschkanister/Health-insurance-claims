@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.domain.segment.field;
 
 import lombok.Getter;
 
@@ -8,10 +8,10 @@ import lombok.Getter;
  */
 @Getter
 public class FieldDefinition {
-    private FieldType type;
-    private boolean isMandatory;
-    private int maxLength;
-    private String name;
+    private final FieldType type;
+    private final boolean isMandatory;
+    private final int maxLength;
+    private final String name;
 
     public FieldDefinition(FieldType type, boolean isMandatory, int maxLength, String name) {
         this.type = type;

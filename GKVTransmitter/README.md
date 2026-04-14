@@ -23,4 +23,4 @@ mvn clean package
 
 - `src/main/java/de/gkvtransmitter/App.java`: JavaFX-Anwendung
 - `src/main/java/de/gkvtransmitter/Main.java`: Main-Einstiegspunkt
-- `src/main/java/module-info.java`: Java-Moduldefinition
+- `src/main/resources/`: JSON-Definitionen fuer Codes, Segmente, Profile und Rechnungsbeispiele

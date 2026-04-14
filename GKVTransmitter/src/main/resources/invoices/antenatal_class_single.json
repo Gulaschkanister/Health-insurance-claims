@@ -1,6 +1,7 @@
 {
     "schemaVersion": "1.0",
     "version": "V21",
+    "invoicerName": "Geburtsvorbereitugnskurs Einzelabrachnung",
     "segments": [
         {
             "position": 1,

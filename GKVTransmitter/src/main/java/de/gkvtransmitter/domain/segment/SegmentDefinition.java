@@ -1,7 +1,8 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.domain.segment;
 
 import java.util.List;
 
+import de.gkvtransmitter.domain.segment.field.FieldDefinition;
 import lombok.Getter;
 
 /**
@@ -10,9 +11,9 @@ import lombok.Getter;
  */
 @Getter
 public class SegmentDefinition {
-    private List<FieldDefinition> fieldDefinitions;
-    private String name;
-    private boolean repeatable;
+    private final List<FieldDefinition> fieldDefinitions;
+    private final String name;
+    private final boolean repeatable;
 
     public SegmentDefinition(List<FieldDefinition> fieldDefinitions, String name, boolean repeatable) {
         this.fieldDefinitions = fieldDefinitions;

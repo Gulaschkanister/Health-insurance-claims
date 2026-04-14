@@ -1,0 +1,104 @@
+@startuml
+
+skinparam packageStyle rectangle
+hide empty members
+
+package "presentation" {
+    class View
+    class Controller {
+        -globalDefinitions: GlobalDefinitions
+        -factoryManager: factoryManager
+        -initialize()
+    }
+    class factoryManager{
+        -Set<Factory> factories
+
+        + addFactory(factory: Factory)
+        + getSpecificFactory(type: String): Factory
+    }
+    Controller --> View
+    Controller --> factoryManager
+}
+interface Factory {
+    +create(): Object
+}
+
+package "parser"{
+    interface ParserFactory<T> {
+        +parse(): T
+    }
+
+    class JsonParserFactory {
+        +parseInvoice(): domain.Invoice
+        +parseProfiles(): List<domain.Invoice>
+        +parseSegments(): List<SegmentDefinition>
+    }
+}
+package "definition" {
+
+
+    class GlobalDefinitions {
+        -invoiceCollection: Map<InvoiceType, domain.Invoice>
+        +getInstance(): GlobalDefinitions
+    }
+
+    enum InvoiceType {
+        SLLA
+        SLGA
+    }
+
+    JsonParserFactory ..|> ParserFactory
+
+}
+
+package "domain" {
+    class Invoice {
+        -segments: List<Segment>
+        -messageType: InvoiceType
+    }
+
+    class Segment {
+        -fieldValues: List<FieldValue>
+        -definition: SegmentDefinition
+    }
+
+    class SegmentDefinition {
+        -name: String
+        -repeatable: boolean
+        -fieldDefinitions: List<FieldDefinition>
+    }
+
+    class FieldValue {
+        -definition: FieldDefinition
+        -value: Object
+    }
+
+    class FieldDefinition {
+        -name: String
+        -type: FieldType
+        -isMandatory: boolean
+        -maxLength: int
+    }
+
+    enum FieldType {
+        DATE
+        NUMBER
+        STRING
+    }
+
+    Invoice *-- Segment
+    Segment *-- FieldValue
+    Segment --> SegmentDefinition
+    SegmentDefinition *-- FieldDefinition
+    FieldValue --> FieldDefinition
+    FieldDefinition --> FieldType
+}
+JsonParserFactory ..> SegmentDefinition
+JsonParserFactory ..> FieldDefinition
+GlobalDefinitions o-- "0..*" domain.Invoice
+JsonParserFactory ..> domain.Invoice
+Controller --> GlobalDefinitions
+domain.Invoice --> InvoiceType
+Factory <|-- JsonParserFactory
+
+@enduml

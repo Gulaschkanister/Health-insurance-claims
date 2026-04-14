@@ -5,7 +5,7 @@
       "type": "java",
       "name": "Debug GKVTransmitter",
       "request": "launch",
-      "mainClass": "de.gkvtransmitter/de.gkvtransmitter.Main",
+      "mainClass": "de.gkvtransmitter.Main",
       "projectName": "gkv-transmitter",
       "cwd": "${workspaceFolder}/GKVTransmitter"
     }

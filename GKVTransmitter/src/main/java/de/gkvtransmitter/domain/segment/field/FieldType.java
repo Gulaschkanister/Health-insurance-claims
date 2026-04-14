@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.domain.segment.field;
 
 /**
  * Dieses Enum soll spaeter die zulaessigen fachlichen Feldtypen fuer

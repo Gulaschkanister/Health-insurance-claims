@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.domain.segment.field;
 
 import lombok.Getter;
 
@@ -8,8 +8,8 @@ import lombok.Getter;
  */
 @Getter
 public class FieldValue {
-    private FieldDefinition definition;
-    private Object value;
+    private final FieldDefinition definition;
+    private final Object value;
 
     public FieldValue(FieldDefinition definition, Object value) {
         this.definition = definition;
