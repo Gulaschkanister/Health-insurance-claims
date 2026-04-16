@@ -8,7 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import de.gkvtransmitter.domain.DtaMessage;
-import de.gkvtransmitter.domain.Invoice;
+import de.gkvtransmitter.domain.invoice.Invoice;
 
 public final class GlobalDefinitions {
     private static final GlobalDefinitions INSTANCE = new GlobalDefinitions();
@@ -41,10 +41,11 @@ public final class GlobalDefinitions {
         invoiceCollection.add(invoice);
     }
 
-    public List<DtaMessage> findInvoicesByInvoicerName(String searchTerm) {
+    public List<DtaMessage> findInvoicesByInvoicerName(String searchTerm) throws IllegalArgumentException {
+
         String normalizedSearchTerm = normalize(searchTerm);
         if (normalizedSearchTerm.isEmpty()) {
-            return List.of();
+            throw new IllegalArgumentException("Invoice search term cannot be empty or whitespace only.");
         }
 
         return invoiceCollection.stream()
@@ -52,10 +53,10 @@ public final class GlobalDefinitions {
                 .toList();
     }
 
-    private String normalize(String value) {
+    private String normalize(String value) throws IllegalArgumentException{
         if (value == null) {
-            return "";
+            throw new IllegalArgumentException("Invoice search term cannot be null.");
         }
-        return value.trim().toLowerCase(Locale.ROOT);
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 }

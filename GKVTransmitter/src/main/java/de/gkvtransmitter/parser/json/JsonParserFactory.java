@@ -5,13 +5,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.gkvtransmitter.definition.InvoiceType;
 import de.gkvtransmitter.domain.DtaMessage;
-import de.gkvtransmitter.domain.Invoice;
+import de.gkvtransmitter.domain.SegmentInfo;
+import de.gkvtransmitter.domain.invoice.Invoice;
 import de.gkvtransmitter.domain.segment.Segment;
 import de.gkvtransmitter.domain.segment.SegmentDefinition;
 import de.gkvtransmitter.domain.segment.field.FieldDefinition;
@@ -61,7 +63,7 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         return definitions;
     }
 
-    private Invoice parseProfile(String profileResourcePath) {
+    private Invoice parseProfile(String profileResourcePath) throws IllegalArgumentException {
         JsonNode profileRoot = readResourceTree(profileResourcePath);
         JsonNode segmentsNode = profileRoot.path("segments");
 
@@ -75,29 +77,65 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         }
 
         String invoiceTypeRaw = profileRoot.path("nachrichtentyp").asText();
-        InvoiceType invoiceType = InvoiceType.valueOf(invoiceTypeRaw.toUpperCase(Locale.ROOT));
-        return new Invoice(segments, invoiceType);
+        if (invoiceTypeRaw.isBlank()) {
+            throw new IllegalArgumentException("Profile " + profileResourcePath + " hat keinen gültigen Nachrichtentyp");
+        }
+        
+        try {
+            InvoiceType invoiceType = InvoiceType.valueOf(invoiceTypeRaw.toUpperCase(Locale.ROOT));
+            return new Invoice(segments, invoiceType);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unbekannter Nachrichtentyp '" + invoiceTypeRaw + "' in " + profileResourcePath, e);
+        }
     }
 
-    private DtaMessage parseInvoiceResource(String invoiceResourcePath) {
+    private DtaMessage parseInvoiceResource(String invoiceResourcePath) throws IllegalArgumentException {
         JsonNode invoiceRoot = readResourceTree(invoiceResourcePath);
         JsonNode segmentsNode = invoiceRoot.path("segments");
 
-        List<String> segmentTypes = new ArrayList<>();
+        List<SegmentInfo> segments = new ArrayList<>();
+        Set<InvoiceType> messageTypes = new java.util.HashSet<>();
+        
         if (segmentsNode.isArray()) {
             for (JsonNode segmentNode : segmentsNode) {
+                int position = segmentNode.path("position").asInt(-1);
                 String segmentType = segmentNode.path("segmentType").asText();
+                
                 if (!segmentType.isBlank()) {
-                    segmentTypes.add(segmentType);
+                    InvoiceType messageType = null;
+                    
+                    // Sammle Nachrichtentypen (ignoriere Header/Footer wie UNB/UNZ)
+                    // UNB/UNZ haben nachrichtentyp=null, da sie technische Hülle sind
+                    if (!segmentNode.path("nachrichtentyp").isNull()) {
+                        String messageTypeRaw = segmentNode.path("nachrichtentyp").asText();
+                        if (!messageTypeRaw.isBlank()) {
+                            try {
+                                messageType = InvoiceType.valueOf(messageTypeRaw.toUpperCase(Locale.ROOT));
+                                messageTypes.add(messageType);
+                            } catch (IllegalArgumentException e) {
+                                throw new IllegalArgumentException("Unbekannter Nachrichtentyp '" + messageTypeRaw + 
+                                    "' bei Segment " + segmentType + " in " + invoiceResourcePath, e);
+                            }
+                        }
+                    }
+                    
+                    // Erstelle SegmentInfo mit Position, Typ und MessageType
+                    segments.add(new SegmentInfo(position, segmentType, messageType));
                 }
             }
+        }
+        
+        if (messageTypes.isEmpty()) {
+            throw new IllegalArgumentException("Invoice " + invoiceResourcePath + 
+                " hat keine gültigen Nachrichtentypen in den Segmenten");
         }
 
         String sourceName = extractFileName(invoiceResourcePath);
         String invoicerName = resolveInvoicerName(invoiceRoot, sourceName);
         String schemaVersion = invoiceRoot.path("schemaVersion").asText();
         String version = invoiceRoot.path("version").asText();
-        return new DtaMessage(sourceName, invoicerName, schemaVersion, version, segmentTypes);
+        
+        return new DtaMessage(sourceName, invoicerName, schemaVersion, version, messageTypes, segments);
     }
 
     private Segment parseSegmentFromResource(String segmentName, boolean repeatable) {

@@ -5,75 +5,93 @@
     "segments": [
         {
             "position": 1,
-            "segmentType": "UNB"
+            "segmentType": "UNB",
+            "nachrichtentyp": null
         },
         {
             "position": 2,
-            "segmentType": "UNH"
+            "segmentType": "UNH",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 3,
-            "segmentType": "FKT"
+            "segmentType": "FKT",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 4,
-            "segmentType": "REC"
+            "segmentType": "REC",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 5,
-            "segmentType": "UST"
+            "segmentType": "UST",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 6,
-            "segmentType": "GES"
+            "segmentType": "GES",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 7,
-            "segmentType": "GES"
+            "segmentType": "GES",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 8,
-            "segmentType": "NAM"
+            "segmentType": "NAM",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 9,
-            "segmentType": "UNT"
+            "segmentType": "UNT",
+            "nachrichtentyp": "SLGA"
         },
         {
             "position": 10,
-            "segmentType": "UNH"
+            "segmentType": "UNH",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 11,
-            "segmentType": "FKT"
+            "segmentType": "FKT",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 12,
-            "segmentType": "REC"
+            "segmentType": "REC",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 13,
-            "segmentType": "INV"
+            "segmentType": "INV",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 14,
-            "segmentType": "NAD"
+            "segmentType": "NAD",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 15,
-            "segmentType": "ENF"
+            "segmentType": "ENF",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 16,
-            "segmentType": "BES"
+            "segmentType": "BES",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 17,
-            "segmentType": "UNT"
+            "segmentType": "UNT",
+            "nachrichtentyp": "SLLA"
         },
         {
             "position": 18,
-            "segmentType": "UNZ"
+            "segmentType": "UNZ",
+            "nachrichtentyp": null
         }
     ]
 }

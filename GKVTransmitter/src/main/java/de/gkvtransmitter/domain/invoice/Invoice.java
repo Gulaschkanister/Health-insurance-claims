@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.domain.invoice;
 
 import java.util.List;
 
