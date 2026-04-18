@@ -1,6 +1,6 @@
 package de.gkvtransmitter.domain.segment;
 
-import java.util.List;
+import java.util.Map;
 
 import de.gkvtransmitter.domain.segment.field.FieldDefinition;
 import lombok.Getter;
@@ -11,12 +11,12 @@ import lombok.Getter;
  */
 @Getter
 public class SegmentDefinition {
-    private final List<FieldDefinition> fieldDefinitions;
+    private final Map<Integer, FieldDefinition> fieldDefinitions;
     private final String name;
     private final boolean repeatable;
 
-    public SegmentDefinition(List<FieldDefinition> fieldDefinitions, String name, boolean repeatable) {
-        this.fieldDefinitions = fieldDefinitions;
+    public SegmentDefinition(Map<Integer, FieldDefinition> fieldDefinitions, String name, boolean repeatable) {
+        this.fieldDefinitions = Map.copyOf(fieldDefinitions);
         this.name = name;
         this.repeatable = repeatable;
     }

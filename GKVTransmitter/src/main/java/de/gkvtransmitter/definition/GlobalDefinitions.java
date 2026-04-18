@@ -1,8 +1,8 @@
 package de.gkvtransmitter.definition;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,11 +14,11 @@ public final class GlobalDefinitions {
     private static final GlobalDefinitions INSTANCE = new GlobalDefinitions();
 
     private final Map<InvoiceType, Invoice> profileCollection;
-    private final List<DtaMessage> invoiceCollection;
+    private final Map<String, DtaMessage> invoiceTemplateCollection;
 
     private GlobalDefinitions() {
         this.profileCollection = new EnumMap<>(InvoiceType.class);
-        this.invoiceCollection = new ArrayList<>();
+        this.invoiceTemplateCollection = new LinkedHashMap<>();
     }
 
     public static GlobalDefinitions getInstance() {
@@ -33,12 +33,16 @@ public final class GlobalDefinitions {
         profileCollection.put(type, profile);
     }
 
-    public List<DtaMessage> getInvoiceCollection() {
-        return Collections.unmodifiableList(invoiceCollection);
+    public Map<String, DtaMessage> getInvoiceTemplateCollection() {
+        return Collections.unmodifiableMap(invoiceTemplateCollection);
     }
 
-    public void registerInvoice(DtaMessage invoice) {
-        invoiceCollection.add(invoice);
+    public void registerInvoiceTemplate(DtaMessage invoiceTemplate) {
+        String key = invoiceTemplate.getInvoicerName() == null ? "" : invoiceTemplate.getInvoicerName().trim();
+        if (key.isBlank()) {
+            key = invoiceTemplate.getSourceName();
+        }
+        invoiceTemplateCollection.put(key, invoiceTemplate);
     }
 
     public List<DtaMessage> findInvoicesByInvoicerName(String searchTerm) throws IllegalArgumentException {
@@ -48,7 +52,7 @@ public final class GlobalDefinitions {
             throw new IllegalArgumentException("Invoice search term cannot be empty or whitespace only.");
         }
 
-        return invoiceCollection.stream()
+        return invoiceTemplateCollection.values().stream()
                 .filter(invoice -> normalize(invoice.getInvoicerName()).contains(normalizedSearchTerm))
                 .toList();
     }
@@ -57,6 +61,6 @@ public final class GlobalDefinitions {
         if (value == null) {
             throw new IllegalArgumentException("Invoice search term cannot be null.");
         }
-        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        return value.trim().toLowerCase(Locale.ROOT);
     }
 }

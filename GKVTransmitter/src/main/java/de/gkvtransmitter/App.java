@@ -2,7 +2,7 @@ package de.gkvtransmitter;
 
 import java.util.stream.Collectors;
 
-import de.gkvtransmitter.domain.DtaMessage;
+import de.gkvtransmitter.domain.SegmentInfo;
 import de.gkvtransmitter.presentation.Controller;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -36,13 +36,15 @@ public class App extends Application {
                                         .sorted()
                                         .collect(Collectors.joining(", "));
 
-                        int loadedInvoices = controller.getGlobalDefinitions().getInvoiceCollection().size();
-                        String loadedInvoiceFiles = controller.getGlobalDefinitions().getInvoiceCollection().stream()
+                                                int loadedInvoices = controller.getGlobalDefinitions().getInvoiceTemplateCollection().size();
+                        String loadedInvoiceFiles = controller.getGlobalDefinitions().getInvoiceTemplateCollection().values().stream()
                                         .map(invoice -> invoice.getSourceName() + " [" +
                                              String.join(", ",
-                                                 invoice.getMessageTypes().stream()
+                                                 invoice.getSegments().stream()
+                                                        .map(SegmentInfo::getMessageType)
+                                                        .filter(java.util.Objects::nonNull)
                                                         .map(Enum::name)
-                                                        .sorted()
+                                                        .distinct()
                                                         .toList()) + "]")
                                         .sorted()
                                         .collect(Collectors.joining(", "));
@@ -65,12 +67,16 @@ public class App extends Application {
                         stage.show();
                 } catch (RuntimeException e) {
                         System.err.println("Fehler beim App-Start: " + e.getMessage());
-                        e.printStackTrace();
+                        if (e.getCause() != null) {
+                                System.err.println("Ursache: " + e.getCause().getMessage());
+                        }
                         showErrorDialog("App konnte nicht starten", e.getMessage());
                         Platform.exit();
                 } catch (Exception e) {
                         System.err.println("Unerwarteter Fehler: " + e.getMessage());
-                        e.printStackTrace();
+                        if (e.getCause() != null) {
+                                System.err.println("Ursache: " + e.getCause().getMessage());
+                        }
                         showErrorDialog("Unerwarteter Fehler", e.getMessage());
                         Platform.exit();
                 }

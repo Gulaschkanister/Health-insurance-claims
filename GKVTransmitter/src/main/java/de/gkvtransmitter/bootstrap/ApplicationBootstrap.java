@@ -29,14 +29,16 @@ public class ApplicationBootstrap {
                 globalDefinitions.registerProfile(profile.getMessageType(), profile);
             }
 
-            // Echte Rechnungen werden aus resources/invoices geladen und in der
-            // Invoice-Liste gesammelt.
+            // Invoice-Templates werden aus resources/invoices geladen und in der
+            // Template-Map gesammelt.
             for (DtaMessage invoice : jsonParserFactory.parseInvoices()) {
-                globalDefinitions.registerInvoice(invoice);
+                globalDefinitions.registerInvoiceTemplate(invoice);
             }
         } catch (Exception e) {
             System.err.println("❌ Bootstrap-Initialisierung fehlgeschlagen: " + e.getMessage());
-            e.printStackTrace();
+            if (e.getCause() != null) {
+                System.err.println("Ursache: " + e.getCause().getMessage());
+            }
             throw new RuntimeException("Fehler beim Laden der Profile und Invoices", e);
         }
     }

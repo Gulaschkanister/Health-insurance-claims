@@ -1,18 +1,18 @@
 package de.gkvtransmitter.domain.invoice;
 
-import java.util.List;
+import java.util.Map;
 
 import de.gkvtransmitter.definition.InvoiceType;
-import de.gkvtransmitter.domain.segment.Segment;
+import de.gkvtransmitter.domain.segment.SegmentDefinition;
 import lombok.Getter;
 
 @Getter
 public class Invoice {
-    private final List<Segment> segments;
+    private final Map<String, SegmentDefinition> segments;
     private final InvoiceType messageType;
 
-    public Invoice(List<Segment> segments, InvoiceType messageType) {
-        this.segments = segments;
+    public Invoice(Map<String, SegmentDefinition> segments, InvoiceType messageType) {
+        this.segments = Map.copyOf(segments);
         this.messageType = messageType;
     }
 }
