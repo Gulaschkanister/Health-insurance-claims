@@ -11,6 +11,7 @@ import lombok.Getter;
  */
 @Getter
 public class Segment {
+
     private final List<FieldValue> fieldValues;
     private final SegmentDefinition definition;
 

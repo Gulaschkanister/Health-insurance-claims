@@ -8,6 +8,7 @@ import lombok.Getter;
  */
 @Getter
 public class FieldDefinition {
+
     private final int position;
     private final FieldType type;
     private final boolean isMandatory;

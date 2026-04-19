@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class ValueFieldEntry {
+
     private final Object value;
     private final String fieldJavaType;
 

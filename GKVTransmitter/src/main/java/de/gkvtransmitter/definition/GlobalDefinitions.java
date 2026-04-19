@@ -11,6 +11,7 @@ import de.gkvtransmitter.domain.DtaMessage;
 import de.gkvtransmitter.domain.invoice.Invoice;
 
 public final class GlobalDefinitions {
+
     private static final GlobalDefinitions INSTANCE = new GlobalDefinitions();
 
     private final Map<InvoiceType, Invoice> profileCollection;
@@ -57,7 +58,7 @@ public final class GlobalDefinitions {
                 .toList();
     }
 
-    private String normalize(String value) throws IllegalArgumentException{
+    private String normalize(String value) throws IllegalArgumentException {
         if (value == null) {
             throw new IllegalArgumentException("Invoice search term cannot be null.");
         }

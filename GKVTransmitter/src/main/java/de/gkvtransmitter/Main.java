@@ -5,6 +5,7 @@ package de.gkvtransmitter;
  * JavaFX-Application-Klasse.
  */
 public class Main {
+
     public static void main(String[] args) {
         App.main(args);
     }

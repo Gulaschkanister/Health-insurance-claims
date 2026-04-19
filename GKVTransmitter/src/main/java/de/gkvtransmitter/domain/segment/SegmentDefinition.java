@@ -11,6 +11,7 @@ import lombok.Getter;
  */
 @Getter
 public class SegmentDefinition {
+
     private final Map<Integer, FieldDefinition> fieldDefinitions;
     private final String name;
     private final boolean repeatable;

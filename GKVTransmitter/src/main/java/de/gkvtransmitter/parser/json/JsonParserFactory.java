@@ -28,6 +28,7 @@ import de.gkvtransmitter.factory.Factory;
 import de.gkvtransmitter.parser.ParserFactory;
 
 public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
+
     private static final List<String> PROFILE_FILES = List.of(
             "profiles/slla-profile.json",
             "profiles/slga-profile.json");
@@ -87,7 +88,7 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         if (invoiceTypeRaw.isBlank()) {
             throw new IllegalArgumentException("Profile " + profileResourcePath + " hat keinen gültigen Nachrichtentyp");
         }
-        
+
         try {
             InvoiceType invoiceType = InvoiceType.valueOf(invoiceTypeRaw.toUpperCase(Locale.ROOT));
             return new Invoice(segments, invoiceType);
@@ -102,17 +103,17 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
 
         List<SegmentInfo> segments = new ArrayList<>();
         boolean hasMessageType = false;
-        
+
         if (segmentsNode.isArray()) {
             for (JsonNode segmentNode : segmentsNode) {
                 int position = segmentNode.path("position").asInt(-1);
                 String segmentType = segmentNode.path("segmentType").asText();
-                
+
                 if (!segmentType.isBlank()) {
                     InvoiceType messageType = null;
                     String groupTag = segmentNode.path("groupTag").asText("").trim();
                     Map<String, String> valueFields = readValueFields(segmentNode.path("values"));
-                    
+
                     // Sammle Nachrichtentypen (ignoriere Header/Footer wie UNB/UNZ)
                     // UNB/UNZ haben nachrichtentyp=null, da sie technische Hülle sind
                     if (!segmentNode.path("nachrichtentyp").isNull()) {
@@ -122,34 +123,34 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
                                 messageType = InvoiceType.valueOf(messageTypeRaw.toUpperCase(Locale.ROOT));
                                 hasMessageType = true;
                             } catch (IllegalArgumentException e) {
-                                throw new IllegalArgumentException("Unbekannter Nachrichtentyp '" + messageTypeRaw + 
-                                    "' bei Segment " + segmentType + " in " + invoiceResourcePath, e);
+                                throw new IllegalArgumentException("Unbekannter Nachrichtentyp '" + messageTypeRaw
+                                        + "' bei Segment " + segmentType + " in " + invoiceResourcePath, e);
                             }
                         }
                     }
 
                     valueFields = ensureTemplateValueFields(messageType, segmentType, valueFields);
-                        Map<String, String> valueFieldJavaTypes = buildValueFieldJavaTypes(messageType, segmentType,
+                    Map<String, String> valueFieldJavaTypes = buildValueFieldJavaTypes(messageType, segmentType,
                             valueFields);
-                        Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields,
+                    Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields,
                             valueFieldJavaTypes);
-                    
+
                     // Erstelle SegmentInfo mit Position, Typ und MessageType
-                        segments.add(new SegmentInfo(position, segmentType, messageType, groupTag, typedValueFields));
+                    segments.add(new SegmentInfo(position, segmentType, messageType, groupTag, typedValueFields));
                 }
             }
         }
-        
+
         if (!hasMessageType) {
-            throw new IllegalArgumentException("Invoice " + invoiceResourcePath + 
-                " hat keine gültigen Nachrichtentypen in den Segmenten");
+            throw new IllegalArgumentException("Invoice " + invoiceResourcePath
+                    + " hat keine gültigen Nachrichtentypen in den Segmenten");
         }
 
         String sourceName = extractFileName(invoiceResourcePath);
         String invoicerName = resolveInvoicerName(invoiceRoot, sourceName);
         String schemaVersion = invoiceRoot.path("schemaVersion").asText();
         String version = invoiceRoot.path("version").asText();
-        
+
         return new DtaMessage(sourceName, invoicerName, schemaVersion, version, segments);
     }
 
@@ -314,9 +315,12 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
 
         try {
             return switch (javaType) {
-                case "Integer" -> Integer.valueOf(rawValue);
-                case "LocalDate" -> parseLocalDate(rawValue);
-                default -> rawValue;
+                case "Integer" ->
+                    Integer.valueOf(rawValue);
+                case "LocalDate" ->
+                    parseLocalDate(rawValue);
+                default ->
+                    rawValue;
             };
         } catch (RuntimeException ex) {
             // Keep original user/resource value if typed conversion fails.
@@ -338,9 +342,12 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         }
 
         return switch (fieldType) {
-            case NUMBER -> "Integer";
-            case DATE -> "LocalDate";
-            case STRING -> "String";
+            case NUMBER ->
+                "Integer";
+            case DATE ->
+                "LocalDate";
+            case STRING ->
+                "String";
         };
     }
 

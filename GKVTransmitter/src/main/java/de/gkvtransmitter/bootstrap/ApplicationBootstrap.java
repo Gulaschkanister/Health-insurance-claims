@@ -7,6 +7,7 @@ import de.gkvtransmitter.parser.json.JsonParserFactory;
 import de.gkvtransmitter.presentation.FactoryManager;
 
 public class ApplicationBootstrap {
+
     private final GlobalDefinitions globalDefinitions;
     private final FactoryManager factoryManager;
 

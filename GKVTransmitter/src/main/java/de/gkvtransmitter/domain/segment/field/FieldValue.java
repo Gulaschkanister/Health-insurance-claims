@@ -8,6 +8,7 @@ import lombok.Getter;
  */
 @Getter
 public class FieldValue {
+
     private final FieldDefinition definition;
     private final Object value;
 

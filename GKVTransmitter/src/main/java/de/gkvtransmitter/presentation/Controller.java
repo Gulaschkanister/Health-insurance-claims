@@ -3,11 +3,21 @@ package de.gkvtransmitter.presentation;
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
 
+/**
+ * Vermittelt zwischen UI-Schicht und Initialisierungslogik.
+ *
+ * Initialisiert globale Definitionen, registriert benoetigte Fabriken und
+ * startet den Bootstrap-Prozess fuer Profil- und Template-Daten.
+ */
 public class Controller {
+
     private final GlobalDefinitions globalDefinitions;
     private final FactoryManager factoryManager;
     private final ApplicationBootstrap bootstrap;
 
+    /**
+     * Baut den fachlichen Anwendungskontext auf.
+     */
     public Controller() {
         try {
             // Singleton mit globalen, zur Laufzeit geladenen Strukturdefinitionen.
@@ -33,7 +43,7 @@ public class Controller {
         try {
             bootstrap.initialize();
         } catch (Exception e) {
-            System.err.println("❌ Bootstrap-Initialisierung fehlgeschlagen: " + e.getMessage());
+            System.err.println("Bootstrap-Initialisierung fehlgeschlagen: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("JSON-Profile konnten nicht geladen werden", e);
         }
@@ -43,6 +53,9 @@ public class Controller {
         return globalDefinitions;
     }
 
+    /**
+     * Liefert den Factory-Manager mit den registrierten Fabriken.
+     */
     public FactoryManager getFactoryManager() {
         return factoryManager;
     }

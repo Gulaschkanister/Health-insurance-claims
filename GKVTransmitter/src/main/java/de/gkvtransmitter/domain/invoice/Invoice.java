@@ -8,6 +8,7 @@ import lombok.Getter;
 
 @Getter
 public class Invoice {
+
     private final Map<String, SegmentDefinition> segments;
     private final InvoiceType messageType;
 
