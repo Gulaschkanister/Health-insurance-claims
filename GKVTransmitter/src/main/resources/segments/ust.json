@@ -8,7 +8,7 @@
     {
       "position": 1,
       "name": "Umsatzsteuersatz",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 3,
       "mandatory": false,
       "example": "19",
@@ -16,7 +16,8 @@
         "pattern": "^[0-9]{1,3}$",
         "description": "Prozentsatz als Zahl (z.B. 19 für 19%)"
       },
-      "fieldArt": "K"
+      "fieldArt": "K",
+      "inputType": "PERCENT"
     }
   ]
 }

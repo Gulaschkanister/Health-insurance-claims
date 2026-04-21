@@ -8,10 +8,11 @@
     {
       "position": 1,
       "name": "Verarbeitungskennzeichen",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 2,
       "mandatory": true,
       "example": "01",
+      "inputType":"NUMBER",
       "validation": {
         "reference": "Anlage 3 Abschnitt 8.1.7",
         "description": "Siehe Schlüssel Verarbeitungskennzeichen"
@@ -20,19 +21,21 @@
     {
       "position": 2,
       "name": "Freifeld",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 1,
       "mandatory": false,
       "example": "",
-      "description": "Konditional, kann leer sein"
+      "description": "Konditional, kann leer sein",
+      "inputType":"STRING"
     },
     {
       "position": 3,
       "name": "IK des Leistungserbringers",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 9,
       "mandatory": true,
       "example": "123456789",
+      "inputType":"NUMBER-SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "Muss übereinstimmen mit SLGA.FKT.Leistungserbringer der zugehörigen SLGA-Nachricht"
@@ -41,10 +44,11 @@
     {
       "position": 4,
       "name": "IK des Kostenträgers",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 9,
       "mandatory": true,
       "example": "987654321",
+      "inputType":"NUMBER-SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "IK des Kostenträgers, auf den die KV-Karte verweist. Identisch mit SLGA.FKT.IK Kostenträger"
@@ -53,10 +57,11 @@
     {
       "position": 5,
       "name": "IK der Krankenkasse (von KV-Karte bzw. ärztlicher Verordnung)",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 9,
       "mandatory": true,
       "example": "987654321",
+      "inputType":"NUMBER-SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "Zwingend anzugeben. Identisch mit SLGA.FKT.IK Krankenkasse"
@@ -65,10 +70,11 @@
     {
       "position": 6,
       "name": "IK des Rechnungsstellers",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 9,
       "mandatory": false,
       "example": "123456789",
+      "inputType":"NUMBER-SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "Konditional: Nur anzugeben, wenn Abrechnung durch Abrechnungsstelle mit Inkassovollmacht. Muss übereinstimmen mit SLGA.FKT.Rechnungssteller"

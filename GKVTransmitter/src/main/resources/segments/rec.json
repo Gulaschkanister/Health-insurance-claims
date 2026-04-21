@@ -14,44 +14,49 @@
         {
           "position": 1,
           "name": "Rechnungsnummer",
-          "type": "N",
+          "type": "INTEGER",
           "maxLength": 8,
           "mandatory": true,
           "example": "00000000",
-          "description": "8-stellige Rechnungsnummer"
+          "description": "8-stellige Rechnungsnummer",
+          "inputType": "NUMBER"
         },
         {
           "position": 2,
           "name": "Nummernkreis",
-          "type": "N",
+          "type": "INTEGER",
           "maxLength": 1,
           "mandatory": true,
           "example": "0",
-          "description": "Nummernkreis-Kennzeichen"
+          "description": "Nummernkreis-Kennzeichen",
+          "inputType": "NUMBER"
         }
-      ]
+      ],
+      "inputType": "STRING"
     },
     {
       "position": 2,
       "name": "Rechnungsdatum",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 8,
       "mandatory": true,
       "example": "20260307",
       "format": "YYYYMMDD",
-      "description": "Datum der Rechnungsstellung"
+      "description": "Datum der Rechnungsstellung",
+      "inputType": "DATE"
     },
     {
       "position": 3,
       "name": "Rechnungsart",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 1,
       "mandatory": true,
       "example": "1",
       "validation": {
         "pattern": "[0-9]",
         "description": "Art der Rechnung"
-      }
+      },
+      "inputType": "CODE"
     }
   ]
 }

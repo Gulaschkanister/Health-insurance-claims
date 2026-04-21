@@ -1,142 +1,154 @@
 {
-    "schemaVersion": "1.0",
-    "version": "V21",
-    "segmentType": "UNB",
-    "description": "Kopfsegment der Nutzdatendatei",
-    "fields": [
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "UNB",
+  "description": "Kopfsegment der Nutzdatendatei",
+  "fields": [
+    {
+      "position": 1,
+      "name": "S001 - Syntax",
+      "description": "Syntax-Identifikation",
+      "type": "COMPOSITE",
+      "mandatory": true,
+      "components": [
         {
-            "position": 1,
-            "name": "S001 - Syntax",
-            "description": "Syntax-Identifikation",
-            "type": "COMPOSITE",
-            "mandatory": true,
-            "components": [
-                {
-                    "position": 1,
-                    "name": "Syntax-Kennung",
-                    "type": "AN",
-                    "maxLength": 4,
-                    "mandatory": true,
-                    "example": "UNOC",
-                    "description": "Groß- und Kleinbuchstaben, Umlaute"
-                },
-                {
-                    "position": 2,
-                    "name": "Syntax-Versionsnummer",
-                    "type": "N",
-                    "maxLength": 1,
-                    "mandatory": true,
-                    "example": "3",
-                    "description": "Vereinbarte Version der Syntax"
-                }
-            ]
+          "position": 1,
+          "name": "Syntax-Kennung",
+          "type": "STRING",
+          "maxLength": 4,
+          "mandatory": true,
+          "example": "UNOC",
+          "description": "Groß- und Kleinbuchstaben, Umlaute",
+          "inputType": "STRING"
         },
         {
-            "position": 2,
-            "name": "S002 - Absender Datei",
-            "description": "IK des Absenders (Abrechnungsstelle mit oder ohne Inkassobefugnis oder LE)",
-            "type": "N",
-            "maxLength": 9,
-            "mandatory": true,
-            "example": "123456789",
-            "validation": {
-                "pattern": "^[0-9]{9}$",
-                "description": "IK-Nummer mit 9 Ziffern"
-            }
-        },
-        {
-            "position": 3,
-            "name": "S003 - Empfänger Datei",
-            "description": "IK des Empfängers (Datenannahmestelle mit Entschlüsselungsbefugnis)",
-            "type": "N",
-            "maxLength": 9,
-            "mandatory": true,
-            "example": "987654321",
-            "validation": {
-                "pattern": "^[0-9]{9}$",
-                "description": "IK-Nummer mit 9 Ziffern"
-            }
-        },
-        {
-            "position": 4,
-            "name": "S004 - Datum/Uhrzeit",
-            "description": "Erstelldatum und Erstelluhrzeit der Datei",
-            "type": "COMPOSITE",
-            "mandatory": true,
-            "components": [
-                {
-                    "position": 1,
-                    "name": "Datum",
-                    "type": "N",
-                    "maxLength": 8,
-                    "mandatory": true,
-                    "example": "20260308",
-                    "format": "YYYYMMDD",
-                    "description": "Erstelldatum der Datei"
-                },
-                {
-                    "position": 2,
-                    "name": "Uhrzeit",
-                    "type": "N",
-                    "maxLength": 4,
-                    "mandatory": true,
-                    "example": "1200",
-                    "format": "HHMM",
-                    "description": "Erstelluhrzeit der Datei"
-                }
-            ]
-        },
-        {
-            "position": 5,
-            "name": "0020 - Datenaustauschreferenz",
-            "description": "Fortlaufende Nummer der Lieferungen zwischen Absender und Empfänger",
-            "type": "AN",
-            "maxLength": 14,
-            "mandatory": true,
-            "example": "00001",
-            "validation": {
-                "pattern": "^[0-9]{1,5}$|^[0-9]{1,14}$",
-                "description": "Fortlaufende Nummer mit führenden Nullen, nach 99999 neu bei 00001 beginnen"
-            }
-        },
-        {
-            "position": 6,
-            "name": "S005 - Leistungsbereich",
-            "description": "Leistungserbringer-Sammelgruppenschlüssel",
-            "type": "AN",
-            "maxLength": 1,
-            "mandatory": true,
-            "example": "H",
-            "validation": {
-                "pattern": "[A-Z0-9]",
-                "description": "Siehe Schlüssel Anlage 3 Abschnitt 8.1.14"
-            }
-        },
-        {
-            "position": 7,
-            "name": "0026 - Anwendungsreferenz",
-            "description": "Logischer Dateiname",
-            "type": "AN",
-            "maxLength": 14,
-            "mandatory": true,
-            "example": "HEB26030801"
-        },
-        {
-            "position": 8,
-            "name": "0035 - Testindikator",
-            "description": "Kennzeichen ob Test-, Erprobungs- oder Echtdatei",
-            "type": "N",
-            "maxLength": 1,
-            "mandatory": true,
-            "example": "1",
-            "validation": {
-                "pattern": "[0-2]",
-                "values": {
-                    "0": "Testdatei",
-                    "1": "Erprobungsdatei",
-                    "2": "Echtdatei"
-                }
-            }
+          "position": 2,
+          "name": "Syntax-Versionsnummer",
+          "type": "INTEGER",
+          "maxLength": 1,
+          "mandatory": true,
+          "example": "3",
+          "description": "Vereinbarte Version der Syntax",
+          "inputType": "NUMBER"
         }
-    ]
+      ],
+      "inputType": "STRING"
+    },
+    {
+      "position": 2,
+      "name": "S002 - Absender Datei",
+      "description": "IK des Absenders (Abrechnungsstelle mit oder ohne Inkassobefugnis oder LE)",
+      "type": "INTEGER",
+      "maxLength": 9,
+      "mandatory": true,
+      "example": "123456789",
+      "validation": {
+        "pattern": "^[0-9]{9}$",
+        "description": "IK-Nummer mit 9 Ziffern"
+      },
+      "inputType": "NUMBER"
+    },
+    {
+      "position": 3,
+      "name": "S003 - Empfänger Datei",
+      "description": "IK des Empfängers (Datenannahmestelle mit Entschlüsselungsbefugnis)",
+      "type": "INTEGER",
+      "maxLength": 9,
+      "mandatory": true,
+      "example": "987654321",
+      "validation": {
+        "pattern": "^[0-9]{9}$",
+        "description": "IK-Nummer mit 9 Ziffern"
+      },
+      "inputType": "NUMBER"
+    },
+    {
+      "position": 4,
+      "name": "S004 - Datum/Uhrzeit",
+      "description": "Erstelldatum und Erstelluhrzeit der Datei",
+      "type": "COMPOSITE",
+      "mandatory": true,
+      "components": [
+        {
+          "position": 1,
+          "name": "Datum",
+          "type": "INTEGER",
+          "maxLength": 8,
+          "mandatory": true,
+          "example": "20260308",
+          "format": "YYYYMMDD",
+          "description": "Erstelldatum der Datei",
+          "inputType": "DATE"
+        },
+        {
+          "position": 2,
+          "name": "Uhrzeit",
+          "type": "INTEGER",
+          "maxLength": 4,
+          "mandatory": true,
+          "example": "1200",
+          "format": "HHMM",
+          "description": "Erstelluhrzeit der Datei",
+          "inputType": "NUMBER"
+        }
+      ],
+      "inputType": "TIME"
+    },
+    {
+      "position": 5,
+      "name": "0020 - Datenaustauschreferenz",
+      "description": "Fortlaufende Nummer der Lieferungen zwischen Absender und Empfänger",
+      "type": "STRING",
+      "maxLength": 14,
+      "mandatory": true,
+      "example": "00001",
+      "validation": {
+        "pattern": "^[0-9]{1,5}$|^[0-9]{1,14}$",
+        "description": "Fortlaufende Nummer mit führenden Nullen, nach 99999 neu bei 00001 beginnen"
+      },
+      "inputType": "NUMBER"
+    },
+    {
+      "position": 6,
+      "name": "S005 - Leistungsbereich",
+      "description": "Leistungserbringer-Sammelgruppenschlüssel",
+      "type": "STRING",
+      "maxLength": 1,
+      "mandatory": true,
+      "example": "H",
+      "validation": {
+        "pattern": "[A-Z0-9]",
+        "description": "Siehe Schlüssel Anlage 3 Abschnitt 8.1.14"
+      },
+      "inputType": "CODE"
+    },
+    {
+      "position": 7,
+      "name": "0026 - Anwendungsreferenz",
+      "description": "Logischer Dateiname",
+      "type": "STRING",
+      "maxLength": 14,
+      "mandatory": true,
+      "example": "HEB26030801",
+      "inputType": "CODE"
+    },
+    {
+      "position": 8,
+      "name": "0035 - Testindikator",
+      "description": "Kennzeichen ob Test-, Erprobungs- oder Echtdatei",
+      "type": "INTEGER",
+      "maxLength": 1,
+      "mandatory": true,
+      "example": "1",
+      "validation": {
+        "pattern": "[0-2]",
+        "values": {
+          "0": "Testdatei",
+          "1": "Erprobungsdatei",
+          "2": "Echtdatei"
+        }
+      },
+      "inputType": "BOOLEAN"
+    }
+  ]
 }

@@ -8,63 +8,69 @@
     {
       "position": 1,
       "name": "Nachname",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": true,
       "example": "MUSTERMANN",
       "description": "Familienname des Versicherten",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     },
     {
       "position": 2,
       "name": "Vorname",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": true,
       "example": "ANNA",
       "description": "Vorname des Versicherten",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     },
     {
       "position": 3,
       "name": "Geburtsdatum",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 8,
       "mandatory": true,
       "example": "19900101",
       "format": "YYYYMMDD",
       "description": "Geburtsdatum des Versicherten",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "DATE"
     },
     {
       "position": 4,
       "name": "Straße",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": true,
       "example": "MUSTERSTRASSE 1",
       "description": "Postanschrift: Straßenname und Hausnummer",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     },
     {
       "position": 5,
       "name": "Postleitzahl",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 10,
       "mandatory": true,
       "example": "12345",
       "description": "Postleitzahl",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "INTEGER"
     },
     {
       "position": 6,
       "name": "Stadt",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": true,
       "example": "MUSTERSTADT",
       "description": "Ort/Stadt",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     }
   ],
   "validationRule": "Wenn INV.Versichertenstatus (Pos 2) leer ist, dann muss NAD mit kompletter Adresse geliefert werden"

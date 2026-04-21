@@ -7,11 +7,12 @@
     {
       "position": 1,
       "name": "Nachrichten-Referenznummer",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 14,
       "mandatory": true,
       "example": "00001",
-      "description": "Fortlaufende Nummer der Nachricht zwischen UNB und UNZ"
+      "description": "Fortlaufende Nummer der Nachricht zwischen UNB und UNZ",
+      "inputType": "STRING"
     },
     {
       "position": 2,
@@ -23,7 +24,7 @@
         {
           "position": 1,
           "name": "Nachrichttyp-Code",
-          "type": "AN",
+          "type": "STRING",
           "maxLength": 6,
           "mandatory": true,
           "example": "SLGA",
@@ -32,36 +33,41 @@
               "SLGA": "Summen-/Begleitdaten",
               "SLLA": "Falldaten/Leistungsdaten"
             }
-          }
+          },
+          "inputType": "CODE"
         },
         {
           "position": 2,
           "name": "Nachrichtentyp-Version",
-          "type": "N",
+          "type": "INTEGER",
           "maxLength": 3,
           "mandatory": true,
           "example": "21",
-          "description": "Version des Nachrichtentyps"
+          "description": "Version des Nachrichtentyps",
+          "inputType": "NUMBER"
         },
         {
           "position": 3,
           "name": "Release",
-          "type": "N",
+          "type": "INTEGER",
           "maxLength": 3,
           "mandatory": true,
           "example": "0",
-          "description": "Release-Nummer"
+          "description": "Release-Nummer",
+          "inputType": "NUMBER"
         },
         {
           "position": 4,
           "name": "Controlling Agency",
-          "type": "AN",
+          "type": "STRING",
           "maxLength": 2,
           "mandatory": true,
           "example": "0",
-          "description": "Kontrollstelle"
+          "description": "Kontrollstelle",
+          "inputType": "STRING"
         }
-      ]
+      ],
+      "inputType": "STRING"
     }
   ]
 }

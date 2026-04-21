@@ -8,44 +8,48 @@
     {
       "position": 1,
       "name": "Versichertennummer",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 12,
       "mandatory": true,
       "example": "012345678901",
       "description": "Versicherungsnummer (KV-Nummerngruppe)",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     },
     {
       "position": 2,
       "name": "Versichertenstatus",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 1,
       "mandatory": false,
       "example": "",
       "description": "Status-Kennzeichen (wenn leer: muss NAD mit kompletter Anschrift folgen)",
-      "fieldArt": "K"
+      "fieldArt": "K",
+      "inputType": "STRING"
     },
     {
       "position": 3,
       "name": "Beleginformation",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 1,
       "mandatory": true,
       "example": "1",
       "validation": {
         "pattern": "[0-9]"
       },
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "NUMBER"
     },
     {
       "position": 4,
       "name": "Belegnummer",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": true,
       "example": "HEB2403001",
       "description": "Verordnungs- oder Belegnummer (z.B. Herausgeber-Bearbeitungs-Nummer für SGS H)",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     }
   ]
 }

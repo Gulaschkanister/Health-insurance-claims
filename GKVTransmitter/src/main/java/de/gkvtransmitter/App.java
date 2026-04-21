@@ -21,7 +21,6 @@ public class App extends Application {
     // Ueber diese Referenz bleibt der initialisierte Fachkontext waehrend der
     // gesamten Laufzeit erreichbar und im Debugger inspizierbar.
 
-    @SuppressWarnings("unused")
     private Controller controller;
     private View view;
 
@@ -32,7 +31,7 @@ public class App extends Application {
             // Controller -> ApplicationBootstrap -> JsonParserFactory -> GlobalDefinitions.
             // Breakpoint hier setzen, dann mit Step Into bis zur Registrierung laufen.
             controller = new Controller();
-            view = new View();
+            view = new View(controller);
 
             int loadedProfiles = controller.getGlobalDefinitions().getProfileCollection().size();
             String loadedTypes = controller.getGlobalDefinitions().getProfileCollection().keySet().stream()
@@ -41,15 +40,17 @@ public class App extends Application {
                     .collect(Collectors.joining(", "));
 
             int loadedInvoices = controller.getGlobalDefinitions().getInvoiceTemplateCollection().size();
-            String loadedInvoiceFiles = controller.getGlobalDefinitions().getInvoiceTemplateCollection().values().stream()
+            String loadedInvoiceFiles = controller.getGlobalDefinitions().getInvoiceTemplateCollection().values()
+                    .stream()
                     .map(invoice -> invoice.getSourceName() + " ["
-                    + String.join(", ",
-                            invoice.getSegments().stream()
-                                    .map(SegmentInfo::getMessageType)
-                                    .filter(java.util.Objects::nonNull)
-                                    .map(Enum::name)
-                                    .distinct()
-                                    .toList()) + "]")
+                            + String.join(", ",
+                                    invoice.getSegments().stream()
+                                            .map(SegmentInfo::getMessageType)
+                                            .filter(java.util.Objects::nonNull)
+                                            .map(Enum::name)
+                                            .distinct()
+                                            .toList())
+                            + "]")
                     .sorted()
                     .collect(Collectors.joining(", "));
 
@@ -62,7 +63,7 @@ public class App extends Application {
                     : "Invoices: 0";
             String statusText = "GKVTransmitter geladen - " + profileStatus + " | " + invoiceStatus;
 
-            Scene scene = view.createStatusScene(statusText, 900, 600);
+            Scene scene = view.createMainScene(statusText, 900, 600);
             stage.setTitle("GKVTransmitter");
             stage.setScene(scene);
             stage.show();

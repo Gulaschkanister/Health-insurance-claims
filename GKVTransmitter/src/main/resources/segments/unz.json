@@ -8,7 +8,7 @@
     {
       "position": 1,
       "name": "Nachrichtenanzahl",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 6,
       "mandatory": true,
       "example": "000002",
@@ -16,19 +16,21 @@
         "pattern": "^[0-9]{6}$",
         "description": "6-stellige Anzahl der Nachrichten (UNH...UNT Blöcke) in dieser Datei"
       },
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "NUMBER"
     },
     {
       "position": 2,
       "name": "Interchange-Reference",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 14,
       "mandatory": true,
       "example": "00001",
       "validation": {
         "description": "MUSS mit Datenaustauschreferenz aus UNB (Position 5) übereinstimmen"
       },
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType": "STRING"
     }
   ]
 }

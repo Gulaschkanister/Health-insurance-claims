@@ -8,32 +8,35 @@
     {
       "position": 1,
       "name": "Nachname",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": false,
       "example": "MUSTERMANN",
       "description": "Familienname",
-      "fieldArt": "K"
+      "fieldArt": "K",
+      "inputType": "STRING"
     },
     {
       "position": 2,
       "name": "Vorname",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": false,
       "example": "MARIA",
       "description": "Vorname",
-      "fieldArt": "K"
+      "fieldArt": "K",
+      "inputType": "STRING"
     },
     {
       "position": 3,
       "name": "Titel",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 35,
       "mandatory": false,
       "example": "DR",
       "description": "Akademischer Titel oder Anrede (optional)",
-      "fieldArt": "K"
+      "fieldArt": "K",
+      "inputType": "STRING"
     }
   ]
 }

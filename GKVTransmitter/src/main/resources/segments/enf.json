@@ -8,12 +8,13 @@
     {
       "position": 1,
       "name": "Zeilen-Identifikationsnummer",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 4,
       "mandatory": true,
       "example": "01",
       "description": "Fortlaufende Nummer der Leistungszeile innerhalb einer INV",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType":"NUMBER"
     },
     {
       "position": 2,
@@ -26,32 +27,35 @@
         {
           "position": 1,
           "name": "Abrechnungscode",
-          "type": "AN",
+          "type": "STRING",
           "maxLength": 2,
           "mandatory": true,
           "example": "61",
-          "description": "Abrechnungscode für Leistungsart (Anlage 3, Schlüssel 8.1.5.1)"
+          "description": "Abrechnungscode für Leistungsart (Anlage 3, Schlüssel 8.1.5.1)",
+          "inputType":"CODE"
         },
         {
           "position": 2,
           "name": "Tarifkennzeichen",
-          "type": "AN",
+          "type": "STRING",
           "maxLength": 5,
           "mandatory": true,
           "example": "00000",
-          "description": "Tarifkennzeichen (5 Stellen, Anlage 3, Schlüssel 8.1.5.2)"
+          "description": "Tarifkennzeichen (5 Stellen, Anlage 3, Schlüssel 8.1.5.2)",
+          "inputType":"CODE"
         }
       ]
     },
     {
       "position": 3,
       "name": "Abrechnungspositionsnummer",
-      "type": "AN",
+      "type": "STRING",
       "maxLength": 9,
       "mandatory": true,
       "example": "306050601",
       "description": "Positionsnummer gültig für diesen Leistungsbereich (Anlage 3, Abschnitt 8.2)",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType":"NUMBER"
     },
     {
       "position": 4,
@@ -62,7 +66,8 @@
       "example": "08,00",
       "format": "X,XX",
       "description": "Leistungsmenge mit 2 Nachkommastellen (z.B. Anzahl Sitzungen, Minuten)",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType":"NUMBER"
     },
     {
       "position": 5,
@@ -73,18 +78,20 @@
       "example": "15000,00",
       "format": "X,XX",
       "description": "Durchschnittlicher Einzelbetrag mit 2 Nachkommastellen (= Fazit Menge * Preis)",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType":"COST"
     },
     {
       "position": 6,
       "name": "Leistungsdatum",
-      "type": "N",
+      "type": "INTEGER",
       "maxLength": 8,
       "mandatory": true,
       "example": "20240301",
       "format": "YYYYMMDD",
       "description": "Datum der Leistungserbringung oder Abrechnungsperiode Start",
-      "fieldArt": "M"
+      "fieldArt": "M",
+      "inputType":"DATE"
     },
     {
       "position": 7,
@@ -95,7 +102,8 @@
       "example": "0,00",
       "format": "X,XX",
       "description": "Zuzahlung des Versicherten pro Position mit 2 Nachkommastellen",
-      "fieldArt": "K"
+      "fieldArt": "K",
+      "inputType":"NUMBER"
     }
   ],
   "validationRule": "Keine Feldverschiebung! Doppelpunkt nur im Kompositfeld Feld 2 zwischen Abrechnungscode und Tarifkennzeichen"
