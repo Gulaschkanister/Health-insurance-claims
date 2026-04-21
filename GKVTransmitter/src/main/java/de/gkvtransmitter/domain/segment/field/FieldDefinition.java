@@ -1,5 +1,6 @@
 package de.gkvtransmitter.domain.segment.field;
 
+import de.gkvtransmitter.domain.inputOptions.InputOptions;
 import lombok.Getter;
 
 /**
@@ -14,12 +15,14 @@ public class FieldDefinition {
     private final boolean isMandatory;
     private final int maxLength;
     private final String name;
+    private final InputOptions inputType;
 
-    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name) {
+    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name, InputOptions inputType) {
         this.position = position;
         this.type = type;
         this.isMandatory = isMandatory;
         this.maxLength = maxLength;
         this.name = name;
+        this.inputType = inputType;
     }
 }

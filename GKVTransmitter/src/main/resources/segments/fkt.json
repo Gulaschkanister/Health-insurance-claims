@@ -35,7 +35,7 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "123456789",
-      "inputType":"NUMBER-SUGGESTION",
+      "inputType":"NUMBER_SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "Muss übereinstimmen mit SLGA.FKT.Leistungserbringer der zugehörigen SLGA-Nachricht"
@@ -48,7 +48,7 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "987654321",
-      "inputType":"NUMBER-SUGGESTION",
+      "inputType":"NUMBER_SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "IK des Kostenträgers, auf den die KV-Karte verweist. Identisch mit SLGA.FKT.IK Kostenträger"
@@ -61,7 +61,7 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "987654321",
-      "inputType":"NUMBER-SUGGESTION",
+      "inputType":"NUMBER_SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "Zwingend anzugeben. Identisch mit SLGA.FKT.IK Krankenkasse"
@@ -74,7 +74,7 @@
       "maxLength": 9,
       "mandatory": false,
       "example": "123456789",
-      "inputType":"NUMBER-SUGGESTION",
+      "inputType":"NUMBER_SUGGESTION",
       "validation": {
         "pattern": "^[0-9]{9}$",
         "description": "Konditional: Nur anzugeben, wenn Abrechnung durch Abrechnungsstelle mit Inkassovollmacht. Muss übereinstimmen mit SLGA.FKT.Rechnungssteller"

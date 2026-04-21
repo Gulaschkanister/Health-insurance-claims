@@ -20,6 +20,7 @@ import de.gkvtransmitter.definition.InvoiceType;
 import de.gkvtransmitter.domain.DtaMessage;
 import de.gkvtransmitter.domain.SegmentInfo;
 import de.gkvtransmitter.domain.ValueFieldEntry;
+import de.gkvtransmitter.domain.inputOptions.InputOptions;
 import de.gkvtransmitter.domain.invoice.Invoice;
 import de.gkvtransmitter.domain.segment.SegmentDefinition;
 import de.gkvtransmitter.domain.segment.field.FieldDefinition;
@@ -132,8 +133,10 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
                     valueFields = ensureTemplateValueFields(messageType, segmentType, valueFields);
                     Map<String, String> valueFieldJavaTypes = buildValueFieldJavaTypes(messageType, segmentType,
                             valueFields);
+                        Map<String, InputOptions> valueFieldInputTypes = buildValueFieldInputTypes(messageType,
+                            segmentType, valueFields);
                     Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields,
-                            valueFieldJavaTypes);
+                            valueFieldJavaTypes, valueFieldInputTypes);
 
                     // Erstelle SegmentInfo mit Position, Typ und MessageType
                     segments.add(new SegmentInfo(position, segmentType, messageType, groupTag, typedValueFields));
@@ -296,16 +299,59 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
     }
 
     private Map<String, ValueFieldEntry> buildTypedValueFields(Map<String, String> rawValueFields,
-            Map<String, String> valueFieldJavaTypes) {
+            Map<String, String> valueFieldJavaTypes,
+            Map<String, InputOptions> valueFieldInputTypes) {
         Map<String, ValueFieldEntry> typedValueFields = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : rawValueFields.entrySet()) {
             String key = entry.getKey();
             String rawValue = entry.getValue();
             String javaType = valueFieldJavaTypes.getOrDefault(key, "String");
             Object typedValue = parseValueByJavaType(rawValue, javaType);
-            typedValueFields.put(key, new ValueFieldEntry(typedValue, javaType));
+
+            typedValueFields.put(key, new ValueFieldEntry(typedValue, javaType, valueFieldInputTypes.get(key)));
         }
         return typedValueFields;
+    }
+
+    private Map<String, InputOptions> buildValueFieldInputTypes(InvoiceType messageType, String segmentType,
+            Map<String, String> valueFields) {
+        Map<String, InputOptions> valueFieldInputTypes = new LinkedHashMap<>();
+        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
+        if (definition == null) {
+            return valueFieldInputTypes;
+        }
+
+        Map<String, InputOptions> keyToInputType = new LinkedHashMap<>();
+        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        for (FieldDefinition field : orderedFields) {
+            String baseKey = toFormFieldKey(field.getName());
+            String key = baseKey;
+            if (keyToInputType.containsKey(key)) {
+                key = key + "_" + field.getPosition();
+            }
+            keyToInputType.put(key, field.getInputType());
+        }
+
+        valueFields.keySet().forEach(key -> valueFieldInputTypes.put(key, keyToInputType.get(key)));
+        return valueFieldInputTypes;
+    }
+
+    private InputOptions parseValueByEnum(String rawValue) throws RuntimeException {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+
+        try {
+            return InputOptions.valueOf(rawValue);
+        } catch (Exception e) {
+
+            return null;
+        }
+
     }
 
     private Object parseValueByJavaType(String rawValue, String javaType) {
@@ -357,7 +403,8 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         boolean mandatory = fieldNode.path("mandatory").asBoolean(false);
         int maxLength = fieldNode.path("maxLength").asInt(0);
         String name = fieldNode.path("name").asText();
-        return new FieldDefinition(position, fieldType, mandatory, maxLength, name);
+        InputOptions inputType = parseValueByEnum(fieldNode.path("inputType").asText());
+        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType);
     }
 
     private FieldType mapFieldType(String rawType) {
