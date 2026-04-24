@@ -8,5 +8,6 @@ public enum InputOptions {
     PERCENT,
     COST,
     BOOLEAN,
-    DATE
+    DATE,
+    TIME
 }

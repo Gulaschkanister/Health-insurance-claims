@@ -17,7 +17,8 @@
         "description": "6-stellige Anzahl der Segmente in dieser Nachricht (UNH, FKT, REC, ... alle bis UNT einschließlich)"
       },
       "fieldArt": "M",
-      "inputType": "NUMBER"
+      "inputType": "NUMBER",
+      "internal": true
     },
     {
       "position": 2,
@@ -30,7 +31,8 @@
         "description": "MUSS mit Referenznummer aus UNH Übereinstimmen"
       },
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 package de.gkvtransmitter.presentation;
 
+import de.gkvtransmitter.domain.inputOptions.InputOptions;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -14,6 +15,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
@@ -47,8 +49,6 @@ public interface UiFactory {
 
     Button createButton(String text);
 
-    ComboBox<Node> createDropdown(Node... options);
-
     DatePicker createDatePicker();
 
     CheckBox createCheckBox(String text);
@@ -67,4 +67,7 @@ public interface UiFactory {
 
     TextField createTextField();
 
+    <T> Spinner<T> createSpinner(Class<T> type, String format, InputOptions inputOption, String fieldType);
+
+    ComboBox<Node> createComboBox(boolean setEditable, Node... options);
 }

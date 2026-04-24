@@ -26,6 +26,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
+
         try {
             // Einstieg in die fachliche Initialisierung:
             // Controller -> ApplicationBootstrap -> JsonParserFactory -> GlobalDefinitions.

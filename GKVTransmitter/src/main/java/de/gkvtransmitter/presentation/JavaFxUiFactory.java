@@ -1,6 +1,8 @@
 package de.gkvtransmitter.presentation;
 
-import javafx.geometry.Insets;
+import java.math.BigDecimal;
+
+import de.gkvtransmitter.domain.inputOptions.InputOptions;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -15,6 +17,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
@@ -52,13 +55,6 @@ public class JavaFxUiFactory implements UiFactory {
     @Override
     public Button createButton(String text) {
         return new Button(text);
-    }
-
-    @Override
-    public ComboBox<Node> createDropdown(Node... nodes) {
-        ComboBox<Node> comboBox = new ComboBox<>();
-        comboBox.getItems().addAll(nodes);
-        return comboBox;
     }
 
     @Override
@@ -128,7 +124,6 @@ public class JavaFxUiFactory implements UiFactory {
         // Abstände zwischen Cells
         gridPane.setHgap(50);
         gridPane.setVgap(10);
-        
 
         // Alle Spalten gleich breit
         for (int i = 0; i < columns; i++) {
@@ -145,4 +140,27 @@ public class JavaFxUiFactory implements UiFactory {
 
         return gridPane;
     }
+
+    @Override
+    public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOptions inputOption, String fieldType) {
+        // TODO: formatTyoe aktuell ungenutzt ziel für die ui anzeige formatieren von
+        // anzeigen
+        if (Integer.class.equals(type)) {
+            return (Spinner<T>) new Spinner<Integer>();
+        }
+        if (BigDecimal.class.equals(type)) {
+            return (Spinner<T>) new Spinner<BigDecimal>();
+        }
+        throw new IllegalArgumentException("Unsupported type: " + type);
+    }
+
+    @Override
+    public ComboBox<Node> createComboBox(boolean setEditable, Node... nodes) {
+        // TODO: hier gehts weiter
+        ComboBox<Node> comboBox = new ComboBox<>();
+        comboBox.getItems().addAll(nodes);
+        comboBox.setEditable(setEditable);
+        return comboBox;
+    }
+
 }

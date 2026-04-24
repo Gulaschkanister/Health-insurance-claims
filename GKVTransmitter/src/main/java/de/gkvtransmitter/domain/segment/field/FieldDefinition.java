@@ -16,13 +16,19 @@ public class FieldDefinition {
     private final int maxLength;
     private final String name;
     private final InputOptions inputType;
+    private final boolean internal;
 
     public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name, InputOptions inputType) {
+        this(position, type, isMandatory, maxLength, name, inputType, false);
+    }
+
+    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name, InputOptions inputType, boolean internal) {
         this.position = position;
         this.type = type;
         this.isMandatory = isMandatory;
         this.maxLength = maxLength;
         this.name = name;
         this.inputType = inputType;
+        this.internal = internal;
     }
 }

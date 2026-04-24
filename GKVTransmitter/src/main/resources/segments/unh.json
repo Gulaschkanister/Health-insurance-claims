@@ -12,7 +12,8 @@
       "mandatory": true,
       "example": "00001",
       "description": "Fortlaufende Nummer der Nachricht zwischen UNB und UNZ",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": true
     },
     {
       "position": 2,
@@ -44,7 +45,8 @@
           "mandatory": true,
           "example": "21",
           "description": "Version des Nachrichtentyps",
-          "inputType": "NUMBER"
+          "inputType": "NUMBER",
+          "internal": true
         },
         {
           "position": 3,

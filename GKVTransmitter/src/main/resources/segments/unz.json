@@ -17,7 +17,8 @@
         "description": "6-stellige Anzahl der Nachrichten (UNH...UNT Blöcke) in dieser Datei"
       },
       "fieldArt": "M",
-      "inputType": "NUMBER"
+      "inputType": "NUMBER",
+      "internal": true
     },
     {
       "position": 2,
@@ -30,7 +31,8 @@
         "description": "MUSS mit Datenaustauschreferenz aus UNB (Position 5) übereinstimmen"
       },
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": true
     }
   ]
 }

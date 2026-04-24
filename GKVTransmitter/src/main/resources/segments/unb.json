@@ -92,7 +92,8 @@
           "inputType": "NUMBER"
         }
       ],
-      "inputType": "TIME"
+      "inputType": "TIME",
+      "internal": true
     },
     {
       "position": 5,
@@ -106,7 +107,8 @@
         "pattern": "^[0-9]{1,5}$|^[0-9]{1,14}$",
         "description": "Fortlaufende Nummer mit führenden Nullen, nach 99999 neu bei 00001 beginnen"
       },
-      "inputType": "NUMBER"
+      "inputType": "NUMBER",
+      "internal": true
     },
     {
       "position": 6,
@@ -148,7 +150,8 @@
           "2": "Echtdatei"
         }
       },
-      "inputType": "BOOLEAN"
+      "inputType": "BOOLEAN",
+      "internal": true
     }
   ]
 }
