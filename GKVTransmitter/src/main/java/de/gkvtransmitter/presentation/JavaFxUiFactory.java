@@ -2,7 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import java.math.BigDecimal;
 
-import de.gkvtransmitter.domain.inputOptions.InputOptions;
+import de.gkvtransmitter.enums.InputOption;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -142,7 +142,7 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     @Override
-    public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOptions inputOption, String fieldType) {
+    public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOption inputOption, String fieldType) {
         // TODO: formatTyoe aktuell ungenutzt ziel für die ui anzeige formatieren von
         // anzeigen
         if (Integer.class.equals(type)) {

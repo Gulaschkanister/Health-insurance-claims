@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.model.segment;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

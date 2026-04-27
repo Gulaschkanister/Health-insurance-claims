@@ -35,7 +35,8 @@
               "SLLA": "Falldaten/Leistungsdaten"
             }
           },
-          "inputType": "CODE"
+          "inputType": "CODE",
+          "internal": true
         },
         {
           "position": 2,
@@ -56,7 +57,8 @@
           "mandatory": true,
           "example": "0",
           "description": "Release-Nummer",
-          "inputType": "NUMBER"
+          "inputType": "NUMBER",
+          "internal": true
         },
         {
           "position": 4,
@@ -66,10 +68,12 @@
           "mandatory": true,
           "example": "0",
           "description": "Kontrollstelle",
-          "inputType": "STRING"
+          "inputType": "STRING",
+          "internal": true
         }
       ],
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": true
     }
   ]
 }

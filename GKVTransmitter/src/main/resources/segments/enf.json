@@ -14,7 +14,8 @@
       "example": "01",
       "description": "Fortlaufende Nummer der Leistungszeile innerhalb einer INV",
       "fieldArt": "M",
-      "inputType":"NUMBER"
+      "inputType": "NUMBER",
+      "internal": true
     },
     {
       "position": 2,
@@ -32,7 +33,8 @@
           "mandatory": true,
           "example": "61",
           "description": "Abrechnungscode für Leistungsart (Anlage 3, Schlüssel 8.1.5.1)",
-          "inputType":"CODE"
+          "inputType": "CODE",
+          "internal": false
         },
         {
           "position": 2,
@@ -42,7 +44,8 @@
           "mandatory": true,
           "example": "00000",
           "description": "Tarifkennzeichen (5 Stellen, Anlage 3, Schlüssel 8.1.5.2)",
-          "inputType":"CODE"
+          "inputType": "CODE",
+          "internal": false
         }
       ]
     },
@@ -55,7 +58,8 @@
       "example": "306050601",
       "description": "Positionsnummer gültig für diesen Leistungsbereich (Anlage 3, Abschnitt 8.2)",
       "fieldArt": "M",
-      "inputType":"NUMBER"
+      "inputType": "NUMBER",
+      "internal": true
     },
     {
       "position": 4,
@@ -67,7 +71,8 @@
       "format": "X,XX",
       "description": "Leistungsmenge mit 2 Nachkommastellen (z.B. Anzahl Sitzungen, Minuten)",
       "fieldArt": "M",
-      "inputType":"NUMBER"
+      "inputType": "NUMBER",
+      "internal": false
     },
     {
       "position": 5,
@@ -79,7 +84,8 @@
       "format": "X,XX",
       "description": "Durchschnittlicher Einzelbetrag mit 2 Nachkommastellen (= Fazit Menge * Preis)",
       "fieldArt": "M",
-      "inputType":"COST"
+      "inputType": "COST",
+      "internal": false
     },
     {
       "position": 6,
@@ -91,7 +97,8 @@
       "format": "YYYYMMDD",
       "description": "Datum der Leistungserbringung oder Abrechnungsperiode Start",
       "fieldArt": "M",
-      "inputType":"DATE"
+      "inputType": "DATE",
+      "internal": false
     },
     {
       "position": 7,
@@ -103,7 +110,8 @@
       "format": "X,XX",
       "description": "Zuzahlung des Versicherten pro Position mit 2 Nachkommastellen",
       "fieldArt": "K",
-      "inputType":"NUMBER"
+      "inputType": "NUMBER",
+      "internal": false
     }
   ],
   "validationRule": "Keine Feldverschiebung! Doppelpunkt nur im Kompositfeld Feld 2 zwischen Abrechnungscode und Tarifkennzeichen"

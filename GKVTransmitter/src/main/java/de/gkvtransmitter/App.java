@@ -2,7 +2,7 @@ package de.gkvtransmitter;
 
 import java.util.stream.Collectors;
 
-import de.gkvtransmitter.domain.SegmentInfo;
+import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.presentation.Controller;
 import de.gkvtransmitter.presentation.View;
 import javafx.application.Application;

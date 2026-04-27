@@ -1,6 +1,6 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.model.segment;
 
-import de.gkvtransmitter.domain.inputOptions.InputOptions;
+import de.gkvtransmitter.enums.InputOption;
 import lombok.Getter;
 
 @Getter
@@ -8,10 +8,10 @@ public class ValueFieldEntry {
 
     private final Object value;
     private final String fieldJavaType;
-    private final InputOptions inputField;
+    private final InputOption inputField;
     private final boolean internal;
 
-    public ValueFieldEntry(Object value, String fieldJavaType, InputOptions inputField, boolean internal) {
+    public ValueFieldEntry(Object value, String fieldJavaType, InputOption inputField, boolean internal) {
         this.value = value;
         this.fieldJavaType = fieldJavaType == null || fieldJavaType.isBlank() ? "String" : fieldJavaType;
         this.inputField = inputField;

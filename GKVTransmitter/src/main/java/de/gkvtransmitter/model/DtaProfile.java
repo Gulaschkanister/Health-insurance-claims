@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain;
+package de.gkvtransmitter.model;
 
 /**
  * Dieses Interface soll spaeter alle Definitionen und Regeln eines konkreten

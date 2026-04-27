@@ -1,7 +1,12 @@
 package de.gkvtransmitter.presentation;
 
+import java.sql.SQLException;
+
+import org.hibernate.Hibernate;
+
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
+import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
 
 /**
  * Vermittelt zwischen UI-Schicht und Initialisierungslogik.
@@ -14,6 +19,7 @@ public class Controller {
     private final GlobalDefinitions globalDefinitions;
     private final FactoryManager factoryManager;
     private final ApplicationBootstrap bootstrap;
+    private final HibernateSqllite database;
 
     /**
      * Baut den fachlichen Anwendungskontext auf.
@@ -26,6 +32,8 @@ public class Controller {
             factoryManager = new FactoryManager();
             // Fuehrt Initialladungen aus und registriert die Profile in GlobalDefinitions.
             bootstrap = new ApplicationBootstrap(globalDefinitions, factoryManager);
+            // TODO:DB
+            this.database = new HibernateSqllite();
             initialize();
         } catch (IllegalArgumentException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());

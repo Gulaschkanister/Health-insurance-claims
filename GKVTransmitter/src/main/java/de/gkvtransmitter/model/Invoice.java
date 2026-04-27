@@ -1,9 +1,9 @@
-package de.gkvtransmitter.domain.invoice;
+package de.gkvtransmitter.model;
 
 import java.util.Map;
 
 import de.gkvtransmitter.definition.InvoiceType;
-import de.gkvtransmitter.domain.segment.SegmentDefinition;
+import de.gkvtransmitter.model.segment.SegmentDefinition;
 import lombok.Getter;
 
 @Getter

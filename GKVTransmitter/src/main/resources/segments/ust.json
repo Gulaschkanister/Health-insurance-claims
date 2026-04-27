@@ -17,7 +17,8 @@
         "description": "Prozentsatz als Zahl (z.B. 19 für 19%)"
       },
       "fieldArt": "K",
-      "inputType": "PERCENT"
+      "inputType": "PERCENT",
+      "internal": false
     }
   ]
 }

@@ -14,7 +14,8 @@
       "example": "MUSTERMANN",
       "description": "Familienname",
       "fieldArt": "K",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 2,
@@ -25,7 +26,8 @@
       "example": "MARIA",
       "description": "Vorname",
       "fieldArt": "K",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 3,
@@ -36,7 +38,8 @@
       "example": "DR",
       "description": "Akademischer Titel oder Anrede (optional)",
       "fieldArt": "K",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     }
   ]
 }

@@ -1,8 +1,8 @@
 package de.gkvtransmitter.bootstrap;
 
 import de.gkvtransmitter.definition.GlobalDefinitions;
-import de.gkvtransmitter.domain.DtaMessage;
-import de.gkvtransmitter.domain.invoice.Invoice;
+import de.gkvtransmitter.model.Invoice;
+import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.parser.json.JsonParserFactory;
 import de.gkvtransmitter.presentation.FactoryManager;
 

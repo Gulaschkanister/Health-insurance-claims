@@ -14,7 +14,8 @@
       "example": "MUSTERMANN",
       "description": "Familienname des Versicherten",
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 2,
@@ -25,7 +26,8 @@
       "example": "ANNA",
       "description": "Vorname des Versicherten",
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 3,
@@ -37,7 +39,8 @@
       "format": "YYYYMMDD",
       "description": "Geburtsdatum des Versicherten",
       "fieldArt": "M",
-      "inputType": "DATE"
+      "inputType": "DATE",
+      "internal": false
     },
     {
       "position": 4,
@@ -48,7 +51,8 @@
       "example": "MUSTERSTRASSE 1",
       "description": "Postanschrift: Straßenname und Hausnummer",
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 5,
@@ -59,7 +63,8 @@
       "example": "12345",
       "description": "Postleitzahl",
       "fieldArt": "M",
-      "inputType": "INTEGER"
+      "inputType": "INTEGER",
+      "internal": false
     },
     {
       "position": 6,
@@ -70,7 +75,8 @@
       "example": "MUSTERSTADT",
       "description": "Ort/Stadt",
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     }
   ],
   "validationRule": "Wenn INV.Versichertenstatus (Pos 2) leer ist, dann muss NAD mit kompletter Adresse geliefert werden"

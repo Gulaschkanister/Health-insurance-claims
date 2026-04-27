@@ -1,6 +1,6 @@
-package de.gkvtransmitter.domain.inputOptions;
+package de.gkvtransmitter.enums;
 
-public enum InputOptions {
+public enum InputOption {
     CODE,
     NUMBER_SUGGESTION,
     NUMBER,

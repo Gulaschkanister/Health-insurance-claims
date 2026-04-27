@@ -20,7 +20,8 @@
       },
       "description": "Summen-Statuscode (Anlage 3, Schlüssel 8.1.6)",
       "fieldArt": "M",
-      "inputType": "CODE"
+      "inputType": "CODE",
+      "internal": false
     },
     {
       "position": 2,
@@ -32,7 +33,8 @@
       "format": "X,XX",
       "description": "Summe in Euro mit Komma als Trennzeichen",
       "fieldArt": "M",
-      "inputType": "COST"
+      "inputType": "COST",
+      "internal": false
     },
     {
       "position": 3,
@@ -44,7 +46,8 @@
       "format": "X,XX",
       "description": "Gesamtsumme in Euro mit Komma als Trennzeichen",
       "fieldArt": "M",
-      "inputType": "COST"
+      "inputType": "COST",
+      "internal": false
     }
   ],
   "repeatable": true,

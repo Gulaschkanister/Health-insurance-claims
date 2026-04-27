@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import de.gkvtransmitter.domain.DtaMessage;
-import de.gkvtransmitter.domain.SegmentInfo;
-import de.gkvtransmitter.domain.ValueFieldEntry;
-import de.gkvtransmitter.domain.inputOptions.InputOptions;
+import de.gkvtransmitter.enums.InputOption;
+import de.gkvtransmitter.model.DtaMessage;
+import de.gkvtransmitter.model.segment.SegmentInfo;
+import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -43,7 +43,7 @@ public class View {
      * Baut die Hauptszene mit einem einfachen Status-Text auf.
      */
     public Scene createMainScene(String statusText, double width, double height) {
-        Menu loadedInvoices = componentFactory.createMenu("Geladene Rechnungen");
+        Menu loadedInvoices = componentFactory.createMenu("Rechnung");
         List<MenuItem> invoiceItems = new java.util.ArrayList<>();
         for (String name : controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()) {
             MenuItem item = componentFactory.createMenuItem(name);
@@ -51,9 +51,9 @@ public class View {
             invoiceItems.add(item);
         }
         loadedInvoices.getItems().addAll(invoiceItems);
-        Menu menu = componentFactory.createMenu("Datei",
-                loadedInvoices);
-        MenuBar menuBar = componentFactory.createMenuBar(menu);
+        Menu patient = componentFactory.createMenu("Patient");
+        Menu self = componentFactory.createMenu("Ich");
+        MenuBar menuBar = componentFactory.createMenuBar(loadedInvoices, patient, self);
 
         // skeleton als Klassenvariable speichern!
         this.skeleton = componentFactory.createBorderPane(
@@ -113,7 +113,7 @@ public class View {
      * @param javaFieldType JavaType
      * @return Node
      */
-    private Node createInputfieldFromTag(InputOptions inputOption, String directName, boolean internal,
+    private Node createInputfieldFromTag(InputOption inputOption, String directName, boolean internal,
             String javaFieldType)
             throws NullPointerException {
 
@@ -124,28 +124,28 @@ public class View {
             // + inputOption);
         }
         switch (inputOption) {
-            case InputOptions.CODE:
+            case InputOption.CODE:
                 return componentFactory.createComboBox(false);
 
-            case InputOptions.NUMBER_SUGGESTION:
+            case InputOption.NUMBER_SUGGESTION:
                 return componentFactory.createComboBox(true);
 
-            case InputOptions.NUMBER:
+            case InputOption.NUMBER:
                 return componentFactory.createSpinner(Integer.class, null, inputOption, javaFieldType);
 
-            case InputOptions.STRING:
+            case InputOption.STRING:
                 return componentFactory.createTextField();
 
-            case InputOptions.PERCENT:
+            case InputOption.PERCENT:
                 return componentFactory.createSpinner(BigDecimal.class, null, inputOption, javaFieldType);
 
-            case InputOptions.COST:
+            case InputOption.COST:
                 return componentFactory.createSpinner(BigDecimal.class, null, inputOption, javaFieldType);
 
-            case InputOptions.BOOLEAN:
+            case InputOption.BOOLEAN:
                 return componentFactory.createCheckBox(directName);
 
-            case InputOptions.DATE:
+            case InputOption.DATE:
                 return componentFactory.createDatePicker();
 
             default:

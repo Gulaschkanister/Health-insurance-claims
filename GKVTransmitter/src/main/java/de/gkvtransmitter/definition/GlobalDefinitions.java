@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import de.gkvtransmitter.domain.DtaMessage;
-import de.gkvtransmitter.domain.invoice.Invoice;
+import de.gkvtransmitter.model.Invoice;
+import de.gkvtransmitter.model.DtaMessage;
 
 public final class GlobalDefinitions {
 

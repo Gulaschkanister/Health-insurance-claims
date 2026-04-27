@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain.converter;
+package de.gkvtransmitter.converter;
 
 public class TypeConverter {
     // TODO: wird voraussichtlich nicht mehr verwendet dachte ursprünglich es wäre

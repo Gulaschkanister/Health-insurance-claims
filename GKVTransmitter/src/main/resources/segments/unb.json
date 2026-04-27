@@ -19,7 +19,8 @@
           "mandatory": true,
           "example": "UNOC",
           "description": "Groß- und Kleinbuchstaben, Umlaute",
-          "inputType": "STRING"
+          "inputType": "STRING",
+          "internal": true
         },
         {
           "position": 2,
@@ -29,10 +30,12 @@
           "mandatory": true,
           "example": "3",
           "description": "Vereinbarte Version der Syntax",
-          "inputType": "NUMBER"
+          "inputType": "NUMBER",
+          "internal": true
         }
       ],
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": true
     },
     {
       "position": 2,
@@ -46,7 +49,8 @@
         "pattern": "^[0-9]{9}$",
         "description": "IK-Nummer mit 9 Ziffern"
       },
-      "inputType": "NUMBER"
+      "inputType": "NUMBER-SUGGESTION",
+      "internal": false
     },
     {
       "position": 3,
@@ -60,7 +64,8 @@
         "pattern": "^[0-9]{9}$",
         "description": "IK-Nummer mit 9 Ziffern"
       },
-      "inputType": "NUMBER"
+      "inputType": "NUMBER-SUGGESTION",
+      "internal": false
     },
     {
       "position": 4,
@@ -78,7 +83,8 @@
           "example": "20260308",
           "format": "YYYYMMDD",
           "description": "Erstelldatum der Datei",
-          "inputType": "DATE"
+          "inputType": "DATE",
+          "internal": true
         },
         {
           "position": 2,
@@ -89,7 +95,8 @@
           "example": "1200",
           "format": "HHMM",
           "description": "Erstelluhrzeit der Datei",
-          "inputType": "NUMBER"
+          "inputType": "NUMBER",
+          "internal": true
         }
       ],
       "inputType": "TIME",
@@ -122,7 +129,8 @@
         "pattern": "[A-Z0-9]",
         "description": "Siehe Schlüssel Anlage 3 Abschnitt 8.1.14"
       },
-      "inputType": "CODE"
+      "inputType": "CODE",
+      "internal": false
     },
     {
       "position": 7,
@@ -132,7 +140,8 @@
       "maxLength": 14,
       "mandatory": true,
       "example": "HEB26030801",
-      "inputType": "CODE"
+      "inputType": "CODE",
+      "internal": true
     },
     {
       "position": 8,

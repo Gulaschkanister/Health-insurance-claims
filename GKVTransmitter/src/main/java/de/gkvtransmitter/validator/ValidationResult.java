@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain.validator;
+package de.gkvtransmitter.validator;
 
 /**
  * Diese Klasse soll spaeter das Ergebnis einer Pruefung mit Status und

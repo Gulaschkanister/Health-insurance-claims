@@ -1,6 +1,6 @@
 package de.gkvtransmitter.presentation;
 
-import de.gkvtransmitter.domain.inputOptions.InputOptions;
+import de.gkvtransmitter.enums.InputOption;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -67,7 +67,7 @@ public interface UiFactory {
 
     TextField createTextField();
 
-    <T> Spinner<T> createSpinner(Class<T> type, String format, InputOptions inputOption, String fieldType);
+    <T> Spinner<T> createSpinner(Class<T> type, String format, InputOption inputOption, String fieldType);
 
     ComboBox<Node> createComboBox(boolean setEditable, Node... options);
 }

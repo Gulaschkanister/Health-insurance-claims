@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain.validator;
+package de.gkvtransmitter.validator;
 
 /**
  * Dieses Interface soll spaeter einzelne, austauschbare Validierungsregeln fuer

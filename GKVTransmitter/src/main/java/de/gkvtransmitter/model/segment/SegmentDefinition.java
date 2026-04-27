@@ -1,8 +1,8 @@
-package de.gkvtransmitter.domain.segment;
+package de.gkvtransmitter.model.segment;
 
 import java.util.Map;
 
-import de.gkvtransmitter.domain.segment.field.FieldDefinition;
+import de.gkvtransmitter.model.segment.field.FieldDefinition;
 import lombok.Getter;
 
 /**

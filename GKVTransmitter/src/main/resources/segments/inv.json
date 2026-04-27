@@ -14,7 +14,8 @@
       "example": "012345678901",
       "description": "Versicherungsnummer (KV-Nummerngruppe)",
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 2,
@@ -25,7 +26,8 @@
       "example": "",
       "description": "Status-Kennzeichen (wenn leer: muss NAD mit kompletter Anschrift folgen)",
       "fieldArt": "K",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     },
     {
       "position": 3,
@@ -38,7 +40,8 @@
         "pattern": "[0-9]"
       },
       "fieldArt": "M",
-      "inputType": "NUMBER"
+      "inputType": "NUMBER",
+      "internal": false
     },
     {
       "position": 4,
@@ -49,7 +52,8 @@
       "example": "HEB2403001",
       "description": "Verordnungs- oder Belegnummer (z.B. Herausgeber-Bearbeitungs-Nummer für SGS H)",
       "fieldArt": "M",
-      "inputType": "STRING"
+      "inputType": "STRING",
+      "internal": false
     }
   ]
 }

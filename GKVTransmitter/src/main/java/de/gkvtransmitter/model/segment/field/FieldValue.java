@@ -1,4 +1,4 @@
-package de.gkvtransmitter.domain.segment.field;
+package de.gkvtransmitter.model.segment.field;
 
 import lombok.Getter;
 
