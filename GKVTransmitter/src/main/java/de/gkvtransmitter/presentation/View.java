@@ -43,18 +43,24 @@ public class View {
      * Baut die Hauptszene mit einem einfachen Status-Text auf.
      */
     public Scene createMainScene(String statusText, double width, double height) {
+        // Invoice Menu
         Menu loadedInvoices = componentFactory.createMenu("Rechnung");
-        List<MenuItem> invoiceItems = new java.util.ArrayList<>();
+        List<MenuItem> invoiceItems = new ArrayList<>();
         for (String name : controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()) {
             MenuItem item = componentFactory.createMenuItem(name);
             item.setOnAction(event -> createFormular(name)); // Korrekter EventHandler!
             invoiceItems.add(item);
         }
         loadedInvoices.getItems().addAll(invoiceItems);
-        Menu patient = componentFactory.createMenu("Patient");
-        Menu self = componentFactory.createMenu("Ich");
+        // Patient Menu
+        Menu patient = componentFactory.createMenu("Patient", new MenuItem("Neu"), new MenuItem("Bearbeiten"));
+        // Me Menu
+        Menu self = componentFactory.createMenu("Ich", new MenuItem("Bearbeiten"));
+        // Everything combined
         MenuBar menuBar = componentFactory.createMenuBar(loadedInvoices, patient, self);
-
+        // TODO: On Klick events für die verschiedenen Menüpunkte hinzufügen ebenso die
+        // Eingabemaske und prüfen, welche Daten noch in den jeweiligen Profilen Fehlen
+        // und die db Passwortgeschützt erstellen?
         // skeleton als Klassenvariable speichern!
         this.skeleton = componentFactory.createBorderPane(
                 menuBar, null, null, null, null);
