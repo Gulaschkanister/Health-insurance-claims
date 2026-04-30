@@ -116,16 +116,46 @@ public class View {
 
     }
 
+    // TODO: könnte auch noch spezifischer für patient und me machen statt generell.
+    // Aktuell sind diese aber exakt gleich
     private void editPerson() {
         // TODO: Wait to implement
+        // TODO: decide on wich inputFields are used
+
+        ScrollPane scrollPane = new ScrollPane(null);
+        scrollPane.setFitToWidth(true);
+        skeleton.setCenter(scrollPane);
     }
 
     private void createPerson() {
         // TODO: Wait to implement
+        // TODO: integrieren dafür einfach Scrollpane austauschen
+
+        
+        ScrollPane scrollPane = new ScrollPane(null);
+        scrollPane.setFitToWidth(true);
+        skeleton.setCenter(scrollPane);
     }
 
     private void deletePerson() {
         // TODO: Wait to implement
+        // TODO: integrieren dafür einfach Scrollpane austauschen
+        ScrollPane scrollPane = new ScrollPane(null);
+        scrollPane.setFitToWidth(true);
+        skeleton.setCenter(scrollPane);
+    }
+
+    private Node createInputfieldFromType(Object obi) throws IllegalArgumentException {
+        // TODO: bessere Lösung?
+        if (obi == null) {
+            throw new IllegalArgumentException("Leeres Obi");
+        }
+        if (obi instanceof String) {
+            return componentFactory.createTextField();
+        } else if (obi instanceof Integer) {
+            return componentFactory.createSpinner(Integer.class, null, null, null);
+        }
+        throw new IllegalArgumentException("Kein gültiger Typ");
     }
 
     /**

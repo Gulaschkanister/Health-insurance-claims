@@ -1,8 +1,5 @@
 package de.gkvtransmitter.presentation;
 
-import java.sql.SQLException;
-
-import org.hibernate.Hibernate;
 
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
