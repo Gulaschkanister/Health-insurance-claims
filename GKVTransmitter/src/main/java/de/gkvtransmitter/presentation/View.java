@@ -53,12 +53,18 @@ public class View {
         }
         loadedInvoices.getItems().addAll(invoiceItems);
         // Patient Menu
-        Menu patient = componentFactory.createMenu("Patient", new MenuItem("Neu"), new MenuItem("Bearbeiten"));
+        MenuItem newPatient = new MenuItem("Neu");
+        newPatient.setOnAction(event -> createPerson());
+        MenuItem editPatient = new MenuItem("Bearbeiten");
+        editPatient.setOnAction(event -> editPerson());
+        Menu patient = componentFactory.createMenu("Patient", newPatient, editPatient);
+
         // Me Menu
         Menu self = componentFactory.createMenu("Ich", new MenuItem("Bearbeiten"));
+        self.setOnAction(event -> editPerson());
         // Everything combined
         MenuBar menuBar = componentFactory.createMenuBar(loadedInvoices, patient, self);
-        // TODO: On Klick events für die verschiedenen Menüpunkte hinzufügen ebenso die
+        // TODO: ebenso die
         // Eingabemaske und prüfen, welche Daten noch in den jeweiligen Profilen Fehlen
         // und die db Passwortgeschützt erstellen?
         // skeleton als Klassenvariable speichern!
@@ -108,6 +114,18 @@ public class View {
 
         skeleton.setCenter(scrollPane);
 
+    }
+
+    private void editPerson() {
+        // TODO: Wait to implement
+    }
+
+    private void createPerson() {
+        // TODO: Wait to implement
+    }
+
+    private void deletePerson() {
+        // TODO: Wait to implement
     }
 
     /**

@@ -30,5 +30,6 @@ public class Person {
         this.country = country;
         this.housenumber = housenumber;
         this.plz = plz;
+        this.ik = ik;
     }
 }
