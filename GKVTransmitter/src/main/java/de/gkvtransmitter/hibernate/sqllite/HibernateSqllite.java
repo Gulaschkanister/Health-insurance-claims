@@ -6,8 +6,13 @@ import de.gkvtransmitter.util.HibernateUtil;
 
 public class HibernateSqllite {
     private SessionFactory sf = HibernateUtil.getSessionFactory();
+    private HibernateSqllite hbsqli;
 
-    public void initSqlite() {
-        HibernateSqllite hsql = new HibernateSqllite();
+    public HibernateSqllite getInstance() {
+        if (this.hbsqli == null) {
+            this.hbsqli = new HibernateSqllite();
+        }
+        return hbsqli;
     }
+
 }

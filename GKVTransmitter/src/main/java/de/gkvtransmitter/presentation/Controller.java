@@ -1,6 +1,5 @@
 package de.gkvtransmitter.presentation;
 
-
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
 import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
@@ -30,7 +29,8 @@ public class Controller {
             // Fuehrt Initialladungen aus und registriert die Profile in GlobalDefinitions.
             bootstrap = new ApplicationBootstrap(globalDefinitions, factoryManager);
             // TODO:DB
-            this.database = new HibernateSqllite();
+            HibernateSqllite hbsqli= new HibernateSqllite();
+            this.database = hbsqli.getInstance();
             initialize();
         } catch (IllegalArgumentException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());
