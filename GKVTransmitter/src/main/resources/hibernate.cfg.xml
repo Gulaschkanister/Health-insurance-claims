@@ -9,8 +9,9 @@
       <property name = "hibernate.connection.driver_class">org.sqlite.JDBC</property>
       <!-- Assume test is the database name -->
       <property name = "hibernate.connection.url">jdbc:sqlite:database.db</property>
-      <property name="hibernate.hbm2ddl.auto">validate</property>
+      <property name="hibernate.hbm2ddl.auto">update</property>
       <mapping class="de.gkvtransmitter.entity.Patient"/>
+      <mapping class="de.gkvtransmitter.entity.ServiceProvider"/>
       <!-- List of XML mapping files -->
    </session-factory>
 </hibernate-configuration>

@@ -29,16 +29,16 @@ public class Controller {
             // Fuehrt Initialladungen aus und registriert die Profile in GlobalDefinitions.
             bootstrap = new ApplicationBootstrap(globalDefinitions, factoryManager);
             // TODO:DB
-            HibernateSqllite hbsqli= new HibernateSqllite();
+            HibernateSqllite hbsqli = new HibernateSqllite();
             this.database = hbsqli.getInstance();
             initialize();
         } catch (IllegalArgumentException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());
-            e.printStackTrace();
+
             throw new IllegalArgumentException("App-Initialisierung fehlgeschlagen", e);
         } catch (RuntimeException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());
-            e.printStackTrace();
+
             throw new RuntimeException("App-Initialisierung fehlgeschlagen", e);
         }
     }
@@ -47,9 +47,9 @@ public class Controller {
         // Von hier aus werden die JSON-Profile gelesen und gespeichert.
         try {
             bootstrap.initialize();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.err.println("Bootstrap-Initialisierung fehlgeschlagen: " + e.getMessage());
-            e.printStackTrace();
+
             throw new RuntimeException("JSON-Profile konnten nicht geladen werden", e);
         }
     }
@@ -63,5 +63,12 @@ public class Controller {
      */
     public FactoryManager getFactoryManager() {
         return factoryManager;
+    }
+
+    /**
+     * Provides access to the database for persistence operations.
+     */
+    public HibernateSqllite getDatabase() {
+        return database;
     }
 }

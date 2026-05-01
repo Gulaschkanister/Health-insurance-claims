@@ -4,8 +4,12 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "Patient")
+@Table(name = "ServiceProvider")
 public class ServiceProvider extends Person {
+
+    public ServiceProvider() {
+        super();
+    }
 
     public ServiceProvider(String firstname, String lastname, String street, String country, String housenumber,
             int plz,

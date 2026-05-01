@@ -18,6 +18,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
@@ -142,14 +143,43 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     @Override
-    public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOption inputOption, String fieldType) {
+    public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOption inputOption) {
         // TODO: formatTyoe aktuell ungenutzt ziel für die ui anzeige formatieren von
         // anzeigen
         if (Integer.class.equals(type)) {
-            return (Spinner<T>) new Spinner<Integer>();
+            Spinner<Integer> spinner = new Spinner<>(
+                    new javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory(
+                            Integer.MIN_VALUE, Integer.MAX_VALUE, 0));
+            spinner.setEditable(true);
+            spinner.setPrefWidth(300);
+            @SuppressWarnings("unchecked")
+            Spinner<T> casted = (Spinner<T>) spinner;
+            return casted;
         }
         if (BigDecimal.class.equals(type)) {
-            return (Spinner<T>) new Spinner<BigDecimal>();
+            // Create a BigDecimal spinner with 0.01 step
+            SpinnerValueFactory<java.math.BigDecimal> vf = new SpinnerValueFactory<java.math.BigDecimal>() {
+                private final java.math.BigDecimal STEP = new java.math.BigDecimal("0.01");
+                {
+                    setValue(java.math.BigDecimal.ZERO);
+                }
+
+                @Override
+                public void decrement(int steps) {
+                    setValue(getValue().subtract(STEP.multiply(java.math.BigDecimal.valueOf(steps))));
+                }
+
+                @Override
+                public void increment(int steps) {
+                    setValue(getValue().add(STEP.multiply(java.math.BigDecimal.valueOf(steps))));
+                }
+            };
+            Spinner<java.math.BigDecimal> spinner = new Spinner<>(vf);
+            spinner.setEditable(true);
+            spinner.setPrefWidth(300);
+            @SuppressWarnings("unchecked")
+            Spinner<T> casted = (Spinner<T>) spinner;
+            return casted;
         }
         throw new IllegalArgumentException("Unsupported type: " + type);
     }
