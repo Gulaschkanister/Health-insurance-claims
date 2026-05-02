@@ -1,5 +1,6 @@
 package de.gkvtransmitter.entity;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,18 +31,17 @@ public class Person {
     private String housenumber;
     private int plz;
     private int ik;
+    private LocalDate birthDate;
 
     @Transient
     private Map<String, TagList> tags = new HashMap<>();
-    // TODO: Transient Tag Klasse Pro Feld hinterlegen zur einfacheren erstellung
-    // von Feldern
 
     protected Person() {
         this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
     }
 
     public Person(String firstname, String lastname, String street, String country, String housenumber, int plz,
-            int ik) {
+            int ik, LocalDate birthDate) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.street = street;
@@ -49,12 +49,15 @@ public class Person {
         this.housenumber = housenumber;
         this.plz = plz;
         this.ik = ik;
+        this.birthDate = birthDate;
         // Load tag configuration from JSON
         this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
     }
 
     public TagList getTagList(String name) {
-        if (name == null || name.isBlank()) return null;
+        if (name == null || name.isBlank()) {
+            return null;
+        }
         return tags.get(name);
     }
 }

@@ -2,36 +2,61 @@
   "firstname": {
     "inputOption": "STRING",
     "modifiers": [
-      {"type": "TEXT"},
-      {"type": "MAX_LENGTH", "value": "100"}
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
     ]
   },
   "lastname": {
     "inputOption": "STRING",
     "modifiers": [
-      {"type": "TEXT"},
-      {"type": "MAX_LENGTH", "value": "100"}
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
     ]
   },
   "street": {
     "inputOption": "STRING",
     "modifiers": [
-      {"type": "TEXT"},
-      {"type": "MAX_LENGTH", "value": "100"}
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
     ]
   },
   "country": {
     "inputOption": "STRING",
     "modifiers": [
-      {"type": "TEXT"},
-      {"type": "MAX_LENGTH", "value": "50"}
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "50"
+      }
     ]
   },
   "housenumber": {
     "inputOption": "STRING",
     "modifiers": [
-      {"type": "TEXT"},
-      {"type": "MAX_LENGTH", "value": "10"}
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "10"
+      }
     ]
   },
   "plz": {
@@ -40,6 +65,10 @@
   },
   "ik": {
     "inputOption": "NUMBER",
+    "modifiers": []
+  },
+  "birthDate": {
+    "inputOption": "DATE",
     "modifiers": []
   }
 }

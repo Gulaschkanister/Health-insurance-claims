@@ -11,6 +11,7 @@ import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.util.HibernateUtil;
 
 public class HibernateSqllite {
+
     private final SessionFactory sf = HibernateUtil.getSessionFactory();
     private HibernateSqllite hbsqli;
 
@@ -20,7 +21,7 @@ public class HibernateSqllite {
         }
         return hbsqli;
     }
-    
+
     /**
      * Save or update a Patient in the database.
      */
@@ -54,7 +55,7 @@ public class HibernateSqllite {
             throw new RuntimeException("Error saving service provider", e);
         }
     }
-    
+
     /**
      * Load all patients from the database.
      */
@@ -65,7 +66,15 @@ public class HibernateSqllite {
             throw new RuntimeException("Error loading patients", e);
         }
     }
-    
+
+    public List<ServiceProvider> getAllServiceProviders() {
+        try (Session session = sf.openSession()) {
+            return session.createQuery("FROM ServiceProvider", ServiceProvider.class).list();
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading ServiceProvider", e);
+        }
+    }
+
     /**
      * Load a patient by ID.
      */
@@ -76,7 +85,7 @@ public class HibernateSqllite {
             throw new RuntimeException("Error loading patient with id: " + id, e);
         }
     }
-    
+
     /**
      * Delete a patient from the database.
      */
@@ -92,6 +101,21 @@ public class HibernateSqllite {
                 transaction.rollback();
             }
             throw new RuntimeException("Error deleting patient", e);
+        }
+    }
+
+    public void deleteServiceProvider(ServiceProvider serviceProvider) {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            ServiceProvider managed = (ServiceProvider) session.merge(serviceProvider);
+            session.delete(managed);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error deleting ServiceProvider", e);
         }
     }
 

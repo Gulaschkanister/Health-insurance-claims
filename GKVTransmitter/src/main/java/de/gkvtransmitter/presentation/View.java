@@ -3,11 +3,13 @@ package de.gkvtransmitter.presentation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,8 +30,11 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -85,14 +90,14 @@ public class View {
         MenuItem newPatient = new MenuItem(messages.get("menu.new"));
         newPatient.setOnAction(event -> createPerson());
         MenuItem editPatient = new MenuItem(messages.get("menu.edit"));
-        editPatient.setOnAction(event -> editPerson());
+        editPatient.setOnAction(event -> editPatient());
         Menu patient = componentFactory.createMenu(messages.get("menu.patient"), newPatient, editPatient);
 
         // Me Menu
         MenuItem newSelf = new MenuItem(messages.get("menu.new"));
         newSelf.setOnAction(event -> createSelfPerson());
         MenuItem editSelf = new MenuItem(messages.get("menu.edit"));
-        editSelf.setOnAction(event -> editPerson());
+        editSelf.setOnAction(event -> editServiceProvider());
         Menu self = componentFactory.createMenu(messages.get("menu.self"), newSelf, editSelf);
         // Everything combined
         MenuBar menuBar = componentFactory.createMenuBar(loadedInvoices, patient, self);
@@ -163,7 +168,8 @@ public class View {
 
     // TODO: könnte auch noch spezifischer für patient und me machen statt generell.
     // Aktuell sind diese aber exakt gleich
-    private void editPerson() {
+    //TODO: Falscher Type sollte entweder ServiceProvider oder Patient sein
+    private void editPatient() {
         Map<String, TagList> tagConfig = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
 
         // Load all patients
@@ -206,7 +212,64 @@ public class View {
             Patient selected = patientMap.get(selectedDisplay);
             if (selected != null) {
                 formContainer.getChildren().clear();
-                populateEditForm(formContainer, tagConfig, selected);
+                populateEditFormPatient(formContainer, tagConfig, selected);
+            }
+        });
+
+        // Main layout
+        VBox mainVBox = new VBox(10);
+        mainVBox.setPadding(new Insets(10));
+        mainVBox.getChildren().addAll(selectionPane, new javafx.scene.control.Separator(), formScrollPane);
+
+        ScrollPane mainScrollPane = new ScrollPane(mainVBox);
+        mainScrollPane.setFitToWidth(true);
+        skeleton.setCenter(mainScrollPane);
+    }
+
+    private void editServiceProvider() {
+        Map<String, TagList> tagConfig = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
+
+        // Load all patients
+        List<ServiceProvider> serviceProviders = controller.getDatabase().getAllServiceProviders();
+        if (serviceProviders.isEmpty()) {
+            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noServiceProviders"));
+            return;
+        }
+
+        // Create patient selection dropdown
+        List<String> serviceProviderDisplayNames = new ArrayList<>();
+        Map<String, ServiceProvider> serviceProviderMap = new HashMap<>();
+        for (ServiceProvider sp : serviceProviders) {
+            String displayName = sp.getFirstname() + " " + sp.getLastname() + " (ID: " + sp.getId() + ")";
+            serviceProviderDisplayNames.add(displayName);
+            serviceProviderMap.put(displayName, sp);
+        }
+
+        // Patient selection UI
+        VBox selectionPane = new VBox(10);
+        selectionPane.setPadding(new Insets(20));
+        Label selectLabel = componentFactory.createLabel("ServiceProvider auswählen:");
+        selectLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
+
+        ComboBox<String> serviceProviderCombo = new ComboBox<>();
+        serviceProviderCombo.getItems().addAll(serviceProviderDisplayNames);
+        serviceProviderCombo.setPrefWidth(300);
+
+        selectionPane.getChildren().addAll(selectLabel, serviceProviderCombo);
+
+        // Create form container (initially empty, will be populated on selection)
+        VBox formContainer = new VBox(10);
+        formContainer.setPadding(new Insets(20));
+        ScrollPane formScrollPane = new ScrollPane(formContainer);
+        formScrollPane.setFitToWidth(true);
+
+        // Handle patient selection
+        serviceProviderCombo.setOnAction(event -> {
+            String selectedDisplay = serviceProviderCombo.getValue();
+            ServiceProvider selected = serviceProviderMap.get(selectedDisplay);
+            if (selected != null) {
+                formContainer.getChildren().clear();
+                populateEditFormServiceProvider(formContainer, tagConfig, selected);
             }
         });
 
@@ -223,7 +286,7 @@ public class View {
     /**
      * Populates the edit form with patient data and input fields.
      */
-    private void populateEditForm(VBox formContainer, Map<String, TagList> tagConfig, Patient patient) {
+    private void populateEditFormPatient(VBox formContainer, Map<String, TagList> tagConfig, Patient patient) {
         Map<String, Node> inputFields = new HashMap<>();
         List<Node> fieldNodes = new ArrayList<>();
 
@@ -235,7 +298,7 @@ public class View {
             Node inputField = createInputFieldFromTagList(fieldName, tagList);
 
             // Populate field with patient data
-            populateFieldValue(inputField, fieldName, patient);
+            populateFieldValuePatient(inputField, fieldName, patient);
             inputFields.put(fieldName, inputField);
 
             fieldNodes.add(componentFactory.createBorderPane(
@@ -247,12 +310,12 @@ public class View {
         // Create update button
         Button updateButton = new Button("Aktualisieren");
         updateButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
-        updateButton.setOnAction(event -> updatePerson(inputFields, patient));
+        updateButton.setOnAction(event -> updatePatient(inputFields, patient));
 
         // Create delete button
         Button deleteButton = new Button("Löschen");
         deleteButton.setStyle("-fx-padding: 10; -fx-font-size: 14; -fx-text-fill: white; -fx-background-color: #d9534f;");
-        deleteButton.setOnAction(event -> confirmDeletePerson(patient));
+        deleteButton.setOnAction(event -> confirmDeletePatient(patient));
 
         // Create cancel button
         Button cancelButton = new Button("Abbrechen");
@@ -271,15 +334,118 @@ public class View {
         formContainer.getChildren().addAll(title, contentGrid, buttonBox);
     }
 
+    private void populateEditFormServiceProvider(VBox formContainer, Map<String, TagList> tagConfig, ServiceProvider serviceProvider) {
+        Map<String, Node> inputFields = new HashMap<>();
+        List<Node> fieldNodes = new ArrayList<>();
+
+        // Build input fields from tag configuration and populate with patient data
+        for (Map.Entry<String, TagList> entry : tagConfig.entrySet()) {
+            String fieldName = entry.getKey();
+            TagList tagList = entry.getValue();
+
+            Node inputField = createInputFieldFromTagList(fieldName, tagList);
+
+            // Populate field with patient data
+            populateFieldValueServiceProvider(inputField, fieldName, serviceProvider);
+            inputFields.put(fieldName, inputField);
+
+            fieldNodes.add(componentFactory.createBorderPane(
+                    componentFactory.createLabel(fieldName),
+                    inputField,
+                    null, null, null));
+        }
+
+        // Create update button
+        Button updateButton = new Button("Aktualisieren");
+        updateButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+        updateButton.setOnAction(event -> updateServiceProvider(inputFields, serviceProvider));
+
+        // Create delete button
+        Button deleteButton = new Button("Löschen");
+        deleteButton.setStyle("-fx-padding: 10; -fx-font-size: 14; -fx-text-fill: white; -fx-background-color: #d9534f;");
+        deleteButton.setOnAction(event -> confirmDeleteServiceProvider(serviceProvider));
+
+        // Create cancel button
+        Button cancelButton = new Button("Abbrechen");
+        cancelButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+        cancelButton.setOnAction(event -> skeleton.setCenter(null));
+
+        HBox buttonBox = new HBox(10);
+        buttonBox.setPadding(new Insets(10));
+        buttonBox.getChildren().addAll(updateButton, deleteButton, cancelButton);
+
+        Label title = componentFactory.createLabel(messages.get("title.patient.edit") + ": " + serviceProvider.getFirstname() + " " + serviceProvider.getLastname());
+        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        GridPane contentGrid = componentFactory.createGridPane(2,
+                fieldNodes.toArray(Node[]::new));
+
+        formContainer.getChildren().addAll(title, contentGrid, buttonBox);
+    }
+
     /**
      * Populates a form field with patient data.
      */
-    private void populateFieldValue(Node field, String fieldName, Patient patient) {
-        String value = getPatientFieldValue(fieldName, patient);
+    private void populateFieldValuePatient(Node field, String fieldName, Patient patient) {
         Node target = field;
         if (field instanceof VBox v && !v.getChildren().isEmpty()) {
             target = v.getChildren().get(0);
         }
+
+        // Handle birth date (DatePicker / LocalDate)
+        if ("birthdate".equalsIgnoreCase(fieldName) || "birthDate".equals(fieldName)) {
+            java.time.LocalDate ld = null;
+            try {
+                ld = patient.getBirthDate();
+            } catch (Exception ignored) {
+            }
+            if (target instanceof DatePicker dp) {
+                dp.setValue(ld);
+                return;
+            } else if (target instanceof TextInputControl tic) {
+                tic.setText(ld != null ? ld.toString() : "");
+                return;
+            }
+        }
+
+        String value = getPatientFieldValue(fieldName, patient);
+        if (target instanceof TextField textField) {
+            textField.setText(value != null ? value : "");
+        } else if (target instanceof Spinner<?> spinner && value != null && !value.isBlank()) {
+            try {
+                int numericValue = Integer.parseInt(value);
+                @SuppressWarnings("unchecked")
+                Spinner<Integer> integerSpinner = (Spinner<Integer>) spinner;
+                integerSpinner.setValueFactory(
+                        new SpinnerValueFactory.IntegerSpinnerValueFactory(Integer.MIN_VALUE, Integer.MAX_VALUE, numericValue));
+            } catch (NumberFormatException e) {
+                // Ignore non-numeric values for spinner fields.
+            }
+        }
+    }
+
+    private void populateFieldValueServiceProvider(Node field, String fieldName, ServiceProvider serviceProvider) {
+        Node target = field;
+        if (field instanceof VBox v && !v.getChildren().isEmpty()) {
+            target = v.getChildren().get(0);
+        }
+
+        // Handle birth date (DatePicker / LocalDate)
+        if ("birthdate".equalsIgnoreCase(fieldName) || "birthDate".equals(fieldName)) {
+            java.time.LocalDate ld = null;
+            try {
+                ld = serviceProvider.getBirthDate();
+            } catch (Exception ignored) {
+            }
+            if (target instanceof DatePicker dp) {
+                dp.setValue(ld);
+                return;
+            } else if (target instanceof TextInputControl tic) {
+                tic.setText(ld != null ? ld.toString() : "");
+                return;
+            }
+        }
+
+        String value = getServiceProviderFieldValue(fieldName, serviceProvider);
         if (target instanceof TextField textField) {
             textField.setText(value != null ? value : "");
         } else if (target instanceof Spinner<?> spinner && value != null && !value.isBlank()) {
@@ -319,10 +485,31 @@ public class View {
         };
     }
 
+    private String getServiceProviderFieldValue(String fieldName, ServiceProvider serviceProvider) {
+        return switch (fieldName) {
+            case "firstname" ->
+                serviceProvider.getFirstname();
+            case "lastname" ->
+                serviceProvider.getLastname();
+            case "street" ->
+                serviceProvider.getStreet();
+            case "country" ->
+                serviceProvider.getCountry();
+            case "housenumber" ->
+                serviceProvider.getHousenumber();
+            case "plz" ->
+                String.valueOf(serviceProvider.getPlz());
+            case "ik" ->
+                String.valueOf(serviceProvider.getIk());
+            default ->
+                "";
+        };
+    }
+
     /**
      * Updates patient data and saves to database.
      */
-    private void updatePerson(Map<String, Node> inputFields, Patient patient) {
+    private void updatePatient(Map<String, Node> inputFields, Patient patient) {
         try {
             patient.setFirstname(getTextFromField(inputFields.get("firstname")));
             patient.setLastname(getTextFromField(inputFields.get("lastname")));
@@ -332,9 +519,85 @@ public class View {
             patient.setPlz(Integer.parseInt(getTextFromField(inputFields.get("plz"))));
             patient.setIk(Integer.parseInt(getTextFromField(inputFields.get("ik"))));
 
+            // Handle birthDate (DatePicker -> LocalDate) if present
+            Node birthNode = inputFields.get("birthDate");
+            if (birthNode != null) {
+                Node target = birthNode;
+                if (birthNode instanceof VBox vb && !vb.getChildren().isEmpty()) {
+                    target = vb.getChildren().get(0);
+                }
+                if (target instanceof DatePicker dp) {
+                    patient.setBirthDate(dp.getValue());
+                } else {
+                    String txt = getFieldText(birthNode);
+                    if (txt != null && !txt.isBlank()) {
+                        try {
+                            long epoch = Long.parseLong(txt);
+                            java.time.LocalDate ld = java.time.Instant.ofEpochMilli(epoch)
+                                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                            patient.setBirthDate(ld);
+                        } catch (NumberFormatException nfe) {
+                            try {
+                                java.time.LocalDate ld = java.time.LocalDate.parse(txt);
+                                patient.setBirthDate(ld);
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    }
+                }
+            }
+
             controller.getDatabase().savePatient(patient);
             showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.patientUpdated"));
-            createMainScene(messages.get("msg.patientUpdated"), 800, 600);
+            skeleton.setCenter(null);
+        } catch (NumberFormatException e) {
+            showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.invalidNumbers"));
+        } catch (Exception e) {
+            showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+        }
+    }
+
+    private void updateServiceProvider(Map<String, Node> inputFields, ServiceProvider serviceProvider) {
+        try {
+            serviceProvider.setFirstname(getTextFromField(inputFields.get("firstname")));
+            serviceProvider.setLastname(getTextFromField(inputFields.get("lastname")));
+            serviceProvider.setStreet(getTextFromField(inputFields.get("street")));
+            serviceProvider.setCountry(getTextFromField(inputFields.get("country")));
+            serviceProvider.setHousenumber(getTextFromField(inputFields.get("housenumber")));
+            serviceProvider.setPlz(Integer.parseInt(getTextFromField(inputFields.get("plz"))));
+            serviceProvider.setIk(Integer.parseInt(getTextFromField(inputFields.get("ik"))));
+
+            // Handle birthDate (DatePicker -> LocalDate) if present
+            Node birthNodeSp = inputFields.get("birthDate");
+            if (birthNodeSp != null) {
+                Node target = birthNodeSp;
+                if (birthNodeSp instanceof VBox vb && !vb.getChildren().isEmpty()) {
+                    target = vb.getChildren().get(0);
+                }
+                if (target instanceof DatePicker dp) {
+                    serviceProvider.setBirthDate(dp.getValue());
+                } else {
+                    String txt = getFieldText(birthNodeSp);
+                    if (txt != null && !txt.isBlank()) {
+                        try {
+                            long epoch = Long.parseLong(txt);
+                            java.time.LocalDate ld = java.time.Instant.ofEpochMilli(epoch)
+                                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                            serviceProvider.setBirthDate(ld);
+                        } catch (NumberFormatException nfe) {
+                            try {
+                                java.time.LocalDate ld = java.time.LocalDate.parse(txt);
+                                serviceProvider.setBirthDate(ld);
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    }
+                }
+            }
+
+            controller.getDatabase().saveServiceProvider(serviceProvider);
+            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.patientUpdated"));
+            skeleton.setCenter(null);
         } catch (NumberFormatException e) {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.invalidNumbers"));
         } catch (Exception e) {
@@ -345,26 +608,48 @@ public class View {
     /**
      * Confirms and deletes a patient.
      */
-    private void confirmDeletePerson(Patient patient) {
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+    private void confirmDeletePatient(Patient patient) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
         alert.setTitle(messages.get("msg.deleteConfirmTitle"));
         alert.setHeaderText(messages.get("msg.deleteConfirmHeader"));
         alert.setContentText(String.format(messages.get("msg.deleteConfirmBody"), patient.getFirstname() + " " + patient.getLastname()));
 
-        java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
-            deletePerson(patient);
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            deletePatient(patient);
+        }
+    }
+
+    private void confirmDeleteServiceProvider(ServiceProvider serviceProvider) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle(messages.get("msg.deleteConfirmTitle"));
+        alert.setHeaderText(messages.get("msg.deleteConfirmHeader"));
+        alert.setContentText(String.format(messages.get("msg.deleteConfirmBody"), serviceProvider.getFirstname() + " " + serviceProvider.getLastname()));
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            deleteServiceProvider(serviceProvider);
         }
     }
 
     /**
      * Deletes a patient from the database.
      */
-    private void deletePerson(Patient patient) {
+    private void deletePatient(Patient patient) {
         try {
             controller.getDatabase().deletePatient(patient);
             showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.patientDeleted"));
-            createMainScene(messages.get("msg.patientDeleted"), 800, 600);
+            skeleton.setCenter(null);
+        } catch (Exception e) {
+            showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+        }
+    }
+
+    private void deleteServiceProvider(ServiceProvider serviceProvider) {
+        try {
+            controller.getDatabase().deleteServiceProvider(serviceProvider);
+            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.patientDeleted"));
+            skeleton.setCenter(null);
         } catch (Exception e) {
             showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
         }
@@ -406,7 +691,8 @@ public class View {
 
         Button cancelButton = new Button(messages.get("button.cancel"));
         cancelButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
-        cancelButton.setOnAction(event -> createMainScene(titleText, 800, 600));
+        cancelButton.setOnAction(event -> skeleton.setCenter(null)
+        );
 
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(10));
@@ -462,7 +748,7 @@ public class View {
             }
             case DATE, TIME -> {
 
-                return componentFactory.createTextField();
+                return componentFactory.createDatePicker();
             }
         }
         return null;
@@ -587,18 +873,22 @@ public class View {
             String housenumber = getFieldText(inputFields.get("housenumber"));
             int plz = Integer.parseInt(getFieldText(inputFields.get("plz")));
             int ik = Integer.parseInt(getFieldText(inputFields.get("ik")));
+            LocalDate birthDate = null;
+            if (inputFields.get("birthDate") instanceof DatePicker dp) {
+                birthDate = dp.getValue();
+            }
 
             if (saveAsServiceProvider) {
-                ServiceProvider serviceProvider = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik);
+                ServiceProvider serviceProvider = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik, birthDate);
                 controller.getDatabase().saveServiceProvider(serviceProvider);
             } else {
-                Patient patient = new Patient(firstname, lastname, street, country, housenumber, plz, ik);
+                Patient patient = new Patient(firstname, lastname, street, country, housenumber, plz, ik, birthDate);
                 controller.getDatabase().savePatient(patient);
             }
 
             showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.patientCreated"));
             // Refresh main scene after save
-            createMainScene(messages.get("msg.patientCreated"), 800, 600);
+            skeleton.setCenter(null);
         } catch (NumberFormatException e) {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.invalidNumbers"));
         } catch (Exception e) {
@@ -655,7 +945,7 @@ public class View {
             }
             Patient patient = patientMap.get(selected);
             if (patient != null) {
-                populatePersonFields(inputFields, patient);
+                populatePatientFields(inputFields, patient);
             }
         });
 
@@ -663,9 +953,9 @@ public class View {
         return presetBox;
     }
 
-    private void populatePersonFields(Map<String, Node> inputFields, Patient patient) {
+    private void populatePatientFields(Map<String, Node> inputFields, Patient patient) {
         for (Map.Entry<String, Node> entry : inputFields.entrySet()) {
-            populateFieldValue(entry.getValue(), entry.getKey(), patient);
+            populateFieldValuePatient(entry.getValue(), entry.getKey(), patient);
         }
     }
 
@@ -710,7 +1000,8 @@ public class View {
     }
 
     /**
-     * Creates a code dropdown for invoice fields based on known field-to-code mappings.
+     * Creates a code dropdown for invoice fields based on known field-to-code
+     * mappings.
      */
     private Node createCodeDropdownForInvoiceField(String fieldName) {
         ComboBox<String> comboBox = new ComboBox<>();
