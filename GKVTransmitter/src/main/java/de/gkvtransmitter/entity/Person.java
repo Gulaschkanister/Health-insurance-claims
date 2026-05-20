@@ -4,12 +4,15 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.persistence.Convert;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
+import de.gkvtransmitter.converter.EncryptedLocalDateConverter;
+import de.gkvtransmitter.converter.EncryptedStringConverter;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import lombok.Getter;
@@ -24,13 +27,19 @@ public class Person {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
+    @Convert(converter = EncryptedStringConverter.class)
     private String firstname;
+    @Convert(converter = EncryptedStringConverter.class)
     private String lastname;
+    @Convert(converter = EncryptedStringConverter.class)
     private String street;
+    @Convert(converter = EncryptedStringConverter.class)
     private String country;
+    @Convert(converter = EncryptedStringConverter.class)
     private String housenumber;
     private int plz;
     private int ik;
+    @Convert(converter = EncryptedLocalDateConverter.class)
     private LocalDate birthDate;
 
     @Transient
