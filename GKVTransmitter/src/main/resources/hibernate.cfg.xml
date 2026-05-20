@@ -5,11 +5,18 @@
    <session-factory>
       <property name="connection.autocommit">true</property>
       <property name="show_sql">true</property>
-      <property name = "hibernate.dialect">org.hibernate.dialect.SQLiteDialect</property>
-      <property name = "hibernate.connection.driver_class">org.sqlite.JDBC</property>
-      <!-- Assume test is the database name -->
-      <property name = "hibernate.connection.url">jdbc:sqlite:database.db</property>
+      <property name="hibernate.dialect">org.hibernate.dialect.SQLiteDialect</property>
+      <property name="hibernate.connection.driver_class">org.sqlite.JDBC</property>
+      <!-- SQLite database file path - persists between sessions -->
+      <property name="hibernate.connection.url">jdbc:sqlite:database.db</property>
+      <!-- Auto-create/update schema without dropping tables -->
       <property name="hibernate.hbm2ddl.auto">update</property>
+      <!-- Connection pooling for better performance -->
+      <property name="hibernate.connection.pool_size">5</property>
+      <!-- Batch processing for better performance -->
+      <property name="hibernate.jdbc.batch_size">20</property>
+      <!-- Format SQL output for readability -->
+      <property name="hibernate.format_sql">true</property>
       <mapping class="de.gkvtransmitter.entity.Patient"/>
       <mapping class="de.gkvtransmitter.entity.ServiceProvider"/>
       <!-- List of XML mapping files -->
