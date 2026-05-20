@@ -42,6 +42,7 @@ public class Person {
 
     public Person(String firstname, String lastname, String street, String country, String housenumber, int plz,
             int ik, LocalDate birthDate) {
+        this();
         this.firstname = firstname;
         this.lastname = lastname;
         this.street = street;
@@ -50,8 +51,6 @@ public class Person {
         this.plz = plz;
         this.ik = ik;
         this.birthDate = birthDate;
-        // Load tag configuration from JSON
-        this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
     }
 
     public TagList getTagList(String name) {

@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.presentation.Controller;
+import de.gkvtransmitter.util.HibernateUtil;
 import de.gkvtransmitter.presentation.View;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -87,5 +88,10 @@ public class App extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    @Override
+    public void stop() {
+        HibernateUtil.shutdown();
     }
 }
