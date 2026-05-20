@@ -90,6 +90,10 @@ Die Anwendung nutzt **SQLite** mit **Hibernate** für die Datenpersistenz.
 - Datenbankdatei: `database.db` im Projektstammverzeichnis
 - Schema wird beim Start automatisch erstellt bzw. aktualisiert (`hbm2ddl.auto=update`)
 - Die Datei wird bei `mvn clean` **nicht** gelöscht (Maven Clean Plugin konfiguriert)
+- Sensible Personenfelder werden verschlüsselt in der Datenbank abgelegt (AES-GCM)
+- Schlüsselmanagement:
+  - optional per Umgebungsvariable `GKV_ENCRYPTION_KEY` (Base64 oder beliebiger String)
+  - andernfalls automatisch lokal unter `~/.gkvtransmitter/encryption.key`
 
 ```bash
 # Datenbank-Inhalt inspizieren
