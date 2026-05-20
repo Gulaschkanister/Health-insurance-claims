@@ -25,4 +25,10 @@ public class HibernateUtil {
         return sessionFactory;
     }
 
+    public static void shutdown() {
+        if (sessionFactory != null && !sessionFactory.isClosed()) {
+            sessionFactory.close();
+        }
+    }
+
 }

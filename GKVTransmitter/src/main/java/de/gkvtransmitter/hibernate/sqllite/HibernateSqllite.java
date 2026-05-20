@@ -7,57 +7,81 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
 import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.Person;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.util.HibernateUtil;
 
 public class HibernateSqllite {
 
-    private final SessionFactory sf = HibernateUtil.getSessionFactory();
-    private HibernateSqllite hbsqli;
+    private static HibernateSqllite instance;
 
-    public HibernateSqllite getInstance() {
-        if (this.hbsqli == null) {
-            this.hbsqli = new HibernateSqllite();
+    private final SessionFactory sf = HibernateUtil.getSessionFactory();
+
+    private HibernateSqllite() {
+    }
+
+    public static synchronized HibernateSqllite getInstance() {
+        if (instance == null) {
+            instance = new HibernateSqllite();
         }
-        return hbsqli;
+        return instance;
+    }
+
+    // ── Generic ────────────────────────────────────────────────────────────
+
+    /**
+     * Speichert oder aktualisiert eine Person-Entität (Patient oder ServiceProvider).
+     */
+    public void save(Person person) {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            session.saveOrUpdate(person);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error saving person", e);
+        }
     }
 
     /**
-     * Save or update a Patient in the database.
+     * Löscht eine Person-Entität (Patient oder ServiceProvider).
+     */
+    public void delete(Person person) {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            Person managed = (Person) session.merge(person);
+            session.delete(managed);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error deleting person", e);
+        }
+    }
+
+    // ── Patient ────────────────────────────────────────────────────────────
+
+    /**
+     * Speichert oder aktualisiert einen Patienten.
      */
     public void savePatient(Patient patient) {
-        Transaction transaction = null;
-        try (Session session = sf.openSession()) {
-            transaction = session.beginTransaction();
-            session.saveOrUpdate(patient);
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw new RuntimeException("Error saving patient", e);
-        }
+        save(patient);
     }
 
     /**
-     * Save or update a ServiceProvider in the database.
+     * Löscht einen Patienten.
      */
-    public void saveServiceProvider(ServiceProvider serviceProvider) {
-        Transaction transaction = null;
-        try (Session session = sf.openSession()) {
-            transaction = session.beginTransaction();
-            session.saveOrUpdate(serviceProvider);
-            transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw new RuntimeException("Error saving service provider", e);
-        }
+    public void deletePatient(Patient patient) {
+        delete(patient);
     }
 
     /**
-     * Load all patients from the database.
+     * Gibt alle Patienten zurück.
      */
     public List<Patient> getAllPatients() {
         try (Session session = sf.openSession()) {
@@ -67,16 +91,8 @@ public class HibernateSqllite {
         }
     }
 
-    public List<ServiceProvider> getAllServiceProviders() {
-        try (Session session = sf.openSession()) {
-            return session.createQuery("FROM ServiceProvider", ServiceProvider.class).list();
-        } catch (Exception e) {
-            throw new RuntimeException("Error loading ServiceProvider", e);
-        }
-    }
-
     /**
-     * Load a patient by ID.
+     * Gibt einen Patienten anhand der ID zurück.
      */
     public Patient getPatientById(int id) {
         try (Session session = sf.openSession()) {
@@ -86,36 +102,41 @@ public class HibernateSqllite {
         }
     }
 
+    // ── ServiceProvider ────────────────────────────────────────────────────
+
     /**
-     * Delete a patient from the database.
+     * Speichert oder aktualisiert einen Leistungserbringer.
      */
-    public void deletePatient(Patient patient) {
-        Transaction transaction = null;
+    public void saveServiceProvider(ServiceProvider serviceProvider) {
+        save(serviceProvider);
+    }
+
+    /**
+     * Löscht einen Leistungserbringer.
+     */
+    public void deleteServiceProvider(ServiceProvider serviceProvider) {
+        delete(serviceProvider);
+    }
+
+    /**
+     * Gibt alle Leistungserbringer zurück.
+     */
+    public List<ServiceProvider> getAllServiceProviders() {
         try (Session session = sf.openSession()) {
-            transaction = session.beginTransaction();
-            Patient managed = (Patient) session.merge(patient);
-            session.delete(managed);
-            transaction.commit();
+            return session.createQuery("FROM ServiceProvider", ServiceProvider.class).list();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw new RuntimeException("Error deleting patient", e);
+            throw new RuntimeException("Error loading service providers", e);
         }
     }
 
-    public void deleteServiceProvider(ServiceProvider serviceProvider) {
-        Transaction transaction = null;
+    /**
+     * Gibt einen Leistungserbringer anhand der ID zurück.
+     */
+    public ServiceProvider getServiceProviderById(int id) {
         try (Session session = sf.openSession()) {
-            transaction = session.beginTransaction();
-            ServiceProvider managed = (ServiceProvider) session.merge(serviceProvider);
-            session.delete(managed);
-            transaction.commit();
+            return session.get(ServiceProvider.class, id);
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw new RuntimeException("Error deleting ServiceProvider", e);
+            throw new RuntimeException("Error loading service provider with id: " + id, e);
         }
     }
 

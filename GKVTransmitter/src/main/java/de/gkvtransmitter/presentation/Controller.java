@@ -28,9 +28,8 @@ public class Controller {
             factoryManager = new FactoryManager();
             // Fuehrt Initialladungen aus und registriert die Profile in GlobalDefinitions.
             bootstrap = new ApplicationBootstrap(globalDefinitions, factoryManager);
-            // TODO:DB
-            HibernateSqllite hbsqli = new HibernateSqllite();
-            this.database = hbsqli.getInstance();
+            // Persistenzschicht via Singleton-Instanz.
+            this.database = HibernateSqllite.getInstance();
             initialize();
         } catch (IllegalArgumentException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());
