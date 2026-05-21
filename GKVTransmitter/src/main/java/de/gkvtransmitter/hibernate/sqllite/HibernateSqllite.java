@@ -6,6 +6,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
+import de.gkvtransmitter.entity.InvoiceBlueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.util.HibernateUtil;
@@ -72,6 +73,28 @@ public class HibernateSqllite {
             return session.createQuery("FROM ServiceProvider", ServiceProvider.class).list();
         } catch (Exception e) {
             throw new RuntimeException("Error loading ServiceProvider", e);
+        }
+    }
+
+    public List<InvoiceBlueprint> getAllInvoiceBlueprints() {
+        try (Session session = sf.openSession()) {
+            return session.createQuery("FROM InvoiceBlueprint ORDER BY name", InvoiceBlueprint.class).list();
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading invoice blueprints", e);
+        }
+    }
+
+    public void saveInvoiceBlueprint(InvoiceBlueprint invoiceBlueprint) {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            session.saveOrUpdate(invoiceBlueprint);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error saving invoice blueprint", e);
         }
     }
 

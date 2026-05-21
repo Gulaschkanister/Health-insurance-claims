@@ -1,0 +1,19 @@
+.root {
+    -fx-font-size: 13px;
+}
+
+.menu-bar {
+    -fx-background-color: #1f2937;
+}
+
+.menu-bar .label {
+    -fx-text-fill: white;
+}
+
+.button {
+    -fx-background-radius: 6;
+}
+
+.scroll-pane {
+    -fx-background-color: #f8fafc;
+}

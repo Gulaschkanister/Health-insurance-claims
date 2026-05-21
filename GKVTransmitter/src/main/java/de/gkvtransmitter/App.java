@@ -65,6 +65,8 @@ public class App extends Application {
             String statusText = "GKVTransmitter geladen - " + profileStatus + " | " + invoiceStatus;
 
             Scene scene = view.createMainScene(statusText, 900, 600);
+            scene.getStylesheets().add("org/kordamp/bootstrapfx/bootstrapfx.css");
+            scene.getStylesheets().add(getClass().getResource("/styles/app.css").toExternalForm());
             stage.setTitle("GKVTransmitter");
             stage.setScene(scene);
             stage.show();

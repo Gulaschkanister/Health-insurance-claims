@@ -3,16 +3,27 @@ package de.gkvtransmitter.presentation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.gkvtransmitter.entity.InvoiceBlueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.enums.InputOption;
@@ -35,35 +46,30 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-/**
- * View-Schicht der Anwendung - REFAKTORIERT
- *
- * Nach großem Refactoring jetzt mit:
- * - Fokus auf Szenen-Management und Hauptmenü
- * - Delegation komplexer Logik an spezialisierte Komponenten
- * - Klare Separation of Concerns
- *
- * Delegationen:
- * - Entity-Bearbeitung -> EditFormController
- * - Feld-Populierung -> EntityFieldPopulator
- * - Menü-Erstellung -> MenuBuilder
- */
 public class View {
+
+    private static final Path DTA_OUTBOX = Paths.get("dta", "outbox");
+    private static final Path DTA_SENT = Paths.get("dta", "sent");
+    private static final Path DTA_INBOX = Paths.get("dta", "inbox");
+    private static final DateTimeFormatter FILE_TS = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     private final UiFactory componentFactory;
     private final Controller controller;
@@ -71,7 +77,7 @@ public class View {
     private final ObjectMapper objectMapper;
     private final Map<String, List<String>> invoiceCodeOptions;
     private BorderPane skeleton;
-    
+
     private final PatientFieldPopulator patientPopulator;
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
 
@@ -94,11 +100,21 @@ public class View {
     private MenuBar buildMainMenuBar() {
         MenuBuilder menuBuilder = new MenuBuilder(componentFactory, messages);
 
-        Map<String, Runnable> invoiceHandlers = new HashMap<>();
+        Map<String, Runnable> invoiceHandlers = new LinkedHashMap<>();
         for (String name : controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()) {
             invoiceHandlers.put(name, () -> createFormular(name));
         }
+
+        for (InvoiceBlueprint blueprint : controller.getDatabase().getAllInvoiceBlueprints()) {
+            String templateName = blueprint.getInvoiceTemplateName();
+            if (controller.getGlobalDefinitions().getInvoiceTemplateCollection().containsKey(templateName)) {
+                invoiceHandlers.put("[Vorlage] " + blueprint.getName(),
+                        () -> createFormular(templateName, blueprint));
+            }
+        }
+
         menuBuilder.addAllInvoiceItems(invoiceHandlers);
+        menuBuilder.addInvoiceItem(messages.get("menu.inbox"), this::receiveReplies);
 
         menuBuilder.addPatientItem(messages.get("menu.new"), this::createPerson);
         menuBuilder.addPatientItem(messages.get("menu.edit"), this::editPatient);
@@ -110,13 +126,17 @@ public class View {
     }
 
     private void createFormular(String invoiceName) {
+        createFormular(invoiceName, null);
+    }
+
+    private void createFormular(String invoiceName, InvoiceBlueprint blueprint) {
         DtaMessage dtaMessage = controller.getGlobalDefinitions().getInvoiceTemplateCollection().get(invoiceName);
         if (dtaMessage == null) {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.noTemplate"));
             return;
         }
 
-        Map<String, Node> allFieldNodes = new HashMap<>();
+        Map<String, Node> allFieldNodes = new LinkedHashMap<>();
         for (SegmentInfo info : dtaMessage.getSegments()) {
             for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
                 if (!entry.getValue().isInternal()) {
@@ -128,6 +148,10 @@ public class View {
                     allFieldNodes.put(entry.getKey(), inputField);
                 }
             }
+        }
+
+        if (blueprint != null) {
+            applyStoredFieldValues(allFieldNodes, blueprint.getFieldPayload());
         }
 
         VBox vbox = new VBox(10);
@@ -147,9 +171,269 @@ public class View {
         GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
         vbox.getChildren().add(contentGrid);
 
+        List<Patient> allPatients = controller.getDatabase().getAllPatients();
+        Set<Integer> preselectedPatientIds = parseSelectedPatientIds(blueprint);
+        Map<Integer, CheckMenuItem> patientChecks = new HashMap<>();
+        VBox patientSelection = buildPatientSelection(allPatients, preselectedPatientIds, patientChecks);
+
+        Button saveTemplateButton = componentFactory.createButton(messages.get("button.saveTemplate"));
+        saveTemplateButton.setOnAction(e -> saveBlueprint(invoiceName, allFieldNodes, patientChecks));
+
+        Button generateDtaButton = componentFactory.createButton(messages.get("button.generateDta"));
+        generateDtaButton.setOnAction(e -> generateDta(invoiceName, dtaMessage, allFieldNodes, patientChecks, false));
+
+        Button sendDtaButton = componentFactory.createButton(messages.get("button.sendDta"));
+        sendDtaButton.setOnAction(e -> generateDta(invoiceName, dtaMessage, allFieldNodes, patientChecks, true));
+
+        Button receiveRepliesButton = componentFactory.createButton(messages.get("button.receiveReplies"));
+        receiveRepliesButton.setOnAction(e -> receiveReplies());
+
+        HBox buttonBox = new HBox(10, saveTemplateButton, generateDtaButton, sendDtaButton, receiveRepliesButton);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+        vbox.getChildren().addAll(patientSelection, buttonBox);
+
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
         skeleton.setCenter(scrollPane);
+    }
+
+    private VBox buildPatientSelection(List<Patient> patients, Set<Integer> preselectedPatientIds,
+            Map<Integer, CheckMenuItem> patientChecks) {
+        VBox box = new VBox(6);
+        Label label = componentFactory.createLabel(messages.get("label.patientPreset"));
+
+        MenuButton patientSelector = new MenuButton(messages.get("prompt.patientPreset"));
+        if (patients.isEmpty()) {
+            patientSelector.setDisable(true);
+            patientSelector.setText(messages.get("msg.noPatients"));
+        } else {
+            for (Patient patient : patients) {
+                String itemText = patient.getFirstname() + " " + patient.getLastname() + " (ID " + patient.getId() + ")";
+                CheckMenuItem item = new CheckMenuItem(itemText);
+                item.setSelected(preselectedPatientIds.contains(patient.getId()));
+                patientChecks.put(patient.getId(), item);
+                patientSelector.getItems().add(item);
+            }
+        }
+        box.getChildren().addAll(label, patientSelector);
+        return box;
+    }
+
+    private void saveBlueprint(String invoiceTemplateName, Map<String, Node> fieldNodes,
+            Map<Integer, CheckMenuItem> patientChecks) {
+        TextInputDialog dialog = new TextInputDialog(invoiceTemplateName + " Vorlage");
+        dialog.setTitle(messages.get("button.saveTemplate"));
+        dialog.setHeaderText(messages.get("button.saveTemplate"));
+        dialog.setContentText("Name:");
+        dialog.showAndWait().ifPresent(name -> {
+            if (name.isBlank()) {
+                return;
+            }
+
+            try {
+                String payload = objectMapper.writeValueAsString(collectFieldValues(fieldNodes));
+                String selectedIds = collectSelectedPatientIds(patientChecks);
+                InvoiceBlueprint blueprint = new InvoiceBlueprint(name.trim(), invoiceTemplateName, payload, selectedIds);
+                controller.getDatabase().saveInvoiceBlueprint(blueprint);
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.blueprintSaved"));
+            } catch (Exception ex) {
+                showErrorDialog(messages.get("dialog.error.title"), ex.getMessage());
+            }
+        });
+    }
+
+    private Map<String, String> collectFieldValues(Map<String, Node> fieldNodes) {
+        Map<String, String> values = new LinkedHashMap<>();
+        fieldNodes.forEach((key, node) -> values.put(key, getFieldText(node)));
+        return values;
+    }
+
+    private String collectSelectedPatientIds(Map<Integer, CheckMenuItem> patientChecks) {
+        return patientChecks.entrySet().stream()
+                .filter(entry -> entry.getValue().isSelected())
+                .map(entry -> String.valueOf(entry.getKey()))
+                .sorted()
+                .reduce((a, b) -> a + "," + b)
+                .orElse("");
+    }
+
+    private Set<Integer> parseSelectedPatientIds(InvoiceBlueprint blueprint) {
+        Set<Integer> ids = new HashSet<>();
+        if (blueprint == null || blueprint.getSelectedPatientIds() == null || blueprint.getSelectedPatientIds().isBlank()) {
+            return ids;
+        }
+        for (String part : blueprint.getSelectedPatientIds().split(",")) {
+            try {
+                ids.add(Integer.parseInt(part.trim()));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return ids;
+    }
+
+    private void applyStoredFieldValues(Map<String, Node> fieldNodes, String payload) {
+        if (payload == null || payload.isBlank()) {
+            return;
+        }
+        try {
+            Map<String, String> values = objectMapper.readValue(payload, new TypeReference<Map<String, String>>() {
+            });
+            values.forEach((key, value) -> {
+                Node node = fieldNodes.get(key);
+                if (node != null) {
+                    setNodeValue(node, value);
+                }
+            });
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void setNodeValue(Node node, String value) {
+        if (value == null) {
+            return;
+        }
+        Node target = node;
+        if (node instanceof VBox v && !v.getChildren().isEmpty()) {
+            target = v.getChildren().get(0);
+        }
+
+        switch (target) {
+            case TextInputControl tic -> tic.setText(value);
+            case Spinner<?> spinner -> {
+                try {
+                    if (spinner.getValueFactory() instanceof SpinnerValueFactory.IntegerSpinnerValueFactory intFactory) {
+                        intFactory.setValue(Integer.parseInt(value));
+                    } else if (spinner.getValueFactory() != null && spinner.getValueFactory().getValue() instanceof BigDecimal) {
+                        @SuppressWarnings("unchecked")
+                        SpinnerValueFactory<BigDecimal> factory = (SpinnerValueFactory<BigDecimal>) spinner
+                                .getValueFactory();
+                        factory.setValue(new BigDecimal(value));
+                    }
+                    if (spinner.getEditor() != null) {
+                        spinner.getEditor().setText(value);
+                    }
+                } catch (RuntimeException ignored) {
+                }
+            }
+            case ComboBox<?> comboBox -> {
+                @SuppressWarnings("unchecked")
+                ComboBox<String> cb = (ComboBox<String>) comboBox;
+                if (!cb.getItems().contains(value)) {
+                    cb.getItems().add(value);
+                }
+                cb.setValue(value);
+            }
+            case DatePicker datePicker -> {
+                try {
+                    datePicker.setValue(LocalDate.parse(value));
+                } catch (RuntimeException ignored) {
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private void generateDta(String invoiceName, DtaMessage dtaMessage, Map<String, Node> fieldNodes,
+            Map<Integer, CheckMenuItem> patientChecks, boolean sendAfterCreate) {
+        try {
+            ensureDtaDirs();
+            Map<String, String> values = collectFieldValues(fieldNodes);
+            List<Integer> selectedPatients = patientChecks.entrySet().stream()
+                    .filter(entry -> entry.getValue().isSelected())
+                    .map(Map.Entry::getKey)
+                    .sorted()
+                    .toList();
+
+            String dtaContent = createDtaPayload(dtaMessage, values, selectedPatients);
+            String fileBase = sanitizeFileName(invoiceName) + "_" + LocalDateTime.now().format(FILE_TS) + ".dta";
+            Path createdFile = DTA_OUTBOX.resolve(fileBase);
+            Files.writeString(createdFile, dtaContent, StandardCharsets.UTF_8);
+            showInfoDialog(messages.get("dialog.info.title"), String.format(messages.get("msg.dtaCreated"), createdFile));
+
+            if (sendAfterCreate) {
+                Path sentFile = DTA_SENT.resolve(fileBase);
+                Files.move(createdFile, sentFile, StandardCopyOption.REPLACE_EXISTING);
+
+                Path replyFile = DTA_INBOX.resolve(fileBase + ".reply.txt");
+                String replyContent = "ACK|" + sentFile.getFileName() + "|PATIENT_IDS=" + selectedPatients;
+                Files.writeString(replyFile, replyContent, StandardCharsets.UTF_8);
+                showInfoDialog(messages.get("dialog.info.title"), String.format(messages.get("msg.dtaSent"), sentFile));
+            }
+        } catch (Exception ex) {
+            showErrorDialog(messages.get("dialog.error.title"), ex.getMessage());
+        }
+    }
+
+    private String createDtaPayload(DtaMessage dtaMessage, Map<String, String> values, List<Integer> selectedPatients) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("UNA:+.? '").append(System.lineSeparator());
+        for (SegmentInfo segment : dtaMessage.getSegments().stream().sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition()))
+                .toList()) {
+            builder.append(segment.getSegmentType());
+            for (Map.Entry<String, ValueFieldEntry> fieldEntry : segment.getValueFields().entrySet()) {
+                String key = fieldEntry.getKey();
+                ValueFieldEntry valueFieldEntry = fieldEntry.getValue();
+                String value = values.getOrDefault(key, "");
+                if (value.isBlank() && valueFieldEntry.getValue() != null) {
+                    value = String.valueOf(valueFieldEntry.getValue());
+                }
+                builder.append("+").append(escapeDtaValue(value));
+            }
+            builder.append("'").append(System.lineSeparator());
+        }
+        if (!selectedPatients.isEmpty()) {
+            builder.append("FTX+PAT+").append(selectedPatients).append("'").append(System.lineSeparator());
+        }
+        return builder.toString();
+    }
+
+    private String escapeDtaValue(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("'", " ").replace("+", " ").replace(System.lineSeparator(), " ").trim();
+    }
+
+    private String sanitizeFileName(String value) {
+        return value.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    private void ensureDtaDirs() throws IOException {
+        Files.createDirectories(DTA_OUTBOX);
+        Files.createDirectories(DTA_SENT);
+        Files.createDirectories(DTA_INBOX);
+    }
+
+    private void receiveReplies() {
+        try {
+            ensureDtaDirs();
+            List<Path> replies;
+            try (var stream = Files.list(DTA_INBOX)) {
+                replies = stream
+                        .filter(path -> path.getFileName().toString().endsWith(".reply.txt"))
+                        .sorted()
+                        .toList();
+            }
+
+            if (replies.isEmpty()) {
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noReplies"));
+                return;
+            }
+
+            StringBuilder details = new StringBuilder();
+            for (Path reply : replies) {
+                details.append(reply.getFileName()).append(": ")
+                        .append(Files.readString(reply, StandardCharsets.UTF_8))
+                        .append(System.lineSeparator());
+            }
+
+            showInfoDialog(messages.get("dialog.info.title"),
+                    String.format(messages.get("msg.repliesReceived"), replies.size())
+                            + System.lineSeparator() + details);
+        } catch (Exception ex) {
+            showErrorDialog(messages.get("dialog.error.title"), ex.getMessage());
+        }
     }
 
     private void editPatient() {
@@ -160,11 +444,10 @@ public class View {
                 () -> controller.getDatabase().getAllPatients(),
                 patient -> controller.getDatabase().savePatient(patient),
                 patient -> controller.getDatabase().deletePatient(patient),
-                fieldName -> createInputFieldFromTagList(fieldName, 
+                fieldName -> createInputFieldFromTagList(fieldName,
                         TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
                 "Patient",
-                fc -> skeleton.setCenter(null)
-        );
+                fc -> skeleton.setCenter(null));
         skeleton.setCenter(editController.buildEditForm());
     }
 
@@ -179,8 +462,7 @@ public class View {
                 fieldName -> createInputFieldFromTagList(fieldName,
                         TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
                 "ServiceProvider",
-                fc -> skeleton.setCenter(null)
-        );
+                fc -> skeleton.setCenter(null));
         skeleton.setCenter(editController.buildEditForm());
     }
 
@@ -248,7 +530,8 @@ public class View {
             }
 
             if (saveAsServiceProvider) {
-                ServiceProvider sp = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik, birthDate);
+                ServiceProvider sp = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik,
+                        birthDate);
                 controller.getDatabase().saveServiceProvider(sp);
             } else {
                 Patient p = new Patient(firstname, lastname, street, country, housenumber, plz, ik, birthDate);
@@ -264,9 +547,11 @@ public class View {
         }
     }
 
-    private Node createInputfieldFromTag(InputOption inputOption, String directName, 
+    private Node createInputfieldFromTag(InputOption inputOption, String directName,
             boolean visible, String javaFieldType) {
-        if (inputOption == null) return null;
+        if (inputOption == null) {
+            return null;
+        }
 
         return switch (inputOption) {
             case CODE -> createCodeDropdownForInvoiceField(directName);
@@ -281,7 +566,9 @@ public class View {
     }
 
     private Node createInputFieldFromTagList(String fieldName, TagList tagList) {
-        if (tagList == null) return componentFactory.createTextField();
+        if (tagList == null) {
+            return componentFactory.createTextField();
+        }
 
         InputOption inputOption = tagList.getInputOption();
         return switch (inputOption) {
@@ -305,7 +592,7 @@ public class View {
         };
     }
 
-    private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner, 
+    private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner,
             InputOption inputOption, String javaFieldType) {
         Label errorLabel = componentFactory.createLabel("");
         errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
@@ -320,7 +607,9 @@ public class View {
         if (spinner.getEditor() != null) {
             spinner.getEditor().textProperty().addListener((obs, o, n) -> validate.run());
             spinner.getEditor().focusedProperty().addListener((obs, oldF, newF) -> {
-                if (!newF) validate.run();
+                if (!newF) {
+                    validate.run();
+                }
             });
         }
 
