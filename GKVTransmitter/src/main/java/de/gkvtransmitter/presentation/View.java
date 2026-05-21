@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -116,30 +117,35 @@ public class View {
             return;
         }
 
-        Map<String, Node> allFieldNodes = new HashMap<>();
+        Map<String, Node> allFieldNodes = new LinkedHashMap<>();
+        Map<String, String> fieldSegments = new LinkedHashMap<>();
         for (SegmentInfo info : dtaMessage.getSegments()) {
             for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
                 if (!entry.getValue().isInternal()) {
+                    String uiFieldKey = buildInvoiceUiFieldKey(info, entry.getKey());
                     Node inputField = createInputfieldFromTag(
                             entry.getValue().getInputField(),
-                            entry.getKey(),
+                            uiFieldKey,
                             entry.getValue().isInternal(),
                             entry.getValue().getFieldJavaType());
-                    allFieldNodes.put(entry.getKey(), inputField);
+                    allFieldNodes.put(uiFieldKey, inputField);
+                    fieldSegments.put(uiFieldKey, info.getSegmentType());
                 }
             }
         }
+
+        applyCollectiveInvoiceDefaults(allFieldNodes, fieldSegments);
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
         Label title = componentFactory.createLabel(invoiceName);
         title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-        vbox.getChildren().add(title);
+        vbox.getChildren().addAll(title, createInvoicePresetBox(allFieldNodes, fieldSegments));
 
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
             fieldNodes.add(componentFactory.createBorderPane(
-                    componentFactory.createLabel(entry.getKey()),
+                    componentFactory.createLabel(formatInvoiceFieldLabel(entry.getKey())),
                     entry.getValue(),
                     null, null, null));
         }
@@ -391,6 +397,275 @@ public class View {
         }
     }
 
+    private String buildInvoiceUiFieldKey(SegmentInfo info, String fieldName) {
+        return info.getSegmentType() + "#" + info.getPosition() + " - " + fieldName;
+    }
+
+    private String extractFieldNameFromUiKey(String uiKey) {
+        if (uiKey == null) {
+            return "";
+        }
+        int separator = uiKey.indexOf(" - ");
+        if (separator >= 0 && separator + 3 < uiKey.length()) {
+            return uiKey.substring(separator + 3);
+        }
+        return uiKey;
+    }
+
+    private String formatInvoiceFieldLabel(String uiKey) {
+        String segment = extractSegmentFromUiKey(uiKey);
+        int position = extractSegmentPositionFromUiKey(uiKey);
+        String fieldName = extractFieldNameFromUiKey(uiKey);
+
+        if (segment.isBlank() || position == Integer.MAX_VALUE) {
+            return fieldName;
+        }
+        return segment + " " + position + " - " + fieldName;
+    }
+
+    private String extractSegmentFromUiKey(String uiKey) {
+        if (uiKey == null) {
+            return "";
+        }
+        int separator = uiKey.indexOf('#');
+        if (separator > 0) {
+            return uiKey.substring(0, separator);
+        }
+        return "";
+    }
+
+    private int extractSegmentPositionFromUiKey(String uiKey) {
+        if (uiKey == null) {
+            return Integer.MAX_VALUE;
+        }
+        int start = uiKey.indexOf('#');
+        int end = uiKey.indexOf(" - ");
+        if (start < 0 || end < 0 || start + 1 >= end) {
+            return Integer.MAX_VALUE;
+        }
+        try {
+            return Integer.parseInt(uiKey.substring(start + 1, end));
+        } catch (NumberFormatException ignored) {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    private VBox createInvoicePresetBox(Map<String, Node> allFieldNodes, Map<String, String> fieldSegments) {
+        List<Patient> patients = controller.getDatabase().getAllPatients();
+        List<ServiceProvider> providers = controller.getDatabase().getAllServiceProviders();
+
+        Label presetTitle = componentFactory.createLabel(messages.get("label.invoicePresetSection"));
+        presetTitle.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
+
+        ComboBox<String> patientPreset = new ComboBox<>();
+        patientPreset.setPrefWidth(380);
+        patientPreset.setPromptText(messages.get("prompt.invoicePatientPreset"));
+        Map<String, Patient> patientByDisplayName = new LinkedHashMap<>();
+        for (Patient patient : patients) {
+            String displayName = patientPopulator.getDisplayName(patient);
+            patientPreset.getItems().add(displayName);
+            patientByDisplayName.put(displayName, patient);
+        }
+        patientPreset.setDisable(patients.isEmpty());
+        patientPreset.setOnAction(event -> {
+            String selected = patientPreset.getValue();
+            if (selected != null) {
+                Patient patient = patientByDisplayName.get(selected);
+                if (patient != null) {
+                    applyPatientPresetToInvoiceFields(patient, allFieldNodes, fieldSegments);
+                }
+            }
+        });
+        if (patients.size() == 1) {
+            String onlyPatient = patientPreset.getItems().get(0);
+            patientPreset.setValue(onlyPatient);
+            applyPatientPresetToInvoiceFields(patientByDisplayName.get(onlyPatient), allFieldNodes, fieldSegments);
+        }
+
+        ComboBox<String> providerPreset = new ComboBox<>();
+        providerPreset.setPrefWidth(380);
+        providerPreset.setPromptText(messages.get("prompt.invoiceProviderPreset"));
+        Map<String, ServiceProvider> providerByDisplayName = new LinkedHashMap<>();
+        for (ServiceProvider provider : providers) {
+            String displayName = serviceProviderPopulator.getDisplayName(provider);
+            providerPreset.getItems().add(displayName);
+            providerByDisplayName.put(displayName, provider);
+        }
+        providerPreset.setDisable(providers.isEmpty());
+        providerPreset.setOnAction(event -> {
+            String selected = providerPreset.getValue();
+            if (selected != null) {
+                ServiceProvider provider = providerByDisplayName.get(selected);
+                if (provider != null) {
+                    applyServiceProviderPresetToInvoiceFields(provider, allFieldNodes, fieldSegments);
+                }
+            }
+        });
+        if (providers.size() == 1) {
+            String onlyProvider = providerPreset.getItems().get(0);
+            providerPreset.setValue(onlyProvider);
+            applyServiceProviderPresetToInvoiceFields(providerByDisplayName.get(onlyProvider), allFieldNodes,
+                    fieldSegments);
+        }
+
+        VBox presetBox = new VBox(8);
+        presetBox.setPadding(new Insets(10, 0, 10, 0));
+        presetBox.getChildren().addAll(
+                presetTitle,
+                componentFactory.createLabel(messages.get("label.invoicePatientPreset")),
+                patientPreset,
+                componentFactory.createLabel(messages.get("label.invoiceProviderPreset")),
+                providerPreset);
+        return presetBox;
+    }
+
+    private void applyPatientPresetToInvoiceFields(Patient patient,
+            Map<String, Node> allFieldNodes,
+            Map<String, String> fieldSegments) {
+        for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
+            String uiFieldKey = entry.getKey();
+            String segmentType = fieldSegments.getOrDefault(uiFieldKey, extractSegmentFromUiKey(uiFieldKey));
+            String normalized = normalizeFieldKey(extractFieldNameFromUiKey(uiFieldKey));
+
+            if ("NAD".equalsIgnoreCase(segmentType)) {
+                if (normalized.contains("nachname")) {
+                    setFieldValue(entry.getValue(), patient.getLastname());
+                } else if (normalized.contains("vorname")) {
+                    setFieldValue(entry.getValue(), patient.getFirstname());
+                } else if (normalized.contains("geburtsdatum")) {
+                    setFieldValue(entry.getValue(), patient.getBirthDate());
+                } else if (normalized.contains("stra") || normalized.contains("strasse")) {
+                    String address = (patient.getStreet() == null ? "" : patient.getStreet()) + " "
+                            + (patient.getHousenumber() == null ? "" : patient.getHousenumber());
+                    setFieldValue(entry.getValue(), address.trim());
+                } else if (normalized.contains("postleitzahl")) {
+                    setFieldValue(entry.getValue(), String.valueOf(patient.getPlz()));
+                }
+            }
+        }
+    }
+
+    private void applyServiceProviderPresetToInvoiceFields(ServiceProvider provider,
+            Map<String, Node> allFieldNodes,
+            Map<String, String> fieldSegments) {
+        for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
+            String uiFieldKey = entry.getKey();
+            String segmentType = fieldSegments.getOrDefault(uiFieldKey, extractSegmentFromUiKey(uiFieldKey));
+            String normalized = normalizeFieldKey(extractFieldNameFromUiKey(uiFieldKey));
+
+            if ("NAM".equalsIgnoreCase(segmentType)) {
+                if (normalized.contains("nachname")) {
+                    setFieldValue(entry.getValue(), provider.getLastname());
+                } else if (normalized.contains("vorname")) {
+                    setFieldValue(entry.getValue(), provider.getFirstname());
+                }
+            }
+
+            if ("FKT".equalsIgnoreCase(segmentType)
+                    && (normalized.contains("leistungserbringer") || normalized.contains("rechnungssteller"))) {
+                setFieldValue(entry.getValue(), String.valueOf(provider.getIk()));
+            }
+        }
+    }
+
+    private void applyCollectiveInvoiceDefaults(Map<String, Node> allFieldNodes, Map<String, String> fieldSegments) {
+        List<String> statusFields = allFieldNodes.keySet().stream()
+                .filter(key -> "GES".equalsIgnoreCase(fieldSegments.getOrDefault(key, extractSegmentFromUiKey(key))))
+                .filter(key -> normalizeFieldKey(extractFieldNameFromUiKey(key)).contains("status"))
+                .sorted(Comparator.comparingInt(this::extractSegmentPositionFromUiKey))
+                .toList();
+
+        if (!statusFields.isEmpty()) {
+            setFieldValue(allFieldNodes.get(statusFields.get(0)), "00");
+        }
+        if (statusFields.size() > 1) {
+            setFieldValue(allFieldNodes.get(statusFields.get(1)), "99");
+        }
+    }
+
+    private void setFieldValue(Node node, String value) {
+        if (node == null || value == null) {
+            return;
+        }
+
+        Node target = node;
+        if (node instanceof VBox v && !v.getChildren().isEmpty()) {
+            target = v.getChildren().get(0);
+        }
+
+        switch (target) {
+            case TextInputControl textInputControl -> textInputControl.setText(value);
+            case Spinner<?> spinner -> setSpinnerValue(spinner, value);
+            case ComboBox<?> comboBox -> setComboBoxValue(comboBox, value);
+            default -> {
+            }
+        }
+    }
+
+    private void setFieldValue(Node node, LocalDate value) {
+        if (node == null || value == null) {
+            return;
+        }
+
+        Node target = node;
+        if (node instanceof VBox v && !v.getChildren().isEmpty()) {
+            target = v.getChildren().get(0);
+        }
+        if (target instanceof DatePicker datePicker) {
+            datePicker.setValue(value);
+        } else {
+            setFieldValue(node, value.toString());
+        }
+    }
+
+    private void setSpinnerValue(Spinner<?> spinner, String value) {
+        if (spinner == null || value == null || value.isBlank()) {
+            return;
+        }
+
+        String normalized = value.replace(",", ".").trim();
+        SpinnerValueFactory<?> valueFactory = spinner.getValueFactory();
+        if (valueFactory instanceof SpinnerValueFactory.IntegerSpinnerValueFactory intFactory) {
+            try {
+                int parsed = Integer.parseInt(normalized.replaceAll("[^\\d-]", ""));
+                intFactory.setValue(parsed);
+                if (spinner.getEditor() != null) {
+                    spinner.getEditor().setText(String.valueOf(parsed));
+                }
+            } catch (NumberFormatException ignored) {
+            }
+            return;
+        }
+
+        try {
+            BigDecimal parsed = new BigDecimal(normalized);
+            @SuppressWarnings("unchecked")
+            SpinnerValueFactory<BigDecimal> decimalFactory = (SpinnerValueFactory<BigDecimal>) valueFactory;
+            if (decimalFactory != null) {
+                decimalFactory.setValue(parsed);
+                if (spinner.getEditor() != null) {
+                    spinner.getEditor().setText(parsed.toPlainString());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void setComboBoxValue(ComboBox<?> comboBox, String value) {
+        if (comboBox == null || value == null || value.isBlank()) {
+            return;
+        }
+        ComboBox rawCombo = comboBox;
+        if (rawCombo.getItems().contains(value)) {
+            rawCombo.setValue(value);
+            return;
+        }
+        if (rawCombo.isEditable()) {
+            rawCombo.setValue(value);
+        }
+    }
+
     private Node createCodeDropdownForInvoiceField(String fieldName) {
         ComboBox<String> comboBox = new ComboBox<>();
         comboBox.setPrefWidth(300);
@@ -406,7 +681,7 @@ public class View {
     }
 
     private List<String> resolveCodeOptionsForField(String fieldName) {
-        String normalized = normalizeFieldKey(fieldName);
+        String normalized = normalizeFieldKey(extractFieldNameFromUiKey(fieldName));
 
         if (normalized.contains("rechnungsart")) {
             return invoiceCodeOptions.getOrDefault("rechnungsarten", List.of());
@@ -426,14 +701,7 @@ public class View {
         try (InputStream is = getClass().getResourceAsStream("/codes/rechnungsarten.json")) {
             if (is != null) {
                 JsonNode root = objectMapper.readTree(is);
-                List<String> rechnungsarten = new ArrayList<>();
-                if (root.isArray()) {
-                    for (JsonNode node : root) {
-                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
-                        rechnungsarten.add(value);
-                    }
-                }
-                options.put("rechnungsarten", rechnungsarten);
+                options.put("rechnungsarten", extractCodeValues(root));
             }
         } catch (IOException ignored) {
         }
@@ -441,19 +709,33 @@ public class View {
         try (InputStream is = getClass().getResourceAsStream("/codes/ges_statuscodes.json")) {
             if (is != null) {
                 JsonNode root = objectMapper.readTree(is);
-                List<String> statuscodes = new ArrayList<>();
-                if (root.isArray()) {
-                    for (JsonNode node : root) {
-                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
-                        statuscodes.add(value);
-                    }
-                }
-                options.put("ges_statuscodes", statuscodes);
+                options.put("ges_statuscodes", extractCodeValues(root));
             }
         } catch (IOException ignored) {
         }
 
         return options;
+    }
+
+    private List<String> extractCodeValues(JsonNode root) {
+        List<String> values = new ArrayList<>();
+        JsonNode source = root;
+        if (root != null && root.isObject() && root.has("codes")) {
+            source = root.get("codes");
+        }
+
+        if (source != null && source.isArray()) {
+            for (JsonNode node : source) {
+                if (node.has("code")) {
+                    values.add(node.get("code").asText());
+                } else if (node.has("value")) {
+                    values.add(node.get("value").asText());
+                } else if (node.isTextual()) {
+                    values.add(node.asText());
+                }
+            }
+        }
+        return values;
     }
 
     private String getFieldText(Node node) {
