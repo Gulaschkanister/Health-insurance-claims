@@ -322,39 +322,43 @@ public class View {
             target = v.getChildren().get(0);
         }
 
-        switch (target) {
-            case TextInputControl tic -> tic.setText(value);
-            case Spinner<?> spinner -> {
-                try {
-                    if (spinner.getValueFactory() instanceof SpinnerValueFactory.IntegerSpinnerValueFactory intFactory) {
-                        intFactory.setValue(Integer.parseInt(value));
-                    } else if (spinner.getValueFactory() != null && spinner.getValueFactory().getValue() instanceof BigDecimal) {
-                        @SuppressWarnings("unchecked")
-                        SpinnerValueFactory<BigDecimal> factory = (SpinnerValueFactory<BigDecimal>) spinner
-                                .getValueFactory();
-                        factory.setValue(new BigDecimal(value));
-                    }
-                    if (spinner.getEditor() != null) {
-                        spinner.getEditor().setText(value);
-                    }
-                } catch (RuntimeException ignored) {
+        if (target instanceof TextInputControl tic) {
+            tic.setText(value);
+            return;
+        }
+
+        if (target instanceof Spinner<?> spinner) {
+            try {
+                if (spinner.getValueFactory() instanceof SpinnerValueFactory.IntegerSpinnerValueFactory intFactory) {
+                    intFactory.setValue(Integer.parseInt(value));
+                } else if (spinner.getValueFactory() != null && spinner.getValueFactory().getValue() instanceof BigDecimal) {
+                    @SuppressWarnings("unchecked")
+                    SpinnerValueFactory<BigDecimal> factory = (SpinnerValueFactory<BigDecimal>) spinner
+                            .getValueFactory();
+                    factory.setValue(new BigDecimal(value));
                 }
-            }
-            case ComboBox<?> comboBox -> {
-                @SuppressWarnings("unchecked")
-                ComboBox<String> cb = (ComboBox<String>) comboBox;
-                if (!cb.getItems().contains(value)) {
-                    cb.getItems().add(value);
+                if (spinner.getEditor() != null) {
+                    spinner.getEditor().setText(value);
                 }
-                cb.setValue(value);
+            } catch (RuntimeException ignored) {
             }
-            case DatePicker datePicker -> {
-                try {
-                    datePicker.setValue(LocalDate.parse(value));
-                } catch (RuntimeException ignored) {
-                }
+            return;
+        }
+
+        if (target instanceof ComboBox<?> comboBox) {
+            @SuppressWarnings("unchecked")
+            ComboBox<String> cb = (ComboBox<String>) comboBox;
+            if (!cb.getItems().contains(value)) {
+                cb.getItems().add(value);
             }
-            default -> {
+            cb.setValue(value);
+            return;
+        }
+
+        if (target instanceof DatePicker datePicker) {
+            try {
+                datePicker.setValue(LocalDate.parse(value));
+            } catch (RuntimeException ignored) {
             }
         }
     }
@@ -781,24 +785,23 @@ public class View {
             target = v.getChildren().get(0);
         }
 
-        switch (target) {
-            case TextInputControl tic -> {
-                return tic.getText();
-            }
-            case Spinner<?> spinner -> {
-                Object value = spinner.getValue();
-                return value != null ? String.valueOf(value) : "";
-            }
-            case ComboBox<?> cb -> {
-                Object value = cb.getValue();
-                return value != null ? String.valueOf(value) : "";
-            }
-            case DatePicker dp -> {
-                var value = dp.getValue();
-                return value != null ? value.toString() : "";
-            }
-            default -> {
-            }
+        if (target instanceof TextInputControl tic) {
+            return tic.getText();
+        }
+
+        if (target instanceof Spinner<?> spinner) {
+            Object value = spinner.getValue();
+            return value != null ? String.valueOf(value) : "";
+        }
+
+        if (target instanceof ComboBox<?> cb) {
+            Object value = cb.getValue();
+            return value != null ? String.valueOf(value) : "";
+        }
+
+        if (target instanceof DatePicker dp) {
+            var value = dp.getValue();
+            return value != null ? value.toString() : "";
         }
         return "";
     }

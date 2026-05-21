@@ -37,11 +37,10 @@ public abstract class EntityFieldPopulator<T> {
             return;
         }
 
-        switch (target) {
-            case TextInputControl textInput -> textInput.setText(value);
-            case Spinner<?> spinner -> populateSpinner(spinner, value);
-            default -> {
-            }
+        if (target instanceof TextInputControl textInput) {
+            textInput.setText(value);
+        } else if (target instanceof Spinner<?> spinner) {
+            populateSpinner(spinner, value);
         }
     }
 
@@ -122,20 +121,18 @@ public abstract class EntityFieldPopulator<T> {
      * @return Der Feldwert
      */
     private String extractFieldValue(Node target) {
-        switch (target) {
-            case TextInputControl textInput -> {
-                return textInput.getText();
-            }
-            case Spinner<?> spinner -> {
-                Object value = spinner.getValue();
-                return value != null ? value.toString() : "";
-            }
-            case DatePicker dp -> {
-                var value = dp.getValue();
-                return value != null ? value.toString() : "";
-            }
-            default -> {
-            }
+        if (target instanceof TextInputControl textInput) {
+            return textInput.getText();
+        }
+
+        if (target instanceof Spinner<?> spinner) {
+            Object value = spinner.getValue();
+            return value != null ? value.toString() : "";
+        }
+
+        if (target instanceof DatePicker dp) {
+            var value = dp.getValue();
+            return value != null ? value.toString() : "";
         }
         return "";
     }
@@ -154,11 +151,10 @@ public abstract class EntityFieldPopulator<T> {
             return;
         }
 
-        switch (target) {
-            case DatePicker dp -> dp.setValue(dateValue);
-            case TextInputControl tic -> tic.setText(dateValue.toString());
-            default -> {
-            }
+        if (target instanceof DatePicker dp) {
+            dp.setValue(dateValue);
+        } else if (target instanceof TextInputControl tic) {
+            tic.setText(dateValue.toString());
         }
     }
 
