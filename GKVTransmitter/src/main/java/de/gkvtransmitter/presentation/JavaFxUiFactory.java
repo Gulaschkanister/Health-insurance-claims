@@ -185,10 +185,9 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     @Override
-    public ComboBox<Node> createComboBox(boolean setEditable, Node... nodes) {
-        // TODO: hier gehts weiter
-        ComboBox<Node> comboBox = new ComboBox<>();
-        comboBox.getItems().addAll(nodes);
+    public ComboBox<String> createComboBox(boolean setEditable, String... options) {
+        ComboBox<String> comboBox = new ComboBox<>();
+        comboBox.getItems().addAll(options);
         comboBox.setEditable(setEditable);
         return comboBox;
     }

@@ -69,5 +69,5 @@ public interface UiFactory {
 
     <T> Spinner<T> createSpinner(Class<T> type, String format, InputOption inputOption);
 
-    ComboBox<Node> createComboBox(boolean setEditable, Node... options);
+    ComboBox<String> createComboBox(boolean setEditable, String... options);
 }
