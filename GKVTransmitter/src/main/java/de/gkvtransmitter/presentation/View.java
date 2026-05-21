@@ -40,6 +40,7 @@ import de.gkvtransmitter.util.ModifierInstance;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import de.gkvtransmitter.util.modifiers.MaxLengthModifier;
+import de.gkvtransmitter.validator.ValidationResult;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -684,12 +685,12 @@ public class View {
             }
         }
 
-        FieldValidator.ValidationResult res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
-        if (res == null || res.isValid) {
+        ValidationResult res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
+        if (res == null || res.isValid()) {
             errorLabel.setVisible(false);
             spinner.setStyle(null);
         } else {
-            errorLabel.setText(res.errorMessage != null ? res.errorMessage : "Ungültiger Wert");
+            errorLabel.setText(res.getErrorMessage() != null ? res.getErrorMessage() : "Ungültiger Wert");
             errorLabel.setVisible(true);
             spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
         }

@@ -184,8 +184,6 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
                 fieldDefinitions.put(fieldDefinition.getPosition(), fieldDefinition);
             }
         }
-        // TODO: die jsons müssen überprüft werden wo noch Interne Daten drin stehen und
-        // wo nicht
         return new SegmentDefinition(fieldDefinitions, segmentName, repeatable);
     }
 

@@ -7,7 +7,7 @@ import de.gkvtransmitter.model.segment.SegmentDefinition;
 import lombok.Getter;
 
 @Getter
-public class Invoice {
+public class Invoice implements DtaProfile {
 
     private final Map<String, SegmentDefinition> segments;
     private final InvoiceType messageType;

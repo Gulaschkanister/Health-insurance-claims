@@ -1,8 +1,14 @@
 package de.gkvtransmitter.converter;
 
 public class TypeConverter {
-    // TODO: wird voraussichtlich nicht mehr verwendet dachte ursprünglich es wäre
-    // praktisch für den Spinner createProzess
+
+    private TypeConverter() {
+    }
+
+    /**
+     * Konvertiert einen String in einfache Zieltypen für UI-bezogene
+     * Eingabeverarbeitung.
+     */
     public static Object convertStringToSimpleType(Class<?> clazz, String stringType) {
         if (Boolean.class == clazz)
             return Boolean.valueOf(stringType);

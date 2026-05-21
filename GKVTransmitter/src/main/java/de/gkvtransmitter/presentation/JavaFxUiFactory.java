@@ -144,14 +144,13 @@ public class JavaFxUiFactory implements UiFactory {
 
     @Override
     public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOption inputOption) {
-        // TODO: formatTyoe aktuell ungenutzt ziel für die ui anzeige formatieren von
-        // anzeigen
         if (Integer.class.equals(type)) {
             Spinner<Integer> spinner = new Spinner<>(
                     new javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory(
                             Integer.MIN_VALUE, Integer.MAX_VALUE, 0));
             spinner.setEditable(true);
             spinner.setPrefWidth(300);
+            applySpinnerFormatPrompt(spinner, formatType);
             @SuppressWarnings("unchecked")
             Spinner<T> casted = (Spinner<T>) spinner;
             return casted;
@@ -177,11 +176,18 @@ public class JavaFxUiFactory implements UiFactory {
             Spinner<java.math.BigDecimal> spinner = new Spinner<>(vf);
             spinner.setEditable(true);
             spinner.setPrefWidth(300);
+            applySpinnerFormatPrompt(spinner, formatType);
             @SuppressWarnings("unchecked")
             Spinner<T> casted = (Spinner<T>) spinner;
             return casted;
         }
         throw new IllegalArgumentException("Unsupported type: " + type);
+    }
+
+    private void applySpinnerFormatPrompt(Spinner<?> spinner, String formatType) {
+        if (formatType != null && !formatType.isBlank() && spinner.getEditor() != null) {
+            spinner.getEditor().setPromptText(formatType);
+        }
     }
 
     @Override
