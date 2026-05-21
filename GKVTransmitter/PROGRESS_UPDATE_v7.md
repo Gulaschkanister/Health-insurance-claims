@@ -87,9 +87,10 @@ Die Blaupause definiert einen klaren Ablauf:
 ## 5. Validierung
 
 - Dependency Advisory Check (Maven): **keine bekannten Schwachstellen** ✅
-- `mvn clean package`: **BUILD SUCCESS** ✅
-- `mvn pmd:check`: in aktueller Umgebung weiterhin abhängig von Java-Release-Setup (bekannte Umgebungsabhängigkeit)
-- CodeQL Security Check: wird nach Abschluss erneut ausgeführt
+- `mvn clean package`: **BUILD FAILURE** ❌  
+  Ursache: `release version 21 not supported` (lokale Runner-Java-Version weicht von Projektanforderung ab)
+- `mvn pmd:check`: **BUILD SUCCESS** ✅
+- CodeQL Security Check: **0 Alerts** ✅
 
 ---
 
