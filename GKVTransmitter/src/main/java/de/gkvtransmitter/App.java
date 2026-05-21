@@ -2,6 +2,7 @@ package de.gkvtransmitter;
 
 import java.util.stream.Collectors;
 
+import atlantafx.base.theme.PrimerLight;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.presentation.Controller;
 import de.gkvtransmitter.util.HibernateUtil;
@@ -66,6 +67,7 @@ public class App extends Application {
             String statusText = "GKVTransmitter geladen - " + profileStatus + " | " + invoiceStatus;
 
             Scene scene = view.createMainScene(statusText, 900, 600);
+            Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
             stage.setTitle("GKVTransmitter");
             stage.setScene(scene);
             stage.show();
