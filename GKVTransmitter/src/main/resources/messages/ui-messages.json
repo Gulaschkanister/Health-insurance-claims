@@ -36,5 +36,8 @@
   "msg.invalidNumbers": "PLZ und IK müssen Zahlen sein!",
   "msg.deleteConfirmTitle": "Bestätigung",
   "msg.deleteConfirmHeader": "Patient löschen?",
-  "msg.deleteConfirmBody": "Soll der Patient %s wirklich gelöscht werden?"
+  "msg.deleteConfirmBody": "Soll der Patient %s wirklich gelöscht werden?",
+  "label.invoicePresets": "Vorlagen (optional)",
+  "label.serviceProviderPreset": "Vorhandenen Dienstleister laden (optional)",
+  "prompt.serviceProviderPreset": "Dienstleister auswählen"
 }

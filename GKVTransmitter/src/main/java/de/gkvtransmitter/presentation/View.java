@@ -40,6 +40,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
@@ -125,7 +126,9 @@ public class View {
                             entry.getKey(),
                             entry.getValue().isInternal(),
                             entry.getValue().getFieldJavaType());
-                    allFieldNodes.put(entry.getKey(), inputField);
+                    if (inputField != null) {
+                        allFieldNodes.put(entry.getKey(), inputField);
+                    }
                 }
             }
         }
@@ -135,6 +138,8 @@ public class View {
         Label title = componentFactory.createLabel(invoiceName);
         title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
         vbox.getChildren().add(title);
+        vbox.getChildren().add(buildPresetSection(allFieldNodes));
+        vbox.getChildren().add(new Separator());
 
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
@@ -150,6 +155,135 @@ public class View {
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
         skeleton.setCenter(scrollPane);
+    }
+
+    /**
+     * Erstellt die optionale Vorlagen-Box am Anfang jedes Rechnungsformulars.
+     * Ermöglicht das schnelle Vorab-Befüllen von Patienten- und Dienstleister-Feldern.
+     */
+    private VBox buildPresetSection(Map<String, Node> allFieldNodes) {
+        VBox presetBox = new VBox(8);
+        presetBox.setPadding(new Insets(10, 20, 10, 20));
+        presetBox.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #dddddd; -fx-border-radius: 4; -fx-background-radius: 4;");
+
+        Label presetTitle = componentFactory.createLabel(messages.get("label.invoicePresets"));
+        presetTitle.setStyle("-fx-font-size: 13; -fx-font-weight: bold;");
+
+        Label patientLabel = componentFactory.createLabel(messages.get("label.patientPreset"));
+        ComboBox<String> patientCombo = new ComboBox<>();
+        patientCombo.setPrefWidth(300);
+        patientCombo.setPromptText(messages.get("prompt.patientPreset"));
+
+        List<Patient> patients = loadPatientsSilently();
+        Map<String, Patient> patientMap = new HashMap<>();
+        for (Patient p : patients) {
+            String displayName = p.getFirstname() + " " + p.getLastname();
+            patientCombo.getItems().add(displayName);
+            patientMap.put(displayName, p);
+        }
+        patientCombo.setOnAction(evt -> {
+            String selected = patientCombo.getValue();
+            if (selected != null && patientMap.containsKey(selected)) {
+                prefillFromPatient(patientMap.get(selected), allFieldNodes);
+            }
+        });
+
+        Label spLabel = componentFactory.createLabel(messages.get("label.serviceProviderPreset"));
+        ComboBox<String> spCombo = new ComboBox<>();
+        spCombo.setPrefWidth(300);
+        spCombo.setPromptText(messages.get("prompt.serviceProviderPreset"));
+
+        List<ServiceProvider> providers = loadServiceProvidersSilently();
+        Map<String, ServiceProvider> spMap = new HashMap<>();
+        for (ServiceProvider sp : providers) {
+            String displayName = sp.getFirstname() + " " + sp.getLastname();
+            spCombo.getItems().add(displayName);
+            spMap.put(displayName, sp);
+        }
+        spCombo.setOnAction(evt -> {
+            String selected = spCombo.getValue();
+            if (selected != null && spMap.containsKey(selected)) {
+                prefillFromServiceProvider(spMap.get(selected), allFieldNodes);
+            }
+        });
+
+        HBox patientRow = new HBox(10, patientLabel, patientCombo);
+        HBox spRow = new HBox(10, spLabel, spCombo);
+        presetBox.getChildren().addAll(presetTitle, patientRow, spRow);
+        return presetBox;
+    }
+
+    /**
+     * Befüllt NAD-Felder (Name, Adresse, Geburtsdatum) und INV-Versichertennummer aus dem gewählten Patienten.
+     */
+    private void prefillFromPatient(Patient patient, Map<String, Node> allFieldNodes) {
+        setNodeText(allFieldNodes, "Nachname", patient.getLastname());
+        setNodeText(allFieldNodes, "Vorname", patient.getFirstname());
+        setNodeDate(allFieldNodes, "Geburtsdatum", patient.getBirthDate());
+        setNodeText(allFieldNodes, "Straße", patient.getStreet() + " " + patient.getHousenumber());
+        setNodeText(allFieldNodes, "Postleitzahl", String.valueOf(patient.getPlz()));
+        setNodeText(allFieldNodes, "Stadt", patient.getCountry());
+        setNodeText(allFieldNodes, "Versichertennummer", String.valueOf(patient.getIk()));
+    }
+
+    /**
+     * Befüllt FKT-IK-Feld des Leistungserbringers aus dem gewählten Dienstleister.
+     */
+    private void prefillFromServiceProvider(ServiceProvider sp, Map<String, Node> allFieldNodes) {
+        setNodeText(allFieldNodes, "IK des Leistungserbringers", String.valueOf(sp.getIk()));
+    }
+
+    /**
+     * Setzt einen Textwert in ein beliebiges Eingabefeld (TextField, Spinner, ComboBox).
+     */
+    @SuppressWarnings("unchecked")
+    private void setNodeText(Map<String, Node> fields, String key, String value) {
+        Node node = fields.get(key);
+        if (node == null || value == null || value.isBlank()) {
+            return;
+        }
+        switch (node) {
+            case TextField tf -> tf.setText(value);
+            case Spinner<?> sp -> {
+                if (sp.getEditor() != null) {
+                    sp.getEditor().setText(value);
+                }
+            }
+            case ComboBox<?> cb -> {
+                ComboBox<String> stringCb = (ComboBox<String>) cb;
+                if (!stringCb.getItems().contains(value)) {
+                    stringCb.getItems().add(0, value);
+                }
+                stringCb.setValue(value);
+            }
+            default -> { /* unsupported node type */ }
+        }
+    }
+
+    /**
+     * Setzt einen Datumswert in ein DatePicker-Feld.
+     */
+    private void setNodeDate(Map<String, Node> fields, String key, LocalDate value) {
+        Node node = fields.get(key);
+        if (node instanceof DatePicker dp && value != null) {
+            dp.setValue(value);
+        }
+    }
+
+    private List<Patient> loadPatientsSilently() {
+        try {
+            return controller.getDatabase().getAllPatients();
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private List<ServiceProvider> loadServiceProvidersSilently() {
+        try {
+            return controller.getDatabase().getAllServiceProviders();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     private void editPatient() {

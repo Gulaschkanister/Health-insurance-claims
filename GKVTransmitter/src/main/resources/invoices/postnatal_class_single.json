@@ -1,0 +1,101 @@
+{
+    "schemaVersion": "1.0",
+    "version": "V21",
+    "invoicerName": "Rückbildungskurs Einzelabrechnung",
+    "segments": [
+        {
+            "position": 1,
+            "segmentType": "UNB",
+            "nachrichtentyp": null
+        },
+        {
+            "position": 2,
+            "segmentType": "UNH",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 3,
+            "segmentType": "FKT",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 4,
+            "segmentType": "REC",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 5,
+            "segmentType": "UST",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 6,
+            "segmentType": "GES",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 7,
+            "segmentType": "GES",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 8,
+            "segmentType": "NAM",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 9,
+            "segmentType": "UNT",
+            "nachrichtentyp": "SLGA"
+        },
+        {
+            "position": 10,
+            "segmentType": "UNH",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 11,
+            "segmentType": "FKT",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 12,
+            "segmentType": "REC",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 13,
+            "segmentType": "INV",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 14,
+            "segmentType": "NAD",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 15,
+            "segmentType": "ENF",
+            "nachrichtentyp": "SLLA",
+            "values": {
+                "Zeilen-Identifikationsnummer": "01",
+                "Abrechnungspositionsnummer": "306050602"
+            }
+        },
+        {
+            "position": 16,
+            "segmentType": "BES",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 17,
+            "segmentType": "UNT",
+            "nachrichtentyp": "SLLA"
+        },
+        {
+            "position": 18,
+            "segmentType": "UNZ",
+            "nachrichtentyp": null
+        }
+    ]
+}

@@ -63,7 +63,7 @@
       "example": "12345",
       "description": "Postleitzahl",
       "fieldArt": "M",
-      "inputType": "INTEGER",
+      "inputType": "NUMBER",
       "internal": false
     },
     {

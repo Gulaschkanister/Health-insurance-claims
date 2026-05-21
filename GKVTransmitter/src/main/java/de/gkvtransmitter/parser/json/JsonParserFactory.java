@@ -35,7 +35,8 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
             "profiles/slga-profile.json");
 
     private static final List<String> INVOICE_FILES = List.of(
-            "invoices/antenatal_class_single.json");
+            "invoices/antenatal_class_single.json",
+            "invoices/postnatal_class_single.json");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private Map<InvoiceType, Invoice> profileByTypeCache;
