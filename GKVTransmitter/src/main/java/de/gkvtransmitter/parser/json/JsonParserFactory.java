@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,16 +31,26 @@ import de.gkvtransmitter.parser.ParserFactory;
 
 public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
 
-    private static final List<String> PROFILE_FILES = List.of(
+    private static final String PROFILE_CATALOG_RESOURCE = "profiles/profile-catalog.json";
+    private static final String INVOICE_CATALOG_RESOURCE = "invoices/invoice-catalog.json";
+    private static final List<String> DEFAULT_PROFILE_FILES = List.of(
             "profiles/slla-profile.json",
             "profiles/slga-profile.json");
 
-    private static final List<String> INVOICE_FILES = List.of(
-            "invoices/antenatal_class_single.json");
+    private static final List<String> DEFAULT_INVOICE_FILES = List.of(
+            "invoices/antenatal_class_single.json",
+            "invoices/postpartum_recovery_single.json");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final List<String> profileFiles;
+    private final List<String> invoiceFiles;
     private Map<InvoiceType, Invoice> profileByTypeCache;
     private final Map<String, SegmentDefinition> segmentDefinitionCache = new LinkedHashMap<>();
+
+    public JsonParserFactory() {
+        this.profileFiles = loadResourceList(PROFILE_CATALOG_RESOURCE, DEFAULT_PROFILE_FILES);
+        this.invoiceFiles = loadResourceList(INVOICE_CATALOG_RESOURCE, DEFAULT_INVOICE_FILES);
+    }
 
     @Override
     public Invoice parse() {
@@ -56,12 +67,12 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
     }
 
     public List<Invoice> parseProfiles() {
-        return PROFILE_FILES.stream().map(this::parseProfile).toList();
+        return profileFiles.stream().map(this::parseProfile).toList();
     }
 
     public List<DtaMessage> parseInvoices() {
         ensureProfileCache();
-        return INVOICE_FILES.stream().map(this::parseInvoiceResource).toList();
+        return invoiceFiles.stream().map(this::parseInvoiceResource).toList();
     }
 
     public List<SegmentDefinition> parseSegments() {
@@ -471,6 +482,35 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         // Fallback to a stable, searchable value when the JSON does not yet
         // expose a dedicated invoicerName field.
         return sourceName;
+    }
+
+    private List<String> loadResourceList(String catalogResourcePath, List<String> fallback) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(catalogResourcePath)) {
+            if (inputStream == null) {
+                return fallback;
+            }
+
+            JsonNode catalogRoot = objectMapper.readTree(inputStream);
+            JsonNode filesNode = catalogRoot.path("files");
+            if (!filesNode.isArray()) {
+                return fallback;
+            }
+
+            List<String> configuredResources = new ArrayList<>();
+            for (JsonNode fileNode : filesNode) {
+                String path = fileNode.asText("").trim();
+                if (!path.isBlank()) {
+                    configuredResources.add(path);
+                }
+            }
+
+            if (configuredResources.isEmpty()) {
+                return fallback;
+            }
+            return Collections.unmodifiableList(configuredResources);
+        } catch (IOException ignored) {
+            return fallback;
+        }
     }
 
     private JsonNode readResourceTree(String resourcePath) {

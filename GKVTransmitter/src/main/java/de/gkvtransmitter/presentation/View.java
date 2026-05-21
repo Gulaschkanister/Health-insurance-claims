@@ -101,11 +101,18 @@ public class View {
         MenuBuilder menuBuilder = new MenuBuilder(componentFactory, messages);
 
         Map<String, Runnable> invoiceHandlers = new LinkedHashMap<>();
-        for (String name : controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()) {
+        List<String> invoiceNames = controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()
+                .stream()
+                .sorted()
+                .toList();
+        for (String name : invoiceNames) {
             invoiceHandlers.put(name, () -> createFormular(name));
         }
 
-        for (InvoiceBlueprint blueprint : controller.getDatabase().getAllInvoiceBlueprints()) {
+        List<InvoiceBlueprint> blueprints = controller.getDatabase().getAllInvoiceBlueprints().stream()
+                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+                .toList();
+        for (InvoiceBlueprint blueprint : blueprints) {
             String templateName = blueprint.getInvoiceTemplateName();
             if (controller.getGlobalDefinitions().getInvoiceTemplateCollection().containsKey(templateName)) {
                 invoiceHandlers.put("[Vorlage] " + blueprint.getName(),
@@ -156,8 +163,9 @@ public class View {
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
+        vbox.getStyleClass().add("form-container");
         Label title = componentFactory.createLabel(invoiceName);
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        title.getStyleClass().add("app-title");
         vbox.getChildren().add(title);
 
         List<Node> fieldNodes = new ArrayList<>();
@@ -169,7 +177,7 @@ public class View {
         }
 
         GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
-        vbox.getChildren().add(contentGrid);
+        contentGrid.getStyleClass().add("form-grid");
 
         List<Patient> allPatients = controller.getDatabase().getAllPatients();
         Set<Integer> preselectedPatientIds = parseSelectedPatientIds(blueprint);
@@ -190,10 +198,17 @@ public class View {
 
         HBox buttonBox = new HBox(10, saveTemplateButton, generateDtaButton, sendDtaButton, receiveRepliesButton);
         buttonBox.setPadding(new Insets(10, 0, 0, 0));
-        vbox.getChildren().addAll(patientSelection, buttonBox);
+        buttonBox.getStyleClass().add("button-row");
+
+        VBox invoiceSection = createSection(messages.get("section.invoiceData"), contentGrid);
+        VBox patientSection = createSection(messages.get("section.patientSelection"), patientSelection);
+        VBox actionSection = createSection(messages.get("section.actions"), buttonBox);
+
+        vbox.getChildren().addAll(invoiceSection, patientSection, actionSection);
 
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
+        scrollPane.getStyleClass().add("app-scroll-pane");
         skeleton.setCenter(scrollPane);
     }
 
@@ -217,6 +232,15 @@ public class View {
         }
         box.getChildren().addAll(label, patientSelector);
         return box;
+    }
+
+    private VBox createSection(String title, Node content) {
+        VBox section = new VBox(8);
+        section.getStyleClass().add("form-section");
+        Label sectionTitle = componentFactory.createLabel(title);
+        sectionTitle.getStyleClass().add("section-title");
+        section.getChildren().addAll(sectionTitle, content);
+        return section;
     }
 
     private void saveBlueprint(String invoiceTemplateName, Map<String, Node> fieldNodes,
@@ -491,26 +515,31 @@ public class View {
         }
 
         Button saveButton = componentFactory.createButton(messages.get("button.save"));
-        saveButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
         saveButton.setOnAction(event -> savePerson(inputFields, createServiceProvider));
 
         Button cancelButton = componentFactory.createButton(messages.get("button.cancel"));
-        cancelButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
         cancelButton.setOnAction(event -> skeleton.setCenter(null));
 
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(10));
+        buttonBox.getStyleClass().add("button-row");
         buttonBox.getChildren().addAll(saveButton, cancelButton);
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
+        vbox.getStyleClass().add("form-container");
         Label title = componentFactory.createLabel(titleText);
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        title.getStyleClass().add("app-title");
         GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
-        vbox.getChildren().addAll(title, contentGrid, buttonBox);
+        contentGrid.getStyleClass().add("form-grid");
+
+        VBox personDataSection = createSection(messages.get("section.personData"), contentGrid);
+        VBox actionSection = createSection(messages.get("section.actions"), buttonBox);
+        vbox.getChildren().addAll(title, personDataSection, actionSection);
 
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
+        scrollPane.getStyleClass().add("app-scroll-pane");
         skeleton.setCenter(scrollPane);
     }
 
