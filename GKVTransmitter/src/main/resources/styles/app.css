@@ -1,19 +1,76 @@
 .root {
     -fx-font-size: 13px;
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #111827;
 }
 
 .menu-bar {
     -fx-background-color: #1f2937;
+    -fx-border-color: #111827;
+    -fx-border-width: 0 0 1 0;
 }
 
-.menu-bar .label {
+.menu-bar > .container > .menu-button > .label {
     -fx-text-fill: white;
+}
+
+.menu-item .label {
+    -fx-text-fill: #111827;
 }
 
 .button {
     -fx-background-radius: 6;
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-padding: 8 14 8 14;
+}
+
+.button:hover {
+    -fx-background-color: #1d4ed8;
+}
+
+.label {
+    -fx-text-fill: #111827;
 }
 
 .scroll-pane {
-    -fx-background-color: #f8fafc;
+    -fx-background-color: transparent;
+}
+
+.app-scroll-pane > .viewport {
+    -fx-background-color: #f3f4f6;
+}
+
+.app-title {
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+}
+
+.form-container {
+    -fx-background-color: #f3f4f6;
+}
+
+.form-section {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-padding: 12;
+}
+
+.section-title {
+    -fx-font-size: 14;
+    -fx-font-weight: bold;
+}
+
+.button-row {
+    -fx-alignment: center-left;
+}
+
+.text-field,
+.combo-box,
+.date-picker,
+.spinner {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #111827;
 }

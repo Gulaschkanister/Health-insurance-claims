@@ -24,3 +24,5 @@ mvn clean package
 - `src/main/java/de/gkvtransmitter/App.java`: JavaFX-Anwendung
 - `src/main/java/de/gkvtransmitter/Main.java`: Main-Einstiegspunkt
 - `src/main/resources/`: JSON-Definitionen fuer Codes, Segmente, Profile und Rechnungsbeispiele
+- `src/main/resources/invoices/invoice-catalog.json`: konfigurierbare Liste der ladbaren Invoice-Templates
+- `src/main/resources/profiles/profile-catalog.json`: konfigurierbare Liste der ladbaren Profile
