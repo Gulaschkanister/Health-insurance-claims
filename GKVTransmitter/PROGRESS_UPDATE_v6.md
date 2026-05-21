@@ -28,12 +28,14 @@ In dieser Session wurde die Rechnungs-UI gezielt so erweitert, dass bei der Erfa
 
 - Im Rechnungsformular wurde ein eigener Preset-Bereich ergänzt.
 - Auswahl eines Patienten befüllt passende `NAD`-Felder automatisch (u. a. Nachname, Vorname, Geburtsdatum, Straße/Hausnummer, Postleitzahl).
+- Wenn genau **ein** Patient vorhanden ist, werden die passenden Rechnungsfelder direkt beim Öffnen vorbelegt.
 
 ### 2.3 Schnellübernahme Dienstleister
 
 - Auswahl eines Dienstleisters befüllt passende Felder automatisch:
   - `NAM` (u. a. Nachname/Vorname)
   - `FKT`-IK-Felder mit Leistungserbringer-/Rechnungsstellerbezug
+- Wenn genau **ein** Dienstleister vorhanden ist, erfolgt diese Übernahme direkt automatisch.
 
 ### 2.4 Sammelrechnungs-Defaults
 

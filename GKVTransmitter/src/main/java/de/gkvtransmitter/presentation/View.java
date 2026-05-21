@@ -145,7 +145,7 @@ public class View {
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
             fieldNodes.add(componentFactory.createBorderPane(
-                    componentFactory.createLabel(entry.getKey()),
+                    componentFactory.createLabel(formatInvoiceFieldLabel(entry.getKey())),
                     entry.getValue(),
                     null, null, null));
         }
@@ -412,6 +412,17 @@ public class View {
         return uiKey;
     }
 
+    private String formatInvoiceFieldLabel(String uiKey) {
+        String segment = extractSegmentFromUiKey(uiKey);
+        int position = extractSegmentPositionFromUiKey(uiKey);
+        String fieldName = extractFieldNameFromUiKey(uiKey);
+
+        if (segment.isBlank() || position == Integer.MAX_VALUE) {
+            return fieldName;
+        }
+        return segment + " " + position + " - " + fieldName;
+    }
+
     private String extractSegmentFromUiKey(String uiKey) {
         if (uiKey == null) {
             return "";
@@ -465,6 +476,11 @@ public class View {
                 }
             }
         });
+        if (patients.size() == 1) {
+            String onlyPatient = patientPreset.getItems().get(0);
+            patientPreset.setValue(onlyPatient);
+            applyPatientPresetToInvoiceFields(patientByDisplayName.get(onlyPatient), allFieldNodes, fieldSegments);
+        }
 
         ComboBox<String> providerPreset = new ComboBox<>();
         providerPreset.setPrefWidth(380);
@@ -485,6 +501,12 @@ public class View {
                 }
             }
         });
+        if (providers.size() == 1) {
+            String onlyProvider = providerPreset.getItems().get(0);
+            providerPreset.setValue(onlyProvider);
+            applyServiceProviderPresetToInvoiceFields(providerByDisplayName.get(onlyProvider), allFieldNodes,
+                    fieldSegments);
+        }
 
         VBox presetBox = new VBox(8);
         presetBox.setPadding(new Insets(10, 0, 10, 0));
