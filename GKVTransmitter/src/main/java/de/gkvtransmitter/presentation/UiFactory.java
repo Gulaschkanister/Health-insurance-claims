@@ -44,6 +44,23 @@ public interface UiFactory {
      */
     Alert createErrorAlert(String title, String message);
 
+    /**
+     * Erstellt ein BorderPane mit den angegebenen Knoten in den entsprechenden
+     * Bereichen.
+     *
+     * @param topProperty Der Knoten, der im oberen Bereich des BorderPane
+     * platziert werden soll
+     * @param centerProperty Der Knoten, der im zentralen Bereich des BorderPane
+     * platziert werden soll
+     * @param bottomProperty Der Knoten, der im unteren Bereich des BorderPane
+     * platziert werden soll
+     * @param leftProperty Der Knoten, der im linken Bereich des BorderPane
+     * platziert werden soll
+     * @param rightProperty Der Knoten, der im rechten Bereich des BorderPane
+     * platziert werden soll
+     * @return Das erstellte BorderPane mit den angegebenen Knoten in den
+     * entsprechenden Bereichen
+     */
     BorderPane createBorderPane(Node topProperty, Node centerProperty, Node bottomProperty, Node leftProperty,
             Node rightProperty);
 
@@ -63,6 +80,12 @@ public interface UiFactory {
 
     MenuItem createMenuItem(String text);
 
+    /**
+     * Erstellt ein GridPane mit der angegebenen Anzahl von Spalten und den übergebenen Knoten.
+     * @param columns Die Anzahl der Spalten im GridPane
+     * @param nodes Die Knoten, die im GridPane platziert werden sollen
+     * @return Das erstellte GridPane mit den angegebenen Knoten
+     */
     GridPane createGridPane(int columns, Node... nodes);
 
     TextField createTextField();

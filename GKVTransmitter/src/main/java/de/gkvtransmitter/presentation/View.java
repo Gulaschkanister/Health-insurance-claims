@@ -20,7 +20,6 @@ import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import de.gkvtransmitter.presentation.builder.MenuBuilder;
-import de.gkvtransmitter.presentation.controller.EditFormController;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.AppMessages;
@@ -53,15 +52,12 @@ import javafx.scene.layout.VBox;
 /**
  * View-Schicht der Anwendung - REFAKTORIERT
  *
- * Nach großem Refactoring jetzt mit:
- * - Fokus auf Szenen-Management und Hauptmenü
- * - Delegation komplexer Logik an spezialisierte Komponenten
- * - Klare Separation of Concerns
+ * Nach großem Refactoring jetzt mit: - Fokus auf Szenen-Management und
+ * Hauptmenü - Delegation komplexer Logik an spezialisierte Komponenten - Klare
+ * Separation of Concerns
  *
- * Delegationen:
- * - Entity-Bearbeitung -> EditFormController
- * - Feld-Populierung -> EntityFieldPopulator
- * - Menü-Erstellung -> MenuBuilder
+ * Delegationen: - Entity-Bearbeitung -> EditFormController - Feld-Populierung
+ * -> EntityFieldPopulator - Menü-Erstellung -> MenuBuilder
  */
 public class View {
 
@@ -71,7 +67,7 @@ public class View {
     private final ObjectMapper objectMapper;
     private final Map<String, List<String>> invoiceCodeOptions;
     private BorderPane skeleton;
-    
+
     private final PatientFieldPopulator patientPopulator;
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
 
@@ -85,12 +81,25 @@ public class View {
         this.serviceProviderPopulator = new ServiceProviderFieldPopulator();
     }
 
+    /**
+     * Erstellt die Hauptszene mit einem leeren Layout und einer Menüleiste.
+     *
+     * @param statusText Der Text, der im Statusbereich angezeigt werden soll
+     * @param width Die Breite der Szene
+     * @param height Die Höhe der Szene
+     * @return Die erstellte Hauptszene
+     */
     public Scene createMainScene(String statusText, double width, double height) {
         MenuBar menuBar = buildMainMenuBar();
         this.skeleton = componentFactory.createBorderPane(menuBar, null, null, null, null);
         return componentFactory.createScene(skeleton, width, height);
     }
 
+    /**
+     * Erstellt die Hauptmenüleiste mit dynamischen Einträgen basierend auf den
+     *
+     * @return die erstellte MenuBar für die Hauptszene
+     */
     private MenuBar buildMainMenuBar() {
         MenuBuilder menuBuilder = new MenuBuilder(componentFactory, messages);
 
@@ -109,13 +118,19 @@ public class View {
         return menuBuilder.build();
     }
 
+    /**
+     * Erstellt und zeigt das Formular für die angegebene Rechnungsvorlage.
+     *
+     * @param invoiceName Der Name der Rechnungsvorlage, die geladen werden
+     * soll.
+     */
     private void createFormular(String invoiceName) {
         DtaMessage dtaMessage = controller.getGlobalDefinitions().getInvoiceTemplateCollection().get(invoiceName);
         if (dtaMessage == null) {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.noTemplate"));
             return;
         }
-
+        //TODO: Nicht anzeigen der hintergrund texte 
         Map<String, Node> allFieldNodes = new HashMap<>();
         for (SegmentInfo info : dtaMessage.getSegments()) {
             for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
@@ -126,6 +141,7 @@ public class View {
                             entry.getValue().isInternal(),
                             entry.getValue().getFieldJavaType());
                     allFieldNodes.put(entry.getKey(), inputField);
+                    //TODO: hier werden die Eingabefelder in allFieldnodes gespeichert
                 }
             }
         }
@@ -138,10 +154,12 @@ public class View {
 
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
+            //TODO: wor werden nochmal die Eingabefelder für die Labels erzeugt?
             fieldNodes.add(componentFactory.createBorderPane(
                     componentFactory.createLabel(entry.getKey()),
                     entry.getValue(),
                     null, null, null));
+
         }
 
         GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
@@ -153,45 +171,62 @@ public class View {
     }
 
     private void editPatient() {
-        EditFormController<Patient> editController = new EditFormController<>(
-                componentFactory,
-                messages,
-                patientPopulator,
-                () -> controller.getDatabase().getAllPatients(),
-                patient -> controller.getDatabase().savePatient(patient),
-                patient -> controller.getDatabase().deletePatient(patient),
-                fieldName -> createInputFieldFromTagList(fieldName, 
-                        TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
-                "Patient",
-                fc -> skeleton.setCenter(null)
-        );
-        skeleton.setCenter(editController.buildEditForm());
+        // EditFormController<Patient> editController = new EditFormController<>(
+        //         componentFactory,
+        //         messages,
+        //         patientPopulator,
+        //         () -> controller.getDatabase().getAllPatients(),
+        //         patient -> controller.getDatabase().savePatient(patient),
+        //         patient -> controller.getDatabase().deletePatient(patient),
+        //         fieldName -> createInputFieldFromTagList(fieldName, 
+        //                 TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
+        //         "Patient",
+        //         fc -> skeleton.setCenter(null)
+        // );
+        // skeleton.setCenter(editController.buildEditForm());
+        //TODO: Patienten bearbeiten
     }
 
     private void editServiceProvider() {
-        EditFormController<ServiceProvider> editController = new EditFormController<>(
-                componentFactory,
-                messages,
-                serviceProviderPopulator,
-                () -> controller.getDatabase().getAllServiceProviders(),
-                sp -> controller.getDatabase().saveServiceProvider(sp),
-                sp -> controller.getDatabase().deleteServiceProvider(sp),
-                fieldName -> createInputFieldFromTagList(fieldName,
-                        TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
-                "ServiceProvider",
-                fc -> skeleton.setCenter(null)
-        );
-        skeleton.setCenter(editController.buildEditForm());
+        // EditFormController<ServiceProvider> editController = new EditFormController<>(
+        //         componentFactory,
+        //         messages,
+        //         serviceProviderPopulator,
+        //         () -> controller.getDatabase().getAllServiceProviders(),
+        //         sp -> controller.getDatabase().saveServiceProvider(sp),
+        //         sp -> controller.getDatabase().deleteServiceProvider(sp),
+        //         fieldName -> createInputFieldFromTagList(fieldName,
+        //                 TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
+        //         "ServiceProvider",
+        //         fc -> skeleton.setCenter(null)
+        // );
+        // skeleton.setCenter(editController.buildEditForm());
+        //TODO: Patienten bearbeiten
     }
 
+    /**
+     * Öffnet das Formular zur Erstellung eines neuen Patienten.
+     */
     private void createPerson() {
         showCreatePersonForm(messages.get("title.patient.new"), false);
     }
 
+    /**
+     * Öffnet das Formular zur Erstellung eines neuen Service Providers
+     * (Selbst).
+     */
     private void createSelfPerson() {
         showCreatePersonForm(messages.get("title.self.new"), true);
     }
 
+    /**
+     * Zeigt das Formular zur Erstellung eines neuen Patienten oder Service
+     * Providers an.
+     *
+     * @param titleText Der Titel des Formulars
+     * @param createServiceProvider Ob ein Service Provider (Selbst) oder ein
+     * Patient erstellt werden soll
+     */
     private void showCreatePersonForm(String titleText, boolean createServiceProvider) {
         Map<String, TagList> tagConfig = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
         Map<String, Node> inputFields = new HashMap<>();
@@ -232,6 +267,15 @@ public class View {
         skeleton.setCenter(scrollPane);
     }
 
+    /**
+     * Speichert einen neuen Patienten oder Service Provider basierend auf den
+     * eingegebenen Daten.
+     *
+     * @param inputFields Die Map der Eingabefelder mit ihren zugehörigen
+     * UI-Komponenten
+     * @param saveAsServiceProvider Ob die Daten als Service Provider (Selbst)
+     * oder als Patient gespeichert werden sollen
+     */
     private void savePerson(Map<String, Node> inputFields, boolean saveAsServiceProvider) {
         try {
             String firstname = getFieldText(inputFields.get("firstname"));
@@ -264,24 +308,60 @@ public class View {
         }
     }
 
-    private Node createInputfieldFromTag(InputOption inputOption, String directName, 
+    /**
+     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ.
+     *
+     * @param inputOption - die Eingabeoption, die den Typ des UI-Elements
+     * angibt
+     * @param directName - der direkte Name des Feldes, der für spezielle Fälle
+     * wie Code-Auswahl verwendet werden kann
+     * @param visible - ob das Feld sichtbar ist, was für die Rückgabe
+     * berücksichtigt werden könnte
+     * @param javaFieldType - der Java-Typ des Feldes, der für die Rückgabe
+     * berücksichtigt werden könnte
+     * @return der Textwert des UI-Elements als String
+     */
+    private Node createInputfieldFromTag(InputOption inputOption, String directName,
             boolean visible, String javaFieldType) {
-        if (inputOption == null) return null;
+        if (inputOption == null) {
+            return null;
+        }
 
         return switch (inputOption) {
-            case CODE -> createCodeDropdownForInvoiceField(directName);
-            case NUMBER_SUGGESTION -> componentFactory.createComboBox(true);
-            case NUMBER -> componentFactory.createSpinner(Integer.class, null, inputOption);
-            case STRING -> componentFactory.createTextField();
-            case PERCENT, COST -> componentFactory.createSpinner(BigDecimal.class, null, inputOption);
-            case BOOLEAN -> componentFactory.createCheckBox(directName);
-            case DATE -> componentFactory.createDatePicker();
-            default -> throw new IllegalArgumentException("Unbekannter InputType: " + inputOption);
+            case CODE ->
+                createCodeDropdownForInvoiceField(directName);
+            case NUMBER_SUGGESTION ->
+                componentFactory.createComboBox(true);
+            case NUMBER ->
+                componentFactory.createSpinner(Integer.class, null, inputOption);
+            case STRING ->
+                componentFactory.createTextField();
+            case PERCENT, COST ->
+                componentFactory.createSpinner(BigDecimal.class, null, inputOption);
+            case BOOLEAN ->
+                componentFactory.createCheckBox(directName);
+            case DATE ->
+                componentFactory.createDatePicker();
+            default ->
+                throw new IllegalArgumentException("Unbekannter InputType: " + inputOption);
         };
     }
 
+    /**
+     * Erstellt ein Eingabefeld basierend auf der TagList-Konfiguration für ein
+     * bestimmtes Feld.
+     *
+     * @param fieldName - der Name des Feldes, für das das Eingabefeld erstellt
+     * werden soll
+     * @param tagList - die TagList, die die Konfiguration für das Feld enthält,
+     * einschließlich der InputOption und möglicher Modifier
+     * @return das erstellte Node, das als Eingabefeld für das angegebene Feld
+     * verwendet werden kann
+     */
     private Node createInputFieldFromTagList(String fieldName, TagList tagList) {
-        if (tagList == null) return componentFactory.createTextField();
+        if (tagList == null) {
+            return componentFactory.createTextField();
+        }
 
         InputOption inputOption = tagList.getInputOption();
         return switch (inputOption) {
@@ -298,14 +378,33 @@ public class View {
                 Spinner<BigDecimal> spinner = componentFactory.createSpinner(BigDecimal.class, null, inputOption);
                 yield createValidatedSpinnerNode(fieldName, spinner, inputOption, "BigDecimal");
             }
-            case CODE -> componentFactory.createComboBox(false);
-            case NUMBER_SUGGESTION -> componentFactory.createComboBox(true);
-            case DATE, TIME -> componentFactory.createDatePicker();
-            default -> componentFactory.createTextField();
+            case CODE ->
+                componentFactory.createComboBox(false);
+            case NUMBER_SUGGESTION ->
+                componentFactory.createComboBox(true);
+            case DATE, TIME ->
+                componentFactory.createDatePicker();
+            default ->
+                componentFactory.createTextField();
         };
     }
 
-    private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner, 
+    /**
+     * Erstellt ein validiertes Spinner-Node mit einem Fehlerlabel, das die
+     * Eingabe basierend auf dem Feldnamen, der InputOption und dem Java-Feldtyp
+     * validiert.
+     *
+     * @param fieldName - der Name des Feldes, das validiert werden soll, z.B.
+     * "plz" für Postleitzahl
+     * @param spinner - der Spinner, der validiert werden soll
+     * @param inputOption - die InputOption, die den Typ der Eingabe angibt,
+     * z.B. NUMBER oder PERCENT
+     * @param javaFieldType - der Java-Typ des Feldes, z.B. "Integer" oder
+     * "BigDecimal", der für die Validierung berücksichtigt werden kann
+     * @return ein Node, das den Spinner und ein Fehlerlabel enthält, das die
+     * Validierungsergebnisse anzeigt
+     */
+    private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner,
             InputOption inputOption, String javaFieldType) {
         Label errorLabel = componentFactory.createLabel("");
         errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
@@ -320,7 +419,9 @@ public class View {
         if (spinner.getEditor() != null) {
             spinner.getEditor().textProperty().addListener((obs, o, n) -> validate.run());
             spinner.getEditor().focusedProperty().addListener((obs, oldF, newF) -> {
-                if (!newF) validate.run();
+                if (!newF) {
+                    validate.run();
+                }
             });
         }
 
@@ -328,6 +429,20 @@ public class View {
         return box;
     }
 
+    /**
+     * Erstellt ein Eingabefeld basierend auf der InputOption und anderen
+     * Parametern, die in der TagList definiert sind.
+     *
+     * @param spinner - der Spinner, der validiert werden soll
+     * @param fieldName - der Name des Feldes, das validiert werden soll, z.B.
+     * "plz" für Postleitzahl
+     * @param errorLabel - das Label, das Fehlermeldungen anzeigt, wenn die
+     * Validierung fehlschlägt
+     * @param inputOption - die InputOption, die den Typ der Eingabe angibt,
+     * z.B. NUMBER oder PERCENT
+     * @param javaFieldType - der Java-Typ des Feldes, z.B. "Integer" oder
+     * "BigDecimal", der für die Validierung berücksichtigt werden kann
+     */
     private void validateSpinner(Spinner<?> spinner, String fieldName, Label errorLabel,
             InputOption inputOption, String javaFieldType) {
         String valText = "";
@@ -377,6 +492,15 @@ public class View {
         }
     }
 
+    /**
+     * Wendet den MaxLengthModifier aus der TagList auf ein TextField an, um die
+     * maximale Länge der Eingabe zu begrenzen.
+     *
+     * @param textField das TextField, auf das der MaxLengthModifier angewendet
+     * werden soll
+     * @param tagList die TagList, die die Modifier enthält, einschließlich des
+     * MaxLengthModifier
+     */
     private void applyMaxLengthModifier(TextField textField, TagList tagList) {
         for (ModifierInstance modifier : tagList.getModifierList()) {
             if (modifier instanceof MaxLengthModifier mmod) {
@@ -391,6 +515,15 @@ public class View {
         }
     }
 
+    /**
+     * Erstellt ein Dropdown-Menü für Felder, die mit Codes gefüllt werden
+     * sollen, basierend auf dem Feldnamen.
+     *
+     * @param fieldName der Name des Feldes, für das das Dropdown erstellt
+     * werden soll
+     * @return ein Node, das ein ComboBox mit den entsprechenden Code-Optionen
+     * enthält, oder eine leere ComboBox, wenn keine Optionen gefunden wurden
+     */
     private Node createCodeDropdownForInvoiceField(String fieldName) {
         ComboBox<String> comboBox = new ComboBox<>();
         comboBox.setPrefWidth(300);
@@ -405,6 +538,15 @@ public class View {
         return comboBox;
     }
 
+    /**
+     * Löst die entsprechenden Code-Optionen für ein gegebenes Feld basierend
+     * auf dem
+     *
+     * @param fieldName der Name des Feldes, für das die Code-Optionen aufgelöst
+     * werden sollen
+     * @return eine Liste von Code-Optionen, die für das angegebene Feld
+     * relevant sind, oder eine leere Liste, wenn keine Optionen gefunden wurden
+     */
     private List<String> resolveCodeOptionsForField(String fieldName) {
         String normalized = normalizeFieldKey(fieldName);
 
@@ -417,10 +559,28 @@ public class View {
         return List.of();
     }
 
+    /**
+     * Normalisiert einen Feldnamen, indem er in Kleinbuchstaben umgewandelt und
+     * alle
+     *
+     * @param key der Nicht-Alphanumerischen Zeichen entfernt werden, um eine
+     * konsistente Basis für die Erkennung von Schlüsselwörtern wie
+     * "rechnungsart" oder "status" zu schaffen, unabhängig von der
+     * ursprünglichen Formatierung des Feldnamens.
+     * @return der normalisierte Feldname, der nur aus Kleinbuchstaben und
+     * Zahlen besteht, oder ein leerer String, wenn der Eingabewert null ist
+     */
     private String normalizeFieldKey(String key) {
         return key.toLowerCase().replaceAll("[^a-z0-9]", "");
     }
 
+    /**
+     * Lädt die Code-Optionen für Rechnungsarten und GES-Statuscodes aus den
+     *
+     * @return eine Map, die die geladenen Code-Optionen enthält, gruppiert nach
+     * Kategorie (z.B. "rechnungsarten", "ges_statuscodes"), oder eine leere
+     * Map, wenn keine Optionen geladen werden konnten
+     */
     private Map<String, List<String>> loadInvoiceCodeOptions() {
         Map<String, List<String>> options = new LinkedHashMap<>();
         try (InputStream is = getClass().getResourceAsStream("/codes/rechnungsarten.json")) {
@@ -456,6 +616,20 @@ public class View {
         return options;
     }
 
+    /**
+     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ. Wenn
+     * das Element in einer VBox verpackt ist, wird das erste Kind der VBox als
+     * Ziel für die Textgewinnung verwendet. Unterstützt verschiedene
+     * UI-Komponenten wie TextInputControl, Spinner, ComboBox und DatePicker, um
+     * den entsprechenden Textwert zurückzugeben. Wenn der Typ des UI-Elements
+     * nicht erkannt wird oder kein Text extrahiert werden kann, wird ein leerer
+     * String zurückgegeben.
+     *
+     * @param node das UI-Element, aus dem der Textwert extrahiert werden soll,
+     * z.B. ein TextField, Spinner, ComboBox oder DatePicker
+     * @return der Textwert des UI-Elements oder ein leerer String, wenn kein
+     * Text extrahiert werden kann
+     */
     private String getFieldText(Node node) {
         Node target = node;
         if (node instanceof VBox v && !v.getChildren().isEmpty()) {
@@ -484,6 +658,14 @@ public class View {
         return "";
     }
 
+    /**
+     * Zeigt einen Informationsdialog mit dem angegebenen Titel und der
+     * Nachricht an.
+     *
+     * @param title Der Titel des Informationsdialogs
+     * @param message Die Nachricht, die im Informationsdialog angezeigt werden
+     * soll
+     */
     public void showInfoDialog(String title, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);
@@ -492,6 +674,12 @@ public class View {
         alert.showAndWait();
     }
 
+    /**
+     * Zeigt einen Fehlerdialog mit dem angegebenen Titel und der Nachricht an.
+     *
+     * @param title Der Titel des Fehlerdialogs
+     * @param message Die Nachricht, die im Fehlerdialog angezeigt werden soll
+     */
     public void showErrorDialog(String title, String message) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setTitle(title);
