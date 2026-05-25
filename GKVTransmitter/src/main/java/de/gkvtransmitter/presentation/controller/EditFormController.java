@@ -48,6 +48,7 @@ public class EditFormController<T> {
     private final Function<String, Node> fieldBuilder;
     private final String entityTypeName;
     private final Consumer<VBox> onFormReady;
+    private final Consumer<EditFormController<T>> onChanged;
 
     private VBox formContainer;
 
@@ -60,7 +61,8 @@ public class EditFormController<T> {
             Consumer<T> entityDeleter,
             Function<String, Node> fieldBuilder,
             String entityTypeName,
-            Consumer<VBox> onFormReady) {
+            Consumer<VBox> onFormReady,
+            Consumer<EditFormController<T>> onChanged) {
         this.componentFactory = componentFactory;
         this.messages = messages;
         this.populator = populator;
@@ -70,6 +72,7 @@ public class EditFormController<T> {
         this.fieldBuilder = fieldBuilder;
         this.entityTypeName = entityTypeName;
         this.onFormReady = onFormReady;
+        this.onChanged = onChanged;
     }
 
     /**
@@ -213,6 +216,7 @@ public class EditFormController<T> {
 
             entitySaver.accept(entity);
             showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.saved"));
+            onChanged.accept(this);
             formContainer.getChildren().clear();
         } catch (NumberFormatException e) {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.invalidNumbers"));
@@ -235,6 +239,7 @@ public class EditFormController<T> {
             try {
                 entityDeleter.accept(entity);
                 showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.deleted"));
+                onChanged.accept(this);
                 formContainer.getChildren().clear();
             } catch (Exception e) {
                 showErrorDialog(messages.get("dialog.error.title"), e.getMessage());

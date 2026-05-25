@@ -20,6 +20,7 @@ import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import de.gkvtransmitter.presentation.builder.MenuBuilder;
+import de.gkvtransmitter.presentation.controller.EditFormController;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.AppMessages;
@@ -103,7 +104,7 @@ public class View {
     private MenuBar buildMainMenuBar() {
         MenuBuilder menuBuilder = new MenuBuilder(componentFactory, messages);
 
-        Map<String, Runnable> invoiceHandlers = new HashMap<>();
+        Map<String, Runnable> invoiceHandlers = new LinkedHashMap<>();
         for (String name : controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()) {
             invoiceHandlers.put(name, () -> createFormular(name));
         }
@@ -130,31 +131,26 @@ public class View {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.noTemplate"));
             return;
         }
-        //TODO: Nicht anzeigen der hintergrund texte 
         Map<String, Node> allFieldNodes = new HashMap<>();
         for (SegmentInfo info : dtaMessage.getSegments()) {
             for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
                 if (!entry.getValue().isInternal()) {
-                    Node inputField = createInputfieldFromTag(
+                        Node inputField = createInputfieldFromTag(
                             entry.getValue().getInputField(),
-                            entry.getKey(),
-                            entry.getValue().isInternal(),
-                            entry.getValue().getFieldJavaType());
+                            entry.getKey());
                     allFieldNodes.put(entry.getKey(), inputField);
-                    //TODO: hier werden die Eingabefelder in allFieldnodes gespeichert
                 }
             }
         }
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
+
         Label title = componentFactory.createLabel(invoiceName);
         title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
         vbox.getChildren().add(title);
-
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
-            //TODO: wor werden nochmal die Eingabefelder für die Labels erzeugt?
             fieldNodes.add(componentFactory.createBorderPane(
                     componentFactory.createLabel(entry.getKey()),
                     entry.getValue(),
@@ -170,37 +166,179 @@ public class View {
         skeleton.setCenter(scrollPane);
     }
 
+    /**
+     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ.
+     *
+     * @param inputOption - die Eingabeoption, die den Typ des UI-Elements
+     * angibt
+     * @param directName - der direkte Name des Feldes, der für spezielle Fälle
+     * wie Code-Auswahl verwendet werden kann
+     * @param visible - ob das Feld sichtbar ist, was für die Rückgabe
+     * berücksichtigt werden könnte
+     * @param javaFieldType - der Java-Typ des Feldes, der für die Rückgabe
+     * berücksichtigt werden könnte
+     * @return der Textwert des UI-Elements als String
+     */
+    private Node createInputfieldFromTag(InputOption inputOption, String directName) {
+        if (inputOption == null) {
+            return null;
+        }
+
+        return switch (inputOption) {
+            case CODE ->
+                createCodeDropdownForInvoiceField(directName);
+            case NUMBER_SUGGESTION ->
+                componentFactory.createComboBox(true);
+            case NUMBER ->
+                componentFactory.createSpinner(Integer.class, null, inputOption);
+            case STRING ->
+                componentFactory.createTextField();
+            case PERCENT, COST ->
+                componentFactory.createSpinner(BigDecimal.class, null, inputOption);
+            case BOOLEAN ->
+                componentFactory.createCheckBox(directName);
+            case DATE ->
+                componentFactory.createDatePicker();
+            default ->
+                throw new IllegalArgumentException("Unbekannter InputType: " + inputOption);
+        };
+    }
+
+    /**
+     * Erstellt ein Dropdown-Menü für Felder, die mit Codes gefüllt werden
+     * sollen, basierend auf dem Feldnamen.
+     *
+     * @param fieldName der Name des Feldes, für das das Dropdown erstellt
+     * werden soll
+     * @return ein Node, das ein ComboBox mit den entsprechenden Code-Optionen
+     * enthält, oder eine leere ComboBox, wenn keine Optionen gefunden wurden
+     */
+    private Node createCodeDropdownForInvoiceField(String fieldName) {
+        ComboBox<String> comboBox = new ComboBox<>();
+        comboBox.setPrefWidth(300);
+
+        List<String> options = resolveCodeOptionsForField(fieldName);
+        if (!options.isEmpty()) {
+            comboBox.getItems().addAll(options);
+            comboBox.getSelectionModel().selectFirst();
+        } else {
+            comboBox.setPromptText("Keine Codes vorhanden");
+        }
+        return comboBox;
+    }
+
+    /**
+     * Löst die entsprechenden Code-Optionen für ein gegebenes Feld basierend
+     * auf dem
+     *
+     * @param fieldName der Name des Feldes, für das die Code-Optionen aufgelöst
+     * werden sollen
+     * @return eine Liste von Code-Optionen, die für das angegebene Feld
+     * relevant sind, oder eine leere Liste, wenn keine Optionen gefunden wurden
+     */
+    private List<String> resolveCodeOptionsForField(String fieldName) {
+        String normalized = normalizeFieldKey(fieldName);
+
+        if (normalized.contains("rechnungsart")) {
+            return invoiceCodeOptions.getOrDefault("rechnungsarten", List.of());
+        }
+        if (normalized.contains("status") || normalized.contains("summen")) {
+            return invoiceCodeOptions.getOrDefault("ges_statuscodes", List.of());
+        }
+        return List.of();
+    }
+
+    /**
+     * Normalisiert einen Feldnamen, indem er in Kleinbuchstaben umgewandelt und
+     * alle
+     *
+     * @param key der Nicht-Alphanumerischen Zeichen entfernt werden, um eine
+     * konsistente Basis für die Erkennung von Schlüsselwörtern wie
+     * "rechnungsart" oder "status" zu schaffen, unabhängig von der
+     * ursprünglichen Formatierung des Feldnamens.
+     * @return der normalisierte Feldname, der nur aus Kleinbuchstaben und
+     * Zahlen besteht, oder ein leerer String, wenn der Eingabewert null ist
+     */
+    private String normalizeFieldKey(String key) {
+        return key.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+
+    /**
+     * Lädt die Code-Optionen für Rechnungsarten und GES-Statuscodes aus den
+     *
+     * @return eine Map, die die geladenen Code-Optionen enthält, gruppiert nach
+     * Kategorie (z.B. "rechnungsarten", "ges_statuscodes"), oder eine leere
+     * Map, wenn keine Optionen geladen werden konnten
+     */
+    private Map<String, List<String>> loadInvoiceCodeOptions() {
+        Map<String, List<String>> options = new LinkedHashMap<>();
+        try (InputStream is = getClass().getResourceAsStream("/codes/rechnungsarten.json")) {
+            if (is != null) {
+                JsonNode root = objectMapper.readTree(is);
+                List<String> rechnungsarten = new ArrayList<>();
+                if (root.isArray()) {
+                    for (JsonNode node : root) {
+                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
+                        rechnungsarten.add(value);
+                    }
+                }
+                options.put("rechnungsarten", rechnungsarten);
+            }
+        } catch (IOException ignored) {
+        }
+
+        try (InputStream is = getClass().getResourceAsStream("/codes/ges_statuscodes.json")) {
+            if (is != null) {
+                JsonNode root = objectMapper.readTree(is);
+                List<String> statuscodes = new ArrayList<>();
+                if (root.isArray()) {
+                    for (JsonNode node : root) {
+                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
+                        statuscodes.add(value);
+                    }
+                }
+                options.put("ges_statuscodes", statuscodes);
+            }
+        } catch (IOException ignored) {
+        }
+
+        return options;
+    }
+
     private void editPatient() {
-        // EditFormController<Patient> editController = new EditFormController<>(
-        //         componentFactory,
-        //         messages,
-        //         patientPopulator,
-        //         () -> controller.getDatabase().getAllPatients(),
-        //         patient -> controller.getDatabase().savePatient(patient),
-        //         patient -> controller.getDatabase().deletePatient(patient),
-        //         fieldName -> createInputFieldFromTagList(fieldName, 
-        //                 TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
-        //         "Patient",
-        //         fc -> skeleton.setCenter(null)
-        // );
-        // skeleton.setCenter(editController.buildEditForm());
-        //TODO: Patienten bearbeiten
+        EditFormController<Patient> editController = new EditFormController<>(
+                componentFactory,
+                messages,
+                patientPopulator,
+                () -> controller.getDatabase().getAllPatients(),
+                patient -> controller.getDatabase().savePatient(patient),
+                patient -> controller.getDatabase().deletePatient(patient),
+                fieldName -> createInputFieldFromTagList(fieldName,
+                        TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
+                "Patient",
+            fc -> {
+            },
+            ec -> skeleton.setCenter(ec.buildEditForm())
+        );
+        skeleton.setCenter(editController.buildEditForm());
     }
 
     private void editServiceProvider() {
-        // EditFormController<ServiceProvider> editController = new EditFormController<>(
-        //         componentFactory,
-        //         messages,
-        //         serviceProviderPopulator,
-        //         () -> controller.getDatabase().getAllServiceProviders(),
-        //         sp -> controller.getDatabase().saveServiceProvider(sp),
-        //         sp -> controller.getDatabase().deleteServiceProvider(sp),
-        //         fieldName -> createInputFieldFromTagList(fieldName,
-        //                 TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
-        //         "ServiceProvider",
-        //         fc -> skeleton.setCenter(null)
-        // );
-        // skeleton.setCenter(editController.buildEditForm());
+        EditFormController<ServiceProvider> editController = new EditFormController<>(
+                componentFactory,
+                messages,
+                serviceProviderPopulator,
+                () -> controller.getDatabase().getAllServiceProviders(),
+                sp -> controller.getDatabase().saveServiceProvider(sp),
+                sp -> controller.getDatabase().deleteServiceProvider(sp),
+                fieldName -> createInputFieldFromTagList(fieldName,
+                        TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
+                "ServiceProvider",
+                fc -> {
+                },
+                ec -> skeleton.setCenter(ec.buildEditForm())
+        );
+        skeleton.setCenter(editController.buildEditForm());
         //TODO: Patienten bearbeiten
     }
 
@@ -306,45 +444,6 @@ public class View {
         } catch (Exception e) {
             showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
         }
-    }
-
-    /**
-     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ.
-     *
-     * @param inputOption - die Eingabeoption, die den Typ des UI-Elements
-     * angibt
-     * @param directName - der direkte Name des Feldes, der für spezielle Fälle
-     * wie Code-Auswahl verwendet werden kann
-     * @param visible - ob das Feld sichtbar ist, was für die Rückgabe
-     * berücksichtigt werden könnte
-     * @param javaFieldType - der Java-Typ des Feldes, der für die Rückgabe
-     * berücksichtigt werden könnte
-     * @return der Textwert des UI-Elements als String
-     */
-    private Node createInputfieldFromTag(InputOption inputOption, String directName,
-            boolean visible, String javaFieldType) {
-        if (inputOption == null) {
-            return null;
-        }
-
-        return switch (inputOption) {
-            case CODE ->
-                createCodeDropdownForInvoiceField(directName);
-            case NUMBER_SUGGESTION ->
-                componentFactory.createComboBox(true);
-            case NUMBER ->
-                componentFactory.createSpinner(Integer.class, null, inputOption);
-            case STRING ->
-                componentFactory.createTextField();
-            case PERCENT, COST ->
-                componentFactory.createSpinner(BigDecimal.class, null, inputOption);
-            case BOOLEAN ->
-                componentFactory.createCheckBox(directName);
-            case DATE ->
-                componentFactory.createDatePicker();
-            default ->
-                throw new IllegalArgumentException("Unbekannter InputType: " + inputOption);
-        };
     }
 
     /**
@@ -513,107 +612,6 @@ public class View {
                 }));
             }
         }
-    }
-
-    /**
-     * Erstellt ein Dropdown-Menü für Felder, die mit Codes gefüllt werden
-     * sollen, basierend auf dem Feldnamen.
-     *
-     * @param fieldName der Name des Feldes, für das das Dropdown erstellt
-     * werden soll
-     * @return ein Node, das ein ComboBox mit den entsprechenden Code-Optionen
-     * enthält, oder eine leere ComboBox, wenn keine Optionen gefunden wurden
-     */
-    private Node createCodeDropdownForInvoiceField(String fieldName) {
-        ComboBox<String> comboBox = new ComboBox<>();
-        comboBox.setPrefWidth(300);
-
-        List<String> options = resolveCodeOptionsForField(fieldName);
-        if (!options.isEmpty()) {
-            comboBox.getItems().addAll(options);
-            comboBox.getSelectionModel().selectFirst();
-        } else {
-            comboBox.setPromptText("Keine Codes vorhanden");
-        }
-        return comboBox;
-    }
-
-    /**
-     * Löst die entsprechenden Code-Optionen für ein gegebenes Feld basierend
-     * auf dem
-     *
-     * @param fieldName der Name des Feldes, für das die Code-Optionen aufgelöst
-     * werden sollen
-     * @return eine Liste von Code-Optionen, die für das angegebene Feld
-     * relevant sind, oder eine leere Liste, wenn keine Optionen gefunden wurden
-     */
-    private List<String> resolveCodeOptionsForField(String fieldName) {
-        String normalized = normalizeFieldKey(fieldName);
-
-        if (normalized.contains("rechnungsart")) {
-            return invoiceCodeOptions.getOrDefault("rechnungsarten", List.of());
-        }
-        if (normalized.contains("status") || normalized.contains("summen")) {
-            return invoiceCodeOptions.getOrDefault("ges_statuscodes", List.of());
-        }
-        return List.of();
-    }
-
-    /**
-     * Normalisiert einen Feldnamen, indem er in Kleinbuchstaben umgewandelt und
-     * alle
-     *
-     * @param key der Nicht-Alphanumerischen Zeichen entfernt werden, um eine
-     * konsistente Basis für die Erkennung von Schlüsselwörtern wie
-     * "rechnungsart" oder "status" zu schaffen, unabhängig von der
-     * ursprünglichen Formatierung des Feldnamens.
-     * @return der normalisierte Feldname, der nur aus Kleinbuchstaben und
-     * Zahlen besteht, oder ein leerer String, wenn der Eingabewert null ist
-     */
-    private String normalizeFieldKey(String key) {
-        return key.toLowerCase().replaceAll("[^a-z0-9]", "");
-    }
-
-    /**
-     * Lädt die Code-Optionen für Rechnungsarten und GES-Statuscodes aus den
-     *
-     * @return eine Map, die die geladenen Code-Optionen enthält, gruppiert nach
-     * Kategorie (z.B. "rechnungsarten", "ges_statuscodes"), oder eine leere
-     * Map, wenn keine Optionen geladen werden konnten
-     */
-    private Map<String, List<String>> loadInvoiceCodeOptions() {
-        Map<String, List<String>> options = new LinkedHashMap<>();
-        try (InputStream is = getClass().getResourceAsStream("/codes/rechnungsarten.json")) {
-            if (is != null) {
-                JsonNode root = objectMapper.readTree(is);
-                List<String> rechnungsarten = new ArrayList<>();
-                if (root.isArray()) {
-                    for (JsonNode node : root) {
-                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
-                        rechnungsarten.add(value);
-                    }
-                }
-                options.put("rechnungsarten", rechnungsarten);
-            }
-        } catch (IOException ignored) {
-        }
-
-        try (InputStream is = getClass().getResourceAsStream("/codes/ges_statuscodes.json")) {
-            if (is != null) {
-                JsonNode root = objectMapper.readTree(is);
-                List<String> statuscodes = new ArrayList<>();
-                if (root.isArray()) {
-                    for (JsonNode node : root) {
-                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
-                        statuscodes.add(value);
-                    }
-                }
-                options.put("ges_statuscodes", statuscodes);
-            }
-        } catch (IOException ignored) {
-        }
-
-        return options;
     }
 
     /**
