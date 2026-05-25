@@ -10,7 +10,7 @@
       <!-- SQLite database file path - persists between sessions -->
       <property name="hibernate.connection.url">jdbc:sqlite:database.db</property>
       <!-- Auto-create/update schema without dropping tables -->
-      <property name="hibernate.hbm2ddl.auto">update</property>
+      <property name="hibernate.hbm2ddl.auto">create</property>
       <!-- Connection pooling for better performance -->
       <property name="hibernate.connection.pool_size">5</property>
       <!-- Batch processing for better performance -->

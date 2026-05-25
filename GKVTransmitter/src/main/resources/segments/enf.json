@@ -24,6 +24,7 @@
       "type": "COMPOSITE",
       "mandatory": true,
       "fieldArt": "M",
+      "internal":true,
       "components": [
         {
           "position": 1,

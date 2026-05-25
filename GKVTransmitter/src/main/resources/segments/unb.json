@@ -50,7 +50,7 @@
         "description": "IK-Nummer mit 9 Ziffern"
       },
       "inputType": "NUMBER-SUGGESTION",
-      "internal": false
+      "internal": true
     },
     {
       "position": 3,
@@ -65,7 +65,7 @@
         "description": "IK-Nummer mit 9 Ziffern"
       },
       "inputType": "NUMBER-SUGGESTION",
-      "internal": false
+      "internal": true
     },
     {
       "position": 4,
