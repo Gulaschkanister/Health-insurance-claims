@@ -120,7 +120,14 @@ public class View {
         menuBuilder.addSelfItem(messages.get("menu.new"), this::createSelfPerson);
         menuBuilder.addSelfItem(messages.get("menu.edit"), this::editServiceProvider);
 
-        return menuBuilder.build();
+        MenuBar menuBar = menuBuilder.build();
+
+        // Add settlement (Abrechnung) menu
+        javafx.scene.control.MenuItem settlementItem = componentFactory.createMenuItem(messages.get("menu.settlement"));
+        settlementItem.setOnAction(ev -> createAbrechnung());
+        menuBar.getMenus().add(componentFactory.createMenu(messages.get("menu.settlement"), settlementItem));
+
+        return menuBar;
     }
 
     /**
@@ -218,6 +225,110 @@ public class View {
             result.put(key, value);
         }
         return result;
+    }
+
+    /**
+     * Builds and shows the Abrechnung (settlement) panel where user can select
+     * a blueprint, a service provider and participating patients.
+     */
+    private void createAbrechnung() {
+        List<de.gkvtransmitter.entity.Blueprint> blueprints = controller.getDatabase().getAllBlueprints();
+        List<ServiceProvider> serviceProviders = controller.getDatabase().getAllServiceProviders();
+        List<Patient> patients = controller.getDatabase().getAllPatients();
+
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(16));
+
+        Label title = componentFactory.createLabel(messages.get("menu.settlement"));
+
+        // Blueprint selector
+        Label bpLabel = componentFactory.createLabel(messages.get("label.selectBlueprint"));
+        ComboBox<de.gkvtransmitter.entity.Blueprint> bpCombo = new ComboBox<>();
+        bpCombo.setPrefWidth(400);
+        if (blueprints != null && !blueprints.isEmpty()) {
+            bpCombo.getItems().addAll(blueprints);
+            bpCombo.setConverter(new javafx.util.StringConverter<de.gkvtransmitter.entity.Blueprint>() {
+                @Override
+                public String toString(de.gkvtransmitter.entity.Blueprint object) {
+                    return object == null ? "" : object.getName();
+                }
+
+                @Override
+                public de.gkvtransmitter.entity.Blueprint fromString(String string) {
+                    return null;
+                }
+            });
+            bpCombo.getSelectionModel().selectFirst();
+        }
+
+        // Service Provider selector
+        Label spLabel = componentFactory.createLabel(messages.get("label.selectServiceProvider"));
+        ComboBox<ServiceProvider> spCombo = new ComboBox<>();
+        spCombo.setPrefWidth(400);
+        if (serviceProviders != null && !serviceProviders.isEmpty()) {
+            spCombo.getItems().addAll(serviceProviders);
+            spCombo.setConverter(new javafx.util.StringConverter<ServiceProvider>() {
+                @Override
+                public String toString(ServiceProvider object) {
+                    return object == null ? "" : object.getFirstname() + " " + object.getLastname();
+                }
+
+                @Override
+                public ServiceProvider fromString(String string) {
+                    return null;
+                }
+            });
+            spCombo.getSelectionModel().selectFirst();
+        }
+
+        // Patients checklist
+        Label patsLabel = componentFactory.createLabel(messages.get("label.selectPatients"));
+        VBox checklist = new VBox(4);
+        List<javafx.scene.control.CheckBox> patientBoxes = new ArrayList<>();
+        if (patients != null && !patients.isEmpty()) {
+            for (Patient p : patients) {
+                javafx.scene.control.CheckBox cb = componentFactory.createCheckBox(p.getFirstname() + " " + p.getLastname());
+                patientBoxes.add(cb);
+                checklist.getChildren().add(cb);
+            }
+        }
+
+        Button start = componentFactory.createButton(messages.get("button.startSettlement"));
+        start.setOnAction(ev -> {
+            if (blueprints == null || blueprints.isEmpty()) {
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noBlueprints"));
+                return;
+            }
+            if (serviceProviders == null || serviceProviders.isEmpty()) {
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noServiceProviders"));
+                return;
+            }
+            if (patients == null || patients.isEmpty()) {
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noPatients"));
+                return;
+            }
+
+            de.gkvtransmitter.entity.Blueprint chosen = bpCombo.getValue();
+            ServiceProvider sp = spCombo.getValue();
+            List<Patient> selectedPatients = new ArrayList<>();
+            for (int i = 0; i < patientBoxes.size(); i++) {
+                if (patientBoxes.get(i).isSelected()) {
+                    selectedPatients.add(patients.get(i));
+                }
+            }
+
+            String summary = String.format("Blaupause: %s\nDienstleister: %s %s\nTeilnehmer: %d",
+                    chosen == null ? "-" : chosen.getName(),
+                    sp == null ? "-" : sp.getFirstname(),
+                    sp == null ? "" : sp.getLastname(),
+                    selectedPatients.size());
+            showInfoDialog(messages.get("dialog.info.title"), summary);
+        });
+
+        root.getChildren().addAll(title, bpLabel, bpCombo, spLabel, spCombo, patsLabel, checklist, start);
+        ScrollPane scroll = new ScrollPane(root);
+        scroll.setFitToWidth(true);
+        skeleton.setCenter(scroll);
     }
 
     /**
