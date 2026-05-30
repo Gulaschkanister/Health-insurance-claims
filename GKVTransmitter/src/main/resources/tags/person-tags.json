@@ -67,6 +67,10 @@
     "inputOption": "NUMBER",
     "modifiers": []
   },
+  "kassenIk": {
+    "inputOption": "NUMBER",
+    "modifiers": []
+  },
   "birthDate": {
     "inputOption": "DATE",
     "modifiers": []

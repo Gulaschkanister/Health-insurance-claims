@@ -31,6 +31,7 @@ public class Person {
     private String housenumber;
     private int plz;
     private int ik;
+    private int kassenIk;
     private LocalDate birthDate;
 
     @Transient
@@ -40,8 +41,10 @@ public class Person {
         this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
     }
 
+   
+
     public Person(String firstname, String lastname, String street, String country, String housenumber, int plz,
-            int ik, LocalDate birthDate) {
+            int ik, int kassenIk, LocalDate birthDate) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.street = street;
@@ -49,6 +52,7 @@ public class Person {
         this.housenumber = housenumber;
         this.plz = plz;
         this.ik = ik;
+        this.kassenIk = kassenIk;
         this.birthDate = birthDate;
         // Load tag configuration from JSON
         this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");

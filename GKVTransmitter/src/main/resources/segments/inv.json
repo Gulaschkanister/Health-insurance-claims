@@ -15,6 +15,7 @@
       "description": "Versicherungsnummer (KV-Nummerngruppe)",
       "fieldArt": "M",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -27,6 +28,7 @@
       "description": "Status-Kennzeichen (wenn leer: muss NAD mit kompletter Anschrift folgen)",
       "fieldArt": "K",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -41,6 +43,7 @@
       },
       "fieldArt": "M",
       "inputType": "NUMBER",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -53,6 +56,7 @@
       "description": "Verordnungs- oder Belegnummer (z.B. Herausgeber-Bearbeitungs-Nummer für SGS H)",
       "fieldArt": "M",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     }
   ]

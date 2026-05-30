@@ -21,6 +21,7 @@
   "field.housenumber": "Hausnummer",
   "field.plz": "Postleitzahl",
   "field.ik": "IK",
+  "field.kassenIk": "IK der Krankenkasse",
   "field.birthDate": "Geburtsdatum",
   "dialog.error.title": "Fehler",
   "dialog.info.title": "Info",

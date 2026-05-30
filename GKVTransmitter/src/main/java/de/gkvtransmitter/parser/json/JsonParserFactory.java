@@ -19,13 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.gkvtransmitter.definition.InvoiceType;
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.factory.Factory;
-import de.gkvtransmitter.model.Invoice;
 import de.gkvtransmitter.model.DtaMessage;
+import de.gkvtransmitter.model.Invoice;
 import de.gkvtransmitter.model.segment.SegmentDefinition;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import de.gkvtransmitter.model.segment.field.FieldDefinition;
 import de.gkvtransmitter.model.segment.field.FieldType;
+import de.gkvtransmitter.model.segment.field.PersonRole;
 import de.gkvtransmitter.parser.ParserFactory;
 
 public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
@@ -139,8 +140,10 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
                             segmentType, valueFields);
                     Map<String, Boolean> valueFieldInternal = buildValueFieldInternal(messageType, segmentType,
                             valueFields);
+                        Map<String, PersonRole> valueFieldPersonRoles = buildValueFieldPersonRoles(messageType,
+                            segmentType, valueFields);
                     Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields,
-                            valueFieldJavaTypes, valueFieldInputTypes, valueFieldInternal);
+                            valueFieldJavaTypes, valueFieldInputTypes, valueFieldInternal, valueFieldPersonRoles);
 
                     // Erstelle SegmentInfo mit Position, Typ und MessageType
                     segments.add(new SegmentInfo(position, segmentType, messageType, groupTag, typedValueFields));
@@ -306,7 +309,8 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
     private Map<String, ValueFieldEntry> buildTypedValueFields(Map<String, String> rawValueFields,
             Map<String, String> valueFieldJavaTypes,
             Map<String, InputOption> valueFieldInputTypes,
-            Map<String, Boolean> valueFieldInternal) {
+            Map<String, Boolean> valueFieldInternal,
+            Map<String, PersonRole> valueFieldPersonRoles) {
         Map<String, ValueFieldEntry> typedValueFields = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : rawValueFields.entrySet()) {
             String key = entry.getKey();
@@ -314,10 +318,39 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
             String javaType = valueFieldJavaTypes.getOrDefault(key, "String");
             Object typedValue = parseValueByJavaType(rawValue, javaType);
             boolean internal = valueFieldInternal.getOrDefault(key, false);
+            PersonRole personRole = valueFieldPersonRoles.get(key);
             typedValueFields.put(key,
-                    new ValueFieldEntry(typedValue, javaType, valueFieldInputTypes.get(key), internal));
+                    new ValueFieldEntry(typedValue, javaType, valueFieldInputTypes.get(key), internal, personRole));
         }
         return typedValueFields;
+    }
+
+    private Map<String, PersonRole> buildValueFieldPersonRoles(InvoiceType messageType, String segmentType,
+            Map<String, String> valueFields) {
+        Map<String, PersonRole> valueFieldPersonRoles = new LinkedHashMap<>();
+        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
+        if (definition == null) {
+            valueFields.keySet().forEach(key -> valueFieldPersonRoles.put(key, null));
+            return valueFieldPersonRoles;
+        }
+
+        Map<String, PersonRole> keyToPersonRole = new LinkedHashMap<>();
+        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        for (FieldDefinition field : orderedFields) {
+            String baseKey = toFormFieldKey(field.getName());
+            String key = baseKey;
+            if (keyToPersonRole.containsKey(key)) {
+                key = key + "_" + field.getPosition();
+            }
+            keyToPersonRole.put(key, field.getPersonRole());
+        }
+
+        valueFields.keySet().forEach(key -> valueFieldPersonRoles.put(key, keyToPersonRole.get(key)));
+        return valueFieldPersonRoles;
     }
 
     private Map<String, InputOption> buildValueFieldInputTypes(InvoiceType messageType, String segmentType,
@@ -440,7 +473,16 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         String name = fieldNode.path("name").asText();
         InputOption inputType = parseValueByEnum(fieldNode.path("inputType").asText());
         boolean internal = fieldNode.path("internal").asBoolean(false);
-        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType, internal);
+        PersonRole personRole = parsePersonRole(fieldNode.path("person").asText(""));
+        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType, internal, personRole);
+    }
+
+    private PersonRole parsePersonRole(String rawPersonRole) {
+        if (rawPersonRole == null || rawPersonRole.isBlank()) {
+            return null;
+        }
+
+        return PersonRole.valueOf(rawPersonRole.trim().toUpperCase(Locale.ROOT));
     }
 
     private FieldType mapFieldType(String rawType) {

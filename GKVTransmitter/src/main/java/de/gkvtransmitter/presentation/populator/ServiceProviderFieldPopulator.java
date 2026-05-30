@@ -21,6 +21,7 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
             case "housenumber" -> serviceProvider.getHousenumber();
             case "plz" -> String.valueOf(serviceProvider.getPlz());
             case "ik" -> String.valueOf(serviceProvider.getIk());
+            case "kassenIk" -> String.valueOf(serviceProvider.getKassenIk());
             default -> "";
         };
     }
@@ -46,6 +47,12 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
             case "ik" -> {
                 try {
                     serviceProvider.setIk(Integer.parseInt(value));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            case "kassenIk" -> {
+                try {
+                    serviceProvider.setKassenIk(Integer.parseInt(value));
                 } catch (NumberFormatException ignored) {
                 }
             }

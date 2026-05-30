@@ -17,14 +17,20 @@ public class FieldDefinition {
     private final String name;
     private final InputOption inputType;
     private final boolean internal;
+    private final PersonRole personRole;
 
     public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
             InputOption inputType) {
-        this(position, type, isMandatory, maxLength, name, inputType, false);
+        this(position, type, isMandatory, maxLength, name, inputType, false, null);
     }
 
     public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
             InputOption inputType, boolean internal) {
+        this(position, type, isMandatory, maxLength, name, inputType, internal, null);
+    }
+
+    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
+            InputOption inputType, boolean internal, PersonRole personRole) {
         this.position = position;
         this.type = type;
         this.isMandatory = isMandatory;
@@ -32,5 +38,6 @@ public class FieldDefinition {
         this.name = name;
         this.inputType = inputType;
         this.internal = internal;
+        this.personRole = personRole;
     }
 }

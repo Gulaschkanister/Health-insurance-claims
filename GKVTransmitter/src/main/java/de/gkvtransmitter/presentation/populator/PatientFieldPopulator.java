@@ -21,6 +21,7 @@ public class PatientFieldPopulator extends EntityFieldPopulator<Patient> {
             case "housenumber" -> patient.getHousenumber();
             case "plz" -> String.valueOf(patient.getPlz());
             case "ik" -> String.valueOf(patient.getIk());
+            case "kassenIk" -> String.valueOf(patient.getKassenIk());
             default -> "";
         };
     }
@@ -46,6 +47,12 @@ public class PatientFieldPopulator extends EntityFieldPopulator<Patient> {
             case "ik" -> {
                 try {
                     patient.setIk(Integer.parseInt(value));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            case "kassenIk" -> {
+                try {
+                    patient.setKassenIk(Integer.parseInt(value));
                 } catch (NumberFormatException ignored) {
                 }
             }

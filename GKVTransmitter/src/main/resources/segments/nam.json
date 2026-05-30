@@ -15,6 +15,7 @@
       "description": "Familienname",
       "fieldArt": "K",
       "inputType": "STRING",
+      "person": "SERVICE_PROVIDER",
       "internal": false
     },
     {
@@ -27,6 +28,7 @@
       "description": "Vorname",
       "fieldArt": "K",
       "inputType": "STRING",
+      "person": "SERVICE_PROVIDER",
       "internal": false
     },
     {
@@ -39,6 +41,7 @@
       "description": "Akademischer Titel oder Anrede (optional)",
       "fieldArt": "K",
       "inputType": "STRING",
+      "person": "SERVICE_PROVIDER",
       "internal": false
     }
   ]

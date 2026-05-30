@@ -15,6 +15,7 @@
       "description": "Familienname des Versicherten",
       "fieldArt": "M",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -27,6 +28,7 @@
       "description": "Vorname des Versicherten",
       "fieldArt": "M",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -40,6 +42,7 @@
       "description": "Geburtsdatum des Versicherten",
       "fieldArt": "M",
       "inputType": "DATE",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -52,6 +55,7 @@
       "description": "Postanschrift: Straßenname und Hausnummer",
       "fieldArt": "M",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -64,6 +68,7 @@
       "description": "Postleitzahl",
       "fieldArt": "M",
       "inputType": "NUMBER",
+      "person": "PATIENT",
       "internal": false
     },
     {
@@ -76,6 +81,7 @@
       "description": "Ort/Stadt",
       "fieldArt": "M",
       "inputType": "STRING",
+      "person": "PATIENT",
       "internal": false
     }
   ],

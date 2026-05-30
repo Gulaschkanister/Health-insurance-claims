@@ -15,6 +15,7 @@
       "description": "Fortlaufende Nummer der Leistungszeile innerhalb einer INV",
       "fieldArt": "M",
       "inputType": "NUMBER",
+      "person": "SERVICE_PROVIDER",
       "internal": true
     },
     {
@@ -24,7 +25,8 @@
       "type": "COMPOSITE",
       "mandatory": true,
       "fieldArt": "M",
-      "internal":true,
+      "person": "SERVICE_PROVIDER",
+      "internal": true,
       "components": [
         {
           "position": 1,
@@ -60,6 +62,7 @@
       "description": "Positionsnummer gültig für diesen Leistungsbereich (Anlage 3, Abschnitt 8.2)",
       "fieldArt": "M",
       "inputType": "NUMBER",
+      "person": "SERVICE_PROVIDER",
       "internal": true
     },
     {
@@ -73,6 +76,7 @@
       "description": "Leistungsmenge mit 2 Nachkommastellen (z.B. Anzahl Sitzungen, Minuten)",
       "fieldArt": "M",
       "inputType": "NUMBER",
+      "person": "SERVICE_PROVIDER",
       "internal": false
     },
     {
@@ -86,6 +90,7 @@
       "description": "Durchschnittlicher Einzelbetrag mit 2 Nachkommastellen (= Fazit Menge * Preis)",
       "fieldArt": "M",
       "inputType": "COST",
+      "person": "SERVICE_PROVIDER",
       "internal": false
     },
     {
@@ -99,6 +104,7 @@
       "description": "Datum der Leistungserbringung oder Abrechnungsperiode Start",
       "fieldArt": "M",
       "inputType": "DATE",
+      "person": "SERVICE_PROVIDER",
       "internal": false
     },
     {
@@ -112,6 +118,7 @@
       "description": "Zuzahlung des Versicherten pro Position mit 2 Nachkommastellen",
       "fieldArt": "K",
       "inputType": "NUMBER",
+      "person": "PATIENT",
       "internal": false
     }
   ],

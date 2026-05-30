@@ -12,7 +12,7 @@
       "maxLength": 2,
       "mandatory": true,
       "example": "01",
-      "inputType":"NUMBER",
+      "inputType": "NUMBER",
       "internal": true,
       "validation": {
         "reference": "Anlage 3 Abschnitt 8.1.7",
@@ -27,7 +27,7 @@
       "mandatory": false,
       "example": "",
       "description": "Konditional, kann leer sein",
-      "inputType":"STRING",
+      "inputType": "STRING",
       "internal": false
     },
     {
@@ -37,7 +37,8 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "123456789",
-      "inputType":"NUMBER_SUGGESTION",
+      "inputType": "NUMBER_SUGGESTION",
+      "person": "SERVICE_PROVIDER",
       "internal": false,
       "validation": {
         "pattern": "^[0-9]{9}$",
@@ -51,7 +52,8 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "987654321",
-      "inputType":"NUMBER_SUGGESTION",
+      "inputType": "NUMBER_SUGGESTION",
+      "person": "PATIENT",
       "internal": false,
       "validation": {
         "pattern": "^[0-9]{9}$",
@@ -65,7 +67,8 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "987654321",
-      "inputType":"NUMBER_SUGGESTION",
+      "inputType": "NUMBER_SUGGESTION",
+      "person": "PATIENT",
       "internal": false,
       "validation": {
         "pattern": "^[0-9]{9}$",
@@ -79,7 +82,8 @@
       "maxLength": 9,
       "mandatory": false,
       "example": "123456789",
-      "inputType":"NUMBER_SUGGESTION",
+      "inputType": "NUMBER_SUGGESTION",
+      "person": "SERVICE_PROVIDER",
       "internal": false,
       "validation": {
         "pattern": "^[0-9]{9}$",

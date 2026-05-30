@@ -134,7 +134,7 @@ public class View {
         Map<String, Node> allFieldNodes = new HashMap<>();
         for (SegmentInfo info : dtaMessage.getSegments()) {
             for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
-                if (!entry.getValue().isInternal()) {
+                if (!entry.getValue().isInternal() && entry.getValue().getPersonRole() == null) {
                         Node inputField = createInputfieldFromTag(
                             entry.getValue().getInputField(),
                             entry.getKey());
@@ -423,6 +423,7 @@ public class View {
             String housenumber = getFieldText(inputFields.get("housenumber"));
             int plz = Integer.parseInt(getFieldText(inputFields.get("plz")));
             int ik = Integer.parseInt(getFieldText(inputFields.get("ik")));
+            int kassenIk = Integer.parseInt(getFieldText(inputFields.get("kassenIk")));
             LocalDate birthDate = null;
             Node birthNode = inputFields.get("birthDate");
             if (birthNode instanceof DatePicker dp) {
@@ -430,10 +431,10 @@ public class View {
             }
 
             if (saveAsServiceProvider) {
-                ServiceProvider sp = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik, birthDate);
+                ServiceProvider sp = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik, kassenIk, birthDate);
                 controller.getDatabase().saveServiceProvider(sp);
             } else {
-                Patient p = new Patient(firstname, lastname, street, country, housenumber, plz, ik, birthDate);
+                Patient p = new Patient(firstname, lastname, street, country, housenumber, plz, ik, kassenIk, birthDate);
                 controller.getDatabase().savePatient(p);
             }
 
