@@ -1,0 +1,166 @@
+{
+  "fallbackRoot": "dta_output/outbox",
+  "targets": [
+    {
+      "kassenIk": 100696012,
+      "name": "AOK Nordost - Die Gesundheitskasse",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-nordost",
+      "enabled": true
+    },
+    {
+      "kassenIk": 101097008,
+      "name": "AOK Sachsen-Anhalt",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-sachsen-anhalt",
+      "enabled": true
+    },
+    {
+      "kassenIk": 101202961,
+      "name": "IKK classic",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/ikk-classic",
+      "enabled": true
+    },
+    {
+      "kassenIk": 101560000,
+      "name": "DAK-Gesundheit",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/dak-gesundheit",
+      "enabled": true
+    },
+    {
+      "kassenIk": 102114819,
+      "name": "AOK Niedersachsen - Die Gesundheitskasse",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-niedersachsen",
+      "enabled": true
+    },
+    {
+      "kassenIk": 102137985,
+      "name": "Techniker Krankenkasse",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/techniker-krankenkasse",
+      "enabled": true
+    },
+    {
+      "kassenIk": 103119199,
+      "name": "AOK Bremen / Bremerhaven",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-bremen-bremerhaven",
+      "enabled": true
+    },
+    {
+      "kassenIk": 103121013,
+      "name": "AOK Sachsen-Anhalt",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-sachsen-anhalt-1",
+      "enabled": true
+    },
+    {
+      "kassenIk": 103170002,
+      "name": "hkk Erste Gesundheit",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/hkk",
+      "enabled": true
+    },
+    {
+      "kassenIk": 103411401,
+      "name": "AOK NordWest - Die Gesundheitskasse",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-nordwest",
+      "enabled": true
+    },
+    {
+      "kassenIk": 104940005,
+      "name": "BARMER",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/barmer",
+      "enabled": true
+    },
+    {
+      "kassenIk": 105230101,
+      "name": "HEAG BKK",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/heag-bkk",
+      "enabled": true
+    },
+    {
+      "kassenIk": 105313145,
+      "name": "AOK Hessen - Die Gesundheitskasse",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-hessen",
+      "enabled": true
+    },
+    {
+      "kassenIk": 105508787,
+      "name": "LKK Hessen, Rheinland-Pfalz und Saarland",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/lkk-hessen-rheinland-pfalz-saarland",
+      "enabled": true
+    },
+    {
+      "kassenIk": 105508890,
+      "name": "Knappschaft",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/knappschaft",
+      "enabled": true
+    },
+    {
+      "kassenIk": 107299005,
+      "name": "AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-plus",
+      "enabled": true
+    },
+    {
+      "kassenIk": 107310373,
+      "name": "AOK Rheinland / Hamburg",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-rheinland-hamburg",
+      "enabled": true
+    },
+    {
+      "kassenIk": 107531187,
+      "name": "BKK Schleswig-Holstein",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/bkk-schleswig-holstein",
+      "enabled": true
+    },
+    {
+      "kassenIk": 107836243,
+      "name": "BKK Wieland-Werke",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/bkk-wieland-werke",
+      "enabled": true
+    },
+    {
+      "kassenIk": 108018007,
+      "name": "AOK Baden-Württemberg",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-baden-wuerttemberg",
+      "enabled": true
+    },
+    {
+      "kassenIk": 108310400,
+      "name": "AOK Bayern",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/aok-bayern",
+      "enabled": true
+    },
+    {
+      "kassenIk": 108428980,
+      "name": "HypoVereinsbank BKK",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/hypovereinsbank-bkk",
+      "enabled": true
+    },
+    {
+      "kassenIk": 109905003,
+      "name": "Kaufmännische Krankenkasse - KKH",
+      "transportType": "FILE",
+      "destinationDirectory": "dta_output/outbox/kkh",
+      "enabled": true
+    }
+  ]
+}

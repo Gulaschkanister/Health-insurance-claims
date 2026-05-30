@@ -23,6 +23,8 @@ import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.dispatch.DispatchBatch;
+import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
@@ -476,26 +478,30 @@ public class View {
                 return;
             }
 
-            java.util.List<java.nio.file.Path> written = new java.util.ArrayList<>();
-            java.nio.file.Path outDir = java.nio.file.Paths.get("dta_output");
+            java.util.List<de.gkvtransmitter.model.Abrechnung> abrechnungen = new java.util.ArrayList<>();
             for (Patient p : selectedPatients) {
                 int ap = appointments.getOrDefault(p.getId(), 0);
-                de.gkvtransmitter.model.Abrechnung ab = new de.gkvtransmitter.model.Abrechnung(p, groupProvider, chosen, ap);
-                long interchangeRef = controller.getDatabase().nextDtaInterchangeReference();
-                String content = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(ab, interchangeRef, "123456780", "987654324");
-                String fname = String.format("patient_%d_%s.dta", p.getId(), java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(java.time.LocalDateTime.now()));
-                try {
-                    java.nio.file.Path writtenPath = de.gkvtransmitter.dta.DtaFactory.writeDtaFile(content, outDir, fname);
-                    written.add(writtenPath);
-                } catch (Exception e) {
-                    showErrorDialog(messages.get("dialog.error.title"), "Fehler beim Schreiben der DTA: " + e.getMessage());
-                    return;
-                }
+                abrechnungen.add(new de.gkvtransmitter.model.Abrechnung(p, groupProvider, chosen, ap));
+            }
+
+            DtaDispatchService dispatchService = new DtaDispatchService();
+            java.nio.file.Path outDir = java.nio.file.Paths.get("dta_output");
+            java.util.List<DispatchBatch> batches;
+            try {
+                batches = dispatchService.generateAndRoute(abrechnungen, outDir);
+            } catch (Exception e) {
+                showErrorDialog(messages.get("dialog.error.title"), "Fehler beim Versand der DTA-Dateien: " + e.getMessage());
+                return;
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.append(String.format("%d DTA-Dateien erzeugt:\n", written.size()));
-            for (java.nio.file.Path pth : written) sb.append(pth.toString()).append('\n');
+            sb.append(String.format("%d DTA-Batches erzeugt:\n", batches.size()));
+            for (DispatchBatch batch : batches) {
+                sb.append("Kassen-IK: ").append(batch.getKassenIk()).append('\n');
+                for (java.nio.file.Path pth : batch.getFiles()) {
+                    sb.append(pth.toString()).append('\n');
+                }
+            }
             showInfoDialog(messages.get("dialog.info.title"), sb.toString());
         });
 
