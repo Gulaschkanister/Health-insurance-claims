@@ -1,6 +1,12 @@
 {
     "schemaVersion": "1.0",
     "version": "V21",
+    "codes": {
+        "rechnungsart": "1",
+        "abrechnungscode": "21901",
+        "leistungsbereich": "21901",
+        "status": "00"
+    },
     "invoicerName": "Geburtsvorbereitugnskurs Einzelabrachnung",
     "segments": [
         {

@@ -1,3 +1,7 @@
+[
+  { "value": "00", "label": "Gesamtsumme aller Status" },
+  { "value": "99", "label": "Nicht zuzuordnende Status (wenn vom Pruefer gefordert)" }
+]
 {
   "schemaVersion": "1.0",
   "codeType": "GES Statuscodes",

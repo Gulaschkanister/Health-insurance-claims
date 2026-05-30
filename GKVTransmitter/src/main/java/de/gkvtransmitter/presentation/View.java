@@ -67,6 +67,7 @@ public class View {
     private final AppMessages messages;
     private final ObjectMapper objectMapper;
     private final Map<String, List<String>> invoiceCodeOptions;
+    private Map<String, String> currentInvoiceHeaderCodes = Map.of();
     private BorderPane skeleton;
 
     private final PatientFieldPopulator patientPopulator;
@@ -131,6 +132,7 @@ public class View {
             showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.noTemplate"));
             return;
         }
+        this.currentInvoiceHeaderCodes = dtaMessage.getHeaderCodes();
         Map<String, Node> allFieldNodes = new HashMap<>();
         for (SegmentInfo info : dtaMessage.getSegments()) {
             for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
@@ -164,6 +166,7 @@ public class View {
         ScrollPane scrollPane = new ScrollPane(vbox);
         scrollPane.setFitToWidth(true);
         skeleton.setCenter(scrollPane);
+        this.currentInvoiceHeaderCodes = Map.of();
     }
 
     /**
@@ -214,16 +217,35 @@ public class View {
      * enthält, oder eine leere ComboBox, wenn keine Optionen gefunden wurden
      */
     private Node createCodeDropdownForInvoiceField(String fieldName) {
+        List<String> options = resolveCodeOptionsForField(fieldName);
+        String normalized = normalizeFieldKey(fieldName);
+        String headerDefault = this.currentInvoiceHeaderCodes.getOrDefault(normalized, this.currentInvoiceHeaderCodes.get(fieldName));
+
+        if (options.isEmpty()) {
+            TextField tf = componentFactory.createTextField();
+            if (headerDefault != null && !headerDefault.isBlank()) {
+                tf.setText(headerDefault);
+            } else {
+                tf.setPromptText("Keine Codes vorhanden");
+            }
+            return tf;
+        }
+
         ComboBox<String> comboBox = new ComboBox<>();
         comboBox.setPrefWidth(300);
+        comboBox.getItems().addAll(options);
 
-        List<String> options = resolveCodeOptionsForField(fieldName);
-        if (!options.isEmpty()) {
-            comboBox.getItems().addAll(options);
-            comboBox.getSelectionModel().selectFirst();
+        if (headerDefault != null && !headerDefault.isBlank()) {
+            if (comboBox.getItems().contains(headerDefault)) {
+                comboBox.getSelectionModel().select(headerDefault);
+            } else {
+                comboBox.getItems().add(0, headerDefault);
+                comboBox.getSelectionModel().selectFirst();
+            }
         } else {
-            comboBox.setPromptText("Keine Codes vorhanden");
+            comboBox.getSelectionModel().selectFirst();
         }
+
         return comboBox;
     }
 

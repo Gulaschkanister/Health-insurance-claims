@@ -161,7 +161,9 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         String schemaVersion = invoiceRoot.path("schemaVersion").asText();
         String version = invoiceRoot.path("version").asText();
 
-        return new DtaMessage(sourceName, invoicerName, schemaVersion, version, segments);
+        Map<String, String> headerCodes = readValueFields(invoiceRoot.path("codes"));
+
+        return new DtaMessage(sourceName, invoicerName, schemaVersion, version, segments, headerCodes);
     }
 
     private SegmentDefinition parseSegmentFromResource(String segmentName, boolean repeatable) {

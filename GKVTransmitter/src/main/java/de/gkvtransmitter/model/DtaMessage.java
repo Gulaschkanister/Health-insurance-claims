@@ -17,13 +17,15 @@ public class DtaMessage {
     private final String schemaVersion;
     private final String version;
     private final List<SegmentInfo> segments;
+    private final java.util.Map<String, String> headerCodes;
 
     public DtaMessage(String sourceName, String invoicerName, String schemaVersion, String version,
-            List<SegmentInfo> segments) {
+            List<SegmentInfo> segments, java.util.Map<String, String> headerCodes) {
         this.sourceName = sourceName;
         this.invoicerName = invoicerName;
         this.schemaVersion = schemaVersion;
         this.version = version;
         this.segments = List.copyOf(segments);
+        this.headerCodes = headerCodes == null ? java.util.Map.of() : java.util.Map.copyOf(headerCodes);
     }
 }
