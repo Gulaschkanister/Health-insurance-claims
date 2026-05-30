@@ -45,6 +45,7 @@ public class EditFormController<T> {
     private final Supplier<List<T>> entityLoader;
     private final Consumer<T> entitySaver;
     private final Consumer<T> entityDeleter;
+    private final boolean showDeleteButton;
     private final Function<String, Node> fieldBuilder;
     private final String entityTypeName;
     private final Consumer<VBox> onFormReady;
@@ -59,6 +60,7 @@ public class EditFormController<T> {
             Supplier<List<T>> entityLoader,
             Consumer<T> entitySaver,
             Consumer<T> entityDeleter,
+            boolean showDeleteButton,
             Function<String, Node> fieldBuilder,
             String entityTypeName,
             Consumer<VBox> onFormReady,
@@ -69,6 +71,7 @@ public class EditFormController<T> {
         this.entityLoader = entityLoader;
         this.entitySaver = entitySaver;
         this.entityDeleter = entityDeleter;
+        this.showDeleteButton = showDeleteButton;
         this.fieldBuilder = fieldBuilder;
         this.entityTypeName = entityTypeName;
         this.onFormReady = onFormReady;
@@ -190,17 +193,20 @@ public class EditFormController<T> {
         updateButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
         updateButton.setOnAction(event -> saveEntity(entity, inputFields));
 
-        Button deleteButton = new Button(messages.get("button.delete"));
-        deleteButton.setStyle("-fx-padding: 10; -fx-font-size: 14; -fx-text-fill: white; -fx-background-color: #d9534f;");
-        deleteButton.setOnAction(event -> confirmDelete(entity));
-
         Button cancelButton = componentFactory.createButton(messages.get("button.cancel"));
         cancelButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
         cancelButton.setOnAction(event -> formContainer.getChildren().clear());
 
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(10));
-        buttonBox.getChildren().addAll(updateButton, deleteButton, cancelButton);
+        if (showDeleteButton) {
+            Button deleteButton = new Button(messages.get("button.delete"));
+            deleteButton.setStyle("-fx-padding: 10; -fx-font-size: 14; -fx-text-fill: white; -fx-background-color: #d9534f;");
+            deleteButton.setOnAction(event -> confirmDelete(entity));
+            buttonBox.getChildren().addAll(updateButton, deleteButton, cancelButton);
+        } else {
+            buttonBox.getChildren().addAll(updateButton, cancelButton);
+        }
 
         return buttonBox;
     }

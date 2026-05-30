@@ -4,6 +4,7 @@
   "menu.self": "Dienstleister",
   "menu.new": "Neu",
   "menu.edit": "Bearbeiten",
+  "menu.delete": "Löschen",
   "button.save": "Speichern",
   "button.saveBlueprint": "Blaupause erstellen",
   "button.update": "Aktualisieren",
@@ -50,6 +51,6 @@
   "title.serviceprovider.edit": "Dienstleister bearbeiten",
   "msg.invalidNumbers": "PLZ und IK müssen Zahlen sein!",
   "msg.deleteConfirmTitle": "Bestätigung",
-  "msg.deleteConfirmHeader": "Patient löschen?",
-  "msg.deleteConfirmBody": "Soll der Patient %s wirklich gelöscht werden?"
+  "msg.deleteConfirmHeader": "Eintrag löschen?",
+  "msg.deleteConfirmBody": "Soll %s wirklich gelöscht werden?"
 }

@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,6 +40,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -116,9 +120,11 @@ public class View {
 
         menuBuilder.addPatientItem(messages.get("menu.new"), this::createPerson);
         menuBuilder.addPatientItem(messages.get("menu.edit"), this::editPatient);
+        menuBuilder.addPatientItem(messages.get("menu.delete"), this::deletePatient);
 
         menuBuilder.addSelfItem(messages.get("menu.new"), this::createSelfPerson);
         menuBuilder.addSelfItem(messages.get("menu.edit"), this::editServiceProvider);
+        menuBuilder.addSelfItem(messages.get("menu.delete"), this::deleteServiceProvider);
 
         MenuBar menuBar = menuBuilder.build();
 
@@ -497,6 +503,7 @@ public class View {
                 () -> controller.getDatabase().getAllPatients(),
                 patient -> controller.getDatabase().savePatient(patient),
                 patient -> controller.getDatabase().deletePatient(patient),
+                false,
                 fieldName -> createInputFieldFromTagList(fieldName,
                         TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
                 "Patient",
@@ -515,6 +522,7 @@ public class View {
                 () -> controller.getDatabase().getAllServiceProviders(),
                 sp -> controller.getDatabase().saveServiceProvider(sp),
                 sp -> controller.getDatabase().deleteServiceProvider(sp),
+                false,
                 fieldName -> createInputFieldFromTagList(fieldName,
                         TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
                 "ServiceProvider",
@@ -524,6 +532,82 @@ public class View {
         );
         skeleton.setCenter(editController.buildEditForm());
         //TODO: Patienten bearbeiten
+    }
+
+    private void deletePatient() {
+        deleteEntity(
+                controller.getDatabase().getAllPatients(),
+                patientPopulator::getDisplayName,
+                patient -> controller.getDatabase().deletePatient(patient),
+                messages.get("msg.noPatients"),
+                messages.get("msg.patientDeleted"),
+            messages.get("menu.patient"),
+            messages.get("label.selectPatient"));
+    }
+
+    private void deleteServiceProvider() {
+        deleteEntity(
+                controller.getDatabase().getAllServiceProviders(),
+                serviceProviderPopulator::getDisplayName,
+                sp -> controller.getDatabase().deleteServiceProvider(sp),
+                messages.get("msg.noServiceProviders"),
+                messages.get("msg.selfDeleted"),
+            messages.get("menu.self"),
+            messages.get("label.selectServiceProvider"));
+    }
+
+    private <T> void deleteEntity(
+            List<T> entities,
+            Function<T, String> displayNameProvider,
+            Consumer<T> deleteAction,
+            String emptyMessage,
+            String successMessage,
+            String entityLabel,
+            String selectionLabel) {
+        if (entities == null || entities.isEmpty()) {
+            showInfoDialog(messages.get("dialog.info.title"), emptyMessage);
+            return;
+        }
+
+        List<String> displayNames = new ArrayList<>();
+        Map<String, T> entityByDisplayName = new LinkedHashMap<>();
+        for (T entity : entities) {
+            String displayName = displayNameProvider.apply(entity);
+            displayNames.add(displayName);
+            entityByDisplayName.put(displayName, entity);
+        }
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(displayNames.get(0), displayNames);
+        dialog.setTitle(messages.get("msg.deleteConfirmTitle"));
+        dialog.setHeaderText(messages.get("msg.deleteConfirmHeader"));
+        dialog.setContentText(selectionLabel);
+
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return;
+        }
+
+        String chosenDisplayName = selection.get();
+        T entity = entityByDisplayName.get(chosenDisplayName);
+        if (entity == null) {
+            showErrorDialog(messages.get("dialog.error.title"), "Ausgewählter Eintrag konnte nicht gefunden werden.");
+            return;
+        }
+
+        Alert confirm = new Alert(AlertType.CONFIRMATION);
+        confirm.setTitle(messages.get("msg.deleteConfirmTitle"));
+        confirm.setHeaderText(messages.get("msg.deleteConfirmHeader"));
+        confirm.setContentText(String.format(messages.get("msg.deleteConfirmBody"), chosenDisplayName));
+
+        Optional<javafx.scene.control.ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+            try {
+                deleteAction.accept(entity);
+                showInfoDialog(messages.get("dialog.info.title"), successMessage);
+            } catch (Exception e) {
+                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+            }
+        }
     }
 
     /**
