@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.enums.InputOption;
@@ -45,6 +47,7 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -150,7 +153,31 @@ public class View {
 
         Label title = componentFactory.createLabel(invoiceName);
         title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-        vbox.getChildren().add(title);
+        Button saveBlueprintBtn = componentFactory.createButton(messages.get("button.saveBlueprint"));
+        saveBlueprintBtn.setOnAction(evt -> {
+            TextInputDialog dialog = new TextInputDialog(invoiceName + "-blueprint");
+            dialog.setTitle(messages.get("button.saveBlueprint"));
+            dialog.setHeaderText(null);
+            dialog.setContentText("Name:");
+            dialog.showAndWait().ifPresent(name -> {
+                try {
+                    Map<String, Object> values = collectVisibleFieldValues(allFieldNodes);
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("template", invoiceName);
+                    payload.put("headerCodes", this.currentInvoiceHeaderCodes);
+                    payload.put("fields", values);
+                    String json = objectMapper.writeValueAsString(payload);
+                    Blueprint bp = new Blueprint(name, invoiceName, json, OffsetDateTime.now());
+                    controller.getDatabase().saveBlueprint(bp);
+                    showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.blueprintSaved"));
+                } catch (Exception e) {
+                    showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+                }
+            });
+        });
+
+        HBox titleRow = new HBox(10, title, saveBlueprintBtn);
+        vbox.getChildren().add(titleRow);
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
             fieldNodes.add(componentFactory.createBorderPane(
@@ -167,6 +194,30 @@ public class View {
         scrollPane.setFitToWidth(true);
         skeleton.setCenter(scrollPane);
         this.currentInvoiceHeaderCodes = Map.of();
+    }
+
+    private Map<String, Object> collectVisibleFieldValues(Map<String, Node> fieldNodes) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Node> e : fieldNodes.entrySet()) {
+            String key = e.getKey();
+            Node node = e.getValue();
+            Object value = null;
+            if (node instanceof TextField) {
+                value = ((TextField) node).getText();
+            } else if (node instanceof ComboBox) {
+                value = ((ComboBox<?>) node).getValue();
+            } else if (node instanceof DatePicker) {
+                value = ((DatePicker) node).getValue();
+            } else if (node instanceof Spinner) {
+                value = ((Spinner<?>) node).getValue();
+            } else if (node instanceof javafx.scene.control.CheckBox) {
+                value = ((javafx.scene.control.CheckBox) node).isSelected();
+            } else if (node instanceof TextInputControl) {
+                value = ((TextInputControl) node).getText();
+            }
+            result.put(key, value);
+        }
+        return result;
     }
 
     /**
