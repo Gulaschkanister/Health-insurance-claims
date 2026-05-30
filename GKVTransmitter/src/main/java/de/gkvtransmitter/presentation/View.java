@@ -247,11 +247,11 @@ public class View {
      */
     private void createAbrechnung() {
         List<de.gkvtransmitter.entity.Blueprint> blueprints = controller.getDatabase().getAllBlueprints();
-        List<ServiceProvider> serviceProviders = controller.getDatabase().getAllServiceProviders();
         List<Patient> patients = controller.getDatabase().getAllPatients();
+        List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
 
         VBox root = new VBox(10);
-        root.setPadding(new Insets(16));
+        root.setPadding(new Insets(20));
 
         Label title = componentFactory.createLabel(messages.get("menu.settlement"));
 
@@ -272,40 +272,130 @@ public class View {
                     return null;
                 }
             });
-            bpCombo.getSelectionModel().selectFirst();
+            // no default selection for blueprint
         }
 
-        // Service Provider selector
-        Label spLabel = componentFactory.createLabel(messages.get("label.selectServiceProvider"));
-        ComboBox<ServiceProvider> spCombo = new ComboBox<>();
-        spCombo.setPrefWidth(400);
-        if (serviceProviders != null && !serviceProviders.isEmpty()) {
-            spCombo.getItems().addAll(serviceProviders);
-            spCombo.setConverter(new javafx.util.StringConverter<ServiceProvider>() {
+        // Group selector (optional)
+        Label groupLabel = componentFactory.createLabel(messages.get("label.selectGroupForSettlement"));
+        ComboBox<PersonGroup> groupCombo = new ComboBox<>();
+        groupCombo.setPrefWidth(400);
+        if (groups != null && !groups.isEmpty()) {
+            groupCombo.getItems().addAll(groups);
+            groupCombo.setConverter(new javafx.util.StringConverter<PersonGroup>() {
                 @Override
-                public String toString(ServiceProvider object) {
-                    return object == null ? "" : object.getFirstname() + " " + object.getLastname();
+                public String toString(PersonGroup object) {
+                    return object == null ? "" : object.getName();
                 }
 
                 @Override
-                public ServiceProvider fromString(String string) {
+                public PersonGroup fromString(String string) {
                     return null;
                 }
             });
-            spCombo.getSelectionModel().selectFirst();
+            // no default selection for group
         }
 
-        // Patients checklist
+        // Note: Dienstleister-Dropdown removed; Dienstleister werden in der Tabelle angezeigt
+
+        // no quick-selects or role filters; show tables for group members
+
+        // Combined members: providers + patients tables
         Label patsLabel = componentFactory.createLabel(messages.get("label.selectPatients"));
-        VBox checklist = new VBox(4);
+        GridPane providerGrid = new GridPane();
+        providerGrid.setHgap(8);
+        providerGrid.setVgap(6);
+        Label provHeader = componentFactory.createLabel("Dienstleister");
+
+        GridPane patientGrid = new GridPane();
+        patientGrid.setHgap(8);
+        patientGrid.setVgap(6);
+        Label patHeader = componentFactory.createLabel("Patienten");
+
+        List<javafx.scene.control.CheckBox> providerBoxes = new ArrayList<>();
+        List<ServiceProvider> providerEntities = new ArrayList<>();
+
         List<javafx.scene.control.CheckBox> patientBoxes = new ArrayList<>();
-        if (patients != null && !patients.isEmpty()) {
-            for (Patient p : patients) {
-                javafx.scene.control.CheckBox cb = componentFactory.createCheckBox(p.getFirstname() + " " + p.getLastname());
-                patientBoxes.add(cb);
-                checklist.getChildren().add(cb);
+        List<Spinner<Integer>> patientSpinners = new ArrayList<>();
+        List<Patient> patientEntities = new ArrayList<>();
+
+        // helper to (re)build checklist from group or all lists
+        VBox membersBox = new VBox(8);
+
+        Runnable buildChecklist = () -> {
+            membersBox.getChildren().clear();
+            providerBoxes.clear();
+            providerEntities.clear();
+            patientBoxes.clear();
+            patientSpinners.clear();
+            patientEntities.clear();
+
+            List<Patient> sourcePatients = new ArrayList<>();
+            List<ServiceProvider> sourceProviders = new ArrayList<>();
+
+            if (groupCombo.getValue() != null) {
+                PersonGroup sel = groupCombo.getValue();
+                if (sel.getPatients() != null) sourcePatients.addAll(sel.getPatients());
+                if (sel.getServiceProviders() != null) sourceProviders.addAll(sel.getServiceProviders());
             }
-        }
+
+            // provider table header
+            providerGrid.getChildren().clear();
+            providerGrid.add(componentFactory.createLabel("Auswählen"), 0, 0);
+            providerGrid.add(componentFactory.createLabel("Name"), 1, 0);
+            providerGrid.add(componentFactory.createLabel("ID"), 2, 0);
+            int prow = 1;
+            for (ServiceProvider prov : sourceProviders) {
+                CheckBox cb = componentFactory.createCheckBox("");
+                javafx.scene.control.Label name = componentFactory.createLabel(prov.getFirstname() + " " + prov.getLastname());
+                javafx.scene.control.Label idLbl = componentFactory.createLabel(String.valueOf(prov.getId()));
+                providerGrid.add(cb, 0, prow);
+                providerGrid.add(name, 1, prow);
+                providerGrid.add(idLbl, 2, prow);
+                providerBoxes.add(cb);
+                providerEntities.add(prov);
+                prow++;
+            }
+
+            // patient table header and rows
+            patientGrid.getChildren().clear();
+            patientGrid.add(componentFactory.createLabel("Auswählen"), 0, 0);
+            patientGrid.add(componentFactory.createLabel("Name"), 1, 0);
+            patientGrid.add(componentFactory.createLabel("ID"), 2, 0);
+            patientGrid.add(componentFactory.createLabel(messages.get("label.appointments")), 3, 0);
+            int r = 1;
+            for (Patient p : sourcePatients) {
+                CheckBox cb = componentFactory.createCheckBox("");
+                javafx.scene.control.Label name = componentFactory.createLabel(p.getFirstname() + " " + p.getLastname());
+                javafx.scene.control.Label idLbl = componentFactory.createLabel(String.valueOf(p.getId()));
+                Spinner<Integer> spinner = componentFactory.createSpinner(Integer.class, null, InputOption.NUMBER);
+                spinner.setPrefWidth(100);
+                spinner.getValueFactory().setValue(1);
+                patientGrid.add(cb, 0, r);
+                patientGrid.add(name, 1, r);
+                patientGrid.add(idLbl, 2, r);
+                patientGrid.add(spinner, 3, r);
+                patientBoxes.add(cb);
+                patientSpinners.add(spinner);
+                patientEntities.add(p);
+                r++;
+            }
+
+            if (providerEntities.isEmpty() && patientEntities.isEmpty()) {
+                membersBox.getChildren().add(componentFactory.createLabel(messages.get("msg.noPatients")));
+            } else {
+                if (!providerEntities.isEmpty()) membersBox.getChildren().addAll(provHeader, providerGrid);
+                if (!patientEntities.isEmpty()) membersBox.getChildren().addAll(patHeader, patientGrid);
+            }
+        };
+
+        // initial build
+        buildChecklist.run();
+
+        // rebuild on group changes
+        groupCombo.setOnAction(ev -> buildChecklist.run());
+
+        // rebuild on group changes (single handler)
+        // (filters/quick-selects removed)
 
         Button start = componentFactory.createButton(messages.get("button.startSettlement"));
         start.setOnAction(ev -> {
@@ -313,33 +403,42 @@ public class View {
                 showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noBlueprints"));
                 return;
             }
-            if (serviceProviders == null || serviceProviders.isEmpty()) {
-                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noServiceProviders"));
+            if (groupCombo.getValue() == null) {
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.selectGroupRequired"));
                 return;
             }
-            if (patients == null || patients.isEmpty()) {
-                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noPatients"));
-                return;
-            }
-
             de.gkvtransmitter.entity.Blueprint chosen = bpCombo.getValue();
-            ServiceProvider sp = spCombo.getValue();
+
             List<Patient> selectedPatients = new ArrayList<>();
-            for (int i = 0; i < patientBoxes.size(); i++) {
-                if (patientBoxes.get(i).isSelected()) {
-                    selectedPatients.add(patients.get(i));
+            List<ServiceProvider> selectedProviders = new ArrayList<>();
+            Map<Integer, Integer> appointments = new LinkedHashMap<>();
+
+            for (int i = 0; i < providerBoxes.size(); i++) {
+                javafx.scene.control.CheckBox cb = providerBoxes.get(i);
+                if (cb.isSelected()) {
+                    selectedProviders.add(providerEntities.get(i));
                 }
             }
 
-            String summary = String.format("Blaupause: %s\nDienstleister: %s %s\nTeilnehmer: %d",
+            for (int i = 0; i < patientBoxes.size(); i++) {
+                javafx.scene.control.CheckBox cb = patientBoxes.get(i);
+                if (cb.isSelected()) {
+                    Patient p = patientEntities.get(i);
+                    selectedPatients.add(p);
+                    Spinner<Integer> spn = patientSpinners.get(i);
+                    Integer count = spn != null ? spn.getValue() : 0;
+                    appointments.put(p.getId(), count != null ? count : 0);
+                }
+            }
+
+            String summary = String.format("Blaupause: %s\nTeilnehmer: %d\nDienstleister: %d",
                     chosen == null ? "-" : chosen.getName(),
-                    sp == null ? "-" : sp.getFirstname(),
-                    sp == null ? "" : sp.getLastname(),
-                    selectedPatients.size());
+                    selectedPatients.size(),
+                    selectedProviders.size());
             showInfoDialog(messages.get("dialog.info.title"), summary);
         });
 
-        root.getChildren().addAll(title, bpLabel, bpCombo, spLabel, spCombo, patsLabel, checklist, start);
+        root.getChildren().addAll(title, bpLabel, bpCombo, groupLabel, groupCombo, patsLabel, membersBox, start);
         ScrollPane scroll = new ScrollPane(root);
         scroll.setFitToWidth(true);
         skeleton.setCenter(scroll);
