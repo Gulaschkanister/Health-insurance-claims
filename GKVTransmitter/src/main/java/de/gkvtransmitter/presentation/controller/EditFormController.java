@@ -90,14 +90,19 @@ public class EditFormController<T> {
             return createEmptyStatePane();
         }
 
-        // Selection-Panel
-        VBox selectionPane = buildSelectionPane(entities);
-
-        // Form Container (wird gefüllt bei Selection)
+        // Wenn nur ein Eintrag übergeben wird, direkt in den Editor springen.
         formContainer = new VBox(10);
         formContainer.setPadding(new Insets(20));
         ScrollPane formScrollPane = new ScrollPane(formContainer);
         formScrollPane.setFitToWidth(true);
+
+        if (entities.size() == 1) {
+            populateEditForm(entities.get(0));
+            return formScrollPane;
+        }
+
+        // Selection-Panel
+        VBox selectionPane = buildSelectionPane(entities);
 
         // Main Layout
         VBox mainVBox = new VBox(10);

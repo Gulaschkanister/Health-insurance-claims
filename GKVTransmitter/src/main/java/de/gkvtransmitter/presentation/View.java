@@ -504,11 +504,20 @@ public class View {
     }
 
     private void editPatient() {
+        Patient selectedPatient = selectEntity(
+            controller.getDatabase().getAllPatients(),
+            patientPopulator::getDisplayName,
+            messages.get("menu.patient"),
+            messages.get("label.selectPatient"));
+        if (selectedPatient == null) {
+            return;
+        }
+
         EditFormController<Patient> editController = new EditFormController<>(
                 componentFactory,
                 messages,
                 patientPopulator,
-                () -> controller.getDatabase().getAllPatients(),
+            () -> List.of(selectedPatient),
                 patient -> controller.getDatabase().savePatient(patient),
                 patient -> controller.getDatabase().deletePatient(patient),
                 false,
@@ -523,11 +532,20 @@ public class View {
     }
 
     private void editServiceProvider() {
+        ServiceProvider selectedServiceProvider = selectEntity(
+            controller.getDatabase().getAllServiceProviders(),
+            serviceProviderPopulator::getDisplayName,
+            messages.get("menu.self"),
+            messages.get("label.selectServiceProvider"));
+        if (selectedServiceProvider == null) {
+            return;
+        }
+
         EditFormController<ServiceProvider> editController = new EditFormController<>(
                 componentFactory,
                 messages,
                 serviceProviderPopulator,
-                () -> controller.getDatabase().getAllServiceProviders(),
+            () -> List.of(selectedServiceProvider),
                 sp -> controller.getDatabase().saveServiceProvider(sp),
                 sp -> controller.getDatabase().deleteServiceProvider(sp),
                 false,
@@ -641,7 +659,7 @@ public class View {
             return;
         }
 
-        PersonGroup selectedGroup = selectGroup(groups);
+        PersonGroup selectedGroup = selectEntity(groups, this::groupDisplayName, messages.get("menu.groups"), messages.get("label.selectGroup"));
         if (selectedGroup != null) {
             showGroupForm(selectedGroup);
         }
@@ -654,7 +672,7 @@ public class View {
             return;
         }
 
-        PersonGroup selectedGroup = selectGroup(groups);
+        PersonGroup selectedGroup = selectEntity(groups, this::groupDisplayName, messages.get("menu.groups"), messages.get("label.selectGroup"));
         if (selectedGroup == null) {
             return;
         }
@@ -675,26 +693,30 @@ public class View {
         }
     }
 
-    private PersonGroup selectGroup(List<PersonGroup> groups) {
+    private <T> T selectEntity(List<T> entities, Function<T, String> displayNameProvider, String title, String contentText) {
+        if (entities == null || entities.isEmpty()) {
+            return null;
+        }
+
         List<String> groupNames = new ArrayList<>();
-        Map<String, PersonGroup> groupByName = new LinkedHashMap<>();
-        for (PersonGroup group : groups) {
-            String display = groupDisplayName(group);
+        Map<String, T> entityByName = new LinkedHashMap<>();
+        for (T entity : entities) {
+            String display = displayNameProvider.apply(entity);
             groupNames.add(display);
-            groupByName.put(display, group);
+            entityByName.put(display, entity);
         }
 
         ChoiceDialog<String> dialog = new ChoiceDialog<>(groupNames.get(0), groupNames);
-        dialog.setTitle(messages.get("menu.groups"));
-        dialog.setHeaderText(messages.get("label.selectGroup"));
-        dialog.setContentText(messages.get("label.selectGroup"));
+        dialog.setTitle(title);
+        dialog.setHeaderText(contentText);
+        dialog.setContentText(contentText);
 
         Optional<String> selection = dialog.showAndWait();
         if (selection.isEmpty()) {
             return null;
         }
 
-        return groupByName.get(selection.get());
+        return entityByName.get(selection.get());
     }
 
     private void showGroupForm(PersonGroup existingGroup) {
