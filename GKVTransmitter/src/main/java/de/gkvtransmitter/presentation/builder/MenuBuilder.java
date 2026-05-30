@@ -22,6 +22,7 @@ public class MenuBuilder {
     private final List<MenuItem> invoiceMenuItems = new ArrayList<>();
     private final List<MenuItem> patientMenuItems = new ArrayList<>();
     private final List<MenuItem> selfMenuItems = new ArrayList<>();
+    private final List<MenuItem> groupMenuItems = new ArrayList<>();
 
     public MenuBuilder(UiFactory componentFactory, AppMessages messages) {
         this.componentFactory = componentFactory;
@@ -82,6 +83,20 @@ public class MenuBuilder {
     }
 
     /**
+     * Fügt ein Gruppen-Menü-Item hinzu.
+     *
+     * @param label Der Menülabel
+     * @param onAction Der Handler
+     * @return this für Fluent API
+     */
+    public MenuBuilder addGroupItem(String label, Runnable onAction) {
+        MenuItem item = componentFactory.createMenuItem(label);
+        item.setOnAction(event -> onAction.run());
+        groupMenuItems.add(item);
+        return this;
+    }
+
+    /**
      * Baut die vollständige MenuBar.
      *
      * @return Die konstruierte MenuBar
@@ -99,7 +114,11 @@ public class MenuBuilder {
                 messages.get("menu.self"),
                 selfMenuItems.toArray(MenuItem[]::new));
 
-        return componentFactory.createMenuBar(invoiceMenu, patientMenu, selfMenu);
+        Menu groupMenu = componentFactory.createMenu(
+            messages.get("menu.groups"),
+            groupMenuItems.toArray(MenuItem[]::new));
+
+        return componentFactory.createMenuBar(invoiceMenu, patientMenu, selfMenu, groupMenu);
     }
 
     /**
@@ -126,6 +145,15 @@ public class MenuBuilder {
     public MenuBuilder withSelfItems(List<MenuItem> items) {
         selfMenuItems.clear();
         selfMenuItems.addAll(items);
+        return this;
+    }
+
+    /**
+     * Setzt alle Gruppen-Items auf einmal.
+     */
+    public MenuBuilder withGroupItems(List<MenuItem> items) {
+        groupMenuItems.clear();
+        groupMenuItems.addAll(items);
         return this;
     }
 }

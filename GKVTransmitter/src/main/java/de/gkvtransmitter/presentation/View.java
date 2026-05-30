@@ -6,11 +6,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -19,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
@@ -41,6 +44,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -125,6 +129,10 @@ public class View {
         menuBuilder.addSelfItem(messages.get("menu.new"), this::createSelfPerson);
         menuBuilder.addSelfItem(messages.get("menu.edit"), this::editServiceProvider);
         menuBuilder.addSelfItem(messages.get("menu.delete"), this::deleteServiceProvider);
+
+        menuBuilder.addGroupItem(messages.get("menu.new"), this::createGroup);
+        menuBuilder.addGroupItem(messages.get("menu.edit"), this::editGroup);
+        menuBuilder.addGroupItem(messages.get("menu.delete"), this::deleteGroup);
 
         MenuBar menuBar = menuBuilder.build();
 
@@ -541,7 +549,6 @@ public class View {
                 patient -> controller.getDatabase().deletePatient(patient),
                 messages.get("msg.noPatients"),
                 messages.get("msg.patientDeleted"),
-            messages.get("menu.patient"),
             messages.get("label.selectPatient"));
     }
 
@@ -552,7 +559,6 @@ public class View {
                 sp -> controller.getDatabase().deleteServiceProvider(sp),
                 messages.get("msg.noServiceProviders"),
                 messages.get("msg.selfDeleted"),
-            messages.get("menu.self"),
             messages.get("label.selectServiceProvider"));
     }
 
@@ -562,7 +568,6 @@ public class View {
             Consumer<T> deleteAction,
             String emptyMessage,
             String successMessage,
-            String entityLabel,
             String selectionLabel) {
         if (entities == null || entities.isEmpty()) {
             showInfoDialog(messages.get("dialog.info.title"), emptyMessage);
@@ -623,6 +628,209 @@ public class View {
      */
     private void createSelfPerson() {
         showCreatePersonForm(messages.get("title.self.new"), true);
+    }
+
+    private void createGroup() {
+        showGroupForm(null);
+    }
+
+    private void editGroup() {
+        List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
+        if (groups == null || groups.isEmpty()) {
+            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noGroups"));
+            return;
+        }
+
+        PersonGroup selectedGroup = selectGroup(groups);
+        if (selectedGroup != null) {
+            showGroupForm(selectedGroup);
+        }
+    }
+
+    private void deleteGroup() {
+        List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
+        if (groups == null || groups.isEmpty()) {
+            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noGroups"));
+            return;
+        }
+
+        PersonGroup selectedGroup = selectGroup(groups);
+        if (selectedGroup == null) {
+            return;
+        }
+
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle(messages.get("msg.deleteConfirmTitle"));
+        alert.setHeaderText(messages.get("msg.deleteConfirmHeader"));
+        alert.setContentText(String.format(messages.get("msg.deleteConfirmBody"), groupDisplayName(selectedGroup)));
+
+        Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+            try {
+                controller.getDatabase().deletePersonGroup(selectedGroup);
+                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.groupDeleted"));
+            } catch (Exception e) {
+                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+            }
+        }
+    }
+
+    private PersonGroup selectGroup(List<PersonGroup> groups) {
+        List<String> groupNames = new ArrayList<>();
+        Map<String, PersonGroup> groupByName = new LinkedHashMap<>();
+        for (PersonGroup group : groups) {
+            String display = groupDisplayName(group);
+            groupNames.add(display);
+            groupByName.put(display, group);
+        }
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(groupNames.get(0), groupNames);
+        dialog.setTitle(messages.get("menu.groups"));
+        dialog.setHeaderText(messages.get("label.selectGroup"));
+        dialog.setContentText(messages.get("label.selectGroup"));
+
+        Optional<String> selection = dialog.showAndWait();
+        if (selection.isEmpty()) {
+            return null;
+        }
+
+        return groupByName.get(selection.get());
+    }
+
+    private void showGroupForm(PersonGroup existingGroup) {
+        PersonGroup group = existingGroup != null ? existingGroup : new PersonGroup();
+        boolean editing = existingGroup != null;
+
+        List<Patient> patients = controller.getDatabase().getAllPatients();
+        List<ServiceProvider> serviceProviders = controller.getDatabase().getAllServiceProviders();
+
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(20));
+
+        Label title = componentFactory.createLabel(editing ? messages.get("title.group.edit") : messages.get("title.group.new"));
+        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+
+        TextField nameField = componentFactory.createTextField();
+        nameField.setPrefWidth(400);
+        nameField.setText(group.getName() != null ? group.getName() : "");
+
+        List<CheckBox> patientBoxes = new ArrayList<>();
+        VBox patientBox = new VBox(6, componentFactory.createLabel(messages.get("label.groupPatients")));
+        if (patients == null || patients.isEmpty()) {
+            patientBox.getChildren().add(componentFactory.createLabel(messages.get("msg.noPatients")));
+        } else {
+            for (Patient patient : patients) {
+                CheckBox checkBox = componentFactory.createCheckBox(
+                        patient.getFirstname() + " " + patient.getLastname() + " (ID: " + patient.getId() + ")");
+                if (containsPatientId(group.getPatients(), patient.getId())) {
+                    checkBox.setSelected(true);
+                }
+                patientBoxes.add(checkBox);
+                patientBox.getChildren().add(checkBox);
+            }
+        }
+
+        List<CheckBox> serviceProviderBoxes = new ArrayList<>();
+        VBox serviceProviderBox = new VBox(6, componentFactory.createLabel(messages.get("label.groupServiceProviders")));
+        if (serviceProviders == null || serviceProviders.isEmpty()) {
+            serviceProviderBox.getChildren().add(componentFactory.createLabel(messages.get("msg.noServiceProviders")));
+        } else {
+            for (ServiceProvider serviceProvider : serviceProviders) {
+                CheckBox checkBox = componentFactory.createCheckBox(
+                        serviceProvider.getFirstname() + " " + serviceProvider.getLastname() + " (ID: " + serviceProvider.getId() + ")");
+                if (containsServiceProviderId(group.getServiceProviders(), serviceProvider.getId())) {
+                    checkBox.setSelected(true);
+                }
+                serviceProviderBoxes.add(checkBox);
+                serviceProviderBox.getChildren().add(checkBox);
+            }
+        }
+
+        HBox nameRow = new HBox(10, componentFactory.createLabel(messages.get("label.groupName")), nameField);
+
+        Button saveButton = componentFactory.createButton(messages.get("button.save"));
+        saveButton.setOnAction(event -> {
+            String groupName = nameField.getText() != null ? nameField.getText().trim() : "";
+            if (groupName.isBlank()) {
+                showErrorDialog(messages.get("dialog.error.title"), "Bitte einen Gruppennamen eingeben.");
+                return;
+            }
+
+            group.setName(groupName);
+            group.setPatients(collectSelectedPatients(patients, patientBoxes));
+            group.setServiceProviders(collectSelectedServiceProviders(serviceProviders, serviceProviderBoxes));
+
+            try {
+                controller.getDatabase().savePersonGroup(group);
+                showInfoDialog(messages.get("dialog.info.title"),
+                        editing ? messages.get("msg.groupUpdated") : messages.get("msg.groupCreated"));
+                skeleton.setCenter(null);
+            } catch (Exception e) {
+                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+            }
+        });
+
+        Button cancelButton = componentFactory.createButton(messages.get("button.cancel"));
+        cancelButton.setOnAction(event -> skeleton.setCenter(null));
+
+        HBox buttonRow = new HBox(10, saveButton, cancelButton);
+
+        root.getChildren().addAll(title, nameRow, patientBox, serviceProviderBox, buttonRow);
+
+        ScrollPane scrollPane = new ScrollPane(root);
+        scrollPane.setFitToWidth(true);
+        skeleton.setCenter(scrollPane);
+    }
+
+    private boolean containsPatientId(Set<Patient> selectedPatients, int id) {
+        if (selectedPatients == null || selectedPatients.isEmpty()) {
+            return false;
+        }
+
+        for (Patient selected : selectedPatients) {
+            if (selected != null && selected.getId() == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean containsServiceProviderId(Set<ServiceProvider> selectedServiceProviders, int id) {
+        if (selectedServiceProviders == null || selectedServiceProviders.isEmpty()) {
+            return false;
+        }
+
+        for (ServiceProvider selected : selectedServiceProviders) {
+            if (selected != null && selected.getId() == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<Patient> collectSelectedPatients(List<Patient> patients, List<CheckBox> patientBoxes) {
+        Set<Patient> selectedPatients = new HashSet<>();
+        for (int i = 0; i < patientBoxes.size(); i++) {
+            if (patientBoxes.get(i).isSelected()) {
+                selectedPatients.add(patients.get(i));
+            }
+        }
+        return selectedPatients;
+    }
+
+    private Set<ServiceProvider> collectSelectedServiceProviders(List<ServiceProvider> serviceProviders,
+            List<CheckBox> serviceProviderBoxes) {
+        Set<ServiceProvider> selectedServiceProviders = new HashSet<>();
+        for (int i = 0; i < serviceProviderBoxes.size(); i++) {
+            if (serviceProviderBoxes.get(i).isSelected()) {
+                selectedServiceProviders.add(serviceProviders.get(i));
+            }
+        }
+        return selectedServiceProviders;
+    }
+
+    private String groupDisplayName(PersonGroup group) {
+        return group.getName() + " (ID: " + group.getId() + ")";
     }
 
     /**

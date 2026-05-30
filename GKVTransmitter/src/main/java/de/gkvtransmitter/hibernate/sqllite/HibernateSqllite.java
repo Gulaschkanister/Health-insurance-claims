@@ -8,6 +8,7 @@ import org.hibernate.Transaction;
 
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.util.HibernateUtil;
 
@@ -76,6 +77,14 @@ public class HibernateSqllite {
         }
     }
 
+    public List<PersonGroup> getAllPersonGroups() {
+        try (Session session = sf.openSession()) {
+            return session.createQuery("FROM PersonGroup", PersonGroup.class).list();
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading groups", e);
+        }
+    }
+
     /**
      * Load a patient by ID.
      */
@@ -117,6 +126,35 @@ public class HibernateSqllite {
                 transaction.rollback();
             }
             throw new RuntimeException("Error deleting ServiceProvider", e);
+        }
+    }
+
+    public void savePersonGroup(PersonGroup personGroup) {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            session.merge(personGroup);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error saving group", e);
+        }
+    }
+
+    public void deletePersonGroup(PersonGroup personGroup) {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            PersonGroup managed = (PersonGroup) session.merge(personGroup);
+            session.delete(managed);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error deleting group", e);
         }
     }
 

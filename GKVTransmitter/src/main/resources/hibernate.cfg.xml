@@ -19,6 +19,7 @@
       <property name="hibernate.format_sql">true</property>
       <mapping class="de.gkvtransmitter.entity.Patient"/>
       <mapping class="de.gkvtransmitter.entity.ServiceProvider"/>
+      <mapping class="de.gkvtransmitter.entity.PersonGroup"/>
       <mapping class="de.gkvtransmitter.entity.Blueprint"/>
       <!-- List of XML mapping files -->
    </session-factory>
