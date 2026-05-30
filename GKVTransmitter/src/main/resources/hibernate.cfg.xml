@@ -21,6 +21,7 @@
       <mapping class="de.gkvtransmitter.entity.ServiceProvider"/>
       <mapping class="de.gkvtransmitter.entity.PersonGroup"/>
       <mapping class="de.gkvtransmitter.entity.Blueprint"/>
+      <mapping class="de.gkvtransmitter.entity.DtaCounter"/>
       <!-- List of XML mapping files -->
    </session-factory>
 </hibernate-configuration>

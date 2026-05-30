@@ -445,15 +445,7 @@ public class View {
             de.gkvtransmitter.entity.Blueprint chosen = bpCombo.getValue();
 
             List<Patient> selectedPatients = new ArrayList<>();
-            List<ServiceProvider> selectedProviders = new ArrayList<>();
             Map<Integer, Integer> appointments = new LinkedHashMap<>();
-
-            for (int i = 0; i < providerBoxes.size(); i++) {
-                javafx.scene.control.CheckBox cb = providerBoxes.get(i);
-                if (cb.isSelected()) {
-                    selectedProviders.add(providerEntities.get(i));
-                }
-            }
 
             for (int i = 0; i < patientBoxes.size(); i++) {
                 javafx.scene.control.CheckBox cb = patientBoxes.get(i);
@@ -466,11 +458,45 @@ public class View {
                 }
             }
 
-            String summary = String.format("Blaupause: %s\nTeilnehmer: %d\nDienstleister: %d",
-                    chosen == null ? "-" : chosen.getName(),
-                    selectedPatients.size(),
-                    selectedProviders.size());
-            showInfoDialog(messages.get("dialog.info.title"), summary);
+            // For per-participant DTA: generate one DTA file per selected patient
+            if (selectedPatients.isEmpty()) {
+                showInfoDialog(messages.get("dialog.info.title"), "Keine Teilnehmer ausgewählt.");
+                return;
+            }
+
+            // choose provider: prefer group's first provider
+            ServiceProvider groupProvider = null;
+            PersonGroup selGroup = groupCombo.getValue();
+            if (selGroup != null && selGroup.getServiceProviders() != null && !selGroup.getServiceProviders().isEmpty()) {
+                groupProvider = selGroup.getServiceProviders().iterator().next();
+            }
+
+            if (groupProvider == null) {
+                showErrorDialog(messages.get("dialog.error.title"), "Die gewählte Gruppe benötigt mindestens einen Dienstleister.");
+                return;
+            }
+
+            java.util.List<java.nio.file.Path> written = new java.util.ArrayList<>();
+            java.nio.file.Path outDir = java.nio.file.Paths.get("dta_output");
+            for (Patient p : selectedPatients) {
+                int ap = appointments.getOrDefault(p.getId(), 0);
+                de.gkvtransmitter.model.Abrechnung ab = new de.gkvtransmitter.model.Abrechnung(p, groupProvider, chosen, ap);
+                long interchangeRef = controller.getDatabase().nextDtaInterchangeReference();
+                String content = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(ab, interchangeRef, "123456780", "987654324");
+                String fname = String.format("patient_%d_%s.dta", p.getId(), java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(java.time.LocalDateTime.now()));
+                try {
+                    java.nio.file.Path writtenPath = de.gkvtransmitter.dta.DtaFactory.writeDtaFile(content, outDir, fname);
+                    written.add(writtenPath);
+                } catch (Exception e) {
+                    showErrorDialog(messages.get("dialog.error.title"), "Fehler beim Schreiben der DTA: " + e.getMessage());
+                    return;
+                }
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("%d DTA-Dateien erzeugt:\n", written.size()));
+            for (java.nio.file.Path pth : written) sb.append(pth.toString()).append('\n');
+            showInfoDialog(messages.get("dialog.info.title"), sb.toString());
         });
 
         root.getChildren().addAll(title, bpLabel, bpCombo, groupLabel, groupCombo, patsLabel, membersBox, start);

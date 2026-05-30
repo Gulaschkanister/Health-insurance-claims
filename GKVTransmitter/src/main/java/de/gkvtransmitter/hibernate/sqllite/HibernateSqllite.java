@@ -7,6 +7,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
 import de.gkvtransmitter.entity.Blueprint;
+import de.gkvtransmitter.entity.DtaCounter;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -180,6 +181,30 @@ public class HibernateSqllite {
             return session.createQuery("FROM Blueprint", Blueprint.class).list();
         } catch (Exception e) {
             throw new RuntimeException("Error loading blueprints", e);
+        }
+    }
+
+    public long nextDtaInterchangeReference() {
+        Transaction transaction = null;
+        try (Session session = sf.openSession()) {
+            transaction = session.beginTransaction();
+            DtaCounter counter = session.get(DtaCounter.class, 1L);
+            if (counter == null) {
+                counter = new DtaCounter();
+                counter.setId(1L);
+                counter.setNextValue(1L);
+            }
+
+            long current = counter.getNextValue() != null ? counter.getNextValue() : 1L;
+            counter.setNextValue(current + 1L);
+            session.saveOrUpdate(counter);
+            transaction.commit();
+            return current;
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error creating next DTA interchange reference", e);
         }
     }
 
