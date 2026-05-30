@@ -37,6 +37,7 @@ import de.gkvtransmitter.util.ModifierInstance;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import de.gkvtransmitter.util.modifiers.MaxLengthModifier;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -105,7 +106,23 @@ public class View {
     public Scene createMainScene(String statusText, double width, double height) {
         MenuBar menuBar = buildMainMenuBar();
         this.skeleton = componentFactory.createBorderPane(menuBar, null, null, null, null);
-        return componentFactory.createScene(skeleton, width, height);
+        Scene scene = componentFactory.createScene(skeleton, width, height);
+        // run seed check after UI is shown once
+        Platform.runLater(() -> seedIfEmpty());
+        return scene;
+    }
+
+    private void seedIfEmpty() {
+        try {
+            boolean noGroups = controller.getDatabase().getAllPersonGroups().isEmpty();
+            boolean noBlue = controller.getDatabase().getAllBlueprints().isEmpty();
+            if (noGroups || noBlue) {
+                seedTestData();
+            }
+        } catch (Exception e) {
+            // don't block startup for seed errors
+            System.err.println("Seed check failed: " + e.getMessage());
+        }
     }
 
     /**
@@ -151,6 +168,13 @@ public class View {
             ev.consume();
         });
         menuBar.getMenus().add(settlementMenu);
+
+        // Dev menu: seed test data
+        javafx.scene.control.Menu devMenu = componentFactory.createMenu("Dev");
+        javafx.scene.control.MenuItem seedItem = componentFactory.createMenuItem("Seed Test Data");
+        seedItem.setOnAction(ev -> seedTestData());
+        devMenu.getItems().add(seedItem);
+        menuBar.getMenus().add(devMenu);
 
         return menuBar;
     }
@@ -1293,5 +1317,46 @@ public class View {
         alert.setHeaderText(title);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * Dev helper: creates a test blueprint, a group with 3 participants and 1 provider
+     */
+    private void seedTestData() {
+        try {
+            // create service provider
+            ServiceProvider prov = new ServiceProvider("Max", "Muster", "Musterstr.", "DE", "1", 12345, 1001, 2001, null);
+            controller.getDatabase().saveServiceProvider(prov);
+
+            // create participants
+            Patient p1 = new Patient("Anna", "A", "Str1", "DE", "1", 11111, 101, 201, null);
+            Patient p2 = new Patient("Bernd", "B", "Str2", "DE", "2", 22222, 102, 202, null);
+            Patient p3 = new Patient("Clara", "C", "Str3", "DE", "3", 33333, 103, 203, null);
+            controller.getDatabase().savePatient(p1);
+            controller.getDatabase().savePatient(p2);
+            controller.getDatabase().savePatient(p3);
+
+            // create group
+            PersonGroup group = new PersonGroup();
+            group.setName("Testgruppe 1");
+            java.util.Set<Patient> ps = new java.util.LinkedHashSet<>();
+            ps.add(p1);
+            ps.add(p2);
+            ps.add(p3);
+            group.setPatients(ps);
+            java.util.Set<ServiceProvider> ss = new java.util.LinkedHashSet<>();
+            ss.add(prov);
+            group.setServiceProviders(ss);
+            controller.getDatabase().savePersonGroup(group);
+
+            // create simple blueprint
+            String payload = "{\"template\":\"test\",\"fields\":{}}";
+            Blueprint bp = new Blueprint("Test Blaupause", "test-template", payload, OffsetDateTime.now());
+            controller.getDatabase().saveBlueprint(bp);
+
+            showInfoDialog(messages.get("dialog.info.title"), "Testdaten angelegt: 1 Dienstleister, 3 Teilnehmer, 1 Gruppe, 1 Blaupause.");
+        } catch (Exception e) {
+            showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+        }
     }
 }
