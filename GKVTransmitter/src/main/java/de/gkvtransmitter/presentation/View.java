@@ -136,10 +136,21 @@ public class View {
 
         MenuBar menuBar = menuBuilder.build();
 
-        // Add settlement (Abrechnung) menu
-        javafx.scene.control.MenuItem settlementItem = componentFactory.createMenuItem(messages.get("menu.settlement"));
-        settlementItem.setOnAction(ev -> createAbrechnung());
-        menuBar.getMenus().add(componentFactory.createMenu(messages.get("menu.settlement"), settlementItem));
+        // Add settlement (Abrechnung) as a single top-level menu (click to open panel)
+        javafx.scene.control.Menu settlementMenu = componentFactory.createMenu(messages.get("menu.settlement"));
+        javafx.scene.control.MenuItem openSettlement = componentFactory.createMenuItem(messages.get("menu.settlement"));
+        openSettlement.setOnAction(ev -> createAbrechnung());
+        settlementMenu.getItems().add(openSettlement);
+        // trigger the item immediately when the top-level menu is activated (single-click behaviour)
+        settlementMenu.setOnShowing(ev -> {
+            try {
+                openSettlement.fire();
+            } finally {
+                settlementMenu.hide();
+            }
+            ev.consume();
+        });
+        menuBar.getMenus().add(settlementMenu);
 
         return menuBar;
     }
