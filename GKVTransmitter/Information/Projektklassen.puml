@@ -1,0 +1,672 @@
+@startuml GKVTransmitterProjektklassen
+' Vollstaendiges Klassenmodell des Projekts GKVTransmitter.
+!pragma layout smetana
+hide empty members
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam package {
+  BorderColor #667085
+  FontColor #344054
+}
+
+package "de.gkvtransmitter" {
+  class Main {
+    +main(String[])
+  }
+
+  class App {
+    -Controller controller
+    -View view
+    +start(Stage)
+    +main(String[])
+  }
+}
+
+package "de.gkvtransmitter.bootstrap" {
+  class ApplicationBootstrap {
+    -GlobalDefinitions globalDefinitions
+    -FactoryManager factoryManager
+    +initialize()
+  }
+}
+
+package "de.gkvtransmitter.converter" {
+  class TypeConverter {
+    +convertStringToSimpleType(Class, String)
+  }
+}
+
+package "de.gkvtransmitter.definition" {
+  enum InvoiceType {
+    SLLA
+    SLGA
+  }
+
+  class GlobalDefinitions {
+    -Map<InvoiceType, Invoice> profileCollection
+    -Map<String, DtaMessage> invoiceTemplateCollection
+    +getInstance()
+    +registerProfile(InvoiceType, Invoice)
+    +registerInvoiceTemplate(DtaMessage)
+    +findInvoicesByInvoicerName(String)
+  }
+}
+
+package "de.gkvtransmitter.entity" {
+  class Person {
+    -int id
+    -String firstname
+    -String lastname
+    -String street
+    -String country
+    -String housenumber
+    -int plz
+    -int ik
+    -int kassenIk
+    -LocalDate birthDate
+    -Map<String, TagList> tags
+    +getTagList(String)
+    +getters/setters
+  }
+
+  class Patient
+  class ServiceProvider
+
+  class PersonGroup {
+    -int id
+    -String name
+    -Set<Patient> patients
+    -Set<ServiceProvider> serviceProviders
+  }
+
+  class Blueprint {
+    -Long id
+    -String name
+    -String templateName
+    -String payload
+    -OffsetDateTime createdAt
+    +getters/setters
+  }
+
+  class DtaCounter {
+    -Long id
+    -Long nextValue
+    +getters/setters
+  }
+
+  Patient --|> Person
+  ServiceProvider --|> Person
+  PersonGroup o-- "0..*" Patient
+  PersonGroup o-- "0..*" ServiceProvider
+}
+
+package "de.gkvtransmitter.model" {
+  class Abrechnung {
+    -Patient patient
+    -ServiceProvider provider
+    -Blueprint blueprint
+    -int appointments
+    -LocalDateTime createdAt
+    +getPatient()
+    +getProvider()
+    +getBlueprint()
+    +getAppointments()
+    +getCreatedAt()
+  }
+
+  class Invoice {
+    -Map<String, SegmentDefinition> segments
+    -InvoiceType messageType
+    +getters
+  }
+
+  class DtaMessage {
+    -String sourceName
+    -String invoicerName
+    -String schemaVersion
+    -String version
+    -List<SegmentInfo> segments
+    -Map<String, String> headerCodes
+    +getters
+  }
+
+  interface DtaProfile
+}
+
+package "de.gkvtransmitter.model.segment" {
+  class Segment {
+    -List<FieldValue> fieldValues
+    -SegmentDefinition definition
+    +getters
+  }
+
+  class SegmentDefinition {
+    -Map<Integer, FieldDefinition> fieldDefinitions
+    -String name
+    -boolean repeatable
+    +getters
+  }
+
+  class SegmentInfo {
+    -int position
+    -String segmentType
+    -InvoiceType messageType
+    -String groupTag
+    -Map<String, ValueFieldEntry> valueFields
+    +getters
+  }
+
+  class ValueFieldEntry {
+    -Object value
+    -String fieldJavaType
+    -InputOption inputField
+    -boolean internal
+    -PersonRole personRole
+    +getters
+  }
+}
+
+package "de.gkvtransmitter.model.segment.field" {
+  class FieldDefinition {
+    -int position
+    -FieldType type
+    -boolean mandatory
+    -int maxLength
+    -String name
+    -InputOption inputType
+    -boolean internal
+    -PersonRole personRole
+    +getters
+  }
+
+  class FieldValue {
+    -FieldDefinition definition
+    -Object value
+    +getters
+  }
+
+  enum FieldType {
+    DATE
+    NUMBER
+    STRING
+  }
+
+  enum PersonRole {
+    PATIENT
+    SERVICE_PROVIDER
+  }
+}
+
+package "de.gkvtransmitter.enums" {
+  enum InputOption {
+    CODE
+    NUMBER_SUGGESTION
+    NUMBER
+    STRING
+    PERCENT
+    COST
+    BOOLEAN
+    DATE
+    TIME
+  }
+
+  enum Modifier {
+    MAX_LENGTH
+    DECIMAL_PLACE
+    NO_DECIMAL_PLACE
+    NUMBER
+    TEXT
+    SPECIAL_CHAR
+  }
+}
+
+package "de.gkvtransmitter.parser" {
+  interface ParserFactory<T> {
+    +parse()
+  }
+}
+
+package "de.gkvtransmitter.parser.json" {
+  class JsonParserFactory {
+    -ObjectMapper objectMapper
+    -Map<InvoiceType, Invoice> profileByTypeCache
+    -Map<String, SegmentDefinition> segmentDefinitionCache
+    +parse()
+    +create()
+    +parseInvoice()
+    +parseProfiles()
+    +parseInvoices()
+    +parseSegments()
+    -parseProfile(String)
+    -parseInvoiceResource(String)
+    -parseSegmentFromResource(String, boolean)
+    -ensureProfileCache()
+    -resolveSegmentDefinition(...)
+    -toFieldDefinition(JsonNode)
+  }
+}
+
+package "de.gkvtransmitter.factory" {
+  interface Factory {
+    +create()
+  }
+}
+
+package "de.gkvtransmitter.dispatch" {
+  class BillingOfficeEndpoint <<record>> {
+    int kassenIk
+    String name
+    BillingOfficeTransportType transportType
+    Path destinationDirectory
+    boolean enabled
+    +fileEndpoint(...)
+  }
+
+  class BillingOfficeEndpointCheck <<record>> {
+    int kassenIk
+    String name
+    Path destinationDirectory
+    boolean reachable
+    String message
+  }
+
+  enum BillingOfficeTransportType {
+    FILE
+  }
+
+  enum BillingOfficeResponseType {
+    ACCEPTED
+    REJECTED
+    TECHNICAL_ERROR
+    SYNTAX_ERROR
+    UNKNOWN
+  }
+
+  class BillingOfficeResponse {
+    -BillingOfficeResponseType type
+    -String message
+    -String rawContent
+    +getType()
+    +getMessage()
+    +getRawContent()
+  }
+
+  interface BillingOfficeTransport {
+    +getType()
+    +send(Path, BillingOfficeEndpoint)
+    +probe(BillingOfficeEndpoint)
+  }
+
+  class FileBillingOfficeTransport {
+    +getType()
+    +send(Path, BillingOfficeEndpoint)
+    +probe(BillingOfficeEndpoint)
+  }
+
+  class BillingOfficeEndpointRegistry {
+    -Map<Integer, BillingOfficeEndpoint> endpoints
+    -Path fallbackRoot
+    +loadDefault()
+    +resolve(int, Path)
+    +getEndpoints()
+    +getFallbackRoot()
+  }
+
+  class DispatchBatch {
+    -int kassenIk
+    -List<Path> files
+    +getKassenIk()
+    +getFiles()
+  }
+
+  class DtaDispatchService {
+    -BillingOfficeEndpointRegistry endpointRegistry
+    -BillingOfficeTransport transport
+    +generateAndRoute(List<Abrechnung>, Path)
+    +checkConfiguredEndpoints()
+    +parseResponse(String)
+  }
+
+  class "BillingOfficeEndpointRegistry.RegistryConfig" as RegistryConfig {
+    -String fallbackRoot
+    -List<BillingOfficeEndpointDefinition> targets
+  }
+
+  class "BillingOfficeEndpointRegistry.BillingOfficeEndpointDefinition" as BillingOfficeEndpointDefinition {
+    -int kassenIk
+    -String name
+    -BillingOfficeTransportType transportType
+    -String destinationDirectory
+    -boolean enabled
+    +toEndpoint()
+  }
+}
+
+package "de.gkvtransmitter.dta" {
+  class DtaFactory {
+    +buildDtaFor(Abrechnung, long, String, String)
+    +buildApplicationRef(LocalDateTime, long)
+    +writeDtaFile(String, Path, String)
+    -calculateFallSum(Abrechnung)
+    -buildProviderNameSegment(ServiceProvider)
+    -buildInvSegment(Patient, LocalDate)
+    -buildNadSegment(Patient)
+    -buildEnfSegment(Abrechnung)
+  }
+}
+
+package "de.gkvtransmitter.presentation" {
+  interface UiFactory {
+    +createLabel(...)
+    +createScene(...)
+    +createErrorAlert(...)
+    +createBorderPane(...)
+    +createButton(...)
+    +createDatePicker()
+    +createCheckBox(...)
+    +createToolBar(...)
+    +createScrollBar(...)
+    +createMenuBar(...)
+    +createMenu(...)
+    +createMenuItem(...)
+    +createGridPane(...)
+    +createTextField()
+    +createSpinner(...)
+    +createComboBox(...)
+  }
+
+  class JavaFxUiFactory
+
+  class FactoryManager {
+    -Set<Factory> factories
+    +addFactory(Factory)
+    +getSpecificFactory(String)
+  }
+
+  class Controller {
+    -GlobalDefinitions globalDefinitions
+    -FactoryManager factoryManager
+    -ApplicationBootstrap bootstrap
+    -HibernateSqllite database
+    +getGlobalDefinitions()
+    +getFactoryManager()
+    +getDatabase()
+  }
+
+  class View {
+    -UiFactory componentFactory
+    -Controller controller
+    -AppMessages messages
+    -ObjectMapper objectMapper
+    -PatientFieldPopulator patientPopulator
+    -ServiceProviderFieldPopulator serviceProviderPopulator
+    +createMainScene(...)
+    +showInfoDialog(...)
+    +showErrorDialog(...)
+    -createFormular(...)
+    -createAbrechnung()
+    -editPatient()
+    -editServiceProvider()
+    -createGroup()
+    -editGroup()
+    -deleteGroup()
+  }
+}
+
+package "de.gkvtransmitter.presentation.builder" {
+  class FormBuilder {
+    -UiFactory componentFactory
+    -AppMessages messages
+    -List<FormField> fields
+    -List<FormButton> buttons
+    +withTitle(String)
+    +addField(...)
+    +addButton(...)
+    +withGridColumns(int)
+    +withFieldSpacing(double)
+    +withPadding(double)
+    +build()
+    +getFieldMap()
+    +getFieldComponents()
+  }
+
+  class MenuBuilder {
+    -UiFactory componentFactory
+    -AppMessages messages
+    -List<MenuItem> invoiceMenuItems
+    -List<MenuItem> patientMenuItems
+    -List<MenuItem> selfMenuItems
+    -List<MenuItem> groupMenuItems
+    +addInvoiceItem(...)
+    +addAllInvoiceItems(...)
+    +addPatientItem(...)
+    +addSelfItem(...)
+    +addGroupItem(...)
+    +withInvoiceItems(...)
+    +withPatientItems(...)
+    +withSelfItems(...)
+    +withGroupItems(...)
+    +build()
+  }
+}
+
+package "de.gkvtransmitter.presentation.controller" {
+  class EditFormController<T> {
+    -UiFactory componentFactory
+    -AppMessages messages
+    -EntityFieldPopulator<T> populator
+    -Supplier<List<T>> entityLoader
+    -Consumer<T> entitySaver
+    -Consumer<T> entityDeleter
+    -boolean showDeleteButton
+    -Function<String, Node> fieldBuilder
+    +buildEditForm()
+  }
+}
+
+package "de.gkvtransmitter.presentation.populator" {
+  abstract class EntityFieldPopulator<T> {
+    +populateField(Node, String, T)
+    +extractToEntity(Node, String, T)
+    +getDisplayName(T)
+    +getId(T)
+    #getFieldValue(String, T)
+    #setEntityFieldValue(String, T, String)
+  }
+
+  class PatientFieldPopulator
+  class ServiceProviderFieldPopulator
+}
+
+package "de.gkvtransmitter.util" {
+  class AppMessages {
+    -Map<String, String> messages
+    +AppMessages(String)
+    +get(String)
+  }
+
+  class TagConfigLoader {
+    +loadTagConfig(String)
+    -parseTagConfig(JsonNode)
+    -parseModifier(JsonNode)
+  }
+
+  class TagList {
+    -InputOption inputOption
+    -List<ModifierInstance> modifierList
+    +getters
+  }
+
+  abstract class ModifierInstance {
+    -Modifier modifier
+    +getModifier()
+  }
+
+  class FieldValidator {
+    +validate(String, String, InputOption, String)
+  }
+
+  class "FieldValidator.ValidationResult" as NestedValidationResult {
+    +boolean isValid
+    +String errorMessage
+  }
+
+  class HibernateUtil {
+    -SessionFactory sessionFactory
+    +getSessionFactory()
+  }
+}
+
+package "de.gkvtransmitter.util.modifiers" {
+  class DecimalPlaceModifier {
+    -int decimalPlaces
+    +getDecimalPlaces()
+  }
+
+  class MaxLengthModifier {
+    -int maxLength
+    +getMaxLength()
+  }
+
+  class NoDecimalPlaceModifier
+  class NumberModifier
+  class SpecialCharModifier
+  class TextModifier
+}
+
+package "de.gkvtransmitter.hibernate.sqllite" {
+  class HibernateSqllite {
+    -SessionFactory sf
+    -HibernateSqllite hbsqli
+    +getInstance()
+    +savePatient(Patient)
+    +saveServiceProvider(ServiceProvider)
+    +getAllPatients()
+    +getAllServiceProviders()
+    +getAllPersonGroups()
+    +getPatientById(int)
+    +deletePatient(Patient)
+    +deleteServiceProvider(ServiceProvider)
+    +savePersonGroup(PersonGroup)
+    +deletePersonGroup(PersonGroup)
+    +saveBlueprint(Blueprint)
+    +getAllBlueprints()
+    +nextDtaInterchangeReference()
+  }
+}
+
+package "de.gkvtransmitter.validator" {
+  class ValidationResult
+  interface ValidationRule
+}
+
+' Vererbung und Implementierung
+JsonParserFactory ..|> ParserFactory
+JsonParserFactory ..|> Factory
+JavaFxUiFactory ..|> UiFactory
+FileBillingOfficeTransport ..|> BillingOfficeTransport
+PatientFieldPopulator --|> EntityFieldPopulator
+ServiceProviderFieldPopulator --|> EntityFieldPopulator
+DecimalPlaceModifier --|> ModifierInstance
+MaxLengthModifier --|> ModifierInstance
+NoDecimalPlaceModifier --|> ModifierInstance
+NumberModifier --|> ModifierInstance
+SpecialCharModifier --|> ModifierInstance
+TextModifier --|> ModifierInstance
+
+' Modell- und Kompositionsbeziehungen
+Invoice o-- "0..*" SegmentDefinition
+DtaMessage o-- "0..*" SegmentInfo
+SegmentInfo o-- "0..*" ValueFieldEntry
+Segment o-- "0..*" FieldValue
+Segment --> SegmentDefinition
+SegmentDefinition o-- "0..*" FieldDefinition
+FieldValue --> FieldDefinition
+GlobalDefinitions o-- "0..*" Invoice
+GlobalDefinitions o-- "0..*" DtaMessage
+Person o-- "0..*" TagList
+TagList o-- "0..*" ModifierInstance
+PersonGroup o-- "0..*" Patient
+PersonGroup o-- "0..*" ServiceProvider
+Abrechnung o-- Patient
+Abrechnung o-- ServiceProvider
+Abrechnung o-- Blueprint
+
+' Enum- und Wertobjekt-Beziehungen
+Invoice --> InvoiceType
+SegmentInfo --> InvoiceType
+FieldDefinition --> FieldType
+FieldDefinition --> InputOption
+FieldDefinition --> PersonRole
+ValueFieldEntry --> InputOption
+ValueFieldEntry --> PersonRole
+TagList --> InputOption
+ModifierInstance --> Modifier
+BillingOfficeEndpoint --> BillingOfficeTransportType
+BillingOfficeResponse --> BillingOfficeResponseType
+BillingOfficeEndpointRegistry o-- "0..*" BillingOfficeEndpoint
+BillingOfficeEndpointRegistry o-- RegistryConfig
+RegistryConfig o-- "0..*" BillingOfficeEndpointDefinition
+BillingOfficeEndpointDefinition --> BillingOfficeTransportType
+DtaDispatchService o-- DispatchBatch
+
+' Anwendungs- und Serviceabhaengigkeiten
+Main --> App
+App --> Controller
+App --> View
+ApplicationBootstrap --> GlobalDefinitions
+ApplicationBootstrap --> FactoryManager
+ApplicationBootstrap --> JsonParserFactory
+Controller --> GlobalDefinitions
+Controller --> FactoryManager
+Controller --> ApplicationBootstrap
+Controller --> HibernateSqllite
+View --> Controller
+View --> UiFactory
+View --> AppMessages
+View --> PatientFieldPopulator
+View --> ServiceProviderFieldPopulator
+FactoryManager o-- "0..*" Factory
+FormBuilder --> UiFactory
+FormBuilder --> AppMessages
+MenuBuilder --> UiFactory
+MenuBuilder --> AppMessages
+EditFormController --> UiFactory
+EditFormController --> EntityFieldPopulator
+EditFormController --> AppMessages
+PatientFieldPopulator --> Patient
+ServiceProviderFieldPopulator --> ServiceProvider
+
+' Parsing, DTA und Persistenz
+JsonParserFactory --> Invoice
+JsonParserFactory --> DtaMessage
+JsonParserFactory --> SegmentDefinition
+JsonParserFactory --> FieldDefinition
+DtaFactory --> Abrechnung
+DtaFactory --> Patient
+DtaFactory --> ServiceProvider
+DtaDispatchService --> BillingOfficeEndpointRegistry
+DtaDispatchService --> BillingOfficeTransport
+DtaDispatchService --> DtaFactory
+DtaDispatchService --> Abrechnung
+HibernateSqllite --> HibernateUtil
+HibernateSqllite --> Patient
+HibernateSqllite --> ServiceProvider
+HibernateSqllite --> PersonGroup
+HibernateSqllite --> Blueprint
+HibernateSqllite --> DtaCounter
+Person --> TagConfigLoader
+TagConfigLoader --> TagList
+TagConfigLoader --> ModifierInstance
+FieldValidator --> InputOption
+
+legend right
+  <b>Beziehungstypen</b>
+  --|>  Vererbung / Implementierung
+  o--   Besitz bzw. Komposition/Aggregation
+  -->   Nutzung oder Abhaengigkeit
+  ..>   lose Abhaengigkeit
+endlegend
+@enduml
