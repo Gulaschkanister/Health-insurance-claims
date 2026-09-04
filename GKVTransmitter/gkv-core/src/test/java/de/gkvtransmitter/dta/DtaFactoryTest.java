@@ -16,16 +16,16 @@ class DtaFactoryTest {
 
     @Test
     void buildDtaForCreatesReferenceAlignedMessages() {
-        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 111111111, 987654321, LocalDate.of(1990, 1, 1));
+        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 108310400, 101560000, LocalDate.of(1990, 1, 1));
         patient.setId(1);
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 222222222, 987654321, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(2);
         Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
         Abrechnung abrechnung = new Abrechnung(patient, provider, blueprint, 3);
 
         String dta = DtaFactory.buildDtaFor(abrechnung, 1L, String.valueOf(provider.getIk()), String.valueOf(patient.getKassenIk()));
 
-        assertTrue(dta.contains("UNB+UNOC:3+222222222+987654321+"));
+        assertTrue(dta.contains("UNB+UNOC:3+104940005+101560000+"));
         assertTrue(dta.contains("+00001+H+HEB"));
         assertTrue(dta.contains("UNH+00001+SLGA:21:0:0'"));
         assertTrue(dta.contains("UNH+00002+SLLA:21:0:0'"));

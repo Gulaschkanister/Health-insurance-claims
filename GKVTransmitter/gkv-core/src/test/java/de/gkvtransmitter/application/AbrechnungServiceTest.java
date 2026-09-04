@@ -32,16 +32,16 @@ class AbrechnungServiceTest {
 
     @Test
     void createsAndDispatchesSettlementForSelectedPatients() throws Exception {
-        Patient patient = patient(1, 111111111);
+        Patient patient = patient(1, 108310400);
         ServiceProvider provider = provider(2);
         PersonGroup group = new PersonGroup("Kurs");
         group.getPatients().add(patient);
         group.getServiceProviders().add(provider);
         Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
-        BillingOfficeEndpoint endpoint = BillingOfficeEndpoint.fileEndpoint(111111111, "Test-Kasse",
+        BillingOfficeEndpoint endpoint = BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse",
                 tempDirectory.resolve("endpoint"));
         BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(
-                Map.of(111111111, endpoint), tempDirectory.resolve("fallback"));
+                Map.of(108310400, endpoint), tempDirectory.resolve("fallback"));
         AbrechnungService service = new AbrechnungService(
                 new DtaDispatchService(registry, new FileBillingOfficeTransport()));
 
@@ -54,7 +54,7 @@ class AbrechnungServiceTest {
 
     @Test
     void rejectsNegativeAppointmentCount() {
-        Patient patient = patient(1, 111111111);
+        Patient patient = patient(1, 108310400);
         PersonGroup group = new PersonGroup("Kurs");
         group.getServiceProviders().add(provider(2));
         Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
@@ -68,14 +68,14 @@ class AbrechnungServiceTest {
 
     private Patient patient(int id, int kassenIk) {
         Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
-                111111111, kassenIk, LocalDate.of(1990, 1, 1));
+                108310400, kassenIk, LocalDate.of(1990, 1, 1));
         patient.setId(id);
         return patient;
     }
 
     private ServiceProvider provider(int id) {
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321,
-                222222222, 111111111, LocalDate.of(1985, 2, 2));
+                104940005, 108310400, LocalDate.of(1985, 2, 2));
         provider.setId(id);
         return provider;
     }

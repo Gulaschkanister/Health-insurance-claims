@@ -26,12 +26,12 @@ class DtaDispatchServiceTest {
 
     @Test
     void generatesFilesGroupedByKassenIk() throws Exception {
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 222222222, 987654321, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(10);
         Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
-        Patient patient1 = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 111111111, 111111111, LocalDate.of(1990, 1, 1));
+        Patient patient1 = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 108310400, 108310400, LocalDate.of(1990, 1, 1));
         patient1.setId(1);
-        Patient patient2 = new Patient("Ben", "Beispiel", "Musterstrasse", "DE", "3", 12345, 111111112, 222222222, LocalDate.of(1991, 2, 2));
+        Patient patient2 = new Patient("Ben", "Beispiel", "Musterstrasse", "DE", "3", 12345, 102137985, 104940005, LocalDate.of(1991, 2, 2));
         patient2.setId(2);
 
         List<Abrechnung> abrechnungen = List.of(
@@ -39,8 +39,8 @@ class DtaDispatchServiceTest {
                 new Abrechnung(patient2, provider, blueprint, 2));
 
         Map<Integer, BillingOfficeEndpoint> endpoints = new LinkedHashMap<>();
-        endpoints.put(111111111, BillingOfficeEndpoint.fileEndpoint(111111111, "Kasse A", tempDir.resolve("send-a")));
-        endpoints.put(222222222, BillingOfficeEndpoint.fileEndpoint(222222222, "Kasse B", tempDir.resolve("send-b")));
+        endpoints.put(108310400, BillingOfficeEndpoint.fileEndpoint(108310400, "Kasse A", tempDir.resolve("send-a")));
+        endpoints.put(104940005, BillingOfficeEndpoint.fileEndpoint(104940005, "Kasse B", tempDir.resolve("send-b")));
         BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(endpoints, tempDir.resolve("fallback"));
 
         DtaDispatchService service = new DtaDispatchService(registry, new FileBillingOfficeTransport());
@@ -57,17 +57,17 @@ class DtaDispatchServiceTest {
 
     @Test
     void testDtaArrivesAtConfiguredEndpoint() throws Exception {
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 222222222, 987654321, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(10);
         Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
-        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 111111111, 111111111, LocalDate.of(1990, 1, 1));
+        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 108310400, 108310400, LocalDate.of(1990, 1, 1));
         patient.setId(1);
 
         List<Abrechnung> abrechnungen = List.of(new Abrechnung(patient, provider, blueprint, 1));
 
         Path endpointDir = tempDir.resolve("endpoint");
         Map<Integer, BillingOfficeEndpoint> endpoints = new LinkedHashMap<>();
-        endpoints.put(111111111, BillingOfficeEndpoint.fileEndpoint(111111111, "Test-Kasse", endpointDir));
+        endpoints.put(108310400, BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse", endpointDir));
         BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(endpoints, tempDir.resolve("fallback"));
 
         DtaDispatchService service = new DtaDispatchService(registry, new FileBillingOfficeTransport());
@@ -76,7 +76,7 @@ class DtaDispatchServiceTest {
         assertEquals(1, batches.size());
         Path deliveredFile = batches.get(0).getFiles().get(0);
 
-        try (var stagedFiles = Files.list(tempDir.resolve("staging").resolve("111111111"));
+        try (var stagedFiles = Files.list(tempDir.resolve("staging").resolve("108310400"));
              var endpointFiles = Files.list(endpointDir)) {
             Path stagedFile = stagedFiles.findFirst().orElseThrow();
             Path endpointFile = endpointFiles.findFirst().orElseThrow();
