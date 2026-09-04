@@ -16,6 +16,9 @@ package "presentation" {
   class JavaFxUiFactory
   class FactoryManager
 }
+package "application" {
+  class AbrechnungService
+}
 package "presentation.builder" {
   class FormBuilder
   class MenuBuilder
@@ -42,6 +45,7 @@ package "util" {
 Main --> App
 App --> Controller
 App --> View
+App --> AbrechnungService
 Controller --> ApplicationBootstrap
 Controller --> GlobalDefinitions
 Controller --> FactoryManager
@@ -53,7 +57,8 @@ View --> MenuBuilder
 View --> EditFormController
 View --> PatientFieldPopulator
 View --> ServiceProviderFieldPopulator
-View --> DtaDispatchService
+View --> AbrechnungService
+AbrechnungService --> DtaDispatchService
 JavaFxUiFactory ..|> UiFactory
 FactoryManager o-- "0..*" Factory
 FormBuilder --> UiFactory

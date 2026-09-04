@@ -23,8 +23,8 @@ import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.application.AbrechnungService;
 import de.gkvtransmitter.dispatch.DispatchBatch;
-import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
@@ -86,8 +86,9 @@ public class View {
 
     private final PatientFieldPopulator patientPopulator;
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
+    private final AbrechnungService abrechnungService;
 
-    public View(Controller controller) {
+    public View(Controller controller, AbrechnungService abrechnungService) {
         this.controller = controller;
         this.componentFactory = new JavaFxUiFactory();
         this.messages = new AppMessages("/messages/ui-messages.json");
@@ -95,6 +96,8 @@ public class View {
         this.invoiceCodeOptions = loadInvoiceCodeOptions();
         this.patientPopulator = new PatientFieldPopulator();
         this.serviceProviderPopulator = new ServiceProviderFieldPopulator();
+        this.abrechnungService = java.util.Objects.requireNonNull(abrechnungService,
+            "abrechnungService must not be null");
     }
 
     /**
@@ -284,7 +287,6 @@ public class View {
      */
     private void createAbrechnung() {
         List<de.gkvtransmitter.entity.Blueprint> blueprints = controller.getDatabase().getAllBlueprints();
-        List<Patient> patients = controller.getDatabase().getAllPatients();
         List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
 
         VBox root = new VBox(10);
@@ -466,29 +468,11 @@ public class View {
                 return;
             }
 
-            // choose provider: prefer group's first provider
-            ServiceProvider groupProvider = null;
             PersonGroup selGroup = groupCombo.getValue();
-            if (selGroup != null && selGroup.getServiceProviders() != null && !selGroup.getServiceProviders().isEmpty()) {
-                groupProvider = selGroup.getServiceProviders().iterator().next();
-            }
-
-            if (groupProvider == null) {
-                showErrorDialog(messages.get("dialog.error.title"), "Die gewählte Gruppe benötigt mindestens einen Dienstleister.");
-                return;
-            }
-
-            java.util.List<de.gkvtransmitter.model.Abrechnung> abrechnungen = new java.util.ArrayList<>();
-            for (Patient p : selectedPatients) {
-                int ap = appointments.getOrDefault(p.getId(), 0);
-                abrechnungen.add(new de.gkvtransmitter.model.Abrechnung(p, groupProvider, chosen, ap));
-            }
-
-            DtaDispatchService dispatchService = new DtaDispatchService();
             java.nio.file.Path outDir = java.nio.file.Paths.get("dta_output");
             java.util.List<DispatchBatch> batches;
             try {
-                batches = dispatchService.generateAndRoute(abrechnungen, outDir);
+                batches = abrechnungService.createAndDispatch(selectedPatients, selGroup, chosen, appointments, outDir);
             } catch (Exception e) {
                 showErrorDialog(messages.get("dialog.error.title"), "Fehler beim Versand der DTA-Dateien: " + e.getMessage());
                 return;

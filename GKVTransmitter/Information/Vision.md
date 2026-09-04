@@ -44,7 +44,7 @@ Die Patterns und ihre Fundstellen im Programm und in dieser Dokumentation sind:
 
 | Pattern bzw. Architekturansatz | Umsetzung im Programm | Fundstelle im UML-Diagramm / in dieser Dokumentation |
 |---|---|---|
-| MVC-nahe Struktur | `App` startet die Anwendung, `View` bildet die Oberfläche ab, `Controller` vermittelt und initialisiert | Paket `de.gkvtransmitter.presentation`, Abschnitt „UML-Struktur“ und dieser Abschnitt |
+| MVC-nahe Struktur | `App` startet die Anwendung, `View` bildet die Oberfläche ab, `Controller` vermittelt und initialisiert | Pakete `presentation` und `application`, Abschnitt „UML-Struktur“ und dieser Abschnitt |
 | Bootstrap Pattern | `ApplicationBootstrap.initialize()` lädt Profile und Vorlagen beim Start | Paket `de.gkvtransmitter.bootstrap`, Abschnitt „Grober Ablauf“ |
 | Singleton | `GlobalDefinitions.getInstance()` liefert eine zentrale Registry | Klasse `GlobalDefinitions` im Paket `definition` |
 | Registry Pattern | `GlobalDefinitions`, `FactoryManager` und `BillingOfficeEndpointRegistry` verwalten Profile, Fabriken bzw. Versandziele | Klassen in `definition`, `presentation` und `dispatch` |
@@ -63,8 +63,8 @@ Nicht jede Struktur im Diagramm ist ein Design Pattern. Klassen wie `Patient` od
 2. Der `Controller` startet `ApplicationBootstrap`.
 3. `JsonParserFactory` liest JSON-Profile, Segmentdefinitionen und Vorlagen.
 4. `GlobalDefinitions` hält die geladenen Definitionen zur Laufzeit vor.
-5. `View` erfasst Abrechnungsdaten und erstellt ein `Abrechnung`-Objekt.
-6. `DtaDispatchService` verwendet `DtaFactory`, erzeugt die DTA-Datei und ermittelt das Ziel anhand der Kassen-IK.
+5. `View` erfasst Abrechnungsdaten und übergibt sie an `AbrechnungService`.
+6. `AbrechnungService` erstellt die `Abrechnung`-Objekte und ruft `DtaDispatchService` auf. Dieser verwendet `DtaFactory`, erzeugt die DTA-Datei und ermittelt das Ziel anhand der Kassen-IK.
 7. `FileBillingOfficeTransport` legt die Datei im konfigurierten Ziel ab.
 8. `HibernateSqllite` speichert bzw. lädt die verwalteten Stammdaten und Blueprints.
 

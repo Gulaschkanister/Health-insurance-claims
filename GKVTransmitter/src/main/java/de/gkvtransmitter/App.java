@@ -2,6 +2,7 @@ package de.gkvtransmitter;
 
 import java.util.stream.Collectors;
 
+import de.gkvtransmitter.application.AbrechnungService;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.presentation.Controller;
 import de.gkvtransmitter.presentation.View;
@@ -32,7 +33,7 @@ public class App extends Application {
             // Controller -> ApplicationBootstrap -> JsonParserFactory -> GlobalDefinitions.
             // Breakpoint hier setzen, dann mit Step Into bis zur Registrierung laufen.
             controller = new Controller();
-            view = new View(controller);
+            view = new View(controller, new AbrechnungService());
 
             int loadedProfiles = controller.getGlobalDefinitions().getProfileCollection().size();
             String loadedTypes = controller.getGlobalDefinitions().getProfileCollection().keySet().stream()
