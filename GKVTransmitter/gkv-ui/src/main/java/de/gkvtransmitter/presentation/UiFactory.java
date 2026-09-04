@@ -1,6 +1,5 @@
 package de.gkvtransmitter.presentation;
 
-import de.gkvtransmitter.enums.InputOption;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -68,7 +67,19 @@ public interface UiFactory {
 
     TextField createTextField();
 
-    <T> Spinner<T> createSpinner(Class<T> type, String format, InputOption inputOption);
+    /**
+     * Erstellt einen Zaehler fuer den angegebenen Zahlentyp.
+     *
+     * <p>Die Art des Bedienelements ergibt sich allein aus dem Typ: ganze
+     * Zahlen bekommen einen Schrittweite-1-Zaehler, Betraege einen mit
+     * Hundertstelschritten. Frueher nahm die Methode zusaetzlich ein
+     * Anzeigeformat und eine {@code InputOption} entgegen - beide wurden im
+     * Rumpf nie gelesen, und saemtliche Aufrufer uebergaben {@code null}
+     * beziehungsweise einen Wert, der schon im Typ steckte.</p>
+     *
+     * @param type {@code Integer} oder {@code BigDecimal}
+     */
+    <T> Spinner<T> createSpinner(Class<T> type);
 
     ComboBox<Node> createComboBox(boolean setEditable, Node... options);
 }

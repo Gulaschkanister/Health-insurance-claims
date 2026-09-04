@@ -17,7 +17,6 @@ import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
-import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
@@ -323,7 +322,7 @@ public class AbrechnungsMaske {
             keinen.getStyleClass().add("schaltflaeche-still");
             keinen.setOnAction(ereignis -> haken(false));
 
-            Spinner<Integer> fuerAlle = bausteine.createSpinner(Integer.class, null, InputOption.NUMBER);
+            Spinner<Integer> fuerAlle = bausteine.createSpinner(Integer.class);
             fuerAlle.setId(ID_TERMINE_ALLE);
             fuerAlle.setPrefWidth(90);
             fuerAlle.getValueFactory().setValue(1);
@@ -349,7 +348,7 @@ public class AbrechnungsMaske {
                 kaestchen.selectedProperty().addListener(
                         (wert, alt, neu) -> aktualisiereZusammenfassung());
 
-                Spinner<Integer> termine = bausteine.createSpinner(Integer.class, null, InputOption.NUMBER);
+                Spinner<Integer> termine = bausteine.createSpinner(Integer.class);
                 termine.setId(ID_TERMINE + person.getId());
                 termine.setPrefWidth(100);
                 termine.getValueFactory().setValue(1);

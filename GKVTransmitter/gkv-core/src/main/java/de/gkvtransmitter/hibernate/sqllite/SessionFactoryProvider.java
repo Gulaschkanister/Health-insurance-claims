@@ -48,7 +48,11 @@ public final class SessionFactoryProvider {
 
         StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .configure("hibernate.cfg.xml")
-                .applySetting(AvailableSettings.URL, settings.getJdbcUrl())
+                // JAKARTA_JDBC_URL statt des veralteten URL: Hibernate 6 fuehrt
+                // beide auf dieselbe Verbindungsadresse zurueck, aber URL ist als
+                // deprecated markiert. Die hibernate.cfg.xml setzt bewusst keine
+                // URL, hier kann sich also nichts gegenseitig ueberschreiben.
+                .applySetting(AvailableSettings.JAKARTA_JDBC_URL, settings.getJdbcUrl())
                 .applySetting(AvailableSettings.HBM2DDL_AUTO, settings.getSchemaMode())
                 .build();
         try {

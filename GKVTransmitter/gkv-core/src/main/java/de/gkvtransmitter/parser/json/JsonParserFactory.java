@@ -166,6 +166,24 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         return new DtaMessage(sourceName, invoicerName, schemaVersion, version, segments, headerCodes);
     }
 
+    /**
+     * Liest eine Segmentdefinition aus {@code segments/<name>.json}.
+     *
+     * <p>Jedes Feld traegt dort ein {@code internal}-Kennzeichen. Es entscheidet,
+     * ob das Feld im Blaupausenformular erscheint: {@code false} heisst, der
+     * Anwender fuellt es, {@code true} heisst, die Anwendung setzt es selbst.
+     * Fehlt der Eintrag, gilt {@code false} - das Feld landet also im Formular.
+     * Am 05.09.2026 wurden alle dreizehn Segmentdateien daraufhin durchgesehen:
+     * jedes Feld traegt das Kennzeichen, keines faellt auf die Vorgabe zurueck.
+     * Ohne Kennzeichen sind nur die Segmentverweise in den beiden Profildateien,
+     * die keine Felder sind und es deshalb auch nicht brauchen.</p>
+     *
+     * <p>Offen bleibt eine fachliche Frage, die nicht hierher gehoert: die
+     * Summenfelder in GES und BES stehen auf {@code false}, werden also von Hand
+     * eingetragen, obwohl sie sich aus den Einzelpositionen ergeben. Solange sie
+     * niemand berechnet, ist die Einstufung richtig; sie steht als offener Punkt
+     * in {@code Information/Naechste_Schritte.md}.</p>
+     */
     private SegmentDefinition parseSegmentFromResource(String segmentName, boolean repeatable) {
         String resourcePath = "segments/" + segmentName.toLowerCase(Locale.ROOT) + ".json";
         JsonNode segmentRoot = readResourceTree(resourcePath);
@@ -178,8 +196,6 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
                 fieldDefinitions.put(fieldDefinition.getPosition(), fieldDefinition);
             }
         }
-        // TODO: die jsons müssen überprüft werden wo noch Interne Daten drin stehen und
-        // wo nicht
         return new SegmentDefinition(fieldDefinitions, segmentName, repeatable);
     }
 

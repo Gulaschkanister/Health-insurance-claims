@@ -23,7 +23,6 @@ import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
-import de.gkvtransmitter.presentation.controller.EditFormController;
 import de.gkvtransmitter.presentation.meldung.Bildschirmmeldungen;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
@@ -31,7 +30,6 @@ import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.Anwendungsverzeichnis;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -40,20 +38,18 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
  * Der Einstieg in die Oberflaeche.
  *
  * <p>Baut die Hauptszene, fuellt die Seitenleiste und verteilt von dort auf
- * die Masken. Die Blaupausenmaske ({ createFormular}) liegt als einzige
+ * die Masken. Die Blaupausenmaske ({@code createFormular}) liegt als einzige
  * noch hier; sie ist der naechste Kandidat fuer eine eigene Klasse.</p>
  */
 public class View {
@@ -284,8 +280,8 @@ public class View {
                 value = ((DatePicker) node).getValue();
             } else if (node instanceof Spinner) {
                 value = ((Spinner<?>) node).getValue();
-            } else if (node instanceof javafx.scene.control.CheckBox) {
-                value = ((javafx.scene.control.CheckBox) node).isSelected();
+            } else if (node instanceof CheckBox) {
+                value = ((CheckBox) node).isSelected();
             } else if (node instanceof TextInputControl) {
                 value = ((TextInputControl) node).getText();
             }
@@ -294,10 +290,6 @@ public class View {
         return result;
     }
 
-    /**
-     * Builds and shows the Abrechnung (settlement) panel where user can select
-     * a blueprint, a service provider and participating patients.
-     */
     /**
      * Zeigt die Abrechnungsmaske.
      *
@@ -337,11 +329,11 @@ public class View {
             case NUMBER_SUGGESTION ->
                 componentFactory.createComboBox(true);
             case NUMBER ->
-                componentFactory.createSpinner(Integer.class, null, inputOption);
+                componentFactory.createSpinner(Integer.class);
             case STRING ->
                 componentFactory.createTextField();
             case PERCENT, COST ->
-                componentFactory.createSpinner(BigDecimal.class, null, inputOption);
+                componentFactory.createSpinner(BigDecimal.class);
             case BOOLEAN ->
                 componentFactory.createCheckBox(directName);
             case DATE ->
@@ -363,7 +355,8 @@ public class View {
     private Node createCodeDropdownForInvoiceField(String fieldName) {
         List<String> options = resolveCodeOptionsForField(fieldName);
         String normalized = normalizeFieldKey(fieldName);
-        String headerDefault = this.currentInvoiceHeaderCodes.getOrDefault(normalized, this.currentInvoiceHeaderCodes.get(fieldName));
+        String headerDefault = this.currentInvoiceHeaderCodes.getOrDefault(normalized,
+                this.currentInvoiceHeaderCodes.get(fieldName));
 
         if (options.isEmpty()) {
             TextField tf = componentFactory.createTextField();
@@ -494,7 +487,8 @@ public class View {
     private void seedTestData() {
         try {
             // create service provider
-            ServiceProvider prov = new ServiceProvider("Max", "Muster", "Musterstr.", "DE", "1", 12345, 1001, 2001, null);
+            ServiceProvider prov = new ServiceProvider("Max", "Muster", "Musterstr.", "DE", "1",
+                    12345, 1001, 2001, null);
             controller.getDatabase().saveServiceProvider(prov);
 
             // create participants

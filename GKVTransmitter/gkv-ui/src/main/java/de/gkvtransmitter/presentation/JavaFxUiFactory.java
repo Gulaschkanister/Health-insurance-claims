@@ -2,7 +2,6 @@ package de.gkvtransmitter.presentation;
 
 import java.math.BigDecimal;
 
-import de.gkvtransmitter.enums.InputOption;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -73,11 +72,10 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     /**
-     * * Erstellt eine ComboBox mit den angegebenen Nodes als Optionen.
+     * Erstellt ein Kontrollkästchen mit der angegebenen Beschriftung.
      *
-     * @param setEditable Ob die ComboBox editierbar sein soll.
-     * @param nodes Die Optionen für die ComboBox.
-     * @return Die erstellte ComboBox.
+     * @param text Die Beschriftung neben dem Kästchen.
+     * @return Das erstellte Kontrollkästchen.
      */
     @Override
     public CheckBox createCheckBox(String text) {
@@ -85,11 +83,14 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     /**
-     * * Erstellt eine ComboBox mit den angegebenen Nodes als Optionen.
+     * Erstellt ein BorderPane mit den angegebenen Knoten in seinen fünf Feldern.
      *
-     * @param setEditable Ob die ComboBox editierbar sein soll.
-     * @param nodes Die Optionen für die ComboBox.
-     * @return Die erstellte ComboBox.
+     * @param topProperty Der Knoten oben, oder {@code null}.
+     * @param centerProperty Der Knoten in der Mitte, oder {@code null}.
+     * @param bottomProperty Der Knoten unten, oder {@code null}.
+     * @param leftProperty Der Knoten links, oder {@code null}.
+     * @param rightProperty Der Knoten rechts, oder {@code null}.
+     * @return Das erstellte BorderPane.
      */
     @Override
     public BorderPane createBorderPane(Node topProperty, Node centerProperty, Node bottomProperty, Node leftProperty,
@@ -104,7 +105,7 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     /**
-     * * Erstellt ein TextField.
+     * Erstellt ein TextField.
      *
      * @return Der erstellte TextField.
      */
@@ -114,7 +115,7 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     /**
-     * * Erstellt ein GridPane mit den angegebenen Nodes.
+     * Erstellt ein GridPane mit den angegebenen Nodes.
      *
      * @param columns Die Anzahl der Spalten.
      * @param nodes Die Nodes für das GridPane.
@@ -145,20 +146,16 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     /**
-     * * Erstellt einen Spinner mit dem angegebenen Typ und Optionen.
+     * Erstellt einen Zähler für den angegebenen Zahlentyp.
      *
-     * @param type Der Typ des Spinners.
-     * @param formatType Der Format-Typ für die Anzeige.
-     * @param inputOption Die Eingabe-Optionen für den Spinner.
-     * @return Der erstellte Spinner.
+     * @param type Der Typ des Zählers.
+     * @return Der erstellte Zähler.
      */
     @Override
-    public <T> Spinner<T> createSpinner(Class<T> type, String formatType, InputOption inputOption) {
-        // TODO: formatTyoe aktuell ungenutzt ziel für die ui anzeige formatieren von
-        // anzeigen
+    public <T> Spinner<T> createSpinner(Class<T> type) {
         if (Integer.class.equals(type)) {
             Spinner<Integer> spinner = new Spinner<>(
-                    new javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory(
+                    new SpinnerValueFactory.IntegerSpinnerValueFactory(
                             Integer.MIN_VALUE, Integer.MAX_VALUE, 0));
             spinner.setEditable(true);
             spinner.setPrefWidth(300);
@@ -168,24 +165,24 @@ public class JavaFxUiFactory implements UiFactory {
         }
         if (BigDecimal.class.equals(type)) {
             // Create a BigDecimal spinner with 0.01 step
-            SpinnerValueFactory<java.math.BigDecimal> vf = new SpinnerValueFactory<java.math.BigDecimal>() {
-                private final java.math.BigDecimal STEP = new java.math.BigDecimal("0.01");
+            SpinnerValueFactory<BigDecimal> vf = new SpinnerValueFactory<BigDecimal>() {
+                private final BigDecimal schritt = new BigDecimal("0.01");
 
                 {
-                    setValue(java.math.BigDecimal.ZERO);
+                    setValue(BigDecimal.ZERO);
                 }
 
                 @Override
                 public void decrement(int steps) {
-                    setValue(getValue().subtract(STEP.multiply(java.math.BigDecimal.valueOf(steps))));
+                    setValue(getValue().subtract(schritt.multiply(BigDecimal.valueOf(steps))));
                 }
 
                 @Override
                 public void increment(int steps) {
-                    setValue(getValue().add(STEP.multiply(java.math.BigDecimal.valueOf(steps))));
+                    setValue(getValue().add(schritt.multiply(BigDecimal.valueOf(steps))));
                 }
             };
-            Spinner<java.math.BigDecimal> spinner = new Spinner<>(vf);
+            Spinner<BigDecimal> spinner = new Spinner<>(vf);
             spinner.setEditable(true);
             spinner.setPrefWidth(300);
             @SuppressWarnings("unchecked")
@@ -196,7 +193,7 @@ public class JavaFxUiFactory implements UiFactory {
     }
 
     /**
-     * * Erstellt eine ComboBox mit den angegebenen Nodes als Optionen.
+     * Erstellt eine ComboBox mit den angegebenen Nodes als Optionen.
      *
      * @param setEditable Ob die ComboBox editierbar sein soll.
      * @param nodes Die Optionen für die ComboBox.
@@ -204,7 +201,6 @@ public class JavaFxUiFactory implements UiFactory {
      */
     @Override
     public ComboBox<Node> createComboBox(boolean setEditable, Node... nodes) {
-        // TODO: hier gehts weiter
         ComboBox<Node> comboBox = new ComboBox<>();
         comboBox.getItems().addAll(nodes);
         comboBox.setEditable(setEditable);

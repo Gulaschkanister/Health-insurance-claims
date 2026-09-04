@@ -137,8 +137,8 @@ public class Feldbau {
                 hoechstlaenge(beschreibung).ifPresent(grenze -> begrenze(feld, grenze));
                 yield feld;
             }
-            case NUMBER -> zaehler(Integer.class, art);
-            case PERCENT, COST -> zaehler(BigDecimal.class, art);
+            case NUMBER -> zaehler(Integer.class);
+            case PERCENT, COST -> zaehler(BigDecimal.class);
             case CODE -> bausteine.createComboBox(false);
             case NUMBER_SUGGESTION -> bausteine.createComboBox(true);
             case DATE, TIME -> bausteine.createDatePicker();
@@ -146,8 +146,8 @@ public class Feldbau {
         };
     }
 
-    private <T> Spinner<T> zaehler(Class<T> art, InputOption eingabeart) {
-        Spinner<T> zaehler = bausteine.createSpinner(art, null, eingabeart);
+    private <T> Spinner<T> zaehler(Class<T> art) {
+        Spinner<T> zaehler = bausteine.createSpinner(art);
         zaehler.setPrefWidth(220);
         return zaehler;
     }
