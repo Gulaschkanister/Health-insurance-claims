@@ -82,7 +82,15 @@
         <module name="OperatorWrap"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
-        <module name="WhitespaceAfterComma"/>
+        <!--
+             War zuvor "WhitespaceAfterComma" - diesen Check gibt es in
+             Checkstyle nicht, weshalb sich die Konfiguration ueberhaupt nicht
+             laden liess. Richtig ist WhitespaceAfter mit den Token, die
+             geprueft werden sollen.
+        -->
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="COMMA, SEMI, TYPECAST"/>
+        </module>
         <module name="WhitespaceAround"/>
 
         <!-- Modifier checks -->

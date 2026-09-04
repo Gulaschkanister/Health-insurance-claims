@@ -132,6 +132,37 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.3.1</version>
+                <dependencies>
+                    <!--
+                        Das Plugin bringt eine Checkstyle-Fassung mit, deren Guava
+                        nicht zu der von Maven geladenen passt (NoSuchMethodError in
+                        ImmutableList.copyOf). Eine neuere Fassung loest das auf.
+                    -->
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>10.20.1</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>${maven.multiModuleProjectDirectory}/build/checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <!--
+                        Die Regeln in checkstyle.xml stehen durchgaengig auf
+                        "warning". Ohne diese Zeile zaehlt das Plugin nur
+                        Verstoesse der Stufe "error" und meldet immer null.
+                    -->
+                    <violationSeverity>warning</violationSeverity>
+                    <!-- Meldet, blockiert aber nicht: der Bestand ist noch nicht regelkonform. -->
+                    <failOnViolation>false</failOnViolation>
+                    <failsOnError>false</failsOnError>
+                </configuration>
+                <!-- Ausfuehren mit: mvn checkstyle:check -->
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
                 <version>3.21.2</version>
                 <configuration>

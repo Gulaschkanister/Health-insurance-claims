@@ -184,12 +184,26 @@ class DtaValidationServiceTest {
         }
 
         @Test
-        @DisplayName("Eine Gesamtsumme, die nicht zur Fallsumme passt, faellt auf")
+        @DisplayName("Eine Gesamtsumme (GES 00), die nicht zur Fallsumme passt, ist ein Fehler")
         void erkenntAbweichendeGesamtsumme() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("GES+00+120000,00+120000,00'", "GES+00+130000,00+130000,00'"));
+
+            assertTrue(enthaeltCode(bericht, "BETRAG_GES_BES"), bericht.alsText());
+            assertFalse(bericht.istVersandfaehig());
+        }
+
+        @Test
+        @DisplayName("Eine Abweichung bei GES 99 ist nur ein Hinweis")
+        void meldetAbweichungBeiSchluessel99AlsHinweis() {
+            // Schluessel 99 richtet sich laut den Codelisten nach der
+            // Pruefvorgabe der Kasse und darf abweichen.
             ValidationReport bericht = service.pruefe(
                     ersetze("GES+99+120000,00+120000,00'", "GES+99+130000,00+130000,00'"));
 
-            assertTrue(enthaeltCode(bericht, "BETRAG_GES_BES"), bericht.alsText());
+            assertTrue(enthaeltCode(bericht, "BETRAG_GES99_ABWEICHUNG"), bericht.alsText());
+            assertTrue(bericht.istVersandfaehig(),
+                    "Eine Abweichung bei Schluessel 99 darf den Versand nicht aufhalten");
         }
 
         @Test

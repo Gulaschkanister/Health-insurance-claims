@@ -41,8 +41,22 @@ public final class BetragskonsistenzRegel implements ValidationRule {
     /** Die Menge steht im ENF an vierter Stelle. */
     private static final int ENF_MENGE = 3;
 
-    /** Summenschluessel der Gesamtsumme ueber alle Rechnungen. */
-    private static final String SCHLUESSEL_GESAMT = "99";
+    /**
+     * Summenschluessel 00: Gesamtsumme aller Status.
+     *
+     * <p>Laut {@code Information/codes/04_summen_und_statuscodes.json} ist das
+     * die Summe aller BES. Eine Abweichung ist ein Fehler.</p>
+     */
+    private static final String SCHLUESSEL_GESAMTSUMME = "00";
+
+    /**
+     * Summenschluessel 99: nicht zuzuordnende Status.
+     *
+     * <p>Dieser Wert richtet sich nach der Pruefvorgabe der Kasse und ist in
+     * der Referenzdatei mit der Gesamtsumme identisch. Eine Abweichung wird
+     * deshalb nur als Hinweis gemeldet - sie kann fachlich gewollt sein.</p>
+     */
+    private static final String SCHLUESSEL_NICHT_ZUZUORDNEN = "99";
 
     @Override
     public String getName() {
@@ -102,14 +116,26 @@ public final class BetragskonsistenzRegel implements ValidationRule {
         }
 
         for (DtaSegment ges : gesSegmente) {
-            if (!SCHLUESSEL_GESAMT.equals(ges.element(GES_SCHLUESSEL).trim())) {
+            String schluessel = ges.element(GES_SCHLUESSEL).trim();
+            boolean istGesamtsumme = SCHLUESSEL_GESAMTSUMME.equals(schluessel);
+            boolean istNichtZuzuordnen = SCHLUESSEL_NICHT_ZUZUORDNEN.equals(schluessel);
+            if (!istGesamtsumme && !istNichtZuzuordnen) {
                 continue;
             }
+
             Optional<BigDecimal> gesamt = betrag(ges, GES_BETRAG, bericht, "GES_BETRAG_UNGUELTIG");
-            if (gesamt.isPresent() && gesamt.get().compareTo(summeDerFaelle) != 0) {
-                bericht.error("BETRAG_GES_BES", ges.ort(),
-                        "Die Gesamtsumme im GES (%s) entspricht nicht der Summe der Rechnungen (%s)."
-                                .formatted(formatiere(gesamt.get()), formatiere(summeDerFaelle)));
+            if (gesamt.isEmpty() || gesamt.get().compareTo(summeDerFaelle) == 0) {
+                continue;
+            }
+
+            String meldung = "Die Summe im GES %s (%s) entspricht nicht der Summe der Rechnungen (%s)."
+                    .formatted(schluessel, formatiere(gesamt.get()), formatiere(summeDerFaelle));
+
+            if (istGesamtsumme) {
+                bericht.error("BETRAG_GES_BES", ges.ort(), meldung);
+            } else {
+                bericht.warning("BETRAG_GES99_ABWEICHUNG", ges.ort(),
+                        meldung + " Bei Schluessel 99 kann das der Pruefvorgabe entsprechen.");
             }
         }
     }

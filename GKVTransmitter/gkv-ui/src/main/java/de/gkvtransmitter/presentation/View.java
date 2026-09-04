@@ -112,21 +112,40 @@ public class View {
         MenuBar menuBar = buildMainMenuBar();
         this.skeleton = componentFactory.createBorderPane(menuBar, null, null, null, null);
         Scene scene = componentFactory.createScene(skeleton, width, height);
-        // run seed check after UI is shown once
-        Platform.runLater(() -> seedIfEmpty());
+        Platform.runLater(this::seedIfEmpty);
         return scene;
     }
 
+    /** Systemeigenschaft, mit der sich das Anlegen von Testdaten einschalten laesst. */
+    private static final String TESTDATEN_PROPERTY = "gkv.testdaten";
+
+    /**
+     * Legt Testdaten an, sofern das ausdruecklich eingeschaltet wurde.
+     *
+     * <p>Bisher lief das bei jedem Start ungefragt: waren keine Gruppen oder
+     * Blaupausen vorhanden, wurden "Max Muster" und drei erfundene Patientinnen
+     * in die Datenbank geschrieben. Zusammen mit dem damaligen
+     * {@code hbm2ddl.auto=create}, das die Datenbank bei jedem Start leerte,
+     * war die Bedingung praktisch immer erfuellt - die Testdaten landeten also
+     * verlaesslich in der Produktivdatenbank.</p>
+     *
+     * <p>Der Menuepunkt unter "Dev" legt die Daten weiterhin auf Wunsch an.
+     * Automatisch geschieht das nur noch mit
+     * {@code -Dgkv.testdaten=true}.</p>
+     */
     private void seedIfEmpty() {
+        if (!Boolean.parseBoolean(System.getProperty(TESTDATEN_PROPERTY, "false"))) {
+            return;
+        }
         try {
             boolean noGroups = controller.getDatabase().getAllPersonGroups().isEmpty();
             boolean noBlue = controller.getDatabase().getAllBlueprints().isEmpty();
             if (noGroups || noBlue) {
                 seedTestData();
             }
-        } catch (Exception e) {
-            // don't block startup for seed errors
-            System.err.println("Seed check failed: " + e.getMessage());
+        } catch (RuntimeException e) {
+            // Ein Fehler beim Anlegen der Testdaten darf den Start nicht verhindern.
+            System.err.println("Anlegen der Testdaten fehlgeschlagen: " + e.getMessage());
         }
     }
 
@@ -473,8 +492,14 @@ public class View {
             java.util.List<DispatchBatch> batches;
             try {
                 batches = abrechnungService.createAndDispatch(selectedPatients, selGroup, chosen, appointments, outDir);
-            } catch (Exception e) {
-                showErrorDialog(messages.get("dialog.error.title"), "Fehler beim Versand der DTA-Dateien: " + e.getMessage());
+            } catch (de.gkvtransmitter.dispatch.DtaValidierungsException e) {
+                // Beanstandungen einzeln anzeigen: die Anwenderin soll alle auf
+                // einmal sehen und nicht nach jeder Korrektur neu anstossen.
+                zeigePruefbericht(e.getBericht());
+                return;
+            } catch (RuntimeException e) {
+                showErrorDialog(messages.get("dialog.error.title"),
+                        "Fehler beim Versand der DTA-Dateien: " + e.getMessage());
                 return;
             }
 
@@ -1313,6 +1338,38 @@ public class View {
      * @param message Die Nachricht, die im Informationsdialog angezeigt werden
      * soll
      */
+    /**
+     * Zeigt einen Pruefbericht mit allen Beanstandungen.
+     *
+     * <p>Fehler und Warnungen stehen getrennt, weil sie unterschiedliche
+     * Bedeutung haben: Fehler haben den Versand aufgehalten, Warnungen sind
+     * Hinweise. Ohne die Trennung waere aus der Liste nicht ersichtlich, was
+     * behoben werden muss.</p>
+     */
+    private void zeigePruefbericht(de.gkvtransmitter.validator.ValidationReport bericht) {
+        StringBuilder text = new StringBuilder();
+        text.append("Die Abrechnung wurde nicht versendet.").append(System.lineSeparator());
+        text.append(System.lineSeparator());
+
+        if (!bericht.getErrors().isEmpty()) {
+            text.append("Zu beheben:").append(System.lineSeparator());
+            for (de.gkvtransmitter.validator.ValidationMessage befund : bericht.getErrors()) {
+                text.append("  - ").append(befund.text());
+                if (!befund.ort().isEmpty()) {
+                    text.append("  [").append(befund.ort()).append(']');
+                }
+                text.append(System.lineSeparator());
+            }
+        }
+        if (!bericht.getWarnings().isEmpty()) {
+            text.append(System.lineSeparator()).append("Hinweise:").append(System.lineSeparator());
+            for (de.gkvtransmitter.validator.ValidationMessage befund : bericht.getWarnings()) {
+                text.append("  - ").append(befund.text()).append(System.lineSeparator());
+            }
+        }
+        showErrorDialog("Pruefung nicht bestanden", text.toString());
+    }
+
     public void showInfoDialog(String title, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle(title);

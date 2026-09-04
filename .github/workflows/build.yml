@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    branches: [main, dev, refactor, "feature/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Übersetzen und testen
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Quelltext holen
+        uses: actions/checkout@v4
+
+      - name: JDK 21 einrichten
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          # Beschleunigt Folgeläufe, indem ~/.m2 zwischengespeichert wird.
+          cache: 'maven'
+
+      - name: Übersetzen und Tests ausführen
+        working-directory: GKVTransmitter
+        run: mvn -B --no-transfer-progress test
+
+      # Läuft auch, wenn Tests fehlgeschlagen sind - sonst fehlt genau dann
+      # der Bericht, den man braucht.
+      - name: Testberichte sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: GKVTransmitter/**/target/surefire-reports/
+          if-no-files-found: ignore
+
+  qualitaet:
+    name: Checkstyle und PMD
+    runs-on: ubuntu-latest
+    # Statische Prüfung meldet, blockiert aber nicht: der Bestand ist noch
+    # nicht regelkonform. Der Job dient dazu, die Entwicklung sichtbar zu
+    # machen, nicht dazu, Beiträge aufzuhalten.
+    continue-on-error: true
+
+    steps:
+      - name: Quelltext holen
+        uses: actions/checkout@v4
+
+      - name: JDK 21 einrichten
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Checkstyle
+        working-directory: GKVTransmitter
+        run: mvn -B --no-transfer-progress checkstyle:check
+
+      - name: PMD
+        working-directory: GKVTransmitter
+        run: mvn -B --no-transfer-progress pmd:check
