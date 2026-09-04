@@ -24,36 +24,50 @@ package "gkv-ui" #F2F6FA {
     }
     class View {
       +createMainScene()
+      -baueNavigation()
       -createFormular()
-      .. Rahmen, verteilt auf die Masken ..
+    }
+    class Hauptfenster {
+      +ergaenzeBereich(name, Runnable)
+      +zeige(Region) / +leeren()
     }
     class AbrechnungsMaske {
       +erzeuge() : Region
     }
     class GruppenMaske {
-      +neu() +bearbeiten() +loeschen()
+      +liste() : Region
+      +neu()
     }
     class PersonenMaske {
-      +neuerTeilnehmer() +neuerDienstleister()
-      +teilnehmerBearbeiten() +teilnehmerLoeschen()
+      +teilnehmerliste() : Region
+      +dienstleisterliste() : Region
     }
     class Feldbau {
       +erzeugeFeld(name, TagList) : Node
-      +textVon(Node) : String
+      +textVon(Node) / +datumVon(Node)
+    }
+    class Listenbau<T> {
+      +baue(List<T>) : Region
+    }
+    class Benachrichtigungen {
+      +zeige(Art, Text)
+      +zeigeBleibend(...)
     }
     interface Maskenrahmen
     interface Abrechnungslauf
     interface UiFactory
     class JavaFxUiFactory
   }
-  package "presentation.dialog" {
-    interface Dialoge
-    class JavaFxDialoge
-    class Pruefberichttext
+  package "presentation.meldung" {
+    interface Meldungen {
+      +erfolg() +hinweis() +fehler()
+      +pruefbericht() +frageNach()
+    }
+    class Bildschirmmeldungen
+    class Pruefbefunde
   }
   package "presentation.builder" {
     class FormBuilder
-    class MenuBuilder
   }
   package "presentation.controller" {
     class EditFormController<T>
@@ -127,37 +141,41 @@ App --> AbrechnungService
 View --> Controller
 View --> UiFactory
 View --> FormBuilder
-View --> MenuBuilder
+View --> Hauptfenster
 View --> AppMessages
 View --> Feldbau
 View --> AbrechnungService
 View --> Anwendungsverzeichnis
-View ..> Maskenrahmen : erfuellt
+Hauptfenster ..|> Maskenrahmen
 View --> AbrechnungsMaske
 View --> GruppenMaske
 View --> PersonenMaske
 
-AbrechnungsMaske --> Dialoge
+AbrechnungsMaske --> Meldungen
 AbrechnungsMaske --> Maskenrahmen
 AbrechnungsMaske --> Abrechnungslauf
 Abrechnungslauf ..> AbrechnungService : Methodenreferenz
-GruppenMaske --> Dialoge
+GruppenMaske --> Meldungen
 GruppenMaske --> Maskenrahmen
 GruppenMaske --> DataRepository
-PersonenMaske --> Dialoge
+PersonenMaske --> Meldungen
 PersonenMaske --> Maskenrahmen
 PersonenMaske --> Feldbau
 PersonenMaske --> EditFormController
 PersonenMaske --> PatientFieldPopulator
 PersonenMaske --> ServiceProviderFieldPopulator
-JavaFxDialoge ..|> Dialoge
-Dialoge ..> Pruefberichttext
+PersonenMaske --> Listenbau
+GruppenMaske --> Listenbau
+Bildschirmmeldungen --> Benachrichtigungen
+Hauptfenster --> Benachrichtigungen
+EditFormController --> Meldungen
+Bildschirmmeldungen ..|> Meldungen
+Bildschirmmeldungen ..> Pruefbefunde
 Controller --> FactoryManager
 Controller --> DataRepository
 Controller ..> HibernateSqllite
 JavaFxUiFactory ..|> UiFactory
 FormBuilder --> UiFactory
-MenuBuilder --> UiFactory
 EditFormController --> EntityFieldPopulator
 PatientFieldPopulator --|> EntityFieldPopulator
 ServiceProviderFieldPopulator --|> EntityFieldPopulator

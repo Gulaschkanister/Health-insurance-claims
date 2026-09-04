@@ -181,9 +181,13 @@ Die Trennung ist im Build verankert: eine Enforcer-Regel lässt das Übersetzen 
 
 ![Oberfläche und Datenzugriff](GKVTransmitter_Praesentation_und_Persistenz.png)
 
-Die Oberfläche ist in Masken geschnitten: eine je Aufgabe. `AbrechnungsMaske` stellt eine Abrechnung zusammen, `GruppenMaske` pflegt die Gruppen, `PersonenMaske` die Teilnehmer und Dienstleister, `Feldbau` erzeugt die Eingabefelder. `View` ist nur noch der Rahmen: Hauptszene, Menüleiste, Verteilung.
+Die Oberfläche ist in Masken geschnitten: eine je Aufgabe. `AbrechnungsMaske` stellt eine Abrechnung zusammen, `GruppenMaske` pflegt die Gruppen, `PersonenMaske` die Teilnehmer und Dienstleister, `Feldbau` erzeugt und prüft die Eingabefelder. `Hauptfenster` trägt Seitenleiste, Kopfzeile und Statuszeile und weist jeder Maske ihren Platz zu.
 
-Jede Maske bekommt von außen, was sie braucht — Daten, Meldewege, den Platz, an dem sie erscheint. Deshalb lässt sich jede einzeln prüfen, ohne Datenbank und ohne dass ein Fenster aufgeht. Meldungen laufen über `Dialoge`; im Betrieb steht dahinter ein JavaFX-Dialog, im Test ein Aufzeichner.
+Jede Maske bekommt von außen, was sie braucht — Daten, Meldewege, den Platz, an dem sie erscheint. Deshalb lässt sich jede einzeln prüfen, ohne Datenbank und ohne dass etwas auf dem Bildschirm erscheinen müsste.
+
+**Im laufenden Betrieb öffnet die Anwendung kein Fenster.** Meldungen erscheinen in der Ecke oben rechts und gehen nach wenigen Sekunden von selbst; was schiefgegangen ist und was eine Antwort verlangt, bleibt stehen, bis es zur Kenntnis genommen wurde. Auch die Rückfrage vor dem Löschen und der Prüfbericht einer abgewiesenen Abrechnung erscheinen dort — Letzterer als Liste, die sich Punkt für Punkt abarbeiten lässt.
+
+Unter jedem Eingabefeld steht, was hineingehört, und darunter Platz für eine Beanstandung. Das **Institutionskennzeichen wird schon hier gegen seine Prüfziffer geprüft**: ein falsches IK lässt die Kasse sonst die gesamte Lieferung abweisen, und das fiele erst Tage später auf.
 
 `DataRepository` ist der Vertrag, `HibernateSqllite` die Umsetzung. Die Oberfläche kennt nur den Vertrag — die Datenhaltung wäre austauschbar, ohne die Oberfläche zu berühren.
 

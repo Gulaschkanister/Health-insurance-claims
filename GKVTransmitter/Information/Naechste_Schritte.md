@@ -1,6 +1,6 @@
 # Nächste Schritte
 
-Stand: 4. September 2026, Branch `feature/kern-architektur`.
+Stand: 5. September 2026, Branch `feature/kern-architektur`.
 
 Dieses Dokument ist die Übergabe. Es hält fest, wo das Projekt steht, was als
 Nächstes ansteht und welche Fallstricke bereits bekannt sind — damit die Arbeit
@@ -15,49 +15,72 @@ Erledigt und geprüft:
 - Validierungsstufe als Tor vor dem Versand, sechs Regeln
 - Kassen-Kommunikation: Antwortauswertung berichtigt, simulierte Gegenstelle
 - Datenablage im Benutzerprofil, eigenständiges Windows-Paket über `jpackage`
-- **`View` von 1438 auf 610 Zeilen zerlegt** — vier Masken herausgelöst
-- **`gkv-ui` hat jetzt 45 Tests**, insgesamt 183, `BUILD SUCCESS`
+- `View` von 1438 auf 531 Zeilen zerlegt, vier Masken herausgelöst
+- **Oberfläche neu: Seitenleiste, Listen, Meldungsecke, Stylesheet**
+- **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
+- **232 Tests**, davon 94 in `gkv-ui`, `BUILD SUCCESS`
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
 Der Branch liegt auf `origin`; die jeweils letzten Commits können noch fehlen
 (`git status` zeigt es als „ahead“).
 
-## Was zuletzt geschah
+## Was zuletzt geschah: die Oberfläche
 
-Die Zerlegung von `View` und die Oberflächentests aus Punkt A und B der
-vorigen Übergabe sind zum großen Teil abgearbeitet. Der Reihe nach:
+Vier Wünsche standen im Raum — keine Popups, effiziente Monatsbearbeitung,
+automatische Abrechnung, schöneres Aussehen. Drei davon sind umgesetzt; die
+**automatische Abrechnung wurde bewusst zurückgestellt** („lassen wir das
+erstmal weg, ist sonst zu kompliziert“).
 
-| Neue Klasse | Was sie übernimmt |
+### Keine Dialogfenster mehr
+
+Im laufenden Betrieb öffnet die Anwendung **kein Fenster**. Meldungen
+erscheinen in der Ecke oben rechts und gehen nach sechs Sekunden von selbst;
+Fehler und Rückfragen bleiben stehen, bis jemand sie zur Kenntnis nimmt.
+
+Der Schnitt der Schnittstelle ist dabei das Wesentliche: aus
+`Optional<T> waehleAus(...)` wurde `void waehleAus(..., Consumer<T>)` — und
+inzwischen ist die Methode ganz verschwunden. Ein `Optional` als Rückgabe muss
+den aufrufenden Faden anhalten, bis jemand geklickt hat, und genau dieses
+Anhalten *ist* das Fenster.
+
+Einzige Ausnahme: ein Fehler beim Programmstart. Die Meldungsecke hängt in der
+Hauptszene, die es zu diesem Zeitpunkt noch nicht gibt.
+
+### Seitenleiste und Listen
+
+Die Menüleiste ist weg. Links stehen die Bereiche, der gewählte bleibt
+hervorgehoben. Teilnehmer, Dienstleister und Gruppen haben je eine Übersicht
+mit Suchfeld und „Bearbeiten“/„Löschen“ in der Zeile — statt eines
+Auswahlfensters, in dem man wissen musste, wen man sucht.
+
+### Neue Klassen in `gkv-ui`
+
+| Klasse | Was sie übernimmt |
 |---|---|
-| `dialog.Dialoge` | Melden, auswählen lassen, nachfragen — als Schnittstelle |
-| `dialog.JavaFxDialoge` | die Umsetzung mit `Alert` und `ChoiceDialog` |
-| `dialog.Pruefberichttext` | Wortlaut des Prüfberichts, ohne JavaFX |
-| `Maskenrahmen` | wo eine Maske erscheint |
-| `AbrechnungsMaske` | Zusammenstellen und Anstoßen einer Abrechnung |
-| `GruppenMaske` | Gruppen anlegen, bearbeiten, löschen |
-| `PersonenMaske` | Teilnehmer und Dienstleister |
-| `Feldbau` | Eingabefelder erzeugen und auslesen |
-| `Abrechnungslauf` | die eine Methode, die die Maske vom Fachdienst braucht |
+| `Hauptfenster` | Seitenleiste, Kopfzeile, Inhalt, Statuszeile |
+| `Benachrichtigungen` | die Meldungsecke oben rechts |
+| `meldung.Meldungen` | melden und nachfragen, ohne Fenster |
+| `meldung.Bildschirmmeldungen` | die Umsetzung in der Ecke |
+| `meldung.Pruefbefunde` | Reihenfolge der Beanstandungen, ohne JavaFX |
+| `Listenbau` | durchsuchbare Liste mit Schaltflächen je Zeile |
+| `Maskenkopf` | „+ Neu“ über einer Übersicht |
+| `style/gkv.css` | Farben, Abstände, Schriftgrößen an einem Ort |
 
-Der Schlüssel war `Dialoge`. Solange jede Meldung als `Alert.showAndWait()`
-abging, ließ sich kein Ablauf prüfen, der im Fehlerfall etwas anzeigt — und das
-sind genau die Abläufe, auf die es ankommt. Erst hinter der Schnittstelle
-wurde alles Weitere prüfbar.
+### Fehler, die dabei ans Licht kamen
 
-Drei Fehler kamen dabei ans Licht und sind behoben:
-
-1. Beim Anlegen eines **Dienstleisters** meldete die Anwendung „Teilnehmer
-   erfolgreich erstellt!“. Die Rolle entschied über das Ziel in der Datenbank,
-   aber nicht über die Meldung.
-2. Schlug das **Speichern fehl**, wurde nach der Fehlermeldung trotzdem
-   geräumt — die Eingaben waren weg, obwohl nichts gespeichert war. Jetzt
-   bleibt das Formular stehen.
-3. Die Mitglieder einer Gruppe landeten in einem `HashSet`, die Reihenfolge
-   der Auswahl ging verloren. Jetzt `LinkedHashSet`.
-
-Ebenfalls erledigt: **Punkt C der vorigen Übergabe.**
-`FieldValidator.ValidationResult` heißt jetzt `FieldValidator.Feldbefund` und
-ist damit nicht mehr mit `validator.ValidationReport` zu verwechseln.
+1. Scheiterte der Start, rief `App` `view.showErrorDialog(...)` auf. War aber
+   schon der `Controller` gescheitert — der häufigste Fall —, war `view` noch
+   `null`, und statt der Ursache erschien eine `NullPointerException`.
+2. Der `statusText` wurde seit jeher an `createMainScene` übergeben und dann
+   nicht verwendet. Eine Statuszeile gab es gar nicht.
+3. „Keine Patienten vorhanden.“ stand in der Abrechnungsmaske auch dann, wenn
+   lediglich noch keine Gruppe gewählt war.
+4. Die Rückfrage vor dem Löschen im Bearbeiten-Formular zeigte
+   „Soll %s wirklich gelöscht werden?“ mit unersetztem Platzhalter — der Text
+   wurde nie formatiert.
+5. Die Kästchen neben den Dienstleistern in der Abrechnungsmaske ließen sich
+   anhaken, hatten aber keine Wirkung. (Stand als Fundstück in der vorigen
+   Übergabe; jetzt behoben.)
 
 ## Sofort zu entscheiden
 
@@ -82,41 +105,56 @@ git branch -D backup/vor-identitaetswechsel
 ### 2. Verwaiste Remote-Branches aufräumen
 
 Auf `origin` liegen sieben `copilot/*`-Branches aus abgeschlossenen PRs sowie
-`dev` (vollständig in `main` enthalten) und `restart`. Sie stiften nur
-Verwirrung.
+`dev` (vollständig in `main` enthalten) und `restart`.
 
 ## Priorisierte nächste Schritte
 
-### A. Die letzte Maske: `createFormular`
+### A. Automatische Abrechnung — zurückgestellt, nicht vergessen
 
-`View` ist mit 610 Zeilen die zweitgrößte Klasse des Projekts (größte:
+Der Wunsch bleibt sinnvoll, sobald das Übrige steht. Was dafür nötig wäre:
+
+1. Eine **Kursvorlage** speichert Blaupause, Gruppe und Terminzahl. Neue
+   Entität in `gkv-core/entity`, Schema wächst über `hbm2ddl=update` mit.
+2. Ein **Lauf-Verzeichnis** hält fest, wann welcher Kurs zuletzt abgerechnet
+   wurde — Voraussetzung für „Vormonat übernehmen“ und für jede Fälligkeit.
+3. Erst darauf lässt sich eine Fälligkeitsanzeige beim Programmstart bauen.
+
+Von einem Versand ohne Rückfrage ist abzuraten: es gehen echte Forderungen an
+die Kasse, eine falsche Terminzahl bemerkt niemand vor der Ablehnung, und ein
+Storno gibt es fachlich noch gar nicht (siehe D).
+
+Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
+„Termine für alle“ und die mitrechnende Zusammenfassung.
+
+### B. Die letzte Maske: `createFormular`
+
+`View` ist mit 531 Zeilen die zweitgrößte Klasse des Projekts (größte:
 `JsonParserFactory` mit 530). Was übrig ist:
 
 - `createFormular` samt `collectVisibleFieldValues` — die Blaupausenmaske
 - `createCodeDropdownForInvoiceField`, `resolveCodeOptionsForField`,
   `normalizeFieldKey`, `loadInvoiceCodeOptions` — die Code-Auswahllisten
-- Hauptszene, Menüleiste, `seedTestData`
+- Hauptszene, Navigation, `seedTestData`
 
 Vorschlag: eine `BlaupausenMaske` nach dem Muster der drei vorhandenen, und
-die Code-Listen als eigene Klasse `Codelisten` daneben — sie sind reine
-JSON-Auswertung und ließen sich ohne JavaFX prüfen.
+die Code-Listen als eigene Klasse daneben — sie sind reine JSON-Auswertung und
+ließen sich ohne JavaFX prüfen.
 
-`View` bliebe als Rahmen: Hauptszene, Menüleiste, Verteilung auf die Masken.
+Dazu gehört auch eine **Übersicht der gespeicherten Blaupausen**. Heute gibt
+es nur „neu anlegen“; eine gespeicherte Blaupause lässt sich weder ansehen
+noch ändern noch löschen.
 
-**Vorgehen:** wie bei den anderen dreien. Erst die Naht, dann die Maske, dann
-die Tests, nach jedem Schritt `mvn test`.
+### C. `EditFormController` hat keine Tests
 
-### B. `EditFormController` hat keine Tests
+Die knapp 300 Zeilen tragen das gesamte **Bearbeiten** von Personen. Die
+Personenmaske prüft nur, dass das Formular erscheint — was darin geschieht,
+ist ungeprüft. Das ist jetzt die größte ungedeckte Stelle.
 
-Die 296 Zeilen dahinter tragen das gesamte **Bearbeiten** von Personen. Die
-Personenmaske prüft nur, dass das Formular überhaupt erscheint — was darin
-geschieht, ist ungeprüft. Das ist jetzt die größte ungedeckte Stelle.
+Der Weg dahin ist frei: die Klasse bekommt alles über den Konstruktor,
+inzwischen auch `Meldungen`, und die Ersatzstücke liegen unter
+`gkv-ui/src/test/`.
 
-Der Weg dahin ist frei: die Klasse bekommt bereits alles über den Konstruktor,
-und `SpeicherRepository`, `AufzeichnendeDialoge` und `AufzeichnenderRahmen`
-liegen unter `gkv-ui/src/test/`.
-
-### C. Fachliche Lücken
+### D. Fachliche Lücken
 
 Nach Nutzen geordnet:
 
@@ -126,47 +164,31 @@ Nach Nutzen geordnet:
    (`UMSATZSTEUERSATZ`). Gehört in die Blaupause, analog zu
    `Leistungsparameter`.
 3. **Weitere Leistungsbereiche** — abgedeckt ist nur SGS H mit Abrechnungscode
-   `61`. Die Struktur dafür steht (`Leistungsparameter`, Segment-JSONs), es
-   fehlen die Daten aus Anlage 3.
+   `61`. Die Struktur dafür steht, es fehlen die Daten aus Anlage 3.
 4. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
    fachliche Zulässigkeit geprüft. Dafür bräuchte es die Schlüsseltabellen aus
    Anlage 3 als JSON — dann wäre es eine weitere `ValidationRule`.
 
-### D. Echter Übermittlungsweg
+### E. Echter Übermittlungsweg
 
 Der Versand ist dateibasiert. Ein realer Weg gehört hinter
 `BillingOfficeTransport`; der übrige Ablauf bleibt unverändert.
 
 Voraussetzungen, die **nicht** durch Programmierung zu beschaffen sind:
-
-- Zertifikate einer anerkannten Stelle
-- Zugangsdaten der Annahmestelle
-- ein eigenes Betriebsstätten-IK
-
-Solange die fehlen, ist die simulierte Gegenstelle das Beste, was geht.
-
-### E. Zwei Fundstücke aus der Zerlegung
-
-Beides absichtlich unverändert gelassen, um die Zerlegung nicht mit
-Verhaltensänderungen zu vermischen:
-
-- **Die Dienstleister-Kästchen in der Abrechnungsmaske haben keine Wirkung.**
-  Sie lassen sich anhaken, aber der Dienstleister wird ohnehin aus der Gruppe
-  genommen (`AbrechnungService.findProvider` nimmt den ersten). Entweder die
-  Auswahl auswerten oder die Kästchen entfernen — so ist die Oberfläche
-  irreführend.
-- **`msg.invalidNumbers` ist unerreichbar.** PLZ und IK sind laut
-  `person-tags.json` `NUMBER` und damit Zähler, deren `getValue()` immer eine
-  Zahl liefert. Die Meldung „PLZ und IK müssen Zahlen sein!“ kann nicht mehr
-  erscheinen. Der Zweig in `PersonenMaske.speichere` bleibt vorerst, weil sich
-  die Feldbeschreibung ändern kann.
+Zertifikate einer anerkannten Stelle, Zugangsdaten der Annahmestelle, ein
+eigenes Betriebsstätten-IK. Solange die fehlen, ist die simulierte Gegenstelle
+das Beste, was geht.
 
 ### F. Kleinigkeiten
 
-- **54 Checkstyle-Hinweise** (`mvn checkstyle:check`): 38 in `gkv-core`, 16 in
-  `gkv-ui`. Vor der Zerlegung waren es 69; der Rest lässt sich beim nächsten
-  Durchgang mitnehmen. Nicht blockierend.
-- **`TODO`-Kommentare** stehen noch in `JavaFxUiFactory` und `Feldbau`.
+- **`msg.invalidNumbers` ist praktisch unerreichbar.** PLZ und IK sind laut
+  `person-tags.json` `NUMBER` und damit Zähler, deren `getValue()` immer eine
+  Zahl liefert. Der Zweig bleibt, weil sich die Feldbeschreibung ändern kann.
+- **Die Meldungsecke liegt über der Maske.** Bei schmalem Fenster kann eine
+  stehende Fehlermeldung ein Eingabefeld verdecken. Sie lässt sich wegklicken;
+  falls es stört, wäre die Maske in der Breite zu begrenzen.
+- **55 Checkstyle-Hinweise** (`mvn checkstyle:check`): 38 in `gkv-core`, 17 in
+  `gkv-ui`. Vor der Zerlegung waren es 69. Nicht blockierend.
 - **CI baut mit JDK 21**, lokal wird JDK 25 genutzt. Bewusst, weil das Projekt
   `release=21` setzt — bei Problemen aber die erste Verdachtsstelle.
 - **`.docx` wird nicht automatisch erzeugt.** Nach Änderungen an
@@ -177,56 +199,58 @@ Verhaltensänderungen zu vermischen:
 **Nach jeder Änderung an `gkv-core` muss `mvn install -DskipTests` laufen**,
 bevor `gkv-ui` gestartet wird. `mvn test` allein installiert nichts. Sonst
 läuft die Anwendung gegen ein altes `gkv-core`-Jar aus `~/.m2` — und man sucht
-den Fehler im Quelltext, der dort längst behoben ist. Genau das ist passiert.
+den Fehler im Quelltext, der dort längst behoben ist.
+
+**`mvn test` ohne `clean` kann grün lügen.** Der Übersetzer arbeitet
+inkrementell; nach dem Entfernen einer Methode meldete er einmal
+`BUILD SUCCESS`, obwohl ein Test sie noch aufrief. Vor jedem Urteil über den
+Stand: `mvn clean test`.
+
+**Ältere Dateien haben CRLF-Zeilenenden.** Ein mehrzeiliges `perl -0pi -e`
+findet dort nichts, obwohl das Muster stimmt. Entweder auf `\r?\n` prüfen oder
+das Bearbeitungswerkzeug nehmen.
 
 **Oberflächentests brauchen eine laufende JavaFX-Umgebung.** `JavaFxLaufzeit`
-fährt sie hoch und führt Code auf ihrem Faden aus. Ohne
-`JavaFxLaufzeit.aufFxFaden(...)` schlägt jede Änderung an einem Bedienelement
-fehl. Ausnahmen aus dem Faden werden zurückgereicht — ohne das gälte ein
-fehlgeschlagener Test als bestanden.
+fährt sie hoch und führt Code auf ihrem Faden aus. Ausnahmen aus dem Faden
+werden zurückgereicht — ohne das gälte ein fehlgeschlagener Test als bestanden.
 
 **Im Bauknecht braucht JavaFX eine Anzeige.** Der Workflow ruft deshalb
-`xvfb-run -a mvn test`. Ohne das scheitert dort jeder Oberflächentest mit
-„Unable to open DISPLAY“, obwohl lokal alles grün ist.
+`xvfb-run -a mvn test`.
 
 **Eine Maske liefert ihren nackten Bereich, nicht das `ScrollPane`.** Dessen
 Inhalt hängt erst nach dem Aufbau der Darstellung im Knotenbaum; ein `lookup`
 auf die Bedienelemente liefe vorher ins Leere. Das Einhüllen macht
-`Maskenrahmen`.
+`Hauptfenster`. Aus demselben Grund gibt es `Hauptfenster.gezeigterInhalt()`.
 
-**Es gibt kein TestFX im Projekt, und das ist Absicht.** Dessen Wert liegt im
-Nachstellen echter Maus- und Tastatureingaben. Seit die Dialoge hinter
-`Dialoge` liegen, blockiert nichts mehr, und die Masken lassen sich unmittelbar
-aufbauen und auswerten. Das erspart die Abhängigkeit von Monocle, das jeder
-JavaFX-Fassung hinterherhinkt.
+**Es gibt kein TestFX, und das ist Absicht.** Dessen Wert liegt im Nachstellen
+echter Eingaben. Seit die Meldungen hinter `Meldungen` liegen, blockiert
+nichts mehr. Das erspart Monocle, das jeder JavaFX-Fassung hinterherhinkt.
 
-**In PowerShell 5.1 kein `2>&1` auf native Programme.** `java -version` schreibt
-auf stderr; die Umleitung erzeugt einen `NativeCommandError`, obwohl der Aufruf
-erfolgreich war.
+**In PowerShell 5.1 kein `2>&1` auf native Programme.** `java -version`
+schreibt auf stderr; die Umleitung erzeugt einen `NativeCommandError`, obwohl
+der Aufruf erfolgreich war.
 
-**`jpackage` baut nur für das System, auf dem es läuft.** Ein Windows-Paket
-entsteht nur unter Windows, nicht aus WSL heraus.
+**`jpackage` baut nur für das System, auf dem es läuft.**
 
-**SQLite legt keine Verzeichnisse an.** Wer einen neuen Pfad einführt, muss das
-Verzeichnis selbst anlegen — siehe `DatabaseSettings.sicherstelleVerzeichnis()`.
+**SQLite legt keine Verzeichnisse an.** Siehe
+`DatabaseSettings.sicherstelleVerzeichnis()`.
 
 **Neue Objekte über `persist` speichern, nicht `merge`.** Nur `persist` trägt
-die vergebene ID in das übergebene Objekt ein. `merge` legt eine Kopie an und
-lässt das Original mit ID 0 zurück, was beim Verknüpfen sofort auffällt.
+die vergebene ID in das übergebene Objekt ein.
 
-**IK in Testdaten brauchen eine gültige Prüfziffer**, sonst weist die
-Validierung zu Recht ab. Verwendbar: `108310400`, `104940005`, `102137985`,
+**IK in Testdaten brauchen eine gültige Prüfziffer** — jetzt erst recht, weil
+die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 `101560000`.
 
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 183 Tests
-mvn test -pl gkv-ui                  # nur die 45 Oberflächentests
+mvn clean test                       # alle 232 Tests
+mvn clean test -pl gkv-ui            # nur die 94 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005
-mvn checkstyle:check                 # 54 Hinweise, nicht blockierend
+mvn checkstyle:check                 # 55 Hinweise, nicht blockierend
 
 cd Information
 java -jar C:/Tools/plantuml/plantuml.jar -tpng -charset UTF-8 "*.puml"

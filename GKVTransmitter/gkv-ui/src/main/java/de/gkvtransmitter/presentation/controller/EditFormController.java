@@ -3,20 +3,18 @@ package de.gkvtransmitter.presentation.controller;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.gkvtransmitter.presentation.UiFactory;
+import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.EntityFieldPopulator;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -41,6 +39,7 @@ import javafx.scene.layout.VBox;
 public class EditFormController<T> {
     private final UiFactory componentFactory;
     private final AppMessages messages;
+    private final Meldungen meldungen;
     private final EntityFieldPopulator<T> populator;
     private final Supplier<List<T>> entityLoader;
     private final Consumer<T> entitySaver;
@@ -56,6 +55,7 @@ public class EditFormController<T> {
     public EditFormController(
             UiFactory componentFactory,
             AppMessages messages,
+            Meldungen meldungen,
             EntityFieldPopulator<T> populator,
             Supplier<List<T>> entityLoader,
             Consumer<T> entitySaver,
@@ -67,6 +67,7 @@ public class EditFormController<T> {
             Consumer<EditFormController<T>> onChanged) {
         this.componentFactory = componentFactory;
         this.messages = messages;
+        this.meldungen = meldungen;
         this.populator = populator;
         this.entityLoader = entityLoader;
         this.entitySaver = entitySaver;
@@ -226,58 +227,40 @@ public class EditFormController<T> {
             }
 
             entitySaver.accept(entity);
-            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.saved"));
+            meldungen.erfolg(messages.get("msg.saved"));
             onChanged.accept(this);
             formContainer.getChildren().clear();
         } catch (NumberFormatException e) {
-            showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.invalidNumbers"));
+            meldungen.hinweis(messages.get("msg.invalidNumbers"));
         } catch (Exception e) {
-            showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+            meldungen.fehler(e.getMessage());
         }
     }
 
     /**
-     * Bestätigt und löscht die Entity.
+     * Fragt zurück und löscht dann.
+     *
+     * <p>Die Rückfrage nennt den Eintrag beim Namen. Zuvor stand dort nur
+     * „Soll %s wirklich gelöscht werden?" mit unersetztem Platzhalter — der
+     * Text wurde nie formatiert.</p>
      */
     private void confirmDelete(T entity) {
-        Alert alert = new Alert(AlertType.CONFIRMATION);
-        alert.setTitle(messages.get("msg.deleteConfirmTitle"));
-        alert.setHeaderText(messages.get("msg.deleteConfirmHeader"));
-        alert.setContentText(messages.get("msg.deleteConfirmBody"));
+        meldungen.frageNach(
+                String.format(messages.get("msg.deleteConfirmBody"), populator.getDisplayName(entity)),
+                messages.get("button.delete"),
+                () -> deleteEntity(entity));
+    }
 
-        Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
-            try {
-                entityDeleter.accept(entity);
-                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.deleted"));
-                onChanged.accept(this);
-                formContainer.getChildren().clear();
-            } catch (Exception e) {
-                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
-            }
+    private void deleteEntity(T entity) {
+        try {
+            entityDeleter.accept(entity);
+        } catch (Exception e) {
+            meldungen.fehler(e.getMessage());
+            return;
         }
-    }
-
-    /**
-     * Zeigt einen Info-Dialog.
-     */
-    private void showInfoDialog(String title, String message) {
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    /**
-     * Zeigt einen Fehler-Dialog.
-     */
-    private void showErrorDialog(String title, String message) {
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.setContentText(message);
-        alert.showAndWait();
+        meldungen.erfolg(messages.get("msg.deleted"));
+        onChanged.accept(this);
+        formContainer.getChildren().clear();
     }
 
     /**

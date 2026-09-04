@@ -159,7 +159,7 @@ public class PersonenMaske {
     }
 
     private void zeigeTeilnehmerform(Patient teilnehmer) {
-        EditFormController<Patient> steuerung = new EditFormController<>(bausteine, texte, teilnehmerFelder,
+        EditFormController<Patient> steuerung = new EditFormController<>(bausteine, texte, meldungen, teilnehmerFelder,
                 () -> List.of(teilnehmer),
                 datenbank::savePatient,
                 datenbank::deletePatient,
@@ -172,7 +172,7 @@ public class PersonenMaske {
     }
 
     private void zeigeDienstleisterform(ServiceProvider dienstleister) {
-        EditFormController<ServiceProvider> steuerung = new EditFormController<>(bausteine, texte,
+        EditFormController<ServiceProvider> steuerung = new EditFormController<>(bausteine, texte, meldungen,
                 dienstleisterFelder,
                 () -> List.of(dienstleister),
                 datenbank::saveServiceProvider,

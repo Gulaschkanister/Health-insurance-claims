@@ -60,7 +60,7 @@ Kern gelangt. Wer eine Klasse mit JavaFX-Bezug in `gkv-core` anlegt, bekommt
 einen Buildfehler — das ist beabsichtigt und kein Hindernis, das man umgeht.
 
 Der Grund: nur ein oberflächenfreier Kern lässt sich ohne laufende Anwendung
-testen. 138 der 183 Tests hängen daran.
+testen. 138 der 232 Tests hängen daran.
 
 ## Pakete in gkv-core
 
@@ -84,22 +84,65 @@ testen. 138 der 183 Tests hängen daran.
 
 | Klasse | Aufgabe |
 |---|---|
-| `View` | Rahmen: Hauptszene, Menüleiste, Verteilung auf die Masken |
+| `View` | Einstieg: Hauptszene, Navigation, Blaupausenmaske |
+| `Hauptfenster` | Seitenleiste, Kopfzeile, Inhalt, Statuszeile — der `Maskenrahmen` |
 | `AbrechnungsMaske` | Abrechnung zusammenstellen und anstoßen |
-| `GruppenMaske` | Gruppen anlegen, bearbeiten, löschen |
-| `PersonenMaske` | Teilnehmer und Dienstleister |
-| `Feldbau` | Eingabefelder erzeugen und auslesen |
-| `Maskenrahmen` | wo eine Maske erscheint |
-| `dialog.Dialoge` | melden, auswählen lassen, nachfragen |
+| `GruppenMaske` | Gruppen: Übersicht und Formular |
+| `PersonenMaske` | Teilnehmer und Dienstleister: Übersicht und Formular |
+| `Listenbau` | durchsuchbare Liste mit Schaltflächen je Zeile |
+| `Maskenkopf` | „+ Neu“ über einer Übersicht |
+| `Feldbau` | Eingabefelder erzeugen, prüfen, erklären, auslesen |
+| `Benachrichtigungen` | die Meldungsecke oben rechts |
+| `meldung.Meldungen` | melden und nachfragen |
 
 Eine Maske bekommt alles über den Konstruktor: Daten, Meldungen, Rahmen. Sie
 liefert aus ihrer Aufbaumethode einen nackten `Region` — **kein `ScrollPane`**.
 Dessen Inhalt hängt erst nach dem Aufbau der Darstellung im Knotenbaum, ein
 `lookup` auf die Bedienelemente liefe vorher ins Leere. Das Einhüllen macht
-`Maskenrahmen`.
+`Hauptfenster`.
 
 Bedienelemente, die ein Test erreichen muss, tragen eine feste Kennung als
 Konstante der Maske (`AbrechnungsMaske.ID_START` und so fort).
+
+### Keine Dialogfenster
+
+Im laufenden Betrieb öffnet die Anwendung **kein Fenster**. Alles läuft über
+`Meldungen`:
+
+```java
+meldungen.erfolg("Anna Muster gespeichert");     // grün, vergeht nach 6 s
+meldungen.hinweis(texte.get("msg.noGroups"));    // neutral, vergeht
+meldungen.fehler(e.getMessage());                // rot, bleibt stehen
+meldungen.pruefbericht(bericht);                 // Liste der Beanstandungen
+meldungen.frageNach(frage, "Löschen", () -> loesche(x));
+```
+
+Alle Methoden geben **nichts** zurück. Ein `Optional<T>` als Rückgabe müsste
+den aufrufenden Faden anhalten, bis jemand geklickt hat — und genau dieses
+Anhalten *ist* das Fenster. Wer eine Antwort braucht, übergibt, was damit
+geschehen soll.
+
+Die einzige Ausnahme ist der Startfehler in `App`: die Meldungsecke hängt in
+der Hauptszene, die es zu diesem Zeitpunkt noch nicht gibt.
+
+### Aussehen
+
+Farben, Abstände und Schriftgrößen stehen in
+`gkv-ui/src/main/resources/style/gkv.css`, die Farben oben als benannte Werte.
+**Kein `setStyle` im Quelltext** — stattdessen eine Stilklasse:
+`masken-titel`, `schaltflaeche-haupt`, `schaltflaeche-still`,
+`schaltflaeche-gefahr`, `karte`, `feld-hinweis`, `feld-fehler`, `zeile-still`.
+
+### Neues Eingabefeld
+
+Ein Feld besteht aus Bedienelement, Erklärung und einer Zeile für die
+Beanstandung. Die Erklärung steht in `ui-messages.json` unter `help.<feldname>`
+— fehlt sie, bleibt das Feld ohne. Eigene Prüfregeln kommen in
+`Feldbau.pruefe(...)`; **das IK wird dort schon gegen die Prüfziffer geprüft**,
+damit ein falsches nicht erst beim Versand auffällt.
+
+`erzeugeFeld` liefert eine Hülle, nicht das Bedienelement. Wer daran muss,
+nimmt `feldbau.bedienelement(feld)`, für Werte `textVon` oder `datumVon`.
 
 ## Wo eine Änderung hingehört
 
@@ -115,14 +158,18 @@ Konstante der Maske (`AbrechnungsMaske.ID_START` und so fort).
 | Etwas an der Oberfläche | die zuständige Maske unter `gkv-ui/presentation/` |
 | Eine neue Maske | eigene Klasse nach dem Muster von `GruppenMaske`, nicht in `View` |
 | Eine neue Art Eingabefeld | `presentation/Feldbau.java` |
-| Eine neue Art Meldung | `presentation/dialog/Dialoge.java` und die beiden Umsetzungen |
+| Eine neue Art Meldung | `presentation/meldung/Meldungen.java` und die beiden Umsetzungen |
+| Eine neue Übersicht mit Liste | `Listenbau` und `Maskenkopf`, siehe `GruppenMaske.liste()` |
+| Farbe, Abstand, Schriftgröße | `gkv-ui/src/main/resources/style/gkv.css` |
+| Ein neuer Bereich in der Seitenleiste | `View.baueNavigation()` |
 
 **Fachlogik gehört nie in eine Maske.** Sie kommt nach `application/` oder in
 den zuständigen Dienst und wird von der Oberfläche nur aufgerufen.
 
-**Und nichts Neues in `View`.** Die Klasse war einmal 1.438 Zeilen lang und
-ist auf 610 zurückgebaut; sie ist der Rahmen, nicht der Ort für neue Masken.
-Eine neue Maske wird eine eigene Klasse nach dem Muster von `GruppenMaske`.
+**Und nichts Neues in `View`.** Die Klasse war einmal 1.438 Zeilen lang und ist
+auf rund 600 zurückgebaut; sie ist der Einstieg, nicht der Ort für neue Masken.
+Eine neue Maske wird eine eigene Klasse nach dem Muster von `GruppenMaske` und
+bekommt einen Eintrag in `View.baueNavigation()`.
 
 ## Persistenz
 
@@ -225,23 +272,23 @@ Keine nackten `RuntimeException`. Vorhanden sind:
 ### Oberflächentests
 
 Es gibt **kein TestFX**, und das ist Absicht: dessen Wert liegt im Nachstellen
-echter Eingaben. Seit die Dialoge hinter `Dialoge` liegen, blockiert nichts
+echter Eingaben. Seit die Meldungen hinter `Meldungen` liegen, blockiert nichts
 mehr, und die Masken lassen sich unmittelbar aufbauen und auswerten. Das
 erspart die Abhängigkeit von Monocle, das jeder JavaFX-Fassung hinterherhinkt.
 
 ```java
 JavaFxLaufzeit.aufFxFaden(() -> {
-    Region maske = new GruppenMaske(new JavaFxUiFactory(), texte, dialoge,
+    Region maske = new GruppenMaske(new JavaFxUiFactory(), texte, meldungen,
             datenbank, rahmen).formular(null);
     ((Button) maske.lookup("#" + GruppenMaske.ID_SPEICHERN)).fire();
-    assertEquals(texte.get("msg.groupNameRequired"), dialoge.einzige().text());
+    assertEquals(texte.get("msg.groupNameRequired"), meldungen.einzige().text());
 });
 ```
 
 Die Ersatzstücke liegen unter `gkv-ui/src/test/java/.../presentation/`:
-`SpeicherRepository` (Daten im Speicher), `AufzeichnendeDialoge` (sammelt
-Meldungen, gibt vorgegebene Antworten), `AufzeichnenderRahmen` (merkt sich,
-was gezeigt wurde).
+`SpeicherRepository` (Daten im Speicher), `AufzeichnendeMeldungen` (sammelt
+Meldungen, beantwortet Rückfragen nach Vorgabe), `AufzeichnenderRahmen` (merkt
+sich, was gezeigt wurde).
 
 Jede Änderung an einem Bedienelement muss auf dem JavaFX-Faden laufen — sonst
 schlägt sie fehl. Im Bauknecht braucht die Laufzeit eine Anzeige; der Workflow
