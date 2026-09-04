@@ -33,6 +33,7 @@ import de.gkvtransmitter.validator.ValidationReport;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.layout.Region;
 
@@ -283,6 +284,139 @@ class AbrechnungsMaskeTest {
         }
     }
 
+    @Nested
+    @DisplayName("Monat fuer Monat derselbe Kurs")
+    class Monatsbetrieb {
+
+        @Test
+        @DisplayName("Alle auswaehlen hakt jeden Teilnehmer an")
+        void alleAuswaehlen() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd"), patient(3, "Clara")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+                start(maske).fire();
+
+                assertEquals(List.of(1, 2, 3),
+                        laeufe.get(0).teilnehmer().stream().map(Patient::getId).toList());
+            });
+        }
+
+        @Test
+        @DisplayName("Keinen nimmt alle Haken wieder weg")
+        void keinenAuswaehlen() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                knopf(maske, AbrechnungsMaske.ID_KEINEN).fire();
+                start(maske).fire();
+
+                assertTrue(laeufe.isEmpty(), "Ohne Haken darf nichts abgerechnet werden");
+                assertEquals(texte.get("msg.noParticipantsSelected"), meldungen.einzige().text());
+            });
+        }
+
+        @Test
+        @DisplayName("Ist niemand angehakt, gilt die Terminzahl fuer alle")
+        void termineFuerAlleOhneAuswahl() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+
+                termineFuerAlleSetzen(maske, 4);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+                start(maske).fire();
+
+                assertEquals(Map.of(1, 4, 2, 4), laeufe.get(0).termine());
+            });
+        }
+
+        @Test
+        @DisplayName("Sind Teilnehmer angehakt, gilt die Terminzahl nur fuer diese")
+        void termineNurFuerAngehakte() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                teilnehmerAnhaken(maske, 2);
+
+                termineFuerAlleSetzen(maske, 6);
+                start(maske).fire();
+
+                assertEquals(Map.of(2, 6), laeufe.get(0).termine());
+                assertEquals(1, terminZaehler(maske, 1).getValue(),
+                        "Der nicht angehakte Teilnehmer bleibt unberuehrt");
+            });
+        }
+
+        @Test
+        @DisplayName("Die Zusammenfassung nennt Auswahl und Summe der Termine")
+        void zeigtZusammenfassung() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd"), patient(3, "Clara")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+
+                assertEquals(String.format(texte.get("msg.selectionSummary"), 0, 3, 0),
+                        zusammenfassung(maske));
+
+                teilnehmerAnhaken(maske, 1);
+                termineSetzen(maske, 1, 4);
+                teilnehmerAnhaken(maske, 2);
+                termineSetzen(maske, 2, 3);
+
+                assertEquals(String.format(texte.get("msg.selectionSummary"), 2, 3, 7),
+                        zusammenfassung(maske),
+                        "Man soll vor dem Absenden sehen, was abgerechnet wird");
+            });
+        }
+
+        @Test
+        @DisplayName("Der Dienstleister wird genannt, aber nicht zur Auswahl gestellt")
+        void dienstleisterOhneAuswahl() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+
+                Label zeile = (Label) maske.lookup("#" + AbrechnungsMaske.ID_DIENSTLEISTER);
+                assertNotNull(zeile, "Wer die Leistung erbracht hat, gehoert in die Maske");
+                assertTrue(zeile.getText().contains("Max Muster"), zeile.getText());
+                assertNull(maske.lookup("#" + AbrechnungsMaske.ID_DIENSTLEISTER + "-9"),
+                        "Ein Kaestchen ohne Wirkung waere irrefuehrend");
+            });
+        }
+
+        @Test
+        @DisplayName("Ein Gruppenwechsel setzt Auswahl und Zusammenfassung zurueck")
+        void gruppenwechselSetztZurueck() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Erste", patient(1, "Anna"), patient(2, "Bernd")))
+                    .mitGruppe(gruppe("Zweite", patient(3, "Clara")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                gruppeWaehlen(maske, 1);
+
+                assertEquals(String.format(texte.get("msg.selectionSummary"), 0, 1, 0),
+                        zusammenfassung(maske));
+            });
+        }
+    }
+
     // --- Aufbau und Bedienung -------------------------------------------
 
     private Region maskeAufbauen() {
@@ -342,5 +476,32 @@ class AbrechnungsMaskeTest {
 
     private static Blueprint blaupause() {
         return new Blueprint("Testblaupause", "test-template", "{\"fields\":{}}", OffsetDateTime.now());
+    }
+
+    private Button knopf(Region maske, String kennung) {
+        Button schaltflaeche = (Button) maske.lookup("#" + kennung);
+        assertNotNull(schaltflaeche, "Keine Schaltflaeche mit der Kennung " + kennung);
+        return schaltflaeche;
+    }
+
+    /** Traegt die Terminzahl in die Werkzeugleiste ein und uebernimmt sie. */
+    @SuppressWarnings("unchecked")
+    private void termineFuerAlleSetzen(Region maske, int anzahl) {
+        Spinner<Integer> fuerAlle =
+                (Spinner<Integer>) maske.lookup("#" + AbrechnungsMaske.ID_TERMINE_ALLE);
+        assertNotNull(fuerAlle, "Kein Zaehler fuer die Terminzahl aller Teilnehmer");
+        fuerAlle.getValueFactory().setValue(anzahl);
+        knopf(maske, AbrechnungsMaske.ID_TERMINE_SETZEN).fire();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Spinner<Integer> terminZaehler(Region maske, int personId) {
+        return (Spinner<Integer>) maske.lookup("#" + AbrechnungsMaske.ID_TERMINE + personId);
+    }
+
+    private String zusammenfassung(Region maske) {
+        Label zeile = (Label) maske.lookup("#" + AbrechnungsMaske.ID_ZUSAMMENFASSUNG);
+        assertNotNull(zeile, "Keine Zusammenfassung unter der Liste");
+        return zeile.getText();
     }
 }
