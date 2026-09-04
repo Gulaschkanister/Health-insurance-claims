@@ -1,11 +1,14 @@
 package de.gkvtransmitter.presentation;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Objects;
+import java.util.Optional;
 
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.FieldValidator;
+import de.gkvtransmitter.util.Institutionskennzeichen;
 import de.gkvtransmitter.util.ModifierInstance;
 import de.gkvtransmitter.util.TagList;
 import de.gkvtransmitter.util.modifiers.MaxLengthModifier;
@@ -14,30 +17,45 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.VBox;
 
 /**
- * Baut die Eingabefelder der Formulare und liest sie wieder aus.
+ * Baut die Eingabefelder der Formulare, erklaert sie und liest sie wieder aus.
  *
- * <p>Herausgeloest aus {@code View}, wo dieser Teil zwischen den Masken lag
- * und von allen gebraucht wurde: von den Personenformularen ebenso wie von der
- * Blaupausenmaske. Er gehoert keiner der beiden, sondern beiden.</p>
+ * <p>Ein Feld besteht aus drei Teilen untereinander: dem Bedienelement, einer
+ * Erklaerung, was hineingehoert, und einer Zeile fuer die Beanstandung.</p>
  *
- * <p>Welche Art Feld entsteht, entscheidet die Angabe aus
- * {@code /tags/person-tags.json}: eine Zeichenkette wird ein Textfeld, eine
- * Zahl ein Zaehler, ein Datum ein Kalenderfeld. Zahlenfelder tragen eine
- * Beschriftung fuer die Beanstandung unter sich - deshalb liefert
- * {@link #erzeugeFeld} einen {@code VBox} und nicht das Bedienelement selbst,
- * und deshalb sieht {@link #textVon} in dessen erstes Kind.</p>
+ * <p>Die Erklaerung stand bisher nirgends - die Beschriftung "IK" musste
+ * genuegen, obwohl weder Laenge noch Herkunft daraus hervorgingen. Geprueft
+ * wurde nur in Zahlenfeldern; in Textfeldern schnitt ein Formatierer
+ * stillschweigend ab, sobald die Hoechstlaenge erreicht war, ohne das zu
+ * sagen.</p>
+ *
+ * <p>Am wichtigsten ist die Pruefziffer der Institutionskennzeichen. Das
+ * Verfahren liegt seit je in {@code gkv-core}, wurde aber nur beim Versand
+ * angewandt: ein falsches Kassen-IK fiel erst auf, nachdem Teilnehmer und
+ * Termine zusammengestellt waren. Jetzt faellt es beim Verlassen des Feldes
+ * auf.</p>
+ *
+ * <p>Weil jedes Feld eingehuellt ist, liefert {@link #erzeugeFeld} eine
+ * {@code VBox} und nicht das Bedienelement selbst. Wer daran muss, nimmt
+ * {@link #bedienelement(Node)}; wer nur den Wert braucht, {@link #textVon(Node)}
+ * oder {@link #datumVon(Node)}.</p>
  */
 public class Feldbau {
 
-    /** Stilklasse eines Feldes, dessen Inhalt beanstandet wurde. */
-    private static final String FEHLERHAFT = "feld-fehlerhaft";
+    /** Stilklasse eines Bedienelements, dessen Inhalt beanstandet wurde. */
+    public static final String STIL_FEHLERHAFT = "feld-fehlerhaft";
+    /** Stilklasse der Zeile mit der Beanstandung. */
+    public static final String STIL_FEHLER = "feld-fehler";
+    /** Stilklasse der Zeile mit der Erklaerung. */
+    public static final String STIL_HINWEIS = "feld-hinweis";
+
+    /** Vorsatz der Schluessel, unter denen die Erklaerungen stehen. */
+    private static final String HINWEIS_SCHLUESSEL = "help.";
 
     private final UiFactory bausteine;
     private final AppMessages texte;
@@ -46,225 +64,278 @@ public class Feldbau {
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
     }
-    /**
-     * Erstellt ein Eingabefeld basierend auf der TagList-Konfiguration für ein
-     * bestimmtes Feld.
-     *
-     * @param fieldName - der Name des Feldes, für das das Eingabefeld erstellt
-     * werden soll
-     * @param tagList - die TagList, die die Konfiguration für das Feld enthält,
-     * einschließlich der InputOption und möglicher Modifier
-     * @return das erstellte Node, das als Eingabefeld für das angegebene Feld
-     * verwendet werden kann
-     */
-    public Node erzeugeFeld(String fieldName, TagList tagList) {
-        if (tagList == null) {
-            return bausteine.createTextField();
-        }
 
-        InputOption inputOption = tagList.getInputOption();
-        return switch (inputOption) {
-            case STRING -> {
-                TextField tf = bausteine.createTextField();
-                applyMaxLengthModifier(tf, tagList);
-                yield tf;
-            }
-            case NUMBER -> {
-                Spinner<Integer> spinner = bausteine.createSpinner(Integer.class, null, inputOption);
-                yield createValidatedSpinnerNode(fieldName, spinner, inputOption, "Integer");
-            }
-            case PERCENT, COST -> {
-                Spinner<BigDecimal> spinner = bausteine.createSpinner(BigDecimal.class, null, inputOption);
-                yield createValidatedSpinnerNode(fieldName, spinner, inputOption, "BigDecimal");
-            }
-            case CODE ->
-                bausteine.createComboBox(false);
-            case NUMBER_SUGGESTION ->
-                bausteine.createComboBox(true);
-            case DATE, TIME ->
-                bausteine.createDatePicker();
-            default ->
-                bausteine.createTextField();
+    /**
+     * Baut ein Feld: Bedienelement, Erklaerung, Platz fuer die Beanstandung.
+     *
+     * @param feldname     der Name aus der Tag-Datei, etwa {@code kassenIk}
+     * @param beschreibung wie das Feld auszusehen hat, oder {@code null}
+     */
+    public Node erzeugeFeld(String feldname, TagList beschreibung) {
+        Node bedienelement = bedienelementFuer(beschreibung);
+
+        Label beanstandung = bausteine.createLabel("");
+        beanstandung.getStyleClass().add(STIL_FEHLER);
+        beanstandung.setWrapText(true);
+        verbergen(beanstandung);
+
+        VBox feld = new VBox(3, bedienelement);
+        erklaerung(feldname, beschreibung).ifPresent(text -> {
+            Label hinweis = bausteine.createLabel(text);
+            hinweis.getStyleClass().add(STIL_HINWEIS);
+            hinweis.setWrapText(true);
+            feld.getChildren().add(hinweis);
+        });
+        feld.getChildren().add(beanstandung);
+
+        ueberwache(feldname, beschreibung, bedienelement, beanstandung);
+        return feld;
+    }
+
+    /** Das Bedienelement eines Feldes, ohne Erklaerung und Beanstandung. */
+    public Node bedienelement(Node feld) {
+        if (feld instanceof VBox huelle && !huelle.getChildren().isEmpty()) {
+            return huelle.getChildren().get(0);
+        }
+        return feld;
+    }
+
+    /**
+     * Der Textwert eines Feldes.
+     *
+     * @return der Inhalt, oder eine leere Zeichenkette
+     */
+    public String textVon(Node feld) {
+        return switch (bedienelement(feld)) {
+            case TextInputControl eingabe -> eingabe.getText() == null ? "" : eingabe.getText();
+            case Spinner<?> zaehler -> zeichenkette(zaehler.getValue());
+            case ComboBox<?> auswahl -> zeichenkette(auswahl.getValue());
+            case DatePicker kalender -> zeichenkette(kalender.getValue());
+            default -> "";
         };
     }
 
     /**
-     * Erstellt ein validiertes Spinner-Node mit einem Fehlerlabel, das die
-     * Eingabe basierend auf dem Feldnamen, der InputOption und dem Java-Feldtyp
-     * validiert.
+     * Der Datumswert eines Feldes.
      *
-     * @param fieldName - der Name des Feldes, das validiert werden soll, z.B.
-     * "plz" für Postleitzahl
-     * @param spinner - der Spinner, der validiert werden soll
-     * @param inputOption - die InputOption, die den Typ der Eingabe angibt,
-     * z.B. NUMBER oder PERCENT
-     * @param javaFieldType - der Java-Typ des Feldes, z.B. "Integer" oder
-     * "BigDecimal", der für die Validierung berücksichtigt werden kann
-     * @return ein Node, das den Spinner und ein Fehlerlabel enthält, das die
-     * Validierungsergebnisse anzeigt
+     * @return das Datum, oder {@code null}
      */
-    private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner,
-            InputOption inputOption, String javaFieldType) {
-        Label errorLabel = bausteine.createLabel("");
-        errorLabel.getStyleClass().add("feld-fehler");
-        errorLabel.setVisible(false);
+    public LocalDate datumVon(Node feld) {
+        return bedienelement(feld) instanceof DatePicker kalender ? kalender.getValue() : null;
+    }
 
-        VBox box = new VBox(4);
-        box.getChildren().addAll(spinner, errorLabel);
+    // --- Aufbau ----------------------------------------------------------
 
-        Runnable validate = () -> validateSpinner(spinner, fieldName, errorLabel, inputOption, javaFieldType);
-
-        spinner.valueProperty().addListener((obs, o, n) -> validate.run());
-        if (spinner.getEditor() != null) {
-            spinner.getEditor().textProperty().addListener((obs, o, n) -> validate.run());
-            spinner.getEditor().focusedProperty().addListener((obs, oldF, newF) -> {
-                if (!newF) {
-                    validate.run();
-                }
-            });
+    private Node bedienelementFuer(TagList beschreibung) {
+        if (beschreibung == null) {
+            return bausteine.createTextField();
         }
+        InputOption art = beschreibung.getInputOption();
+        return switch (art) {
+            case STRING -> {
+                TextField feld = bausteine.createTextField();
+                hoechstlaenge(beschreibung).ifPresent(grenze -> begrenze(feld, grenze));
+                yield feld;
+            }
+            case NUMBER -> zaehler(Integer.class, art);
+            case PERCENT, COST -> zaehler(BigDecimal.class, art);
+            case CODE -> bausteine.createComboBox(false);
+            case NUMBER_SUGGESTION -> bausteine.createComboBox(true);
+            case DATE, TIME -> bausteine.createDatePicker();
+            default -> bausteine.createTextField();
+        };
+    }
 
-        validate.run();
-        return box;
+    private <T> Spinner<T> zaehler(Class<T> art, InputOption eingabeart) {
+        Spinner<T> zaehler = bausteine.createSpinner(art, null, eingabeart);
+        zaehler.setPrefWidth(220);
+        return zaehler;
     }
 
     /**
-     * Erstellt ein Eingabefeld basierend auf der InputOption und anderen
-     * Parametern, die in der TagList definiert sind.
+     * Haengt die Pruefung an das Bedienelement.
      *
-     * @param spinner - der Spinner, der validiert werden soll
-     * @param fieldName - der Name des Feldes, das validiert werden soll, z.B.
-     * "plz" für Postleitzahl
-     * @param errorLabel - das Label, das Fehlermeldungen anzeigt, wenn die
-     * Validierung fehlschlägt
-     * @param inputOption - die InputOption, die den Typ der Eingabe angibt,
-     * z.B. NUMBER oder PERCENT
-     * @param javaFieldType - der Java-Typ des Feldes, z.B. "Integer" oder
-     * "BigDecimal", der für die Validierung berücksichtigt werden kann
+     * <p>Waehrend des Tippens ist eine unfertige Eingabe zwangslaeufig falsch -
+     * ein IK ist nach drei Ziffern noch keines. Die Beanstandung erscheint
+     * deshalb erst, wenn das Feld den Fokus verliert; danach bessert sie sich
+     * bei jedem Tastendruck nach, damit man beim Berichtigen sieht, wann es
+     * stimmt.</p>
      */
-    private void validateSpinner(Spinner<?> spinner, String fieldName, Label errorLabel,
-            InputOption inputOption, String javaFieldType) {
-        String valText = "";
-        try {
-            if (spinner.getEditor() != null && !spinner.getEditor().getText().isBlank()) {
-                valText = spinner.getEditor().getText();
-            } else if (spinner.getValue() != null) {
-                valText = String.valueOf(spinner.getValue());
-            }
-        } catch (Exception ignored) {
-        }
-
-        if ("plz".equalsIgnoreCase(fieldName) && !valText.isBlank()) {
-            if (!valText.matches("\\d{5}")) {
-                errorLabel.setText("PLZ muss 5-stellig sein");
-                errorLabel.setVisible(true);
-                beanstande(spinner);
+    private void ueberwache(String feldname, TagList beschreibung, Node bedienelement, Label beanstandung) {
+        boolean[] schonBeanstandet = {false};
+        Runnable pruefen = () -> {
+            Optional<String> befund = pruefe(feldname, beschreibung, textVon(bedienelement));
+            if (befund.isEmpty()) {
+                beanstandung.setText("");
+                verbergen(beanstandung);
+                bedienelement.getStyleClass().remove(STIL_FEHLERHAFT);
                 return;
             }
-        }
+            schonBeanstandet[0] = true;
+            beanstandung.setText(befund.get());
+            zeigen(beanstandung);
+            if (!bedienelement.getStyleClass().contains(STIL_FEHLERHAFT)) {
+                bedienelement.getStyleClass().add(STIL_FEHLERHAFT);
+            }
+        };
 
-        if (spinner.getValueFactory() instanceof SpinnerValueFactory.IntegerSpinnerValueFactory intVf) {
-            try {
-                int min = intVf.getMin();
-                int max = intVf.getMax();
-                if (!valText.isBlank()) {
-                    int cur = Integer.parseInt(valText);
-                    if (cur < min || cur > max) {
-                        errorLabel.setText(String.format("Wert muss zwischen %d und %d liegen", min, max));
-                        errorLabel.setVisible(true);
-                        beanstande(spinner);
-                        return;
-                    }
+        bedienelement.focusedProperty().addListener((wert, hatteFokus, hatFokus) -> {
+            if (!hatFokus) {
+                pruefen.run();
+            }
+        });
+
+        switch (bedienelement) {
+            case TextInputControl eingabe -> eingabe.textProperty()
+                    .addListener((wert, alt, neu) -> nachbessern(schonBeanstandet, pruefen));
+            case Spinner<?> zaehler -> {
+                zaehler.valueProperty().addListener((wert, alt, neu) -> pruefen.run());
+                if (zaehler.getEditor() != null) {
+                    zaehler.getEditor().textProperty()
+                            .addListener((wert, alt, neu) -> nachbessern(schonBeanstandet, pruefen));
                 }
-            } catch (NumberFormatException ignored) {
             }
-        }
-
-        FieldValidator.Feldbefund res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
-        if (res == null || res.isValid) {
-            errorLabel.setVisible(false);
-            entlaste(spinner);
-        } else {
-            errorLabel.setText(res.errorMessage != null ? res.errorMessage : "Ungültiger Wert");
-            errorLabel.setVisible(true);
-            beanstande(spinner);
+            case ComboBox<?> auswahl -> auswahl.valueProperty().addListener((wert, alt, neu) -> pruefen.run());
+            case DatePicker kalender -> kalender.valueProperty().addListener((wert, alt, neu) -> pruefen.run());
+            default -> { }
         }
     }
 
-    /** Kennzeichnet ein Feld als beanstandet. */
-    private void beanstande(Spinner<?> spinner) {
-        if (!spinner.getStyleClass().contains(FEHLERHAFT)) {
-            spinner.getStyleClass().add(FEHLERHAFT);
+    /** Waehrend des Tippens nur nachbessern, was schon beanstandet wurde. */
+    private void nachbessern(boolean[] schonBeanstandet, Runnable pruefen) {
+        if (schonBeanstandet[0]) {
+            pruefen.run();
         }
     }
 
-    /** Nimmt die Kennzeichnung wieder weg. */
-    private void entlaste(Spinner<?> spinner) {
-        spinner.getStyleClass().remove(FEHLERHAFT);
+    // --- Pruefung --------------------------------------------------------
+
+    /**
+     * Prueft einen Wert.
+     *
+     * <p>Paketsichtbar, damit sich die Regeln ohne Bedienelement pruefen
+     * lassen.</p>
+     *
+     * @return die Beanstandung, oder leer
+     */
+    Optional<String> pruefe(String feldname, TagList beschreibung, String wert) {
+        if (wert == null || wert.isBlank()) {
+            return Optional.empty();
+        }
+        String bereinigt = wert.trim();
+        if (istKennzeichen(feldname)) {
+            return Institutionskennzeichen.istGueltig(bereinigt)
+                    ? Optional.empty()
+                    : Optional.of(texte.get("msg.invalidIk"));
+        }
+        if ("plz".equalsIgnoreCase(feldname) && !bereinigt.matches("\\d{5}")) {
+            return Optional.of(texte.get("msg.invalidPlz"));
+        }
+        Optional<String> zuLang = zuLang(beschreibung, bereinigt);
+        if (zuLang.isPresent()) {
+            return zuLang;
+        }
+        if (beschreibung == null) {
+            return Optional.empty();
+        }
+        FieldValidator.Feldbefund befund = FieldValidator.validate(feldname, bereinigt,
+                beschreibung.getInputOption(), javatyp(beschreibung.getInputOption()));
+        if (befund == null || befund.isValid) {
+            return Optional.empty();
+        }
+        return Optional.of(befund.errorMessage == null ? texte.get("msg.invalidValue") : befund.errorMessage);
     }
 
     /**
-     * Wendet den MaxLengthModifier aus der TagList auf ein TextField an, um die
-     * maximale Länge der Eingabe zu begrenzen.
+     * Ob das Feld ein Institutionskennzeichen traegt.
      *
-     * @param textField das TextField, auf das der MaxLengthModifier angewendet
-     * werden soll
-     * @param tagList die TagList, die die Modifier enthält, einschließlich des
-     * MaxLengthModifier
+     * <p>Das eigene IK des Dienstleisters heisst {@code ik}, das der Kasse
+     * {@code kassenIk}; beide folgen demselben Verfahren.</p>
      */
-    private void applyMaxLengthModifier(TextField textField, TagList tagList) {
-        for (ModifierInstance modifier : tagList.getModifierList()) {
-            if (modifier instanceof MaxLengthModifier mmod) {
-                int maxLength = mmod.getMaxLength();
-                textField.setTextFormatter(new TextFormatter<>(change -> {
-                    if (change.getControlNewText().length() <= maxLength) {
-                        return change;
-                    }
-                    return null;
-                }));
+    private boolean istKennzeichen(String feldname) {
+        return "ik".equalsIgnoreCase(feldname) || "kassenIk".equalsIgnoreCase(feldname);
+    }
+
+    private Optional<String> zuLang(TagList beschreibung, String wert) {
+        return hoechstlaenge(beschreibung)
+                .filter(grenze -> wert.length() > grenze)
+                .map(grenze -> String.format(texte.get("msg.tooLong"), grenze));
+    }
+
+    private Optional<Integer> hoechstlaenge(TagList beschreibung) {
+        if (beschreibung == null || beschreibung.getModifierList() == null) {
+            return Optional.empty();
+        }
+        for (ModifierInstance modifier : beschreibung.getModifierList()) {
+            if (modifier instanceof MaxLengthModifier grenze) {
+                return Optional.of(grenze.getMaxLength());
             }
         }
+        return Optional.empty();
     }
 
     /**
-     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ. Wenn
-     * das Element in einer VBox verpackt ist, wird das erste Kind der VBox als
-     * Ziel für die Textgewinnung verwendet. Unterstützt verschiedene
-     * UI-Komponenten wie TextInputControl, Spinner, ComboBox und DatePicker, um
-     * den entsprechenden Textwert zurückzugeben. Wenn der Typ des UI-Elements
-     * nicht erkannt wird oder kein Text extrahiert werden kann, wird ein leerer
-     * String zurückgegeben.
+     * Begrenzt die Eingabe auf die Hoechstlaenge.
      *
-     * @param node das UI-Element, aus dem der Textwert extrahiert werden soll,
-     * z.B. ein TextField, Spinner, ComboBox oder DatePicker
-     * @return der Textwert des UI-Elements oder ein leerer String, wenn kein
-     * Text extrahiert werden kann
+     * <p>Der Formatierer schneidet weiterhin ab - anders liesse sich eine zu
+     * lange Eingabe kaum verhindern -, aber die Erklaerung unter dem Feld nennt
+     * die Grenze vorher. Zuvor hoerte das Feld bei Zeichen 101 einfach auf zu
+     * reagieren, ohne dass jemand wusste, warum.</p>
      */
-    public String textVon(Node node) {
-        Node target = node;
-        if (node instanceof VBox v && !v.getChildren().isEmpty()) {
-            target = v.getChildren().get(0);
-        }
+    private void begrenze(TextField feld, int grenze) {
+        feld.setTextFormatter(new TextFormatter<>(aenderung ->
+                aenderung.getControlNewText().length() <= grenze ? aenderung : null));
+    }
 
-        switch (target) {
-            case TextInputControl tic -> {
-                return tic.getText();
-            }
-            case Spinner<?> spinner -> {
-                Object value = spinner.getValue();
-                return value != null ? String.valueOf(value) : "";
-            }
-            case ComboBox<?> cb -> {
-                Object value = cb.getValue();
-                return value != null ? String.valueOf(value) : "";
-            }
-            case DatePicker dp -> {
-                var value = dp.getValue();
-                return value != null ? value.toString() : "";
-            }
-            default -> {
-            }
+    private String javatyp(InputOption art) {
+        return switch (art) {
+            case NUMBER, NUMBER_SUGGESTION -> "Integer";
+            case PERCENT, COST -> "BigDecimal";
+            default -> "String";
+        };
+    }
+
+    // --- Erklaerungen ----------------------------------------------------
+
+    /**
+     * Die Erklaerung zu einem Feld, gefolgt von der Hoechstlaenge, sofern es
+     * eine gibt.
+     *
+     * <p>Fehlt der Text, bleibt das Feld ohne Erklaerung - besser keine als
+     * eine nichtssagende.</p>
+     */
+    private Optional<String> erklaerung(String feldname, TagList beschreibung) {
+        String schluessel = HINWEIS_SCHLUESSEL + feldname;
+        String text = texte.get(schluessel);
+        Optional<String> eigener = schluessel.equals(text) ? Optional.empty() : Optional.of(text);
+        Optional<String> grenze = hoechstlaenge(beschreibung)
+                .map(hoechstens -> String.format(texte.get("help.maxLength"), hoechstens));
+
+        if (eigener.isPresent() && grenze.isPresent()) {
+            return Optional.of(eigener.get() + " " + grenze.get());
         }
-        return "";
+        return eigener.or(() -> grenze);
+    }
+
+    // --- Kleinkram -------------------------------------------------------
+
+    private static String zeichenkette(Object wert) {
+        return wert == null ? "" : String.valueOf(wert);
+    }
+
+    /**
+     * Blendet eine Zeile aus, ohne dass ihr Platz erhalten bleibt.
+     *
+     * <p>Ohne {@code setManaged(false)} bliebe eine leere Zeile stehen und die
+     * Felder eines Formulars staenden weiter auseinander als noetig.</p>
+     */
+    private static void verbergen(Label zeile) {
+        zeile.setVisible(false);
+        zeile.setManaged(false);
+    }
+
+    private static void zeigen(Label zeile) {
+        zeile.setVisible(true);
+        zeile.setManaged(true);
     }
 }

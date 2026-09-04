@@ -21,6 +21,7 @@ import de.gkvtransmitter.util.AppMessages;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
@@ -160,6 +161,32 @@ class PersonenMaskeTest {
                 assertEquals(AufzeichnendeMeldungen.Art.FEHLER, meldung.art());
                 assertTrue(meldung.text().contains("Datenbank gesperrt"), meldung.text());
                 assertEquals(0, rahmen.wieOftGeleert());
+            });
+        }
+
+        @Test
+        @DisplayName("Ein Kassen-IK mit falscher Pruefziffer wird schon im Formular beanstandet")
+        void ungueltigesKassenIk() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = formular(false);
+                fuelleAus(formular);
+
+                zahl(formular, "kassenIk", 108310401);
+
+                assertEquals(texte.get("msg.invalidIk"), beanstandung(formular, "kassenIk"),
+                        "Sonst faellt es erst beim Versand auf");
+            });
+        }
+
+        @Test
+        @DisplayName("Ein gueltiges Kassen-IK wird nicht beanstandet")
+        void gueltigesKassenIk() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = formular(false);
+
+                fuelleAus(formular);
+
+                assertNull(beanstandung(formular, "kassenIk"));
             });
         }
 
@@ -350,24 +377,39 @@ class PersonenMaskeTest {
     }
 
     private TextField text(Region formular, String feldname) {
-        return (TextField) feld(formular, feldname);
+        return (TextField) bedienelement(formular, feldname);
     }
 
     private DatePicker kalender(Region formular, String feldname) {
-        return (DatePicker) feld(formular, feldname);
+        return (DatePicker) bedienelement(formular, feldname);
+    }
+
+    private void zahl(Region formular, String feldname, int wert) {
+        @SuppressWarnings("unchecked")
+        Spinner<Integer> zaehler = (Spinner<Integer>) bedienelement(formular, feldname);
+        zaehler.getValueFactory().setValue(wert);
     }
 
     /**
-     * Setzt einen Zahlenwert.
+     * Das Bedienelement eines Feldes.
      *
-     * <p>Zahlenfelder tragen eine Beschriftung fuer die Beanstandung unter
-     * sich; das Bedienelement ist deshalb das erste Kind des Feldes.</p>
+     * <p>Jedes Feld traegt Erklaerung und Beanstandung unter sich; das
+     * Bedienelement ist deshalb das erste Kind der Huelle.</p>
      */
-    private void zahl(Region formular, String feldname, int wert) {
-        VBox umhuellung = (VBox) feld(formular, feldname);
-        @SuppressWarnings("unchecked")
-        Spinner<Integer> zaehler = (Spinner<Integer>) umhuellung.getChildren().get(0);
-        zaehler.getValueFactory().setValue(wert);
+    private Node bedienelement(Region formular, String feldname) {
+        return ((VBox) feld(formular, feldname)).getChildren().get(0);
+    }
+
+    /** Die sichtbare Beanstandung unter einem Feld, oder {@code null}. */
+    private String beanstandung(Region formular, String feldname) {
+        return ((VBox) feld(formular, feldname)).getChildren().stream()
+                .filter(Label.class::isInstance)
+                .map(Label.class::cast)
+                .filter(zeile -> zeile.getStyleClass().contains(Feldbau.STIL_FEHLER))
+                .filter(Label::isVisible)
+                .map(Label::getText)
+                .findFirst()
+                .orElse(null);
     }
 
     private Node feld(Region formular, String feldname) {

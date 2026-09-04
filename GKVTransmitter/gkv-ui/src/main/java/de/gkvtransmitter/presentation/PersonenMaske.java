@@ -22,7 +22,6 @@ import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -281,10 +280,7 @@ public class PersonenMaske {
             return;
         }
 
-        LocalDate geburtstag = null;
-        if (felder.get("birthDate") instanceof DatePicker kalender) {
-            geburtstag = kalender.getValue();
-        }
+        LocalDate geburtstag = feldbau.datumVon(felder.get("birthDate"));
 
         try {
             if (alsDienstleister) {
