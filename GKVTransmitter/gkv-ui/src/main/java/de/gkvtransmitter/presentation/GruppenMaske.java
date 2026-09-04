@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -13,7 +13,7 @@ import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.Person;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
-import de.gkvtransmitter.presentation.dialog.Dialoge;
+import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.geometry.Insets;
@@ -50,15 +50,15 @@ public class GruppenMaske {
 
     private final UiFactory bausteine;
     private final AppMessages texte;
-    private final Dialoge dialoge;
+    private final Meldungen meldungen;
     private final DataRepository datenbank;
     private final Maskenrahmen rahmen;
 
-    public GruppenMaske(UiFactory bausteine, AppMessages texte, Dialoge dialoge,
+    public GruppenMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
             DataRepository datenbank, Maskenrahmen rahmen) {
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
-        this.dialoge = Objects.requireNonNull(dialoge, "dialoge must not be null");
+        this.meldungen = Objects.requireNonNull(meldungen, "meldungen must not be null");
         this.datenbank = Objects.requireNonNull(datenbank, "datenbank must not be null");
         this.rahmen = Objects.requireNonNull(rahmen, "rahmen must not be null");
     }
@@ -70,38 +70,44 @@ public class GruppenMaske {
 
     /** Laesst eine Gruppe auswaehlen und zeigt sie zum Bearbeiten. */
     public void bearbeiten() {
-        waehleGruppe().ifPresent(gruppe -> rahmen.zeige(formular(gruppe)));
+        waehleGruppe(gruppe -> rahmen.zeige(formular(gruppe)));
     }
 
     /** Laesst eine Gruppe auswaehlen und loescht sie nach Rueckfrage. */
     public void loeschen() {
-        Optional<PersonGroup> gewaehlt = waehleGruppe();
-        if (gewaehlt.isEmpty()) {
-            return;
-        }
-        PersonGroup gruppe = gewaehlt.get();
-        boolean zugestimmt = dialoge.bestaetige(texte.get("msg.deleteConfirmTitle"),
-                texte.get("msg.deleteConfirmHeader"),
-                String.format(texte.get("msg.deleteConfirmBody"), anzeigename(gruppe)));
-        if (!zugestimmt) {
-            return;
-        }
-        try {
-            datenbank.deletePersonGroup(gruppe);
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), texte.get("msg.groupDeleted"));
-        } catch (RuntimeException e) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"), e.getMessage());
-        }
+        waehleGruppe(this::frageUndLoesche);
     }
 
-    private Optional<PersonGroup> waehleGruppe() {
+    /**
+     * Fragt zurueck, ehe geloescht wird.
+     *
+     * <p>Auf der Schaltflaeche steht "Loeschen", nicht "Ja". Wer nach einem
+     * Moment Ablenkung auf die Frage zurueckkommt, liest sonst nur noch die
+     * Antwortmoeglichkeiten und weiss nicht mehr, wozu.</p>
+     */
+    private void frageUndLoesche(PersonGroup gruppe) {
+        meldungen.frageNach(String.format(texte.get("msg.deleteConfirmBody"), anzeigename(gruppe)),
+                texte.get("button.delete"), () -> loesche(gruppe));
+    }
+
+    private void loesche(PersonGroup gruppe) {
+        try {
+            datenbank.deletePersonGroup(gruppe);
+        } catch (RuntimeException e) {
+            meldungen.fehler(e.getMessage());
+            return;
+        }
+        meldungen.erfolg(texte.get("msg.groupDeleted"));
+    }
+
+    private void waehleGruppe(Consumer<PersonGroup> wennGewaehlt) {
         List<PersonGroup> gruppen = datenbank.getAllPersonGroups();
         if (gruppen == null || gruppen.isEmpty()) {
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), texte.get("msg.noGroups"));
-            return Optional.empty();
+            meldungen.hinweis(texte.get("msg.noGroups"));
+            return;
         }
-        return dialoge.waehleAus(texte.get("menu.groups"), texte.get("label.selectGroup"),
-                gruppen, this::anzeigename);
+        meldungen.waehleAus(texte.get("menu.groups"), texte.get("label.selectGroup"),
+                gruppen, this::anzeigename, wennGewaehlt);
     }
 
     /**
@@ -161,7 +167,7 @@ public class GruppenMaske {
             List<ServiceProvider> dienstleister, List<CheckBox> dienstleisterKaestchen) {
         String name = namensfeld.getText() != null ? namensfeld.getText().trim() : "";
         if (name.isBlank()) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"), texte.get("msg.groupNameRequired"));
+            meldungen.hinweis(texte.get("msg.groupNameRequired"));
             return;
         }
 
@@ -172,11 +178,10 @@ public class GruppenMaske {
         try {
             datenbank.savePersonGroup(gruppe);
         } catch (RuntimeException e) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"), e.getMessage());
+            meldungen.fehler(e.getMessage());
             return;
         }
-        dialoge.zeigeInfo(texte.get("dialog.info.title"),
-                texte.get(bearbeitet ? "msg.groupUpdated" : "msg.groupCreated"));
+        meldungen.erfolg(texte.get(bearbeitet ? "msg.groupUpdated" : "msg.groupCreated"));
         rahmen.leeren();
     }
 

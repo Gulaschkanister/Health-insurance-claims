@@ -25,14 +25,15 @@ import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import de.gkvtransmitter.presentation.builder.MenuBuilder;
 import de.gkvtransmitter.presentation.controller.EditFormController;
-import de.gkvtransmitter.presentation.dialog.Dialoge;
-import de.gkvtransmitter.presentation.dialog.JavaFxDialoge;
+import de.gkvtransmitter.presentation.meldung.Bildschirmmeldungen;
+import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.Anwendungsverzeichnis;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -45,10 +46,10 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
@@ -76,8 +77,11 @@ public class View {
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
     private final AbrechnungService abrechnungService;
 
-    /** Alle Meldungen an den Anwender laufen hierueber, siehe {@link Dialoge}. */
-    private final Dialoge dialoge = new JavaFxDialoge();
+    /** Die Meldungsecke oben rechts, siehe {@link Benachrichtigungen}. */
+    private final Benachrichtigungen benachrichtigungen = new Benachrichtigungen();
+
+    /** Alle Meldungen an den Anwender laufen hierueber, siehe {@link Meldungen}. */
+    private final Meldungen meldungen = new Bildschirmmeldungen(benachrichtigungen);
 
     /** Baut die Eingabefelder der Formulare und liest sie wieder aus. */
     private final Feldbau feldbau;
@@ -122,18 +126,34 @@ public class View {
             "abrechnungService must not be null");
     }
 
+    /** Das Stylesheet der Anwendung. Ohne es sieht alles nach JavaFX-Vorgabe aus. */
+    static final String STYLESHEET = "/style/gkv.css";
+
     /**
-     * Erstellt die Hauptszene mit einem leeren Layout und einer Menüleiste.
+     * Erstellt die Hauptszene.
      *
-     * @param statusText Der Text, der im Statusbereich angezeigt werden soll
-     * @param width Die Breite der Szene
-     * @param height Die Höhe der Szene
-     * @return Die erstellte Hauptszene
+     * <p>Der Aufbau ist zweischichtig: unten der Rahmen mit Menue, Maske und
+     * Statuszeile, darueber die Meldungsecke. Sie liegt bewusst <em>ueber</em>
+     * der Maske statt darin - so kann eine Meldung erscheinen, ohne dass sich
+     * die Maske darunter verschiebt.</p>
+     *
+     * @param statusText was in der Statuszeile steht. Er wurde bisher
+     *        uebergeben und dann nicht verwendet; die Zeile gab es gar nicht.
      */
     public Scene createMainScene(String statusText, double width, double height) {
         MenuBar menuBar = buildMainMenuBar();
         this.skeleton = componentFactory.createBorderPane(menuBar, null, null, null, null);
-        Scene scene = componentFactory.createScene(skeleton, width, height);
+
+        Label status = componentFactory.createLabel(statusText == null ? "" : statusText);
+        status.getStyleClass().add("statuszeile");
+        status.setMaxWidth(Double.MAX_VALUE);
+        skeleton.setBottom(status);
+
+        StackPane schichten = new StackPane(skeleton, benachrichtigungen.bereich());
+        StackPane.setAlignment(benachrichtigungen.bereich(), Pos.TOP_RIGHT);
+
+        Scene scene = componentFactory.createScene(schichten, width, height);
+        scene.getStylesheets().add(getClass().getResource(STYLESHEET).toExternalForm());
         Platform.runLater(this::seedIfEmpty);
         return scene;
     }
@@ -234,7 +254,7 @@ public class View {
     private void createFormular(String invoiceName) {
         DtaMessage dtaMessage = controller.getGlobalDefinitions().getInvoiceTemplateCollection().get(invoiceName);
         if (dtaMessage == null) {
-            showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.noTemplate"));
+            meldungen.fehler(messages.get("msg.noTemplate"));
             return;
         }
         this.currentInvoiceHeaderCodes = dtaMessage.getHeaderCodes();
@@ -255,30 +275,23 @@ public class View {
 
         Label title = componentFactory.createLabel(invoiceName);
         title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-        Button saveBlueprintBtn = componentFactory.createButton(messages.get("button.saveBlueprint"));
-        saveBlueprintBtn.setOnAction(evt -> {
-            TextInputDialog dialog = new TextInputDialog(invoiceName + "-blueprint");
-            dialog.setTitle(messages.get("button.saveBlueprint"));
-            dialog.setHeaderText(null);
-            dialog.setContentText("Name:");
-            dialog.showAndWait().ifPresent(name -> {
-                try {
-                    Map<String, Object> values = collectVisibleFieldValues(allFieldNodes);
-                    Map<String, Object> payload = new HashMap<>();
-                    payload.put("template", invoiceName);
-                    payload.put("headerCodes", this.currentInvoiceHeaderCodes);
-                    payload.put("fields", values);
-                    String json = objectMapper.writeValueAsString(payload);
-                    Blueprint bp = new Blueprint(name, invoiceName, json, OffsetDateTime.now());
-                    controller.getDatabase().saveBlueprint(bp);
-                    showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.blueprintSaved"));
-                } catch (Exception e) {
-                    showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
-                }
-            });
-        });
+        // Der Name stand frueher in einem eigenen Fenster, das erst nach dem
+        // Klick aufging. Jetzt liegt er im Formular: man sieht beim Ausfuellen,
+        // unter welchem Namen die Blaupause landet, und kann ihn aendern, ohne
+        // erst etwas ausloesen zu muessen.
+        TextField blaupausenname = componentFactory.createTextField();
+        blaupausenname.setId("blaupause-name");
+        blaupausenname.setPromptText(messages.get("label.blueprintName"));
+        blaupausenname.setText(invoiceName + "-blueprint");
+        blaupausenname.setPrefWidth(240);
 
-        HBox titleRow = new HBox(10, title, saveBlueprintBtn);
+        Button saveBlueprintBtn = componentFactory.createButton(messages.get("button.saveBlueprint"));
+        saveBlueprintBtn.getStyleClass().add("schaltflaeche-haupt");
+        saveBlueprintBtn.setOnAction(evt ->
+                speichereBlaupause(invoiceName, blaupausenname.getText(), allFieldNodes));
+
+        HBox titleRow = new HBox(10, title, blaupausenname, saveBlueprintBtn);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
         vbox.getChildren().add(titleRow);
         List<Node> fieldNodes = new ArrayList<>();
         for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
@@ -292,10 +305,29 @@ public class View {
         GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
         vbox.getChildren().add(contentGrid);
 
-        ScrollPane scrollPane = new ScrollPane(vbox);
-        scrollPane.setFitToWidth(true);
-        skeleton.setCenter(scrollPane);
+        rahmen.zeige(vbox);
         this.currentInvoiceHeaderCodes = Map.of();
+    }
+
+    /** Legt aus den ausgefuellten Feldern eine Blaupause an. */
+    private void speichereBlaupause(String invoiceName, String name, Map<String, Node> allFieldNodes) {
+        if (name == null || name.isBlank()) {
+            meldungen.hinweis(messages.get("msg.blueprintNameRequired"));
+            return;
+        }
+        try {
+            Map<String, Object> values = collectVisibleFieldValues(allFieldNodes);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("template", invoiceName);
+            payload.put("headerCodes", this.currentInvoiceHeaderCodes);
+            payload.put("fields", values);
+            String json = objectMapper.writeValueAsString(payload);
+            controller.getDatabase().saveBlueprint(
+                    new Blueprint(name.trim(), invoiceName, json, OffsetDateTime.now()));
+            meldungen.erfolg(messages.get("msg.blueprintSaved"));
+        } catch (Exception e) {
+            meldungen.fehler(e.getMessage());
+        }
     }
 
     private Map<String, Object> collectVisibleFieldValues(Map<String, Node> fieldNodes) {
@@ -335,7 +367,7 @@ public class View {
      * liefert deshalb den nackten Bereich.</p>
      */
     private void createAbrechnung() {
-        AbrechnungsMaske maske = new AbrechnungsMaske(componentFactory, messages, dialoge,
+        AbrechnungsMaske maske = new AbrechnungsMaske(componentFactory, messages, meldungen,
                 controller.getDatabase(), abrechnungService::createAndDispatch,
                 Anwendungsverzeichnis::versandordner);
         rahmen.zeige(maske.erzeuge());
@@ -525,7 +557,7 @@ public class View {
 
     /** Baut die Personenmaske auf den aktuellen Rahmen, siehe {@link #gruppenMaske()}. */
     private PersonenMaske personenMaske() {
-        return new PersonenMaske(componentFactory, messages, dialoge, controller.getDatabase(), rahmen,
+        return new PersonenMaske(componentFactory, messages, meldungen, controller.getDatabase(), rahmen,
                 feldbau, patientPopulator, serviceProviderPopulator);
     }
 
@@ -549,22 +581,7 @@ public class View {
      * veralteten Rahmen zeigt.</p>
      */
     private GruppenMaske gruppenMaske() {
-        return new GruppenMaske(componentFactory, messages, dialoge, controller.getDatabase(), rahmen);
-    }
-
-    /**
-     * Zeigt einen Informationsdialog an.
-     *
-     * <p>Bleibt oeffentlich, weil {@code App} bei einem Startfehler darauf
-     * zurueckgreift, bevor es ueberhaupt eine Maske gibt.</p>
-     */
-    public void showInfoDialog(String title, String message) {
-        dialoge.zeigeInfo(title, message);
-    }
-
-    /** Zeigt einen Fehlerdialog an. */
-    public void showErrorDialog(String title, String message) {
-        dialoge.zeigeFehler(title, message);
+        return new GruppenMaske(componentFactory, messages, meldungen, controller.getDatabase(), rahmen);
     }
 
     /**
@@ -602,9 +619,9 @@ public class View {
             Blueprint bp = new Blueprint("Test Blaupause", "test-template", payload, OffsetDateTime.now());
             controller.getDatabase().saveBlueprint(bp);
 
-            showInfoDialog(messages.get("dialog.info.title"), "Testdaten angelegt: 1 Dienstleister, 3 Teilnehmer, 1 Gruppe, 1 Blaupause.");
+            meldungen.erfolg("Testdaten angelegt: 1 Dienstleister, 3 Teilnehmer, 1 Gruppe, 1 Blaupause.");
         } catch (Exception e) {
-            showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
+            meldungen.fehler(e.getMessage());
         }
     }
 }

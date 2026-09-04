@@ -1,0 +1,322 @@
+/*
+ * Aussehen des GKVTransmitter.
+ *
+ * Vorher lagen Schriftgroessen, Farben und Abstaende als einzelne
+ * setStyle-Aufrufe im Quelltext verstreut - siebzehn Stellen, jede fuer sich
+ * gesetzt, keine mit der anderen abgestimmt. Hier stehen sie an einem Ort.
+ *
+ * Die Farben sind oben als benannte Werte definiert und werden unten nur noch
+ * benutzt. Wer die Anmutung aendern will, aendert die zwoelf Zeilen darunter
+ * und sonst nichts.
+ */
+
+.root {
+    /* Grundflaechen */
+    -farbe-grund:        #F4F6F8;
+    -farbe-flaeche:      #FFFFFF;
+    -farbe-linie:        #DDE3E8;
+
+    /* Seitenleiste */
+    -farbe-leiste:       #22303C;
+    -farbe-leiste-hell:  #2E4150;
+    -farbe-leiste-text:  #C6D2DC;
+
+    /* Schrift */
+    -farbe-text:         #1F2933;
+    -farbe-text-still:   #6B7A88;
+    -farbe-text-hell:    #FFFFFF;
+
+    /* Akzent und Bedeutung */
+    -farbe-akzent:       #2D6E8E;
+    -farbe-akzent-dunkel:#245A75;
+    -farbe-erfolg:       #1E7A4B;
+    -farbe-warnung:      #A8630A;
+    -farbe-fehler:       #B3261E;
+
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: -farbe-grund;
+    -fx-text-fill: -farbe-text;
+}
+
+/* ---------------------------------------------------------------- Schale */
+
+.seitenleiste {
+    -fx-background-color: -farbe-leiste;
+    -fx-min-width: 200px;
+    -fx-pref-width: 200px;
+    -fx-padding: 18px 12px 18px 12px;
+    -fx-spacing: 4px;
+}
+
+.marke {
+    -fx-text-fill: -farbe-text-hell;
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 4px 8px;
+}
+
+.marke-zusatz {
+    -fx-text-fill: -farbe-leiste-text;
+    -fx-font-size: 11px;
+    -fx-padding: 0 0 18px 8px;
+}
+
+/*
+ * Die Navigationseintraege sind Umschalter in einer Gruppe: genau einer ist
+ * aktiv, und man sieht auf einen Blick, wo man ist. Das leistete die
+ * Menueleiste nicht - nach dem Loslassen war jede Spur weg.
+ */
+.nav-eintrag {
+    -fx-background-color: transparent;
+    -fx-text-fill: -farbe-leiste-text;
+    -fx-alignment: center-left;
+    -fx-padding: 9px 12px 9px 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-font-size: 13.5px;
+}
+
+.nav-eintrag:hover {
+    -fx-background-color: -farbe-leiste-hell;
+    -fx-text-fill: -farbe-text-hell;
+}
+
+.nav-eintrag:selected {
+    -fx-background-color: -farbe-akzent;
+    -fx-text-fill: -farbe-text-hell;
+    -fx-font-weight: bold;
+}
+
+.nav-gruppe {
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 10.5px;
+    -fx-padding: 16px 0 4px 12px;
+}
+
+.kopfzeile {
+    -fx-background-color: -farbe-flaeche;
+    -fx-border-color: transparent transparent -farbe-linie transparent;
+    -fx-border-width: 0 0 1px 0;
+    -fx-padding: 16px 24px 16px 24px;
+}
+
+.kopf-titel {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -farbe-text;
+}
+
+.inhalt {
+    -fx-background-color: -farbe-grund;
+    -fx-padding: 0;
+}
+
+.inhalt > .viewport {
+    -fx-background-color: -farbe-grund;
+}
+
+.statuszeile {
+    -fx-background-color: -farbe-flaeche;
+    -fx-border-color: -farbe-linie transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 7px 24px 7px 24px;
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 11.5px;
+}
+
+/* ---------------------------------------------------------------- Masken */
+
+.maske {
+    -fx-padding: 24px;
+    -fx-spacing: 14px;
+}
+
+.masken-titel {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -farbe-text;
+}
+
+.masken-erlaeuterung {
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 12px;
+    -fx-padding: 0 0 4px 0;
+}
+
+.karte {
+    -fx-background-color: -farbe-flaeche;
+    -fx-background-radius: 8px;
+    -fx-border-color: -farbe-linie;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 16px;
+    -fx-spacing: 10px;
+}
+
+.feld-beschriftung {
+    -fx-text-fill: -farbe-text;
+    -fx-font-size: 12.5px;
+    -fx-font-weight: bold;
+}
+
+/* Erklaerung unter einem Eingabefeld: was gehoert hier hinein. */
+.feld-hinweis {
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 11px;
+}
+
+/* Beanstandung unter einem Eingabefeld. */
+.feld-fehler {
+    -fx-text-fill: -farbe-fehler;
+    -fx-font-size: 11px;
+}
+
+.feld-fehlerhaft {
+    -fx-border-color: -farbe-fehler;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+}
+
+.tabellenkopf {
+    -fx-font-weight: bold;
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 11.5px;
+}
+
+.zeile-still {
+    -fx-text-fill: -farbe-text-still;
+}
+
+/* ---------------------------------------------------------- Schaltflaechen */
+
+.button {
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px 8px 16px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+.schaltflaeche-haupt {
+    -fx-background-color: -farbe-akzent;
+    -fx-text-fill: -farbe-text-hell;
+    -fx-font-weight: bold;
+}
+
+.schaltflaeche-haupt:hover {
+    -fx-background-color: -farbe-akzent-dunkel;
+}
+
+.schaltflaeche-still {
+    -fx-background-color: transparent;
+    -fx-text-fill: -farbe-akzent;
+    -fx-border-color: -farbe-linie;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+}
+
+.schaltflaeche-still:hover {
+    -fx-background-color: #EAF1F5;
+}
+
+.schaltflaeche-gefahr {
+    -fx-background-color: transparent;
+    -fx-text-fill: -farbe-fehler;
+    -fx-border-color: -farbe-linie;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+}
+
+.schaltflaeche-gefahr:hover {
+    -fx-background-color: #FBEDEC;
+}
+
+/* --------------------------------------------------- Benachrichtigungen */
+
+/*
+ * Die Ecke oben rechts. Sie liegt ueber der Maske, nimmt aber keine Klicks
+ * entgegen, wo keine Meldung steht - siehe setPickOnBounds in
+ * Benachrichtigungen.
+ */
+.meldungsecke {
+    -fx-padding: 16px;
+    -fx-spacing: 10px;
+}
+
+.meldung {
+    -fx-background-color: -farbe-flaeche;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px 1px 1px 4px;
+    -fx-padding: 12px 14px 12px 14px;
+    -fx-max-width: 380px;
+    -fx-effect: dropshadow(gaussian, rgba(31, 41, 51, 0.18), 12, 0.1, 0, 3);
+}
+
+.meldung-erfolg  { -fx-border-color: -farbe-linie -farbe-linie -farbe-linie -farbe-erfolg; }
+.meldung-hinweis { -fx-border-color: -farbe-linie -farbe-linie -farbe-linie -farbe-akzent; }
+.meldung-fehler  { -fx-border-color: -farbe-linie -farbe-linie -farbe-linie -farbe-fehler; }
+
+.meldung-text {
+    -fx-text-fill: -farbe-text;
+    -fx-font-size: 12.5px;
+}
+
+.meldung-titel {
+    -fx-font-weight: bold;
+    -fx-font-size: 12.5px;
+}
+
+.meldung-erfolg .meldung-titel  { -fx-text-fill: -farbe-erfolg; }
+.meldung-hinweis .meldung-titel { -fx-text-fill: -farbe-akzent; }
+.meldung-fehler .meldung-titel  { -fx-text-fill: -farbe-fehler; }
+
+.meldung-schliessen {
+    -fx-background-color: transparent;
+    -fx-text-fill: -farbe-text-still;
+    -fx-padding: 0 4px 0 4px;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.meldung-schliessen:hover {
+    -fx-text-fill: -farbe-text;
+}
+
+.befund {
+    -fx-text-fill: -farbe-text;
+    -fx-font-size: 12px;
+}
+
+.befund-ort {
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 10.5px;
+}
+
+/* ---------------------------------------------------- Bedienelemente */
+
+.text-field, .spinner, .combo-box, .date-picker, .choice-box {
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
+    -fx-border-color: -farbe-linie;
+    -fx-border-width: 1px;
+    -fx-background-color: -farbe-flaeche;
+    -fx-padding: 6px 8px 6px 8px;
+}
+
+.text-field:focused, .combo-box:focused, .date-picker:focused {
+    -fx-border-color: -farbe-akzent;
+}
+
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.check-box {
+    -fx-text-fill: -farbe-text;
+}
+
+.separator .line {
+    -fx-border-color: -farbe-linie transparent transparent transparent;
+}

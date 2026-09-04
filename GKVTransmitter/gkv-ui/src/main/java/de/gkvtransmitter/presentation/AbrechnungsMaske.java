@@ -16,7 +16,7 @@ import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.enums.InputOption;
-import de.gkvtransmitter.presentation.dialog.Dialoge;
+import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.geometry.Insets;
@@ -62,16 +62,16 @@ public class AbrechnungsMaske {
 
     private final UiFactory bausteine;
     private final AppMessages texte;
-    private final Dialoge dialoge;
+    private final Meldungen meldungen;
     private final DataRepository datenbank;
     private final Abrechnungslauf abrechnungslauf;
     private final Supplier<Path> versandordner;
 
-    public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Dialoge dialoge,
+    public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
             DataRepository datenbank, Abrechnungslauf abrechnungslauf, Supplier<Path> versandordner) {
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
-        this.dialoge = Objects.requireNonNull(dialoge, "dialoge must not be null");
+        this.meldungen = Objects.requireNonNull(meldungen, "meldungen must not be null");
         this.datenbank = Objects.requireNonNull(datenbank, "datenbank must not be null");
         this.abrechnungslauf = Objects.requireNonNull(abrechnungslauf, "abrechnungslauf must not be null");
         this.versandordner = Objects.requireNonNull(versandordner, "versandordner must not be null");
@@ -150,17 +150,17 @@ public class AbrechnungsMaske {
     private void starteAbrechnung(List<Blueprint> blaupausen, ComboBox<Blueprint> blaupauseAuswahl,
             ComboBox<PersonGroup> gruppeAuswahl, Teilnehmerliste liste) {
         if (blaupausen == null || blaupausen.isEmpty()) {
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), texte.get("msg.noBlueprints"));
+            meldungen.hinweis(texte.get("msg.noBlueprints"));
             return;
         }
         if (gruppeAuswahl.getValue() == null) {
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), texte.get("msg.selectGroupRequired"));
+            meldungen.hinweis(texte.get("msg.selectGroupRequired"));
             return;
         }
 
         List<Patient> gewaehlte = liste.gewaehlteTeilnehmer();
         if (gewaehlte.isEmpty()) {
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), texte.get("msg.noParticipantsSelected"));
+            meldungen.hinweis(texte.get("msg.noParticipantsSelected"));
             return;
         }
 
@@ -171,15 +171,14 @@ public class AbrechnungsMaske {
         } catch (DtaValidierungsException e) {
             // Beanstandungen vollstaendig anzeigen: die Anwenderin soll alle
             // auf einmal sehen und nicht nach jeder Korrektur neu anstossen.
-            dialoge.zeigePruefbericht(e.getBericht());
+            meldungen.pruefbericht(e.getBericht());
             return;
         } catch (RuntimeException e) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"),
-                    texte.get("msg.dispatchFailed") + e.getMessage());
+            meldungen.fehler(texte.get("msg.dispatchFailed") + e.getMessage());
             return;
         }
 
-        dialoge.zeigeInfo(texte.get("dialog.info.title"), fasseZusammen(lieferungen));
+        meldungen.erfolg(fasseZusammen(lieferungen));
     }
 
     /** Listet die erzeugten Dateien je Krankenkasse auf. */

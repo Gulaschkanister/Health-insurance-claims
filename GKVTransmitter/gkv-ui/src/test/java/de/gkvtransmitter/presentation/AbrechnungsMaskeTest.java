@@ -3,6 +3,7 @@ package de.gkvtransmitter.presentation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.presentation.meldung.Pruefbefunde;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.validator.ValidationReport;
 import javafx.scene.control.Button;
@@ -52,7 +54,7 @@ class AbrechnungsMaskeTest {
     Path zielordner;
 
     private SpeicherRepository datenbank;
-    private AufzeichnendeDialoge dialoge;
+    private AufzeichnendeMeldungen meldungen;
     private AppMessages texte;
     private final List<Lauf> laeufe = new ArrayList<>();
 
@@ -72,7 +74,7 @@ class AbrechnungsMaskeTest {
     @BeforeEach
     void aufsetzen() {
         datenbank = new SpeicherRepository();
-        dialoge = new AufzeichnendeDialoge();
+        meldungen = new AufzeichnendeMeldungen();
         texte = new AppMessages("/messages/ui-messages.json");
         laeufe.clear();
         antwort = lauf -> List.of();
@@ -92,7 +94,7 @@ class AbrechnungsMaskeTest {
                 teilnehmerAnhaken(maske, 1);
                 start(maske).fire();
 
-                assertEquals(texte.get("msg.noBlueprints"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.noBlueprints"), meldungen.einzige().text());
                 assertTrue(laeufe.isEmpty(), "Es darf nichts abgerechnet worden sein");
             });
         }
@@ -105,7 +107,7 @@ class AbrechnungsMaskeTest {
                 Region maske = maskeAufbauen();
                 start(maske).fire();
 
-                assertEquals(texte.get("msg.selectGroupRequired"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.selectGroupRequired"), meldungen.einzige().text());
                 assertTrue(laeufe.isEmpty(), "Es darf nichts abgerechnet worden sein");
             });
         }
@@ -119,7 +121,7 @@ class AbrechnungsMaskeTest {
                 gruppeWaehlen(maske, 0);
                 start(maske).fire();
 
-                assertEquals(texte.get("msg.noParticipantsSelected"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.noParticipantsSelected"), meldungen.einzige().text());
                 assertTrue(laeufe.isEmpty(), "Es darf nichts abgerechnet worden sein");
             });
         }
@@ -136,7 +138,7 @@ class AbrechnungsMaskeTest {
 
                 assertNull(maske.lookup("#" + AbrechnungsMaske.ID_TEILNEHMER + "1"),
                         "Ohne Mitglieder darf kein Auswahlkaestchen entstehen");
-                assertTrue(dialoge.leer(), "Der Hinweis gehoert in die Maske, nicht in einen Dialog");
+                assertTrue(meldungen.leer(), "Der Hinweis gehoert in die Maske, nicht in einen Dialog");
             });
         }
     }
@@ -227,14 +229,16 @@ class AbrechnungsMaskeTest {
                 teilnehmerAnhaken(maske, 1);
                 start(maske).fire();
 
-                AufzeichnendeDialoge.Meldung meldung = dialoge.einzige();
-                assertEquals(AufzeichnendeDialoge.Art.FEHLER, meldung.art());
-                assertTrue(meldung.text().contains("Die Zahl der Nachrichten stimmt nicht."),
-                        "Der erste Fehler fehlt: " + meldung.text());
-                assertTrue(meldung.text().contains("Das IK der Kasse ist ungueltig."),
-                        "Auch der zweite Fehler muss zu sehen sein: " + meldung.text());
-                assertTrue(meldung.text().contains("Der Rechnungsbetrag ist auffaellig hoch."),
-                        "Die Warnung fehlt: " + meldung.text());
+                assertEquals(AufzeichnendeMeldungen.Art.PRUEFBERICHT, meldungen.einzige().art());
+                assertSame(bericht, meldungen.letzterPruefbericht(),
+                        "Der Bericht muss vollstaendig weitergereicht werden, nicht als Text");
+                assertEquals(List.of(
+                                "Die Zahl der Nachrichten stimmt nicht.",
+                                "Das IK der Kasse ist ungueltig.",
+                                "Der Rechnungsbetrag ist auffaellig hoch."),
+                        Pruefbefunde.zeilen(meldungen.letzterPruefbericht()).stream()
+                                .map(Pruefbefunde.Zeile::text).toList(),
+                        "Erst die Fehler, dann die Hinweise");
             });
         }
 
@@ -252,8 +256,8 @@ class AbrechnungsMaskeTest {
                 teilnehmerAnhaken(maske, 1);
                 start(maske).fire();
 
-                AufzeichnendeDialoge.Meldung meldung = dialoge.einzige();
-                assertEquals(AufzeichnendeDialoge.Art.FEHLER, meldung.art());
+                AufzeichnendeMeldungen.Meldung meldung = meldungen.einzige();
+                assertEquals(AufzeichnendeMeldungen.Art.FEHLER, meldung.art());
                 assertTrue(meldung.text().contains("Zielordner nicht beschreibbar"), meldung.text());
             });
         }
@@ -271,8 +275,8 @@ class AbrechnungsMaskeTest {
                 teilnehmerAnhaken(maske, 1);
                 start(maske).fire();
 
-                AufzeichnendeDialoge.Meldung meldung = dialoge.einzige();
-                assertEquals(AufzeichnendeDialoge.Art.INFO, meldung.art());
+                AufzeichnendeMeldungen.Meldung meldung = meldungen.einzige();
+                assertEquals(AufzeichnendeMeldungen.Art.ERFOLG, meldung.art());
                 assertTrue(meldung.text().contains(String.valueOf(KASSEN_IK)), meldung.text());
                 assertTrue(meldung.text().contains(datei.toString()), meldung.text());
             });
@@ -282,7 +286,7 @@ class AbrechnungsMaskeTest {
     // --- Aufbau und Bedienung -------------------------------------------
 
     private Region maskeAufbauen() {
-        AbrechnungsMaske maske = new AbrechnungsMaske(new JavaFxUiFactory(), texte, dialoge, datenbank,
+        AbrechnungsMaske maske = new AbrechnungsMaske(new JavaFxUiFactory(), texte, meldungen, datenbank,
                 (teilnehmer, gruppe, blaupause, termine, ordner) -> {
                     Lauf lauf = new Lauf(List.copyOf(teilnehmer), gruppe, blaupause,
                             Map.copyOf(termine), ordner);

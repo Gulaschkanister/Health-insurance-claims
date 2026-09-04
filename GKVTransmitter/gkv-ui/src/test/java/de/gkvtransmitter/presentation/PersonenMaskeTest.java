@@ -39,7 +39,7 @@ class PersonenMaskeTest {
     private static final int KASSEN_IK = 108310400;
 
     private SpeicherRepository datenbank;
-    private AufzeichnendeDialoge dialoge;
+    private AufzeichnendeMeldungen meldungen;
     private AufzeichnenderRahmen rahmen;
     private AppMessages texte;
 
@@ -51,7 +51,7 @@ class PersonenMaskeTest {
     @BeforeEach
     void aufsetzen() {
         datenbank = new SpeicherRepository();
-        dialoge = new AufzeichnendeDialoge();
+        meldungen = new AufzeichnendeMeldungen();
         rahmen = new AufzeichnenderRahmen();
         texte = new AppMessages("/messages/ui-messages.json");
     }
@@ -92,7 +92,7 @@ class PersonenMaskeTest {
                 ServiceProvider angelegt = datenbank.getAllServiceProviders().get(0);
                 assertEquals("Anna", angelegt.getFirstname());
                 assertTrue(datenbank.getAllPatients().isEmpty(), "Es darf kein Teilnehmer entstanden sein");
-                assertEquals(texte.get("msg.selfCreated"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.selfCreated"), meldungen.einzige().text());
             });
         }
 
@@ -104,7 +104,7 @@ class PersonenMaskeTest {
                 fuelleAus(formular);
                 speichern(formular).fire();
 
-                assertEquals(texte.get("msg.patientCreated"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.patientCreated"), meldungen.einzige().text());
             });
         }
 
@@ -143,7 +143,7 @@ class PersonenMaskeTest {
 
                 assertEquals(1, rahmen.wieOftGeleert());
                 assertTrue(datenbank.getAllPatients().isEmpty());
-                assertTrue(dialoge.leer());
+                assertTrue(meldungen.leer());
             });
         }
 
@@ -156,8 +156,8 @@ class PersonenMaskeTest {
                 fuelleAus(formular);
                 speichern(formular).fire();
 
-                AufzeichnendeDialoge.Meldung meldung = dialoge.einzige();
-                assertEquals(AufzeichnendeDialoge.Art.FEHLER, meldung.art());
+                AufzeichnendeMeldungen.Meldung meldung = meldungen.einzige();
+                assertEquals(AufzeichnendeMeldungen.Art.FEHLER, meldung.art());
                 assertTrue(meldung.text().contains("Datenbank gesperrt"), meldung.text());
                 assertEquals(0, rahmen.wieOftGeleert());
             });
@@ -188,8 +188,8 @@ class PersonenMaskeTest {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().teilnehmerLoeschen();
 
-                assertEquals(texte.get("msg.noPatients"), dialoge.einzige().text());
-                assertTrue(dialoge.gestellteRueckfragen().isEmpty());
+                assertEquals(texte.get("msg.noPatients"), meldungen.einzige().text());
+                assertTrue(meldungen.gestellteRueckfragen().isEmpty());
             });
         }
 
@@ -197,14 +197,14 @@ class PersonenMaskeTest {
         @DisplayName("Ohne Zustimmung bleibt der Teilnehmer bestehen")
         void ohneZustimmung() {
             datenbank.mitPatient(patient(1, "Anna"));
-            dialoge.waehltEintrag(0);
+            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().teilnehmerLoeschen();
 
-                assertEquals(1, dialoge.gestellteRueckfragen().size(), "Es muss nachgefragt werden");
+                assertEquals(1, meldungen.gestellteRueckfragen().size(), "Es muss nachgefragt werden");
                 assertEquals(1, datenbank.getAllPatients().size());
-                assertTrue(dialoge.leer());
+                assertTrue(meldungen.leer());
             });
         }
 
@@ -212,13 +212,13 @@ class PersonenMaskeTest {
         @DisplayName("Nach Zustimmung wird der Teilnehmer geloescht und das gemeldet")
         void mitZustimmung() {
             datenbank.mitPatient(patient(1, "Anna"));
-            dialoge.waehltEintrag(0).stimmtZu();
+            meldungen.waehltEintrag(0).stimmtZu();
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().teilnehmerLoeschen();
 
                 assertTrue(datenbank.getAllPatients().isEmpty());
-                assertEquals(texte.get("msg.patientDeleted"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.patientDeleted"), meldungen.einzige().text());
             });
         }
 
@@ -226,14 +226,14 @@ class PersonenMaskeTest {
         @DisplayName("Der Dienstleister wird eigenstaendig geloescht und eigenstaendig gemeldet")
         void dienstleisterGeloescht() {
             datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
-            dialoge.waehltEintrag(0).stimmtZu();
+            meldungen.waehltEintrag(0).stimmtZu();
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().dienstleisterLoeschen();
 
                 assertTrue(datenbank.getAllServiceProviders().isEmpty());
                 assertEquals(1, datenbank.getAllPatients().size(), "Der Teilnehmer bleibt unberuehrt");
-                assertEquals(texte.get("msg.selfDeleted"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.selfDeleted"), meldungen.einzige().text());
             });
         }
     }
@@ -248,7 +248,7 @@ class PersonenMaskeTest {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().teilnehmerBearbeiten();
 
-                assertEquals(texte.get("msg.noPatients"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.noPatients"), meldungen.einzige().text());
                 assertNull(rahmen.inhalt());
             });
         }
@@ -262,7 +262,7 @@ class PersonenMaskeTest {
                 maske().teilnehmerBearbeiten();
 
                 assertNull(rahmen.inhalt());
-                assertTrue(dialoge.leer());
+                assertTrue(meldungen.leer());
             });
         }
 
@@ -270,7 +270,7 @@ class PersonenMaskeTest {
         @DisplayName("Der gewaehlte Teilnehmer wird zum Bearbeiten gezeigt")
         void formularGezeigt() {
             datenbank.mitPatient(patient(1, "Anna"));
-            dialoge.waehltEintrag(0);
+            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().teilnehmerBearbeiten();
@@ -284,7 +284,7 @@ class PersonenMaskeTest {
 
     private PersonenMaske maske() {
         UiFactory bausteine = new JavaFxUiFactory();
-        return new PersonenMaske(bausteine, texte, dialoge, datenbank, rahmen,
+        return new PersonenMaske(bausteine, texte, meldungen, datenbank, rahmen,
                 new Feldbau(bausteine, texte), new PatientFieldPopulator(),
                 new ServiceProviderFieldPopulator());
     }

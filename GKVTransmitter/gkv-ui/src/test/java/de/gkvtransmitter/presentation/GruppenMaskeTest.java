@@ -39,7 +39,7 @@ class GruppenMaskeTest {
     private static final int KASSEN_IK = 108310400;
 
     private SpeicherRepository datenbank;
-    private AufzeichnendeDialoge dialoge;
+    private AufzeichnendeMeldungen meldungen;
     private AufzeichnenderRahmen rahmen;
     private AppMessages texte;
 
@@ -51,7 +51,7 @@ class GruppenMaskeTest {
     @BeforeEach
     void aufsetzen() {
         datenbank = new SpeicherRepository();
-        dialoge = new AufzeichnendeDialoge();
+        meldungen = new AufzeichnendeMeldungen();
         rahmen = new AufzeichnenderRahmen();
         texte = new AppMessages("/messages/ui-messages.json");
     }
@@ -68,7 +68,7 @@ class GruppenMaskeTest {
                 Region formular = neuesFormular();
                 speichern(formular).fire();
 
-                assertEquals(texte.get("msg.groupNameRequired"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.groupNameRequired"), meldungen.einzige().text());
                 assertTrue(datenbank.gespeicherteGruppen().isEmpty());
                 assertEquals(0, rahmen.wieOftGeleert(), "Die Eingaben duerfen nicht verlorengehen");
             });
@@ -82,7 +82,7 @@ class GruppenMaskeTest {
                 namensfeld(formular).setText("   ");
                 speichern(formular).fire();
 
-                assertEquals(texte.get("msg.groupNameRequired"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.groupNameRequired"), meldungen.einzige().text());
                 assertTrue(datenbank.gespeicherteGruppen().isEmpty());
             });
         }
@@ -127,7 +127,7 @@ class GruppenMaskeTest {
                 speichern(formular).fire();
 
                 assertEquals(1, rahmen.wieOftGeleert());
-                assertEquals(texte.get("msg.groupCreated"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.groupCreated"), meldungen.einzige().text());
             });
         }
 
@@ -141,7 +141,7 @@ class GruppenMaskeTest {
 
                 assertEquals(1, rahmen.wieOftGeleert());
                 assertTrue(datenbank.gespeicherteGruppen().isEmpty());
-                assertTrue(dialoge.leer());
+                assertTrue(meldungen.leer());
             });
         }
 
@@ -165,8 +165,8 @@ class GruppenMaskeTest {
                 namensfeld(formular).setText("Montagsgruppe");
                 speichern(formular).fire();
 
-                AufzeichnendeDialoge.Meldung meldung = dialoge.einzige();
-                assertEquals(AufzeichnendeDialoge.Art.FEHLER, meldung.art());
+                AufzeichnendeMeldungen.Meldung meldung = meldungen.einzige();
+                assertEquals(AufzeichnendeMeldungen.Art.FEHLER, meldung.art());
                 assertTrue(meldung.text().contains("Datenbank gesperrt"), meldung.text());
                 assertEquals(0, rahmen.wieOftGeleert());
             });
@@ -183,7 +183,7 @@ class GruppenMaskeTest {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().bearbeiten();
 
-                assertEquals(texte.get("msg.noGroups"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.noGroups"), meldungen.einzige().text());
                 assertNull(rahmen.inhalt());
             });
         }
@@ -196,7 +196,7 @@ class GruppenMaskeTest {
             PersonGroup vorhanden = new PersonGroup("Montagsgruppe");
             vorhanden.setPatients(new LinkedHashSet<>(List.of(bernd)));
             datenbank.mitPatient(anna).mitPatient(bernd).mitGruppe(vorhanden);
-            dialoge.waehltEintrag(0);
+            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().bearbeiten();
@@ -218,7 +218,7 @@ class GruppenMaskeTest {
                 maske().bearbeiten();
 
                 assertNull(rahmen.inhalt());
-                assertTrue(dialoge.leer());
+                assertTrue(meldungen.leer());
             });
         }
 
@@ -228,7 +228,7 @@ class GruppenMaskeTest {
             Patient anna = patient(1, "Anna");
             PersonGroup vorhanden = new PersonGroup("Alt");
             datenbank.mitPatient(anna).mitGruppe(vorhanden);
-            dialoge.waehltEintrag(0);
+            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().bearbeiten();
@@ -240,7 +240,7 @@ class GruppenMaskeTest {
                 assertEquals(List.of(vorhanden), datenbank.gespeicherteGruppen());
                 assertEquals("Neu", vorhanden.getName());
                 assertEquals(1, datenbank.getAllPersonGroups().size());
-                assertEquals(texte.get("msg.groupUpdated"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.groupUpdated"), meldungen.einzige().text());
             });
         }
     }
@@ -253,14 +253,14 @@ class GruppenMaskeTest {
         @DisplayName("Ohne Zustimmung bleibt die Gruppe bestehen")
         void ohneZustimmung() {
             datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-            dialoge.waehltEintrag(0);
+            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().loeschen();
 
-                assertEquals(1, dialoge.gestellteRueckfragen().size(), "Es muss nachgefragt werden");
+                assertEquals(1, meldungen.gestellteRueckfragen().size(), "Es muss nachgefragt werden");
                 assertEquals(1, datenbank.getAllPersonGroups().size());
-                assertTrue(dialoge.leer(), "Ohne Loeschung gibt es nichts zu melden");
+                assertTrue(meldungen.leer(), "Ohne Loeschung gibt es nichts zu melden");
             });
         }
 
@@ -268,13 +268,13 @@ class GruppenMaskeTest {
         @DisplayName("Nach Zustimmung wird geloescht und das gemeldet")
         void mitZustimmung() {
             datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-            dialoge.waehltEintrag(0).stimmtZu();
+            meldungen.waehltEintrag(0).stimmtZu();
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().loeschen();
 
                 assertTrue(datenbank.getAllPersonGroups().isEmpty());
-                assertEquals(texte.get("msg.groupDeleted"), dialoge.einzige().text());
+                assertEquals(texte.get("msg.groupDeleted"), meldungen.einzige().text());
             });
         }
 
@@ -282,13 +282,13 @@ class GruppenMaskeTest {
         @DisplayName("Die Rueckfrage nennt die Gruppe beim Namen")
         void rueckfrageNenntGruppe() {
             datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-            dialoge.waehltEintrag(0);
+            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().loeschen();
 
-                assertTrue(dialoge.gestellteRueckfragen().get(0).contains("Montagsgruppe"),
-                        dialoge.gestellteRueckfragen().toString());
+                assertTrue(meldungen.gestellteRueckfragen().get(0).contains("Montagsgruppe"),
+                        meldungen.gestellteRueckfragen().toString());
             });
         }
 
@@ -298,8 +298,8 @@ class GruppenMaskeTest {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 maske().loeschen();
 
-                assertEquals(texte.get("msg.noGroups"), dialoge.einzige().text());
-                assertTrue(dialoge.gestellteRueckfragen().isEmpty());
+                assertEquals(texte.get("msg.noGroups"), meldungen.einzige().text());
+                assertTrue(meldungen.gestellteRueckfragen().isEmpty());
             });
         }
     }
@@ -307,7 +307,7 @@ class GruppenMaskeTest {
     // --- Aufbau und Bedienung -------------------------------------------
 
     private GruppenMaske maske() {
-        return new GruppenMaske(new JavaFxUiFactory(), texte, dialoge, datenbank, rahmen);
+        return new GruppenMaske(new JavaFxUiFactory(), texte, meldungen, datenbank, rahmen);
     }
 
     private Region neuesFormular() {

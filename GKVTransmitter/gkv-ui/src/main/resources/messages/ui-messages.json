@@ -49,6 +49,8 @@
   "msg.saved": "Erfolgreich gespeichert!",
   "msg.deleted": "Erfolgreich gelöscht!",
   "msg.blueprintSaved": "Blaupause erfolgreich gespeichert!",
+  "label.blueprintName": "Name der Blaupause",
+  "msg.blueprintNameRequired": "Bitte einen Namen für die Blaupause eingeben.",
   "label.selectPatient": "Teilnehmer auswählen",
   "label.selectServiceProvider": "Dienstleister auswählen",
   "menu.settlement": "Abrechnung",

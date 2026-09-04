@@ -6,14 +6,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.controller.EditFormController;
-import de.gkvtransmitter.presentation.dialog.Dialoge;
+import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.repository.DataRepository;
@@ -54,19 +53,19 @@ public class PersonenMaske {
 
     private final UiFactory bausteine;
     private final AppMessages texte;
-    private final Dialoge dialoge;
+    private final Meldungen meldungen;
     private final DataRepository datenbank;
     private final Maskenrahmen rahmen;
     private final Feldbau feldbau;
     private final PatientFieldPopulator teilnehmerFelder;
     private final ServiceProviderFieldPopulator dienstleisterFelder;
 
-    public PersonenMaske(UiFactory bausteine, AppMessages texte, Dialoge dialoge, DataRepository datenbank,
+    public PersonenMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen, DataRepository datenbank,
             Maskenrahmen rahmen, Feldbau feldbau, PatientFieldPopulator teilnehmerFelder,
             ServiceProviderFieldPopulator dienstleisterFelder) {
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
-        this.dialoge = Objects.requireNonNull(dialoge, "dialoge must not be null");
+        this.meldungen = Objects.requireNonNull(meldungen, "meldungen must not be null");
         this.datenbank = Objects.requireNonNull(datenbank, "datenbank must not be null");
         this.rahmen = Objects.requireNonNull(rahmen, "rahmen must not be null");
         this.feldbau = Objects.requireNonNull(feldbau, "feldbau must not be null");
@@ -92,16 +91,15 @@ public class PersonenMaske {
     /** Laesst einen Teilnehmer auswaehlen und zeigt ihn zum Bearbeiten. */
     public void teilnehmerBearbeiten() {
         waehle(datenbank.getAllPatients(), teilnehmerFelder::getDisplayName,
-                texte.get("menu.patient"), texte.get("label.selectPatient"), texte.get("msg.noPatients"))
-                .ifPresent(this::zeigeTeilnehmerform);
+                texte.get("menu.patient"), texte.get("label.selectPatient"),
+                texte.get("msg.noPatients"), this::zeigeTeilnehmerform);
     }
 
     /** Laesst einen Dienstleister auswaehlen und zeigt ihn zum Bearbeiten. */
     public void dienstleisterBearbeiten() {
         waehle(datenbank.getAllServiceProviders(), dienstleisterFelder::getDisplayName,
                 texte.get("menu.self"), texte.get("label.selectServiceProvider"),
-                texte.get("msg.noServiceProviders"))
-                .ifPresent(this::zeigeDienstleisterform);
+                texte.get("msg.noServiceProviders"), this::zeigeDienstleisterform);
     }
 
     private void zeigeTeilnehmerform(Patient teilnehmer) {
@@ -149,34 +147,31 @@ public class PersonenMaske {
 
     private <T> void loesche(List<T> bestand, Function<T, String> anzeige, Consumer<T> loeschen,
             String auswahltext, String wennLeer, String wennGeloescht) {
-        Optional<T> gewaehlt = waehle(bestand, anzeige, texte.get("msg.deleteConfirmTitle"),
-                auswahltext, wennLeer);
-        if (gewaehlt.isEmpty()) {
-            return;
-        }
-        T eintrag = gewaehlt.get();
-        boolean zugestimmt = dialoge.bestaetige(texte.get("msg.deleteConfirmTitle"),
-                texte.get("msg.deleteConfirmHeader"),
-                String.format(texte.get("msg.deleteConfirmBody"), anzeige.apply(eintrag)));
-        if (!zugestimmt) {
-            return;
-        }
+        waehle(bestand, anzeige, texte.get("msg.deleteConfirmTitle"), auswahltext, wennLeer,
+                eintrag -> meldungen.frageNach(
+                        String.format(texte.get("msg.deleteConfirmBody"), anzeige.apply(eintrag)),
+                        texte.get("button.delete"),
+                        () -> fuehreLoeschungAus(eintrag, loeschen, wennGeloescht)));
+    }
+
+    private <T> void fuehreLoeschungAus(T eintrag, Consumer<T> loeschen, String wennGeloescht) {
         try {
             loeschen.accept(eintrag);
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), wennGeloescht);
         } catch (RuntimeException e) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"), e.getMessage());
+            meldungen.fehler(e.getMessage());
+            return;
         }
+        meldungen.erfolg(wennGeloescht);
     }
 
     /** Laesst einen Eintrag auswaehlen und meldet, wenn es gar keinen gibt. */
-    private <T> Optional<T> waehle(List<T> bestand, Function<T, String> anzeige, String titel,
-            String text, String wennLeer) {
+    private <T> void waehle(List<T> bestand, Function<T, String> anzeige, String titel,
+            String text, String wennLeer, Consumer<T> wennGewaehlt) {
         if (bestand == null || bestand.isEmpty()) {
-            dialoge.zeigeInfo(texte.get("dialog.info.title"), wennLeer);
-            return Optional.empty();
+            meldungen.hinweis(wennLeer);
+            return;
         }
-        return dialoge.waehleAus(titel, text, bestand, anzeige);
+        meldungen.waehleAus(titel, text, bestand, anzeige, wennGewaehlt);
     }
 
     // --- Formular --------------------------------------------------------
@@ -245,7 +240,7 @@ public class PersonenMaske {
             ik = Integer.parseInt(text(felder, "ik"));
             kassenIk = Integer.parseInt(text(felder, "kassenIk"));
         } catch (NumberFormatException e) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"), texte.get("msg.invalidNumbers"));
+            meldungen.hinweis(texte.get("msg.invalidNumbers"));
             return;
         }
 
@@ -263,12 +258,11 @@ public class PersonenMaske {
                         hausnummer, plz, ik, kassenIk, geburtstag));
             }
         } catch (RuntimeException e) {
-            dialoge.zeigeFehler(texte.get("dialog.error.title"), e.getMessage());
+            meldungen.fehler(e.getMessage());
             return;
         }
 
-        dialoge.zeigeInfo(texte.get("dialog.info.title"),
-                texte.get(alsDienstleister ? "msg.selfCreated" : "msg.patientCreated"));
+        meldungen.erfolg(texte.get(alsDienstleister ? "msg.selfCreated" : "msg.patientCreated"));
         rahmen.leeren();
     }
 

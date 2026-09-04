@@ -8,6 +8,8 @@ import de.gkvtransmitter.presentation.Controller;
 import de.gkvtransmitter.presentation.View;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
@@ -70,20 +72,36 @@ public class App extends Application {
             stage.setScene(scene);
             stage.show();
         } catch (RuntimeException e) {
-            System.err.println("Fehler beim App-Start: " + e.getMessage());
-            if (e.getCause() != null) {
-                System.err.println("Ursache: " + e.getCause().getMessage());
-            }
-            view.showErrorDialog("App konnte nicht starten", e.getMessage());
-            Platform.exit();
+            scheitern("App konnte nicht starten", e);
         } catch (Exception e) {
-            System.err.println("Unerwarteter Fehler: " + e.getMessage());
-            if (e.getCause() != null) {
-                System.err.println("Ursache: " + e.getCause().getMessage());
-            }
-            view.showErrorDialog("Unerwarteter Fehler", e.getMessage());
-            Platform.exit();
+            scheitern("Unerwarteter Fehler", e);
         }
+    }
+
+    /**
+     * Meldet einen Fehler beim Start und beendet die Anwendung.
+     *
+     * <p>Hier steht bewusst ein Dialogfenster, obwohl es im laufenden Betrieb
+     * keine mehr gibt: Die Meldungsecke haengt in der Hauptszene, und wenn der
+     * Start scheitert, gibt es die noch gar nicht. Eine Meldung dorthin waere
+     * unsichtbar.</p>
+     *
+     * <p>Zuvor lief dieser Zweig ueber {@code view.showErrorDialog(...)}. Wenn
+     * aber schon der {@code Controller} scheiterte - der haeufigste Fall, etwa
+     * bei unlesbaren JSON-Profilen -, war {@code view} noch {@code null}. Statt
+     * der Ursache erschien dann eine {@code NullPointerException}.</p>
+     */
+    private static void scheitern(String titel, Exception fehler) {
+        System.err.println(titel + ": " + fehler.getMessage());
+        if (fehler.getCause() != null) {
+            System.err.println("Ursache: " + fehler.getCause().getMessage());
+        }
+        Alert meldung = new Alert(AlertType.ERROR);
+        meldung.setTitle(titel);
+        meldung.setHeaderText(titel);
+        meldung.setContentText(fehler.getMessage());
+        meldung.showAndWait();
+        Platform.exit();
     }
 
     public static void main(String[] args) {
