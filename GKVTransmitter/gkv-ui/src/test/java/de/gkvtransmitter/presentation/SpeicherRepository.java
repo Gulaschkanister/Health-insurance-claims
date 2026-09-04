@@ -23,7 +23,12 @@ class SpeicherRepository implements DataRepository {
     private final List<PersonGroup> gruppen = new ArrayList<>();
     private final List<Blueprint> blaupausen = new ArrayList<>();
 
+    private final List<PersonGroup> gespeicherteGruppen = new ArrayList<>();
+
     private long naechsteReferenz = 1;
+
+    /** Wird beim Speichern geworfen, wenn gesetzt. Fuer den Fehlerpfad. */
+    private RuntimeException fehlerBeimSpeichern;
 
     SpeicherRepository mitGruppe(PersonGroup gruppe) {
         gruppen.add(gruppe);
@@ -33,6 +38,26 @@ class SpeicherRepository implements DataRepository {
     SpeicherRepository mitBlaupause(Blueprint blaupause) {
         blaupausen.add(blaupause);
         return this;
+    }
+
+    SpeicherRepository mitPatient(Patient patient) {
+        patienten.add(patient);
+        return this;
+    }
+
+    SpeicherRepository mitDienstleister(ServiceProvider dienstleister) {
+        this.dienstleister.add(dienstleister);
+        return this;
+    }
+
+    SpeicherRepository scheitertBeimSpeichern(RuntimeException fehler) {
+        this.fehlerBeimSpeichern = fehler;
+        return this;
+    }
+
+    /** Die Gruppen, die tatsaechlich zum Speichern uebergeben wurden. */
+    List<PersonGroup> gespeicherteGruppen() {
+        return List.copyOf(gespeicherteGruppen);
     }
 
     @Override
@@ -77,7 +102,13 @@ class SpeicherRepository implements DataRepository {
 
     @Override
     public void savePersonGroup(PersonGroup personGroup) {
-        gruppen.add(personGroup);
+        if (fehlerBeimSpeichern != null) {
+            throw fehlerBeimSpeichern;
+        }
+        gespeicherteGruppen.add(personGroup);
+        if (!gruppen.contains(personGroup)) {
+            gruppen.add(personGroup);
+        }
     }
 
     @Override

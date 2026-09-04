@@ -75,6 +75,7 @@
   "label.providers": "Dienstleister",
   "label.patients": "Patienten",
   "msg.noParticipantsSelected": "Keine Teilnehmer ausgewählt.",
+  "msg.groupNameRequired": "Bitte einen Gruppennamen eingeben.",
   "msg.batchesCreated": "%d DTA-Batches erzeugt:",
   "msg.dispatchFailed": "Fehler beim Versand der DTA-Dateien: "
 }

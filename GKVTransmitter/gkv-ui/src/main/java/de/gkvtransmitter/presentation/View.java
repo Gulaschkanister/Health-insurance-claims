@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,6 +63,7 @@ import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
@@ -92,6 +92,27 @@ public class View {
 
     /** Alle Meldungen an den Anwender laufen hierueber, siehe {@link Dialoge}. */
     private final Dialoge dialoge = new JavaFxDialoge();
+
+    /**
+     * Der Platz, an dem die Masken erscheinen: die Mitte des Rahmens.
+     *
+     * <p>Das umhuellende {@code ScrollPane} entsteht erst hier. Die Masken
+     * liefern den nackten Bereich, sonst waeren ihre Bedienelemente vor dem
+     * ersten Zeichnen nicht auffindbar - und damit nicht pruefbar.</p>
+     */
+    private final Maskenrahmen rahmen = new Maskenrahmen() {
+        @Override
+        public void zeige(Region inhalt) {
+            ScrollPane scroll = new ScrollPane(inhalt);
+            scroll.setFitToWidth(true);
+            skeleton.setCenter(scroll);
+        }
+
+        @Override
+        public void leeren() {
+            skeleton.setCenter(null);
+        }
+    };
 
     public View(Controller controller, AbrechnungService abrechnungService) {
         this.controller = controller;
@@ -321,9 +342,7 @@ public class View {
         AbrechnungsMaske maske = new AbrechnungsMaske(componentFactory, messages, dialoge,
                 controller.getDatabase(), abrechnungService::createAndDispatch,
                 Anwendungsverzeichnis::versandordner);
-        ScrollPane scroll = new ScrollPane(maske.erzeuge());
-        scroll.setFitToWidth(true);
-        skeleton.setCenter(scroll);
+        rahmen.zeige(maske.erzeuge());
     }
 
     /**
@@ -630,210 +649,36 @@ public class View {
     }
 
     private void createGroup() {
-        showGroupForm(null);
+        gruppenMaske().neu();
     }
 
     private void editGroup() {
-        List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
-        if (groups == null || groups.isEmpty()) {
-            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noGroups"));
-            return;
-        }
-
-        PersonGroup selectedGroup = selectEntity(groups, this::groupDisplayName, messages.get("menu.groups"), messages.get("label.selectGroup"));
-        if (selectedGroup != null) {
-            showGroupForm(selectedGroup);
-        }
+        gruppenMaske().bearbeiten();
     }
 
     private void deleteGroup() {
-        List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
-        if (groups == null || groups.isEmpty()) {
-            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noGroups"));
-            return;
-        }
-
-        PersonGroup selectedGroup = selectEntity(groups, this::groupDisplayName, messages.get("menu.groups"), messages.get("label.selectGroup"));
-        if (selectedGroup == null) {
-            return;
-        }
-
-        Alert alert = new Alert(AlertType.CONFIRMATION);
-        alert.setTitle(messages.get("msg.deleteConfirmTitle"));
-        alert.setHeaderText(messages.get("msg.deleteConfirmHeader"));
-        alert.setContentText(String.format(messages.get("msg.deleteConfirmBody"), groupDisplayName(selectedGroup)));
-
-        Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
-            try {
-                controller.getDatabase().deletePersonGroup(selectedGroup);
-                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.groupDeleted"));
-            } catch (Exception e) {
-                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
-            }
-        }
+        gruppenMaske().loeschen();
     }
 
-    private <T> T selectEntity(List<T> entities, Function<T, String> displayNameProvider, String title, String contentText) {
-        if (entities == null || entities.isEmpty()) {
-            return null;
-        }
-
-        List<String> groupNames = new ArrayList<>();
-        Map<String, T> entityByName = new LinkedHashMap<>();
-        for (T entity : entities) {
-            String display = displayNameProvider.apply(entity);
-            groupNames.add(display);
-            entityByName.put(display, entity);
-        }
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(groupNames.get(0), groupNames);
-        dialog.setTitle(title);
-        dialog.setHeaderText(contentText);
-        dialog.setContentText(contentText);
-
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return null;
-        }
-
-        return entityByName.get(selection.get());
+    /**
+     * Baut die Gruppenmaske auf den aktuellen Rahmen.
+     *
+     * <p>Bewusst je Aufruf neu: die Maske haelt keinen Zustand ueber ihren
+     * Aufbau hinaus, und so gibt es keine Gelegenheit, dass sie auf einen
+     * veralteten Rahmen zeigt.</p>
+     */
+    private GruppenMaske gruppenMaske() {
+        return new GruppenMaske(componentFactory, messages, dialoge, controller.getDatabase(), rahmen);
     }
 
-    private void showGroupForm(PersonGroup existingGroup) {
-        PersonGroup group = existingGroup != null ? existingGroup : new PersonGroup();
-        boolean editing = existingGroup != null;
-
-        List<Patient> patients = controller.getDatabase().getAllPatients();
-        List<ServiceProvider> serviceProviders = controller.getDatabase().getAllServiceProviders();
-
-        VBox root = new VBox(10);
-        root.setPadding(new Insets(20));
-
-        Label title = componentFactory.createLabel(editing ? messages.get("title.group.edit") : messages.get("title.group.new"));
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-
-        TextField nameField = componentFactory.createTextField();
-        nameField.setPrefWidth(400);
-        nameField.setText(group.getName() != null ? group.getName() : "");
-
-        List<CheckBox> patientBoxes = new ArrayList<>();
-        VBox patientBox = new VBox(6, componentFactory.createLabel(messages.get("label.groupPatients")));
-        if (patients == null || patients.isEmpty()) {
-            patientBox.getChildren().add(componentFactory.createLabel(messages.get("msg.noPatients")));
-        } else {
-            for (Patient patient : patients) {
-                CheckBox checkBox = componentFactory.createCheckBox(
-                        patient.getFirstname() + " " + patient.getLastname() + " (ID: " + patient.getId() + ")");
-                if (containsPatientId(group.getPatients(), patient.getId())) {
-                    checkBox.setSelected(true);
-                }
-                patientBoxes.add(checkBox);
-                patientBox.getChildren().add(checkBox);
-            }
-        }
-
-        List<CheckBox> serviceProviderBoxes = new ArrayList<>();
-        VBox serviceProviderBox = new VBox(6, componentFactory.createLabel(messages.get("label.groupServiceProviders")));
-        if (serviceProviders == null || serviceProviders.isEmpty()) {
-            serviceProviderBox.getChildren().add(componentFactory.createLabel(messages.get("msg.noServiceProviders")));
-        } else {
-            for (ServiceProvider serviceProvider : serviceProviders) {
-                CheckBox checkBox = componentFactory.createCheckBox(
-                        serviceProvider.getFirstname() + " " + serviceProvider.getLastname() + " (ID: " + serviceProvider.getId() + ")");
-                if (containsServiceProviderId(group.getServiceProviders(), serviceProvider.getId())) {
-                    checkBox.setSelected(true);
-                }
-                serviceProviderBoxes.add(checkBox);
-                serviceProviderBox.getChildren().add(checkBox);
-            }
-        }
-
-        HBox nameRow = new HBox(10, componentFactory.createLabel(messages.get("label.groupName")), nameField);
-
-        Button saveButton = componentFactory.createButton(messages.get("button.save"));
-        saveButton.setOnAction(event -> {
-            String groupName = nameField.getText() != null ? nameField.getText().trim() : "";
-            if (groupName.isBlank()) {
-                showErrorDialog(messages.get("dialog.error.title"), "Bitte einen Gruppennamen eingeben.");
-                return;
-            }
-
-            group.setName(groupName);
-            group.setPatients(collectSelectedPatients(patients, patientBoxes));
-            group.setServiceProviders(collectSelectedServiceProviders(serviceProviders, serviceProviderBoxes));
-
-            try {
-                controller.getDatabase().savePersonGroup(group);
-                showInfoDialog(messages.get("dialog.info.title"),
-                        editing ? messages.get("msg.groupUpdated") : messages.get("msg.groupCreated"));
-                skeleton.setCenter(null);
-            } catch (Exception e) {
-                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
-            }
-        });
-
-        Button cancelButton = componentFactory.createButton(messages.get("button.cancel"));
-        cancelButton.setOnAction(event -> skeleton.setCenter(null));
-
-        HBox buttonRow = new HBox(10, saveButton, cancelButton);
-
-        root.getChildren().addAll(title, nameRow, patientBox, serviceProviderBox, buttonRow);
-
-        ScrollPane scrollPane = new ScrollPane(root);
-        scrollPane.setFitToWidth(true);
-        skeleton.setCenter(scrollPane);
-    }
-
-    private boolean containsPatientId(Set<Patient> selectedPatients, int id) {
-        if (selectedPatients == null || selectedPatients.isEmpty()) {
-            return false;
-        }
-
-        for (Patient selected : selectedPatients) {
-            if (selected != null && selected.getId() == id) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean containsServiceProviderId(Set<ServiceProvider> selectedServiceProviders, int id) {
-        if (selectedServiceProviders == null || selectedServiceProviders.isEmpty()) {
-            return false;
-        }
-
-        for (ServiceProvider selected : selectedServiceProviders) {
-            if (selected != null && selected.getId() == id) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private Set<Patient> collectSelectedPatients(List<Patient> patients, List<CheckBox> patientBoxes) {
-        Set<Patient> selectedPatients = new HashSet<>();
-        for (int i = 0; i < patientBoxes.size(); i++) {
-            if (patientBoxes.get(i).isSelected()) {
-                selectedPatients.add(patients.get(i));
-            }
-        }
-        return selectedPatients;
-    }
-
-    private Set<ServiceProvider> collectSelectedServiceProviders(List<ServiceProvider> serviceProviders,
-            List<CheckBox> serviceProviderBoxes) {
-        Set<ServiceProvider> selectedServiceProviders = new HashSet<>();
-        for (int i = 0; i < serviceProviderBoxes.size(); i++) {
-            if (serviceProviderBoxes.get(i).isSelected()) {
-                selectedServiceProviders.add(serviceProviders.get(i));
-            }
-        }
-        return selectedServiceProviders;
-    }
-
-    private String groupDisplayName(PersonGroup group) {
-        return group.getName() + " (ID: " + group.getId() + ")";
+    /**
+     * Laesst einen Eintrag aus einer Liste auswaehlen.
+     *
+     * @return der gewaehlte Eintrag, oder {@code null} bei Abbruch
+     */
+    private <T> T selectEntity(List<T> entities, Function<T, String> displayNameProvider, String title,
+            String contentText) {
+        return dialoge.waehleAus(title, contentText, entities, displayNameProvider).orElse(null);
     }
 
     /**
