@@ -30,9 +30,8 @@ public class Controller {
             factoryManager = new FactoryManager();
             // Fuehrt Initialladungen aus und registriert die Profile in GlobalDefinitions.
             bootstrap = new ApplicationBootstrap(globalDefinitions, factoryManager);
-            // TODO:DB
-            HibernateSqllite hbsqli = new HibernateSqllite();
-            this.database = hbsqli.getInstance();
+            // Oeffnet die per gkv.db.path / GKV_DB_PATH konfigurierte Datenbank.
+            this.database = HibernateSqllite.open();
             initialize();
         } catch (IllegalArgumentException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());

@@ -1,27 +1,41 @@
-<?xml version = "1.0" encoding = "utf-8"?>
-<!DOCTYPE hibernate-configuration SYSTEM 
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration SYSTEM
 "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
 <hibernate-configuration>
    <session-factory>
-      <property name="connection.autocommit">true</property>
-      <property name="show_sql">true</property>
-      <property name="hibernate.dialect">org.hibernate.dialect.SQLiteDialect</property>
+      <!--
+         Verbindungs-URL und Schema-Modus werden absichtlich NICHT hier gesetzt.
+         Beide kommen aus DatabaseSettings und werden vom SessionFactoryProvider
+         gesetzt, damit sich Produktivbetrieb und Tests unterschiedliche
+         Datenbanken geben koennen.
+
+         Frueher stand hier hbm2ddl.auto=create - das legt das Schema bei jedem
+         Start neu an und verwirft dabei saemtliche gespeicherten Stammdaten.
+         Der Standard ist jetzt "update" (siehe DatabaseSettings).
+      -->
+      <property name="hibernate.dialect">org.hibernate.community.dialect.SQLiteDialect</property>
       <property name="hibernate.connection.driver_class">org.sqlite.JDBC</property>
-      <!-- SQLite database file path - persists between sessions -->
-      <property name="hibernate.connection.url">jdbc:sqlite:database.db</property>
-      <!-- Auto-create/update schema without dropping tables -->
-      <property name="hibernate.hbm2ddl.auto">create</property>
-      <!-- Connection pooling for better performance -->
+
+      <!--
+         autocommit war auf true gesetzt. Damit wurde jede Anweisung sofort
+         wirksam und ein Rollback konnte nichts mehr zuruecknehmen - die
+         Transaktionsklammern im Repository waren wirkungslos.
+      -->
+      <property name="hibernate.connection.autocommit">false</property>
+
       <property name="hibernate.connection.pool_size">5</property>
-      <!-- Batch processing for better performance -->
       <property name="hibernate.jdbc.batch_size">20</property>
-      <!-- Format SQL output for readability -->
+
+      <!--
+         busy_timeout, journal_mode und foreign_keys stehen in der Verbindungs-URL
+         (siehe DatabaseSettings) - als Hibernate-Property wuerde SQLite sie
+         stillschweigend ignorieren.
+      -->
+
+      <!-- SQL-Ausgabe nur bei Bedarf zuschalten, sie ueberflutet sonst die Konsole. -->
+      <property name="hibernate.show_sql">false</property>
       <property name="hibernate.format_sql">true</property>
-      <mapping class="de.gkvtransmitter.entity.Patient"/>
-      <mapping class="de.gkvtransmitter.entity.ServiceProvider"/>
-      <mapping class="de.gkvtransmitter.entity.PersonGroup"/>
-      <mapping class="de.gkvtransmitter.entity.Blueprint"/>
-      <mapping class="de.gkvtransmitter.entity.DtaCounter"/>
-      <!-- List of XML mapping files -->
+
+      <!-- Die entity-Klassen registriert der SessionFactoryProvider typsicher. -->
    </session-factory>
 </hibernate-configuration>
