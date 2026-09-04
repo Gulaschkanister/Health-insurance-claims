@@ -6,6 +6,8 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
+import de.gkvtransmitter.util.Anwendungsverzeichnis;
+
 /**
  * Legt fest, gegen welche Datei die Anwendung arbeitet und wie mit dem Schema
  * umgegangen wird.
@@ -28,7 +30,13 @@ public final class DatabaseSettings {
     /** Umgebungsvariable fuer den Schema-Modus. */
     public static final String SCHEMA_ENV = "GKV_DB_SCHEMA";
 
-    private static final String DEFAULT_PATH = "database.db";
+    /**
+     * Ohne Vorgabe wird die Datenbank im Datenverzeichnis des Benutzers
+     * angelegt, nicht im Arbeitsverzeichnis - siehe {@link Anwendungsverzeichnis}.
+     */
+    private static Path standardPfad() {
+        return Anwendungsverzeichnis.datenbank();
+    }
 
     /**
      * Ergaenzt fehlende Tabellen und Spalten, laesst vorhandene Daten aber stehen.
@@ -79,10 +87,12 @@ public final class DatabaseSettings {
      * Umgebungsvariablen, ersatzweise aus den Standardwerten.
      */
     public static DatabaseSettings fromEnvironment() {
-        String pfad = ersteBelegung(PATH_PROPERTY, PATH_ENV, DEFAULT_PATH);
+        String pfad = ersteBelegung(PATH_PROPERTY, PATH_ENV, null);
         String modus = normalisiereSchemaModus(
                 ersteBelegung(SCHEMA_PROPERTY, SCHEMA_ENV, DEFAULT_SCHEMA_MODE));
-        Path datei = Paths.get(pfad).toAbsolutePath();
+        Path datei = pfad == null
+                ? standardPfad()
+                : Anwendungsverzeichnis.aufloesen(Paths.get(pfad)).toAbsolutePath();
         return new DatabaseSettings(dateiUrl(datei), modus, datei.toString());
     }
 

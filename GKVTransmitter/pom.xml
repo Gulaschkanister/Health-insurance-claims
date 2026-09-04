@@ -129,6 +129,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!--
+                            Ohne diese Datei meldet Hibernate je Testfall den
+                            Verbindungsaufbau mit JDBC-URL und Poolgroesse. Das
+                            sind ueber hundert Zeilen, in denen das
+                            Testergebnis untergeht.
+                        -->
+                        <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

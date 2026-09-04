@@ -488,7 +488,10 @@ public class View {
             }
 
             PersonGroup selGroup = groupCombo.getValue();
-            java.nio.file.Path outDir = java.nio.file.Paths.get("dta_output");
+            // Fester Ort im Datenverzeichnis des Benutzers. Ein relativer
+            // Pfad haette bei einer ausgelieferten Anwendung im jeweiligen
+            // Startverzeichnis gelegen.
+            java.nio.file.Path outDir = de.gkvtransmitter.util.Anwendungsverzeichnis.versandordner();
             java.util.List<DispatchBatch> batches;
             try {
                 batches = abrechnungService.createAndDispatch(selectedPatients, selGroup, chosen, appointments, outDir);

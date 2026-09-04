@@ -47,6 +47,122 @@
 
     <profiles>
         <!--
+            Baut eine eigenstaendige Anwendung: einen Ordner mit Startprogramm
+            und mitgelieferter Java-Laufzeit. Auf dem Zielrechner muss weder
+            Java noch sonst etwas installiert sein.
+
+                mvn -Ppaket clean package
+
+            Ergebnis: gkv-ui/target/paket/GKVTransmitter/
+
+            jpackage erzeugt immer fuer das System, auf dem es laeuft. Ein
+            Windows-Paket entsteht also nur unter Windows.
+        -->
+        <profile>
+            <id>paket</id>
+            <properties>
+                <!--
+                    jpackage verlangt eine reine Zahlenversion. Das
+                    "-SNAPSHOT" aus der Projektversion wuerde es abweisen.
+                -->
+                <paket.version>1.0.0</paket.version>
+                <paket.verzeichnis>${project.build.directory}/paket</paket.verzeichnis>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- 1. Alle benoetigten Bibliotheken einsammeln. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <executions>
+                            <execution>
+                                <id>bibliotheken-sammeln</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${paket.verzeichnis}/lib</outputDirectory>
+                                    <includeScope>runtime</includeScope>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 2. Das eigene Jar dazulegen. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>eigenes-jar-dazulegen</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                              todir="${paket.verzeichnis}/lib"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 3. Anwendung samt Laufzeit schnueren. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.1</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${java.home}/bin/jpackage</executable>
+                                    <arguments>
+                                        <argument>--type</argument>
+                                        <argument>app-image</argument>
+                                        <argument>--name</argument>
+                                        <argument>GKVTransmitter</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>${paket.version}</argument>
+                                        <argument>--vendor</argument>
+                                        <argument>GKVTransmitter</argument>
+                                        <argument>--description</argument>
+                                        <argument>Abrechnung mit gesetzlichen Krankenkassen</argument>
+                                        <argument>--input</argument>
+                                        <argument>${paket.verzeichnis}/lib</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.build.finalName}.jar</argument>
+                                        <!--
+                                            Main erweitert bewusst nicht Application.
+                                            Nur dadurch laesst sich JavaFX ueber den
+                                            Klassenpfad starten, ohne dass die Laufzeit
+                                            "JavaFX runtime components are missing" meldet.
+                                        -->
+                                        <argument>--main-class</argument>
+                                        <argument>de.gkvtransmitter.Main</argument>
+                                        <argument>--dest</argument>
+                                        <argument>${paket.verzeichnis}</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>--enable-native-access=ALL-UNNAMED</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
             Startet die Anwendung mit Debug-Anschluss auf Port 5005 und wartet,
             bis sich ein Debugger verbunden hat (suspend=y). Ohne das Warten
             waere die Initialisierung - Bootstrap, JSON-Profile, Datenbank -

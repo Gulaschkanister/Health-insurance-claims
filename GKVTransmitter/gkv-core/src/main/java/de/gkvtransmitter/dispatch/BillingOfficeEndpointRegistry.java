@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.gkvtransmitter.util.Anwendungsverzeichnis;
+
 public class BillingOfficeEndpointRegistry {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -25,10 +27,15 @@ public class BillingOfficeEndpointRegistry {
         this.fallbackRoot = fallbackRoot;
     }
 
+    /** Sammelordner, wenn fuer eine Kasse kein Ziel hinterlegt ist. */
+    private static Path standardAusgang() {
+        return Anwendungsverzeichnis.versandordner().resolve("outbox");
+    }
+
     public static BillingOfficeEndpointRegistry loadDefault() {
         try (InputStream inputStream = BillingOfficeEndpointRegistry.class.getResourceAsStream(DEFAULT_RESOURCE)) {
             if (inputStream == null) {
-                return new BillingOfficeEndpointRegistry(Map.of(), Path.of("dta_output", "outbox"));
+                return new BillingOfficeEndpointRegistry(Map.of(), standardAusgang());
             }
             RegistryConfig config = MAPPER.readValue(inputStream, RegistryConfig.class);
             Map<Integer, BillingOfficeEndpoint> loaded = new LinkedHashMap<>();
@@ -37,7 +44,9 @@ public class BillingOfficeEndpointRegistry {
                     loaded.put(definition.kassenIk(), definition.toEndpoint());
                 }
             }
-            Path fallback = config.fallbackRoot() != null ? Path.of(config.fallbackRoot()) : Path.of("dta_output", "outbox");
+            Path fallback = config.fallbackRoot() != null
+                    ? Anwendungsverzeichnis.aufloesen(Path.of(config.fallbackRoot()))
+                    : standardAusgang();
             return new BillingOfficeEndpointRegistry(loaded, fallback);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load billing office endpoints", e);
@@ -83,7 +92,11 @@ public class BillingOfficeEndpointRegistry {
         }
 
         public BillingOfficeEndpoint toEndpoint() {
-            return new BillingOfficeEndpoint(kassenIk, name, transportType, Path.of(destinationDirectory), enabled);
+            // Relative Zielordner aus der Konfiguration werden gegen das
+            // Datenverzeichnis aufgeloest und nicht gegen das
+            // Arbeitsverzeichnis - sonst laegen sie je nach Startart woanders.
+            Path ziel = Anwendungsverzeichnis.aufloesen(Path.of(destinationDirectory));
+            return new BillingOfficeEndpoint(kassenIk, name, transportType, ziel, enabled);
         }
     }
 }
