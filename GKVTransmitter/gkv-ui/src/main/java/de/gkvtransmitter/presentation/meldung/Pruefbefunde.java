@@ -17,7 +17,7 @@ import de.gkvtransmitter.validator.ValidationReport;
 public final class Pruefbefunde {
 
     /** Ueberschrift der Meldung. */
-    public static final String TITEL = "Pruefung nicht bestanden";
+    public static final String TITEL = "Prüfung nicht bestanden";
 
     /** Was unter der Ueberschrift steht, bevor die Liste beginnt. */
     public static final String EINLEITUNG = "Die Abrechnung wurde nicht versendet.";

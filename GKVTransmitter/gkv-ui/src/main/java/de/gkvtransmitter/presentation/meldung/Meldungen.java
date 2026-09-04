@@ -1,9 +1,5 @@
 package de.gkvtransmitter.presentation.meldung;
 
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import de.gkvtransmitter.validator.ValidationReport;
 
 /**
@@ -14,7 +10,7 @@ import de.gkvtransmitter.validator.ValidationReport;
  * oder schiefgegangen ist, bleibt stehen.</p>
  *
  * <p>Alle Methoden geben nichts zurueck. Das ist der wesentliche Unterschied
- * zum frueheren Zuschnitt: {@code Optional<T> waehleAus(...)} musste den
+ * zum frueheren Zuschnitt: ein {@code Optional<T>} als Rueckgabe musste den
  * aufrufenden Faden anhalten, bis jemand geklickt hatte - und genau dieses
  * Anhalten ist das Fenster. Wer eine Antwort braucht, uebergibt hier, was
  * damit geschehen soll.</p>
@@ -50,12 +46,4 @@ public interface Meldungen {
      * @param wennBejaht laeuft nur bei Zustimmung; bei Ablehnung geschieht nichts
      */
     void frageNach(String frage, String bejahenBeschriftung, Runnable wennBejaht);
-
-    /**
-     * Laesst einen Eintrag aus einer Liste waehlen.
-     *
-     * @param wennGewaehlt laeuft mit dem gewaehlten Eintrag; bei Abbruch nicht
-     */
-    <T> void waehleAus(String titel, String text, List<T> eintraege,
-            Function<T, String> anzeige, Consumer<T> wennGewaehlt);
 }

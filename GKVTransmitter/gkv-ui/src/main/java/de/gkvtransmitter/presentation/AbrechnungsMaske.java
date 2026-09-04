@@ -19,7 +19,6 @@ import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
-import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -89,18 +88,16 @@ public class AbrechnungsMaske {
         List<Blueprint> blaupausen = datenbank.getAllBlueprints();
         List<PersonGroup> gruppen = datenbank.getAllPersonGroups();
 
-        VBox wurzel = new VBox(10);
-        wurzel.setPadding(new Insets(20));
+        VBox wurzel = new VBox(14);
+        wurzel.getStyleClass().add("maske");
 
-        Label ueberschrift = bausteine.createLabel(texte.get("menu.settlement"));
-
-        Label blaupauseBeschriftung = bausteine.createLabel(texte.get("label.selectBlueprint"));
+        Label blaupauseBeschriftung = beschriftung(texte.get("label.selectBlueprint"));
         ComboBox<Blueprint> blaupauseAuswahl = auswahlfeld(ID_BLAUPAUSE, blaupausen, Blueprint::getName);
 
-        Label gruppeBeschriftung = bausteine.createLabel(texte.get("label.selectGroupForSettlement"));
+        Label gruppeBeschriftung = beschriftung(texte.get("label.selectGroupForSettlement"));
         ComboBox<PersonGroup> gruppeAuswahl = auswahlfeld(ID_GRUPPE, gruppen, PersonGroup::getName);
 
-        Label teilnehmerBeschriftung = bausteine.createLabel(texte.get("label.selectPatients"));
+        Label teilnehmerBeschriftung = beschriftung(texte.get("label.selectPatients"));
 
         Teilnehmerliste liste = new Teilnehmerliste();
         liste.baueAuf(gruppeAuswahl.getValue());
@@ -110,11 +107,19 @@ public class AbrechnungsMaske {
 
         Button start = bausteine.createButton(texte.get("button.startSettlement"));
         start.setId(ID_START);
+        start.getStyleClass().add("schaltflaeche-haupt");
         start.setOnAction(ereignis -> starteAbrechnung(blaupausen, blaupauseAuswahl, gruppeAuswahl, liste));
 
-        wurzel.getChildren().addAll(ueberschrift, blaupauseBeschriftung, blaupauseAuswahl,
+        wurzel.getChildren().addAll(blaupauseBeschriftung, blaupauseAuswahl,
                 gruppeBeschriftung, gruppeAuswahl, teilnehmerBeschriftung, liste.bereich(), start);
         return wurzel;
+    }
+
+    /** Eine Beschriftung ueber einem Eingabefeld. */
+    private Label beschriftung(String text) {
+        Label label = bausteine.createLabel(text);
+        label.getStyleClass().add("feld-beschriftung");
+        return label;
     }
 
     /** Baut ein Auswahlfeld, das Eintraege ueber ihren Namen darstellt. */
@@ -247,7 +252,12 @@ public class AbrechnungsMaske {
             fuelleTeilnehmer(quellePatienten);
 
             if (dienstleister.isEmpty() && teilnehmer.isEmpty()) {
-                bereich.getChildren().add(bausteine.createLabel(texte.get("msg.noPatients")));
+                // Zwei verschiedene Lagen, die frueher denselben Satz bekamen:
+                // "Keine Patienten vorhanden" stand auch da, wenn nur noch
+                // keine Gruppe gewaehlt war - und liess einen suchen, wo keine
+                // fehlten.
+                bereich.getChildren().add(bausteine.createLabel(texte.get(
+                        gruppe == null ? "msg.selectGroupFirst" : "msg.emptyGroup")));
                 return;
             }
             if (!dienstleister.isEmpty()) {

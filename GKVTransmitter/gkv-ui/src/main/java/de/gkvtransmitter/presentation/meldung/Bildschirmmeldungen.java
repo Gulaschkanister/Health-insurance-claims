@@ -1,9 +1,6 @@
 package de.gkvtransmitter.presentation.meldung;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import de.gkvtransmitter.presentation.Benachrichtigungen;
 import de.gkvtransmitter.presentation.Benachrichtigungen.Art;
@@ -11,11 +8,9 @@ import de.gkvtransmitter.validator.ValidationReport;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
 
 /**
  * Bringt die Meldungen in die Ecke oben rechts.
@@ -69,51 +64,10 @@ public class Bildschirmmeldungen implements Meldungen {
 
         // Die Karte wird beim Klick geschlossen, gleich welche Antwort kommt.
         // Sonst bliebe die Frage stehen, nachdem sie beantwortet ist.
-        Node karte = ecke.zeigeBleibend(Art.HINWEIS, "Rueckfrage", frage, schaltflaechen);
+        Node karte = ecke.zeigeBleibend(Art.HINWEIS, "Rückfrage", frage, schaltflaechen);
         bejahen.setOnAction(ereignis -> {
             ecke.entferne(karte);
             wennBejaht.run();
-        });
-        abbrechen.setOnAction(ereignis -> ecke.entferne(karte));
-    }
-
-    @Override
-    public <T> void waehleAus(String titel, String text, List<T> eintraege,
-            Function<T, String> anzeige, Consumer<T> wennGewaehlt) {
-        if (eintraege == null || eintraege.isEmpty()) {
-            return;
-        }
-
-        ChoiceBox<T> auswahl = new ChoiceBox<>();
-        auswahl.getItems().addAll(eintraege);
-        auswahl.setConverter(new StringConverter<T>() {
-            @Override
-            public String toString(T eintrag) {
-                return eintrag == null ? "" : anzeige.apply(eintrag);
-            }
-
-            @Override
-            public T fromString(String zeichenkette) {
-                return null;
-            }
-        });
-        auswahl.getSelectionModel().selectFirst();
-        auswahl.setMaxWidth(Double.MAX_VALUE);
-
-        Button uebernehmen = new Button("Auswaehlen");
-        uebernehmen.getStyleClass().add("schaltflaeche-haupt");
-        Button abbrechen = new Button("Abbrechen");
-        abbrechen.getStyleClass().add("schaltflaeche-still");
-
-        VBox inhalt = new VBox(8, auswahl, new HBox(8, uebernehmen, abbrechen));
-        Node karte = ecke.zeigeBleibend(Art.HINWEIS, titel, text, inhalt);
-
-        uebernehmen.setOnAction(ereignis -> {
-            T gewaehlt = auswahl.getValue();
-            ecke.entferne(karte);
-            if (gewaehlt != null) {
-                wennGewaehlt.accept(gewaehlt);
-            }
         });
         abbrechen.setOnAction(ereignis -> ecke.entferne(karte));
     }

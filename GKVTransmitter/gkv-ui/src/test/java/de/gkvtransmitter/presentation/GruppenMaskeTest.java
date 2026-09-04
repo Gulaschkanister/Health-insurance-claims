@@ -23,6 +23,7 @@ import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.Region;
 
@@ -173,33 +174,86 @@ class GruppenMaskeTest {
         }
     }
 
+
+    @Nested
+    @DisplayName("Uebersicht")
+    class Uebersicht {
+
+        @Test
+        @DisplayName("Ohne Gruppen steht ein Hinweis in der Liste, kein leeres Formular")
+        void keineGruppen() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region liste = maske().liste();
+
+                assertNull(bearbeitenKnopf(liste, 1), "Ohne Gruppen darf keine Zeile entstehen");
+                assertTrue(meldungen.leer(), "Der Hinweis gehoert in die Liste, nicht in eine Meldung");
+            });
+        }
+
+        @Test
+        @DisplayName("Die Liste nennt Name und Zahl der Mitglieder")
+        void mitgliederzahl() {
+            PersonGroup gruppe = new PersonGroup("Montagsgruppe");
+            gruppe.setId(7);
+            gruppe.setPatients(new LinkedHashSet<>(List.of(patient(1, "Anna"), patient(2, "Bernd"))));
+            gruppe.setServiceProviders(new LinkedHashSet<>(List.of(dienstleister(9, "Max"))));
+            datenbank.mitGruppe(gruppe);
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                List<String> zeile = zeilentexte(maske().liste());
+
+                assertTrue(zeile.contains("Montagsgruppe"), zeile.toString());
+                assertTrue(zeile.contains("2"), "Zahl der Teilnehmer fehlt: " + zeile);
+                assertTrue(zeile.contains("1"), "Zahl der Dienstleister fehlt: " + zeile);
+            });
+        }
+
+        @Test
+        @DisplayName("Das Suchfeld blendet aus, was nicht passt")
+        void suche() {
+            datenbank.mitGruppe(gruppe(1, "Montagsgruppe")).mitGruppe(gruppe(2, "Freitagsgruppe"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region liste = maske().liste();
+                assertNotNull(bearbeitenKnopf(liste, 1));
+                assertNotNull(bearbeitenKnopf(liste, 2));
+
+                suchfeld(liste).setText("freitag");
+
+                assertNull(bearbeitenKnopf(liste, 1), "Die Montagsgruppe passt nicht zur Suche");
+                assertNotNull(bearbeitenKnopf(liste, 2));
+            });
+        }
+
+        @Test
+        @DisplayName("Die Suche unterscheidet nicht zwischen gross und klein")
+        void sucheOhneRuecksichtAufSchreibweise() {
+            datenbank.mitGruppe(gruppe(1, "Montagsgruppe"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region liste = maske().liste();
+                suchfeld(liste).setText("MONTAG");
+
+                assertNotNull(bearbeitenKnopf(liste, 1));
+            });
+        }
+    }
+
     @Nested
     @DisplayName("Bearbeiten")
     class Bearbeiten {
-
-        @Test
-        @DisplayName("Ohne Gruppen meldet die Maske das, statt ein leeres Formular zu zeigen")
-        void keineGruppen() {
-            JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().bearbeiten();
-
-                assertEquals(texte.get("msg.noGroups"), meldungen.einzige().text());
-                assertNull(rahmen.inhalt());
-            });
-        }
 
         @Test
         @DisplayName("Die bisherigen Mitglieder sind vorausgewaehlt")
         void mitgliederVorausgewaehlt() {
             Patient anna = patient(1, "Anna");
             Patient bernd = patient(2, "Bernd");
-            PersonGroup vorhanden = new PersonGroup("Montagsgruppe");
+            PersonGroup vorhanden = gruppe(7, "Montagsgruppe");
             vorhanden.setPatients(new LinkedHashSet<>(List.of(bernd)));
             datenbank.mitPatient(anna).mitPatient(bernd).mitGruppe(vorhanden);
-            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().bearbeiten();
+                bearbeitenKnopf(maske().liste(), 7).fire();
 
                 Region formular = rahmen.inhalt();
                 assertNotNull(formular, "Das Formular muss gezeigt werden");
@@ -210,28 +264,14 @@ class GruppenMaskeTest {
         }
 
         @Test
-        @DisplayName("Ein Abbruch der Auswahl zeigt kein Formular")
-        void auswahlAbgebrochen() {
-            datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-
-            JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().bearbeiten();
-
-                assertNull(rahmen.inhalt());
-                assertTrue(meldungen.leer());
-            });
-        }
-
-        @Test
         @DisplayName("Das Bearbeiten aendert die vorhandene Gruppe, statt eine zweite anzulegen")
         void aendertVorhandene() {
             Patient anna = patient(1, "Anna");
-            PersonGroup vorhanden = new PersonGroup("Alt");
+            PersonGroup vorhanden = gruppe(7, "Alt");
             datenbank.mitPatient(anna).mitGruppe(vorhanden);
-            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().bearbeiten();
+                bearbeitenKnopf(maske().liste(), 7).fire();
                 Region formular = rahmen.inhalt();
                 namensfeld(formular).setText("Neu");
                 anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
@@ -252,11 +292,10 @@ class GruppenMaskeTest {
         @Test
         @DisplayName("Ohne Zustimmung bleibt die Gruppe bestehen")
         void ohneZustimmung() {
-            datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-            meldungen.waehltEintrag(0);
+            datenbank.mitGruppe(gruppe(7, "Montagsgruppe"));
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().loeschen();
+                loeschenKnopf(maske().liste(), 7).fire();
 
                 assertEquals(1, meldungen.gestellteRueckfragen().size(), "Es muss nachgefragt werden");
                 assertEquals(1, datenbank.getAllPersonGroups().size());
@@ -267,11 +306,11 @@ class GruppenMaskeTest {
         @Test
         @DisplayName("Nach Zustimmung wird geloescht und das gemeldet")
         void mitZustimmung() {
-            datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-            meldungen.waehltEintrag(0).stimmtZu();
+            datenbank.mitGruppe(gruppe(7, "Montagsgruppe"));
+            meldungen.stimmtZu();
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().loeschen();
+                loeschenKnopf(maske().liste(), 7).fire();
 
                 assertTrue(datenbank.getAllPersonGroups().isEmpty());
                 assertEquals(texte.get("msg.groupDeleted"), meldungen.einzige().text());
@@ -281,11 +320,10 @@ class GruppenMaskeTest {
         @Test
         @DisplayName("Die Rueckfrage nennt die Gruppe beim Namen")
         void rueckfrageNenntGruppe() {
-            datenbank.mitGruppe(new PersonGroup("Montagsgruppe"));
-            meldungen.waehltEintrag(0);
+            datenbank.mitGruppe(gruppe(7, "Montagsgruppe"));
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().loeschen();
+                loeschenKnopf(maske().liste(), 7).fire();
 
                 assertTrue(meldungen.gestellteRueckfragen().get(0).contains("Montagsgruppe"),
                         meldungen.gestellteRueckfragen().toString());
@@ -293,13 +331,16 @@ class GruppenMaskeTest {
         }
 
         @Test
-        @DisplayName("Ohne Gruppen wird gar nicht erst nachgefragt")
-        void keineGruppen() {
-            JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().loeschen();
+        @DisplayName("Nach dem Loeschen wird die Liste neu aufgebaut")
+        void listeNeuAufgebaut() {
+            datenbank.mitGruppe(gruppe(7, "Montagsgruppe"));
+            meldungen.stimmtZu();
 
-                assertEquals(texte.get("msg.noGroups"), meldungen.einzige().text());
-                assertTrue(meldungen.gestellteRueckfragen().isEmpty());
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                loeschenKnopf(maske().liste(), 7).fire();
+
+                assertEquals(1, rahmen.wieOftGeleert(),
+                        "Sonst stuende die geloeschte Gruppe noch in der Liste");
             });
         }
     }
@@ -332,6 +373,35 @@ class GruppenMaskeTest {
         kaestchen(formular, kennung).setSelected(true);
     }
 
+    private Button bearbeitenKnopf(Region liste, int gruppenId) {
+        return zeilenknopf(liste, gruppenId, GruppenMaske.AKTION_BEARBEITEN);
+    }
+
+    private Button loeschenKnopf(Region liste, int gruppenId) {
+        Button knopf = zeilenknopf(liste, gruppenId, GruppenMaske.AKTION_LOESCHEN);
+        assertNotNull(knopf, "Keine Loeschen-Schaltflaeche fuer Gruppe " + gruppenId);
+        return knopf;
+    }
+
+    private Button zeilenknopf(Region liste, int gruppenId, String aktion) {
+        return (Button) liste.lookup(
+                "#" + GruppenMaske.KENNUNG + Listenbau.ZEILE + gruppenId + "-" + aktion);
+    }
+
+    private TextField suchfeld(Region liste) {
+        TextField feld = (TextField) liste.lookup("#" + GruppenMaske.KENNUNG + Listenbau.SUCHE);
+        assertNotNull(feld, "Kein Suchfeld in der Liste");
+        return feld;
+    }
+
+    /** Alle Beschriftungstexte der Liste, um Zeileninhalte zu pruefen. */
+    private List<String> zeilentexte(Region liste) {
+        return liste.lookupAll(".label").stream()
+                .filter(Label.class::isInstance)
+                .map(knoten -> ((Label) knoten).getText())
+                .toList();
+    }
+
     private PersonGroup einzigeGespeicherte() {
         List<PersonGroup> gespeichert = datenbank.gespeicherteGruppen();
         assertEquals(1, gespeichert.size(), "Erwartet war genau ein Speichervorgang");
@@ -343,6 +413,12 @@ class GruppenMaskeTest {
     }
 
     // --- Testdaten -------------------------------------------------------
+
+    private static PersonGroup gruppe(int id, String name) {
+        PersonGroup gruppe = new PersonGroup(name);
+        gruppe.setId(id);
+        return gruppe;
+    }
 
     private static Patient patient(int id, String vorname) {
         Patient person = new Patient(vorname, "Muster", "Musterweg", "DE", "1", 12345, 101, KASSEN_IK, null);

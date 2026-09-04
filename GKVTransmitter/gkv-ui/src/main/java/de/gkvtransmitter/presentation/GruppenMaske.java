@@ -5,7 +5,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -16,7 +15,6 @@ import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
-import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -47,6 +45,14 @@ public class GruppenMaske {
     public static final String ID_TEILNEHMER = "gruppe-teilnehmer-";
     /** Vorsatz der Auswahlkaestchen je Dienstleister, gefolgt von dessen Kennnummer. */
     public static final String ID_DIENSTLEISTER = "gruppe-dienstleister-";
+    /** Kennung der Schaltflaeche, die ein leeres Formular oeffnet. */
+    public static final String ID_NEU = "gruppe-neu";
+    /** Kennungsvorsatz der Gruppenliste. */
+    public static final String KENNUNG = "gruppe";
+    /** Nachsatz der Kennung einer Bearbeiten-Schaltflaeche. */
+    public static final String AKTION_BEARBEITEN = "bearbeiten";
+    /** Nachsatz der Kennung einer Loeschen-Schaltflaeche. */
+    public static final String AKTION_LOESCHEN = "loeschen";
 
     private final UiFactory bausteine;
     private final AppMessages texte;
@@ -68,14 +74,35 @@ public class GruppenMaske {
         rahmen.zeige(formular(null));
     }
 
-    /** Laesst eine Gruppe auswaehlen und zeigt sie zum Bearbeiten. */
-    public void bearbeiten() {
-        waehleGruppe(gruppe -> rahmen.zeige(formular(gruppe)));
+    /**
+     * Die Uebersicht aller Gruppen, mit Suchfeld und Schaltflaechen je Zeile.
+     *
+     * <p>Sie zeigt nebenbei, wie viele Teilnehmer und Dienstleister eine
+     * Gruppe hat. Das war zuvor nur zu erfahren, indem man sie oeffnete - und
+     * eine Gruppe ohne Dienstleister laesst sich gar nicht abrechnen.</p>
+     */
+    public Region liste() {
+        return Maskenkopf.mitListe(bausteine, texte.get("title.group.new"), ID_NEU, this::neu,
+                new Listenbau<PersonGroup>(bausteine, KENNUNG)
+                        .spalten(texte.get("label.groupName"), texte.get("label.groupPatients"),
+                                texte.get("label.groupServiceProviders"))
+                        .zellen(gruppe -> List.of(
+                                gruppe.getName() == null ? "" : gruppe.getName(),
+                                String.valueOf(anzahl(gruppe.getPatients())),
+                                String.valueOf(anzahl(gruppe.getServiceProviders()))))
+                        .kennnummer(gruppe -> String.valueOf(gruppe.getId()))
+                        .durchsuchbar(texte.get("label.searchGroup"),
+                                gruppe -> gruppe.getName() == null ? "" : gruppe.getName())
+                        .hinweisWennLeer(texte.get("msg.noGroups"))
+                        .aktion(texte.get("menu.edit"), AKTION_BEARBEITEN, "schaltflaeche-still",
+                                gruppe -> rahmen.zeige(formular(gruppe)))
+                        .aktion(texte.get("menu.delete"), AKTION_LOESCHEN, "schaltflaeche-gefahr",
+                                this::frageUndLoesche)
+                        .baue(datenbank.getAllPersonGroups()));
     }
 
-    /** Laesst eine Gruppe auswaehlen und loescht sie nach Rueckfrage. */
-    public void loeschen() {
-        waehleGruppe(this::frageUndLoesche);
+    private static int anzahl(Set<?> mitglieder) {
+        return mitglieder == null ? 0 : mitglieder.size();
     }
 
     /**
@@ -98,16 +125,7 @@ public class GruppenMaske {
             return;
         }
         meldungen.erfolg(texte.get("msg.groupDeleted"));
-    }
-
-    private void waehleGruppe(Consumer<PersonGroup> wennGewaehlt) {
-        List<PersonGroup> gruppen = datenbank.getAllPersonGroups();
-        if (gruppen == null || gruppen.isEmpty()) {
-            meldungen.hinweis(texte.get("msg.noGroups"));
-            return;
-        }
-        meldungen.waehleAus(texte.get("menu.groups"), texte.get("label.selectGroup"),
-                gruppen, this::anzeigename, wennGewaehlt);
+        rahmen.leeren();
     }
 
     /**
@@ -122,12 +140,12 @@ public class GruppenMaske {
         List<Patient> patienten = sicher(datenbank.getAllPatients());
         List<ServiceProvider> dienstleister = sicher(datenbank.getAllServiceProviders());
 
-        VBox wurzel = new VBox(10);
-        wurzel.setPadding(new Insets(20));
+        VBox wurzel = new VBox(14);
+        wurzel.getStyleClass().add("maske");
 
         Label ueberschrift = bausteine.createLabel(
                 texte.get(bearbeitet ? "title.group.edit" : "title.group.new"));
-        ueberschrift.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        ueberschrift.getStyleClass().add("masken-titel");
 
         TextField namensfeld = bausteine.createTextField();
         namensfeld.setId(ID_NAME);
@@ -150,11 +168,13 @@ public class GruppenMaske {
 
         Button speichern = bausteine.createButton(texte.get("button.save"));
         speichern.setId(ID_SPEICHERN);
+        speichern.getStyleClass().add("schaltflaeche-haupt");
         speichern.setOnAction(ereignis -> speichere(gruppe, bearbeitet, namensfeld,
                 patienten, teilnehmerKaestchen, dienstleister, dienstleisterKaestchen));
 
         Button abbrechen = bausteine.createButton(texte.get("button.cancel"));
         abbrechen.setId(ID_ABBRECHEN);
+        abbrechen.getStyleClass().add("schaltflaeche-still");
         abbrechen.setOnAction(ereignis -> rahmen.leeren());
 
         wurzel.getChildren().addAll(ueberschrift, namenszeile, teilnehmerBereich, dienstleisterBereich,

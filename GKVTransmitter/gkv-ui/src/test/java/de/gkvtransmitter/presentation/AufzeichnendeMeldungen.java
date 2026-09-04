@@ -2,8 +2,6 @@ package de.gkvtransmitter.presentation;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.validator.ValidationReport;
@@ -29,17 +27,8 @@ class AufzeichnendeMeldungen implements Meldungen {
 
     private ValidationReport letzterBericht;
 
-    /** Welchen Eintrag eine Auswahl liefert. Ohne Angabe: Abbruch. */
-    private int gewaehlteStelle = -1;
-
     /** Wie eine Rueckfrage beantwortet wird. Standard: abgelehnt. */
     private boolean zustimmung;
-
-    /** Laesst kuenftige Auswahlen den Eintrag an dieser Stelle liefern. */
-    AufzeichnendeMeldungen waehltEintrag(int stelle) {
-        this.gewaehlteStelle = stelle;
-        return this;
-    }
 
     /** Laesst kuenftige Rueckfragen bejahen. */
     AufzeichnendeMeldungen stimmtZu() {
@@ -74,15 +63,6 @@ class AufzeichnendeMeldungen implements Meldungen {
         if (zustimmung) {
             wennBejaht.run();
         }
-    }
-
-    @Override
-    public <T> void waehleAus(String titel, String text, List<T> eintraege,
-            Function<T, String> anzeige, Consumer<T> wennGewaehlt) {
-        if (eintraege == null || eintraege.isEmpty() || gewaehlteStelle < 0) {
-            return;
-        }
-        wennGewaehlt.accept(eintraege.get(gewaehlteStelle));
     }
 
     List<Meldung> alle() {

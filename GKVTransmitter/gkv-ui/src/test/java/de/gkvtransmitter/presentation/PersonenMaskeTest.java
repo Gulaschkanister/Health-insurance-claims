@@ -179,28 +179,83 @@ class PersonenMaskeTest {
     }
 
     @Nested
-    @DisplayName("Loeschen")
-    class Loeschen {
+    @DisplayName("Uebersicht")
+    class Uebersicht {
 
         @Test
-        @DisplayName("Ohne Teilnehmer wird gar nicht erst nachgefragt")
+        @DisplayName("Ohne Teilnehmer steht ein Hinweis in der Liste")
         void keineTeilnehmer() {
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().teilnehmerLoeschen();
+                Region liste = maske().teilnehmerliste();
 
-                assertEquals(texte.get("msg.noPatients"), meldungen.einzige().text());
-                assertTrue(meldungen.gestellteRueckfragen().isEmpty());
+                assertNull(zeilenknopf(liste, PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN));
+                assertTrue(meldungen.leer(), "Der Hinweis gehoert in die Liste, nicht in eine Meldung");
             });
         }
+
+        @Test
+        @DisplayName("Teilnehmer und Dienstleister stehen in getrennten Listen")
+        void getrennteListen() {
+            datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region teilnehmer = maske().teilnehmerliste();
+                assertNotNull(zeilenknopf(teilnehmer, PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN));
+                assertNull(zeilenknopf(teilnehmer, PersonenMaske.KENNUNG_TEILNEHMER, 9,
+                        PersonenMaske.AKTION_BEARBEITEN), "Der Dienstleister gehoert nicht hierher");
+
+                Region dienstleister = maske().dienstleisterliste();
+                assertNotNull(zeilenknopf(dienstleister, PersonenMaske.KENNUNG_DIENSTLEISTER, 9,
+                        PersonenMaske.AKTION_BEARBEITEN));
+            });
+        }
+
+        @Test
+        @DisplayName("Das Suchfeld filtert nach Namen")
+        void suche() {
+            datenbank.mitPatient(patient(1, "Anna")).mitPatient(patient(2, "Bernd"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region liste = maske().teilnehmerliste();
+                TextField suche = (TextField) liste.lookup(
+                        "#" + PersonenMaske.KENNUNG_TEILNEHMER + Listenbau.SUCHE);
+                assertNotNull(suche, "Kein Suchfeld in der Teilnehmerliste");
+
+                suche.setText("bernd");
+
+                assertNull(zeilenknopf(liste, PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN));
+                assertNotNull(zeilenknopf(liste, PersonenMaske.KENNUNG_TEILNEHMER, 2,
+                        PersonenMaske.AKTION_BEARBEITEN));
+            });
+        }
+
+        @Test
+        @DisplayName("Die Schaltflaeche fuer einen neuen Eintrag oeffnet das Formular")
+        void neuerEintrag() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region liste = maske().teilnehmerliste();
+                ((Button) liste.lookup("#" + PersonenMaske.ID_NEU)).fire();
+
+                assertNotNull(rahmen.inhalt());
+                assertNotNull(rahmen.inhalt().lookup("#" + PersonenMaske.ID_SPEICHERN));
+            });
+        }
+    }
+
+    @Nested
+    @DisplayName("Loeschen")
+    class Loeschen {
 
         @Test
         @DisplayName("Ohne Zustimmung bleibt der Teilnehmer bestehen")
         void ohneZustimmung() {
             datenbank.mitPatient(patient(1, "Anna"));
-            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().teilnehmerLoeschen();
+                loeschenKnopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1).fire();
 
                 assertEquals(1, meldungen.gestellteRueckfragen().size(), "Es muss nachgefragt werden");
                 assertEquals(1, datenbank.getAllPatients().size());
@@ -212,10 +267,10 @@ class PersonenMaskeTest {
         @DisplayName("Nach Zustimmung wird der Teilnehmer geloescht und das gemeldet")
         void mitZustimmung() {
             datenbank.mitPatient(patient(1, "Anna"));
-            meldungen.waehltEintrag(0).stimmtZu();
+            meldungen.stimmtZu();
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().teilnehmerLoeschen();
+                loeschenKnopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1).fire();
 
                 assertTrue(datenbank.getAllPatients().isEmpty());
                 assertEquals(texte.get("msg.patientDeleted"), meldungen.einzige().text());
@@ -226,14 +281,27 @@ class PersonenMaskeTest {
         @DisplayName("Der Dienstleister wird eigenstaendig geloescht und eigenstaendig gemeldet")
         void dienstleisterGeloescht() {
             datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
-            meldungen.waehltEintrag(0).stimmtZu();
+            meldungen.stimmtZu();
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().dienstleisterLoeschen();
+                loeschenKnopf(maske().dienstleisterliste(), PersonenMaske.KENNUNG_DIENSTLEISTER, 9).fire();
 
                 assertTrue(datenbank.getAllServiceProviders().isEmpty());
                 assertEquals(1, datenbank.getAllPatients().size(), "Der Teilnehmer bleibt unberuehrt");
                 assertEquals(texte.get("msg.selfDeleted"), meldungen.einzige().text());
+            });
+        }
+
+        @Test
+        @DisplayName("Die Rueckfrage nennt den Teilnehmer beim Namen")
+        void rueckfrageNenntNamen() {
+            datenbank.mitPatient(patient(1, "Anna"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                loeschenKnopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1).fire();
+
+                assertTrue(meldungen.gestellteRueckfragen().get(0).contains("Anna"),
+                        meldungen.gestellteRueckfragen().toString());
             });
         }
     }
@@ -243,37 +311,13 @@ class PersonenMaskeTest {
     class Bearbeiten {
 
         @Test
-        @DisplayName("Ohne Teilnehmer meldet die Maske das, statt ein leeres Formular zu zeigen")
-        void keineTeilnehmer() {
-            JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().teilnehmerBearbeiten();
-
-                assertEquals(texte.get("msg.noPatients"), meldungen.einzige().text());
-                assertNull(rahmen.inhalt());
-            });
-        }
-
-        @Test
-        @DisplayName("Ein Abbruch der Auswahl zeigt kein Formular")
-        void auswahlAbgebrochen() {
-            datenbank.mitPatient(patient(1, "Anna"));
-
-            JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().teilnehmerBearbeiten();
-
-                assertNull(rahmen.inhalt());
-                assertTrue(meldungen.leer());
-            });
-        }
-
-        @Test
         @DisplayName("Der gewaehlte Teilnehmer wird zum Bearbeiten gezeigt")
         void formularGezeigt() {
             datenbank.mitPatient(patient(1, "Anna"));
-            meldungen.waehltEintrag(0);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
-                maske().teilnehmerBearbeiten();
+                zeilenknopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN).fire();
 
                 assertNotNull(rahmen.inhalt(), "Das Bearbeitungsformular muss gezeigt werden");
             });
@@ -334,6 +378,16 @@ class PersonenMaskeTest {
 
     private Button speichern(Region formular) {
         return (Button) formular.lookup("#" + PersonenMaske.ID_SPEICHERN);
+    }
+
+    private Button zeilenknopf(Region liste, String kennungsvorsatz, int personId, String aktion) {
+        return (Button) liste.lookup("#" + kennungsvorsatz + Listenbau.ZEILE + personId + "-" + aktion);
+    }
+
+    private Button loeschenKnopf(Region liste, String kennungsvorsatz, int personId) {
+        Button knopf = zeilenknopf(liste, kennungsvorsatz, personId, PersonenMaske.AKTION_LOESCHEN);
+        assertNotNull(knopf, "Keine Loeschen-Schaltflaeche fuer " + personId);
+        return knopf;
     }
 
     // --- Testdaten -------------------------------------------------------

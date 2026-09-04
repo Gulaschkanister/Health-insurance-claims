@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.Person;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.controller.EditFormController;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
@@ -19,7 +20,6 @@ import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -47,6 +47,16 @@ public class PersonenMaske {
     public static final String ID_ABBRECHEN = "person-abbrechen";
     /** Vorsatz der Eingabefelder, gefolgt vom Feldnamen aus der Tag-Datei. */
     public static final String ID_FELD = "person-feld-";
+    /** Kennung der Schaltflaeche, die ein leeres Formular oeffnet. */
+    public static final String ID_NEU = "person-neu";
+    /** Kennungsvorsatz der Teilnehmerliste. */
+    public static final String KENNUNG_TEILNEHMER = "teilnehmer";
+    /** Kennungsvorsatz der Dienstleisterliste. */
+    public static final String KENNUNG_DIENSTLEISTER = "dienstleister";
+    /** Nachsatz der Kennung einer Bearbeiten-Schaltflaeche. */
+    public static final String AKTION_BEARBEITEN = "bearbeiten";
+    /** Nachsatz der Kennung einer Loeschen-Schaltflaeche. */
+    public static final String AKTION_LOESCHEN = "loeschen";
 
     /** Woher die Feldbeschreibungen einer Person stammen. */
     private static final String TAGS = "/tags/person-tags.json";
@@ -86,20 +96,67 @@ public class PersonenMaske {
         rahmen.zeige(formular(texte.get("title.self.new"), true));
     }
 
-    // --- Bearbeiten ------------------------------------------------------
+    // --- Liste -----------------------------------------------------------
 
-    /** Laesst einen Teilnehmer auswaehlen und zeigt ihn zum Bearbeiten. */
-    public void teilnehmerBearbeiten() {
-        waehle(datenbank.getAllPatients(), teilnehmerFelder::getDisplayName,
-                texte.get("menu.patient"), texte.get("label.selectPatient"),
-                texte.get("msg.noPatients"), this::zeigeTeilnehmerform);
+    /**
+     * Die Uebersicht aller Teilnehmer, mit Suchfeld und Schaltflaechen je
+     * Zeile.
+     *
+     * <p>Sie ersetzt die frueheren Menuepunkte "Bearbeiten" und "Loeschen",
+     * die jeweils erst eine Auswahlbox oeffneten. Man musste wissen, wen man
+     * sucht; hier sieht man es.</p>
+     */
+    public Region teilnehmerliste() {
+        return uebersicht(texte.get("menu.patient"), texte.get("title.patient.new"),
+                this::neuerTeilnehmer,
+                new Listenbau<Patient>(bausteine, KENNUNG_TEILNEHMER)
+                        .spalten(texte.get("label.name"), texte.get("field.plz"),
+                                texte.get("field.ik"), texte.get("field.kassenIk"))
+                        .zellen(PersonenMaske::spaltenwerte)
+                        .kennnummer(person -> String.valueOf(person.getId()))
+                        .durchsuchbar(texte.get("label.searchPerson"), PersonenMaske::suchtext)
+                        .hinweisWennLeer(texte.get("msg.noPatients"))
+                        .aktion(texte.get("menu.edit"), AKTION_BEARBEITEN, "schaltflaeche-still",
+                                this::zeigeTeilnehmerform)
+                        .aktion(texte.get("menu.delete"), AKTION_LOESCHEN, "schaltflaeche-gefahr",
+                                person -> frageUndLoesche(person, teilnehmerFelder.getDisplayName(person),
+                                        datenbank::deletePatient, texte.get("msg.patientDeleted")))
+                        .baue(datenbank.getAllPatients()));
     }
 
-    /** Laesst einen Dienstleister auswaehlen und zeigt ihn zum Bearbeiten. */
-    public void dienstleisterBearbeiten() {
-        waehle(datenbank.getAllServiceProviders(), dienstleisterFelder::getDisplayName,
-                texte.get("menu.self"), texte.get("label.selectServiceProvider"),
-                texte.get("msg.noServiceProviders"), this::zeigeDienstleisterform);
+    /** Die Uebersicht aller Dienstleister. */
+    public Region dienstleisterliste() {
+        return uebersicht(texte.get("menu.self"), texte.get("title.self.new"),
+                this::neuerDienstleister,
+                new Listenbau<ServiceProvider>(bausteine, KENNUNG_DIENSTLEISTER)
+                        .spalten(texte.get("label.name"), texte.get("field.plz"),
+                                texte.get("field.ik"), texte.get("field.kassenIk"))
+                        .zellen(PersonenMaske::spaltenwerte)
+                        .kennnummer(person -> String.valueOf(person.getId()))
+                        .durchsuchbar(texte.get("label.searchPerson"), PersonenMaske::suchtext)
+                        .hinweisWennLeer(texte.get("msg.noServiceProviders"))
+                        .aktion(texte.get("menu.edit"), AKTION_BEARBEITEN, "schaltflaeche-still",
+                                this::zeigeDienstleisterform)
+                        .aktion(texte.get("menu.delete"), AKTION_LOESCHEN, "schaltflaeche-gefahr",
+                                person -> frageUndLoesche(person,
+                                        dienstleisterFelder.getDisplayName(person),
+                                        datenbank::deleteServiceProvider, texte.get("msg.selfDeleted")))
+                        .baue(datenbank.getAllServiceProviders()));
+    }
+
+    private Region uebersicht(String ueberschriftText, String neuBeschriftung, Runnable neu, Region liste) {
+        return Maskenkopf.mitListe(bausteine, neuBeschriftung, ID_NEU, neu, liste);
+    }
+
+    private static List<String> spaltenwerte(Person person) {
+        return List.of(person.getFirstname() + " " + person.getLastname(),
+                String.valueOf(person.getPlz()),
+                String.valueOf(person.getIk()),
+                String.valueOf(person.getKassenIk()));
+    }
+
+    private static String suchtext(Person person) {
+        return person.getFirstname() + " " + person.getLastname() + " " + person.getPlz();
     }
 
     private void zeigeTeilnehmerform(Patient teilnehmer) {
@@ -131,30 +188,20 @@ public class PersonenMaske {
 
     // --- Loeschen --------------------------------------------------------
 
-    /** Laesst einen Teilnehmer auswaehlen und loescht ihn nach Rueckfrage. */
-    public void teilnehmerLoeschen() {
-        loesche(datenbank.getAllPatients(), teilnehmerFelder::getDisplayName, datenbank::deletePatient,
-                texte.get("label.selectPatient"), texte.get("msg.noPatients"),
-                texte.get("msg.patientDeleted"));
+    /**
+     * Fragt zurueck, ehe geloescht wird.
+     *
+     * <p>Auf der Schaltflaeche steht "Loeschen", nicht "Ja". Wer nach einem
+     * Moment Ablenkung auf die Frage zurueckkommt, liest sonst nur noch die
+     * Antwortmoeglichkeiten und weiss nicht mehr, wozu.</p>
+     */
+    private <T> void frageUndLoesche(T eintrag, String anzeigename, Consumer<T> loeschen,
+            String wennGeloescht) {
+        meldungen.frageNach(String.format(texte.get("msg.deleteConfirmBody"), anzeigename),
+                texte.get("button.delete"), () -> loesche(eintrag, loeschen, wennGeloescht));
     }
 
-    /** Laesst einen Dienstleister auswaehlen und loescht ihn nach Rueckfrage. */
-    public void dienstleisterLoeschen() {
-        loesche(datenbank.getAllServiceProviders(), dienstleisterFelder::getDisplayName,
-                datenbank::deleteServiceProvider, texte.get("label.selectServiceProvider"),
-                texte.get("msg.noServiceProviders"), texte.get("msg.selfDeleted"));
-    }
-
-    private <T> void loesche(List<T> bestand, Function<T, String> anzeige, Consumer<T> loeschen,
-            String auswahltext, String wennLeer, String wennGeloescht) {
-        waehle(bestand, anzeige, texte.get("msg.deleteConfirmTitle"), auswahltext, wennLeer,
-                eintrag -> meldungen.frageNach(
-                        String.format(texte.get("msg.deleteConfirmBody"), anzeige.apply(eintrag)),
-                        texte.get("button.delete"),
-                        () -> fuehreLoeschungAus(eintrag, loeschen, wennGeloescht)));
-    }
-
-    private <T> void fuehreLoeschungAus(T eintrag, Consumer<T> loeschen, String wennGeloescht) {
+    private <T> void loesche(T eintrag, Consumer<T> loeschen, String wennGeloescht) {
         try {
             loeschen.accept(eintrag);
         } catch (RuntimeException e) {
@@ -162,16 +209,7 @@ public class PersonenMaske {
             return;
         }
         meldungen.erfolg(wennGeloescht);
-    }
-
-    /** Laesst einen Eintrag auswaehlen und meldet, wenn es gar keinen gibt. */
-    private <T> void waehle(List<T> bestand, Function<T, String> anzeige, String titel,
-            String text, String wennLeer, Consumer<T> wennGewaehlt) {
-        if (bestand == null || bestand.isEmpty()) {
-            meldungen.hinweis(wennLeer);
-            return;
-        }
-        meldungen.waehleAus(titel, text, bestand, anzeige, wennGewaehlt);
+        rahmen.leeren();
     }
 
     // --- Formular --------------------------------------------------------
@@ -197,22 +235,21 @@ public class PersonenMaske {
 
         Button speichern = bausteine.createButton(texte.get("button.save"));
         speichern.setId(ID_SPEICHERN);
-        speichern.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+        speichern.getStyleClass().add("schaltflaeche-haupt");
         speichern.setOnAction(ereignis -> speichere(felder, alsDienstleister));
 
         Button abbrechen = bausteine.createButton(texte.get("button.cancel"));
         abbrechen.setId(ID_ABBRECHEN);
-        abbrechen.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+        abbrechen.getStyleClass().add("schaltflaeche-still");
         abbrechen.setOnAction(ereignis -> rahmen.leeren());
 
         HBox schaltflaechen = new HBox(10, speichern, abbrechen);
-        schaltflaechen.setPadding(new Insets(10));
 
         Label ueberschrift = bausteine.createLabel(ueberschriftText);
-        ueberschrift.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        ueberschrift.getStyleClass().add("masken-titel");
 
-        VBox wurzel = new VBox(10);
-        wurzel.setPadding(new Insets(20));
+        VBox wurzel = new VBox(14);
+        wurzel.getStyleClass().add("maske");
         GridPane gitter = bausteine.createGridPane(2, zeilen.toArray(Node[]::new));
         wurzel.getChildren().addAll(ueberschrift, gitter, schaltflaechen);
         return wurzel;

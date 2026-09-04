@@ -36,6 +36,9 @@ import javafx.scene.layout.VBox;
  */
 public class Feldbau {
 
+    /** Stilklasse eines Feldes, dessen Inhalt beanstandet wurde. */
+    private static final String FEHLERHAFT = "feld-fehlerhaft";
+
     private final UiFactory bausteine;
     private final AppMessages texte;
 
@@ -103,7 +106,7 @@ public class Feldbau {
     private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner,
             InputOption inputOption, String javaFieldType) {
         Label errorLabel = bausteine.createLabel("");
-        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
+        errorLabel.getStyleClass().add("feld-fehler");
         errorLabel.setVisible(false);
 
         VBox box = new VBox(4);
@@ -155,7 +158,7 @@ public class Feldbau {
             if (!valText.matches("\\d{5}")) {
                 errorLabel.setText("PLZ muss 5-stellig sein");
                 errorLabel.setVisible(true);
-                spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
+                beanstande(spinner);
                 return;
             }
         }
@@ -169,7 +172,7 @@ public class Feldbau {
                     if (cur < min || cur > max) {
                         errorLabel.setText(String.format("Wert muss zwischen %d und %d liegen", min, max));
                         errorLabel.setVisible(true);
-                        spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
+                        beanstande(spinner);
                         return;
                     }
                 }
@@ -180,12 +183,24 @@ public class Feldbau {
         FieldValidator.Feldbefund res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
         if (res == null || res.isValid) {
             errorLabel.setVisible(false);
-            spinner.setStyle(null);
+            entlaste(spinner);
         } else {
             errorLabel.setText(res.errorMessage != null ? res.errorMessage : "Ungültiger Wert");
             errorLabel.setVisible(true);
-            spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
+            beanstande(spinner);
         }
+    }
+
+    /** Kennzeichnet ein Feld als beanstandet. */
+    private void beanstande(Spinner<?> spinner) {
+        if (!spinner.getStyleClass().contains(FEHLERHAFT)) {
+            spinner.getStyleClass().add(FEHLERHAFT);
+        }
+    }
+
+    /** Nimmt die Kennzeichnung wieder weg. */
+    private void entlaste(Spinner<?> spinner) {
+        spinner.getStyleClass().remove(FEHLERHAFT);
     }
 
     /**

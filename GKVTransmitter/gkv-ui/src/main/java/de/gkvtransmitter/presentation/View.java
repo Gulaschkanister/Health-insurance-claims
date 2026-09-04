@@ -23,7 +23,6 @@ import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
-import de.gkvtransmitter.presentation.builder.MenuBuilder;
 import de.gkvtransmitter.presentation.controller.EditFormController;
 import de.gkvtransmitter.presentation.meldung.Bildschirmmeldungen;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
@@ -41,27 +40,21 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
- * View-Schicht der Anwendung - REFAKTORIERT
+ * Der Einstieg in die Oberflaeche.
  *
- * Nach großem Refactoring jetzt mit: - Fokus auf Szenen-Management und
- * Hauptmenü - Delegation komplexer Logik an spezialisierte Komponenten - Klare
- * Separation of Concerns
- *
- * Delegationen: - Entity-Bearbeitung -> EditFormController - Feld-Populierung
- * -> EntityFieldPopulator - Menü-Erstellung -> MenuBuilder
+ * <p>Baut die Hauptszene, fuellt die Seitenleiste und verteilt von dort auf
+ * die Masken. Die Blaupausenmaske ({ createFormular}) liegt als einzige
+ * noch hier; sie ist der naechste Kandidat fuer eine eigene Klasse.</p>
  */
 public class View {
 
@@ -71,7 +64,6 @@ public class View {
     private final ObjectMapper objectMapper;
     private final Map<String, List<String>> invoiceCodeOptions;
     private Map<String, String> currentInvoiceHeaderCodes = Map.of();
-    private BorderPane skeleton;
 
     private final PatientFieldPopulator patientPopulator;
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
@@ -86,32 +78,8 @@ public class View {
     /** Baut die Eingabefelder der Formulare und liest sie wieder aus. */
     private final Feldbau feldbau;
 
-    /**
-     * Der Platz, an dem die Masken erscheinen: die Mitte des Rahmens.
-     *
-     * <p>Das umhuellende {@code ScrollPane} entsteht erst hier. Die Masken
-     * liefern den nackten Bereich, sonst waeren ihre Bedienelemente vor dem
-     * ersten Zeichnen nicht auffindbar - und damit nicht pruefbar.</p>
-     */
-    private final Maskenrahmen rahmen = new Maskenrahmen() {
-        @Override
-        public void zeige(Region inhalt) {
-            // Was schon scrollt, wird nicht ein zweites Mal eingehuellt:
-            // EditFormController liefert bereits ein ScrollPane.
-            if (inhalt instanceof ScrollPane) {
-                skeleton.setCenter(inhalt);
-                return;
-            }
-            ScrollPane scroll = new ScrollPane(inhalt);
-            scroll.setFitToWidth(true);
-            skeleton.setCenter(scroll);
-        }
-
-        @Override
-        public void leeren() {
-            skeleton.setCenter(null);
-        }
-    };
+    /** Seitenleiste, Maske, Statuszeile - und zugleich der Platz der Masken. */
+    private final Hauptfenster hauptfenster = new Hauptfenster(benachrichtigungen.bereich());
 
     public View(Controller controller, AbrechnungService abrechnungService) {
         this.controller = controller;
@@ -141,21 +109,47 @@ public class View {
      *        uebergeben und dann nicht verwendet; die Zeile gab es gar nicht.
      */
     public Scene createMainScene(String statusText, double width, double height) {
-        MenuBar menuBar = buildMainMenuBar();
-        this.skeleton = componentFactory.createBorderPane(menuBar, null, null, null, null);
+        baueNavigation();
+        hauptfenster.setzeMarke("GKVTransmitter", messages.get("app.subtitle"));
+        hauptfenster.setzeStatus(statusText);
+        hauptfenster.oeffneErstenBereich();
 
-        Label status = componentFactory.createLabel(statusText == null ? "" : statusText);
-        status.getStyleClass().add("statuszeile");
-        status.setMaxWidth(Double.MAX_VALUE);
-        skeleton.setBottom(status);
-
-        StackPane schichten = new StackPane(skeleton, benachrichtigungen.bereich());
-        StackPane.setAlignment(benachrichtigungen.bereich(), Pos.TOP_RIGHT);
-
-        Scene scene = componentFactory.createScene(schichten, width, height);
+        Scene scene = componentFactory.createScene(hauptfenster.wurzel(), width, height);
         scene.getStylesheets().add(getClass().getResource(STYLESHEET).toExternalForm());
         Platform.runLater(this::seedIfEmpty);
         return scene;
+    }
+
+    /**
+     * Fuellt die Seitenleiste.
+     *
+     * <p>Die Reihenfolge ist die des Arbeitsablaufs: zuerst das, wozu das
+     * Programm da ist, dann die Daten, die es dafuer braucht, dann die
+     * Vorlagen. Zuvor standen alle Punkte gleichrangig nebeneinander in einer
+     * Menueleiste.</p>
+     */
+    private void baueNavigation() {
+        hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.billing"));
+        hauptfenster.ergaenzeBereich(messages.get("menu.settlement"), this::createAbrechnung);
+
+        hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.data"));
+        hauptfenster.ergaenzeBereich(messages.get("menu.patient"),
+                () -> hauptfenster.zeige(personenMaske().teilnehmerliste()));
+        hauptfenster.ergaenzeBereich(messages.get("menu.self"),
+                () -> hauptfenster.zeige(personenMaske().dienstleisterliste()));
+        hauptfenster.ergaenzeBereich(messages.get("menu.groups"),
+                () -> hauptfenster.zeige(gruppenMaske().liste()));
+
+        Set<String> vorlagen = controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet();
+        if (!vorlagen.isEmpty()) {
+            hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.templates"));
+            for (String name : vorlagen) {
+                hauptfenster.ergaenzeBereich(name, () -> createFormular(name));
+            }
+        }
+
+        hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.dev"));
+        hauptfenster.ergaenzeBereich(messages.get("nav.testdata"), this::seedTestData);
     }
 
     /** Systemeigenschaft, mit der sich das Anlegen von Testdaten einschalten laesst. */
@@ -192,60 +186,6 @@ public class View {
     }
 
     /**
-     * Erstellt die Hauptmenüleiste mit dynamischen Einträgen basierend auf den
-     *
-     * @return die erstellte MenuBar für die Hauptszene
-     */
-    private MenuBar buildMainMenuBar() {
-        MenuBuilder menuBuilder = new MenuBuilder(componentFactory, messages);
-
-        Map<String, Runnable> invoiceHandlers = new LinkedHashMap<>();
-        for (String name : controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()) {
-            invoiceHandlers.put(name, () -> createFormular(name));
-        }
-        menuBuilder.addAllInvoiceItems(invoiceHandlers);
-
-        menuBuilder.addPatientItem(messages.get("menu.new"), this::createPerson);
-        menuBuilder.addPatientItem(messages.get("menu.edit"), this::editPatient);
-        menuBuilder.addPatientItem(messages.get("menu.delete"), this::deletePatient);
-
-        menuBuilder.addSelfItem(messages.get("menu.new"), this::createSelfPerson);
-        menuBuilder.addSelfItem(messages.get("menu.edit"), this::editServiceProvider);
-        menuBuilder.addSelfItem(messages.get("menu.delete"), this::deleteServiceProvider);
-
-        menuBuilder.addGroupItem(messages.get("menu.new"), this::createGroup);
-        menuBuilder.addGroupItem(messages.get("menu.edit"), this::editGroup);
-        menuBuilder.addGroupItem(messages.get("menu.delete"), this::deleteGroup);
-
-        MenuBar menuBar = menuBuilder.build();
-
-        // Add settlement (Abrechnung) as a single top-level menu (click to open panel)
-        javafx.scene.control.Menu settlementMenu = componentFactory.createMenu(messages.get("menu.settlement"));
-        javafx.scene.control.MenuItem openSettlement = componentFactory.createMenuItem(messages.get("menu.settlement"));
-        openSettlement.setOnAction(ev -> createAbrechnung());
-        settlementMenu.getItems().add(openSettlement);
-        // trigger the item immediately when the top-level menu is activated (single-click behaviour)
-        settlementMenu.setOnShowing(ev -> {
-            try {
-                openSettlement.fire();
-            } finally {
-                settlementMenu.hide();
-            }
-            ev.consume();
-        });
-        menuBar.getMenus().add(settlementMenu);
-
-        // Dev menu: seed test data
-        javafx.scene.control.Menu devMenu = componentFactory.createMenu("Dev");
-        javafx.scene.control.MenuItem seedItem = componentFactory.createMenuItem("Seed Test Data");
-        seedItem.setOnAction(ev -> seedTestData());
-        devMenu.getItems().add(seedItem);
-        menuBar.getMenus().add(devMenu);
-
-        return menuBar;
-    }
-
-    /**
      * Erstellt und zeigt das Formular für die angegebene Rechnungsvorlage.
      *
      * @param invoiceName Der Name der Rechnungsvorlage, die geladen werden
@@ -270,11 +210,11 @@ public class View {
             }
         }
 
-        VBox vbox = new VBox(10);
-        vbox.setPadding(new Insets(20));
+        VBox vbox = new VBox(14);
+        vbox.getStyleClass().add("maske");
 
         Label title = componentFactory.createLabel(invoiceName);
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        title.getStyleClass().add("masken-titel");
         // Der Name stand frueher in einem eigenen Fenster, das erst nach dem
         // Klick aufging. Jetzt liegt er im Formular: man sieht beim Ausfuellen,
         // unter welchem Namen die Blaupause landet, und kann ihn aendern, ohne
@@ -305,7 +245,7 @@ public class View {
         GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
         vbox.getChildren().add(contentGrid);
 
-        rahmen.zeige(vbox);
+        hauptfenster.zeige(vbox);
         this.currentInvoiceHeaderCodes = Map.of();
     }
 
@@ -370,7 +310,7 @@ public class View {
         AbrechnungsMaske maske = new AbrechnungsMaske(componentFactory, messages, meldungen,
                 controller.getDatabase(), abrechnungService::createAndDispatch,
                 Anwendungsverzeichnis::versandordner);
-        rahmen.zeige(maske.erzeuge());
+        hauptfenster.zeige(maske.erzeuge());
     }
 
     /**
@@ -531,46 +471,10 @@ public class View {
         return options;
     }
 
-    private void editPatient() {
-        personenMaske().teilnehmerBearbeiten();
-    }
-
-    private void editServiceProvider() {
-        personenMaske().dienstleisterBearbeiten();
-    }
-
-    private void deletePatient() {
-        personenMaske().teilnehmerLoeschen();
-    }
-
-    private void deleteServiceProvider() {
-        personenMaske().dienstleisterLoeschen();
-    }
-
-    private void createPerson() {
-        personenMaske().neuerTeilnehmer();
-    }
-
-    private void createSelfPerson() {
-        personenMaske().neuerDienstleister();
-    }
-
     /** Baut die Personenmaske auf den aktuellen Rahmen, siehe {@link #gruppenMaske()}. */
     private PersonenMaske personenMaske() {
-        return new PersonenMaske(componentFactory, messages, meldungen, controller.getDatabase(), rahmen,
+        return new PersonenMaske(componentFactory, messages, meldungen, controller.getDatabase(), hauptfenster,
                 feldbau, patientPopulator, serviceProviderPopulator);
-    }
-
-    private void createGroup() {
-        gruppenMaske().neu();
-    }
-
-    private void editGroup() {
-        gruppenMaske().bearbeiten();
-    }
-
-    private void deleteGroup() {
-        gruppenMaske().loeschen();
     }
 
     /**
@@ -581,7 +485,7 @@ public class View {
      * veralteten Rahmen zeigt.</p>
      */
     private GruppenMaske gruppenMaske() {
-        return new GruppenMaske(componentFactory, messages, meldungen, controller.getDatabase(), rahmen);
+        return new GruppenMaske(componentFactory, messages, meldungen, controller.getDatabase(), hauptfenster);
     }
 
     /**

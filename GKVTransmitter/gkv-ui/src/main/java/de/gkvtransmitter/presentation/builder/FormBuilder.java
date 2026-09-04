@@ -28,7 +28,6 @@ public class FormBuilder {
     private final UiFactory componentFactory;
     private final AppMessages messages;
     private String title;
-    private final String titleStyleClass = "-fx-font-size: 18; -fx-font-weight: bold;";
     private final List<FormField> fields = new ArrayList<>();
     private final List<FormButton> buttons = new ArrayList<>();
     private double fieldSpacing = 10.0;
@@ -118,7 +117,7 @@ public class FormBuilder {
         // Titel
         if (title != null && !title.isBlank()) {
             Label titleLabel = componentFactory.createLabel(title);
-            titleLabel.setStyle(titleStyleClass);
+            titleLabel.getStyleClass().add("masken-titel");
             mainVBox.getChildren().add(titleLabel);
         }
 
@@ -158,7 +157,7 @@ public class FormBuilder {
 
         for (FormButton btn : buttons) {
             Button button = componentFactory.createButton(btn.label);
-            button.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+            button.getStyleClass().add("schaltflaeche-still");
             button.setOnAction(event -> btn.onAction.run());
             buttonBox.getChildren().add(button);
         }

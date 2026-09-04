@@ -123,7 +123,7 @@ public class EditFormController<T> {
 
         Label selectLabel = componentFactory.createLabel(
                 messages.get("label.select" + entityTypeName));
-        selectLabel.setStyle("-fx-font-size: 14; -fx-font-weight: bold;");
+        selectLabel.getStyleClass().add("feld-beschriftung");
 
         ComboBox<String> entityCombo = new ComboBox<>();
         for (T entity : entities) {
@@ -181,7 +181,7 @@ public class EditFormController<T> {
         Label title = componentFactory.createLabel(
                 messages.get("title." + entityTypeName.toLowerCase() + ".edit") + ": "
                         + populator.getDisplayName(entity));
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
+        title.getStyleClass().add("masken-titel");
 
         GridPane contentGrid = componentFactory.createGridPane(2,
                 fieldNodes.toArray(Node[]::new));
@@ -195,18 +195,18 @@ public class EditFormController<T> {
      */
     private HBox buildActionButtons(T entity, Map<String, Node> inputFields) {
         Button updateButton = componentFactory.createButton(messages.get("button.update"));
-        updateButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+        updateButton.getStyleClass().add("schaltflaeche-haupt");
         updateButton.setOnAction(event -> saveEntity(entity, inputFields));
 
         Button cancelButton = componentFactory.createButton(messages.get("button.cancel"));
-        cancelButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
+        cancelButton.getStyleClass().add("schaltflaeche-still");
         cancelButton.setOnAction(event -> formContainer.getChildren().clear());
 
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(10));
         if (showDeleteButton) {
             Button deleteButton = new Button(messages.get("button.delete"));
-            deleteButton.setStyle("-fx-padding: 10; -fx-font-size: 14; -fx-text-fill: white; -fx-background-color: #d9534f;");
+            deleteButton.getStyleClass().add("schaltflaeche-gefahr");
             deleteButton.setOnAction(event -> confirmDelete(entity));
             buttonBox.getChildren().addAll(updateButton, deleteButton, cancelButton);
         } else {
