@@ -34,6 +34,9 @@ package "presentation.populator" {
 package "hibernate.sqllite" {
   class HibernateSqllite
 }
+package "repository" {
+  interface DataRepository
+}
 package "util" {
   class AppMessages
   class FieldValidator
@@ -49,7 +52,8 @@ App --> AbrechnungService
 Controller --> ApplicationBootstrap
 Controller --> GlobalDefinitions
 Controller --> FactoryManager
-Controller --> HibernateSqllite
+Controller --> DataRepository
+Controller ..> HibernateSqllite
 View --> Controller
 View --> UiFactory
 View --> FormBuilder
@@ -68,6 +72,7 @@ PatientFieldPopulator --|> EntityFieldPopulator
 ServiceProviderFieldPopulator --|> EntityFieldPopulator
 EntityFieldPopulator --> FieldValidator
 HibernateSqllite --> HibernateUtil
+HibernateSqllite ..|> DataRepository
 HibernateSqllite --> Patient
 HibernateSqllite --> ServiceProvider
 HibernateSqllite --> PersonGroup

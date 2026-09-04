@@ -11,9 +11,10 @@ import de.gkvtransmitter.entity.DtaCounter;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.HibernateUtil;
 
-public class HibernateSqllite {
+public class HibernateSqllite implements DataRepository {
 
     private final SessionFactory sf = HibernateUtil.getSessionFactory();
     private HibernateSqllite hbsqli;

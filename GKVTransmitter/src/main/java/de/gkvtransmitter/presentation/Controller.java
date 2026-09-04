@@ -3,6 +3,7 @@ package de.gkvtransmitter.presentation;
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
 import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
+import de.gkvtransmitter.repository.DataRepository;
 
 /**
  * Vermittelt zwischen UI-Schicht und Initialisierungslogik.
@@ -15,7 +16,7 @@ public class Controller {
     private final GlobalDefinitions globalDefinitions;
     private final FactoryManager factoryManager;
     private final ApplicationBootstrap bootstrap;
-    private final HibernateSqllite database;
+    private final DataRepository database;
 
     /**
      * Baut den fachlichen Anwendungskontext auf.
@@ -68,7 +69,7 @@ public class Controller {
     /**
      * Provides access to the database for persistence operations.
      */
-    public HibernateSqllite getDatabase() {
+    public DataRepository getDatabase() {
         return database;
     }
 }

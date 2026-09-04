@@ -53,7 +53,7 @@ Die Patterns und ihre Fundstellen im Programm und in dieser Dokumentation sind:
 | Builder Pattern | `FormBuilder` und `MenuBuilder` erstellen UI-Strukturen schrittweise | Paket `presentation.builder` |
 | Strategy-/Adapter-Ansatz | `BillingOfficeTransport` definiert den Versandvertrag, `FileBillingOfficeTransport` implementiert den Datei-Versand | `FileBillingOfficeTransport ..|> BillingOfficeTransport` und Paket `dispatch` |
 | Domain Model | Fachliche Objekte werden durch `Patient`, `ServiceProvider`, `Abrechnung`, `Invoice`, `SegmentDefinition` und weitere Modellklassen beschrieben | Pakete `entity`, `model` und `model.segment` |
-| Data Mapper / ORM | Hibernate bildet Entity-Klassen auf SQLite ab | Paket `hibernate.sqllite`, Klasse `HibernateSqllite` |
+| Repository plus Data Mapper / ORM | `DataRepository` definiert den Persistenzvertrag; `HibernateSqllite` implementiert ihn und bildet Entity-Klassen auf SQLite ab | Pakete `repository` und `hibernate.sqllite`, UML-Ansicht „Präsentation und Persistenz“ |
 
 Nicht jede Struktur im Diagramm ist ein Design Pattern. Klassen wie `Patient` oder `Abrechnung` sind vor allem Bestandteile des Domain Models; Vererbung, Interfaces, Aggregationen und Abhängigkeiten sind UML-Modellierungsmittel.
 
