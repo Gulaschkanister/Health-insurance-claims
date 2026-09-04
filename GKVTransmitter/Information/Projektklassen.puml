@@ -628,6 +628,10 @@ View --> UiFactory
 View --> AppMessages
 View --> PatientFieldPopulator
 View --> ServiceProviderFieldPopulator
+View --> Blueprint
+View --> PersonGroup
+View --> Abrechnung
+View --> DtaDispatchService
 FactoryManager o-- "0..*" Factory
 FormBuilder --> UiFactory
 FormBuilder --> AppMessages
