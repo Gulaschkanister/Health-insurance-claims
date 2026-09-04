@@ -10,7 +10,9 @@ title Uebersicht: zwei Module, ein Weg von der Eingabe zur Kasse
 
 package "gkv-ui  (JavaFX)" as ui #F2F6FA {
   [App / Main]
-  [View]
+  [View  (Rahmen)]
+  [Masken]
+  [Dialoge]
   [Controller]
 }
 
@@ -51,10 +53,12 @@ package "gkv-core  (ohne JavaFX)" as core #F7F7F2 {
   }
 }
 
-[App / Main] --> [View]
+[App / Main] --> [View  (Rahmen)]
 [App / Main] --> [Controller]
-[View] --> [Controller]
-[View] --> [AbrechnungService]
+[View  (Rahmen)] --> [Controller]
+[View  (Rahmen)] --> [Masken]
+[Masken] --> [Dialoge]
+[Masken] --> [AbrechnungService]
 [Controller] --> [ApplicationBootstrap]
 [Controller] --> [DataRepository]
 

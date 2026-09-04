@@ -24,11 +24,32 @@ package "gkv-ui" #F2F6FA {
     }
     class View {
       +createMainScene()
-      -createAbrechnung()
-      -zeigePruefbericht(ValidationReport)
+      -createFormular()
+      .. Rahmen, verteilt auf die Masken ..
     }
+    class AbrechnungsMaske {
+      +erzeuge() : Region
+    }
+    class GruppenMaske {
+      +neu() +bearbeiten() +loeschen()
+    }
+    class PersonenMaske {
+      +neuerTeilnehmer() +neuerDienstleister()
+      +teilnehmerBearbeiten() +teilnehmerLoeschen()
+    }
+    class Feldbau {
+      +erzeugeFeld(name, TagList) : Node
+      +textVon(Node) : String
+    }
+    interface Maskenrahmen
+    interface Abrechnungslauf
     interface UiFactory
     class JavaFxUiFactory
+  }
+  package "presentation.dialog" {
+    interface Dialoge
+    class JavaFxDialoge
+    class Pruefberichttext
   }
   package "presentation.builder" {
     class FormBuilder
@@ -107,12 +128,30 @@ View --> Controller
 View --> UiFactory
 View --> FormBuilder
 View --> MenuBuilder
-View --> EditFormController
-View --> PatientFieldPopulator
-View --> ServiceProviderFieldPopulator
-View --> AbrechnungService
 View --> AppMessages
+View --> Feldbau
+View --> AbrechnungService
 View --> Anwendungsverzeichnis
+View ..> Maskenrahmen : erfuellt
+View --> AbrechnungsMaske
+View --> GruppenMaske
+View --> PersonenMaske
+
+AbrechnungsMaske --> Dialoge
+AbrechnungsMaske --> Maskenrahmen
+AbrechnungsMaske --> Abrechnungslauf
+Abrechnungslauf ..> AbrechnungService : Methodenreferenz
+GruppenMaske --> Dialoge
+GruppenMaske --> Maskenrahmen
+GruppenMaske --> DataRepository
+PersonenMaske --> Dialoge
+PersonenMaske --> Maskenrahmen
+PersonenMaske --> Feldbau
+PersonenMaske --> EditFormController
+PersonenMaske --> PatientFieldPopulator
+PersonenMaske --> ServiceProviderFieldPopulator
+JavaFxDialoge ..|> Dialoge
+Dialoge ..> Pruefberichttext
 Controller --> FactoryManager
 Controller --> DataRepository
 Controller ..> HibernateSqllite

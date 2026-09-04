@@ -1,3 +1,6 @@
+| `ValidationRule` | sechs mitgelieferte Regeln | weitere fachliche Prüfungen |
+| `Dialoge` | JavaFX-Dialoge | eine andere Art zu melden, etwa ein Protokoll |
+| `Maskenrahmen` | die Mitte des Hauptfensters | eine andere Anordnung der Masken |
 ---
 title: "GKVTransmitter"
 subtitle: "Abrechnung mit gesetzlichen Krankenkassen — Dokumentation"
@@ -178,17 +181,23 @@ Die Trennung ist im Build verankert: eine Enforcer-Regel lässt das Übersetzen 
 
 ![Oberfläche und Datenzugriff](GKVTransmitter_Praesentation_und_Persistenz.png)
 
+Die Oberfläche ist in Masken geschnitten: eine je Aufgabe. `AbrechnungsMaske` stellt eine Abrechnung zusammen, `GruppenMaske` pflegt die Gruppen, `PersonenMaske` die Teilnehmer und Dienstleister, `Feldbau` erzeugt die Eingabefelder. `View` ist nur noch der Rahmen: Hauptszene, Menüleiste, Verteilung.
+
+Jede Maske bekommt von außen, was sie braucht — Daten, Meldewege, den Platz, an dem sie erscheint. Deshalb lässt sich jede einzeln prüfen, ohne Datenbank und ohne dass ein Fenster aufgeht. Meldungen laufen über `Dialoge`; im Betrieb steht dahinter ein JavaFX-Dialog, im Test ein Aufzeichner.
+
 `DataRepository` ist der Vertrag, `HibernateSqllite` die Umsetzung. Die Oberfläche kennt nur den Vertrag — die Datenhaltung wäre austauschbar, ohne die Oberfläche zu berühren.
 
 ## Erweiterungspunkte
 
-An drei Stellen ist ein Vertrag bewusst von seiner Umsetzung getrennt, damit sich das Programm erweitern lässt, ohne Bestehendes anzufassen:
+An fünf Stellen ist ein Vertrag bewusst von seiner Umsetzung getrennt, damit sich das Programm erweitern lässt, ohne Bestehendes anzufassen:
 
 | Vertrag | Heutige Umsetzung | Erweiterbar um |
 |---|---|---|
 | `DataRepository` | `HibernateSqllite` | eine andere Datenhaltung |
 | `BillingOfficeTransport` | Datei-Zustellung, simulierte Kasse | einen echten Übermittlungsweg |
 | `ValidationRule` | sechs mitgelieferte Regeln | weitere fachliche Prüfungen |
+| `Dialoge` | JavaFX-Dialoge | eine andere Art zu melden, etwa ein Protokoll |
+| `Maskenrahmen` | die Mitte des Hauptfensters | eine andere Anordnung der Masken |
 
 # Konfiguration
 

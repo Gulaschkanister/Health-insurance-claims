@@ -177,7 +177,7 @@ public class Feldbau {
             }
         }
 
-        FieldValidator.ValidationResult res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
+        FieldValidator.Feldbefund res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
         if (res == null || res.isValid) {
             errorLabel.setVisible(false);
             spinner.setStyle(null);

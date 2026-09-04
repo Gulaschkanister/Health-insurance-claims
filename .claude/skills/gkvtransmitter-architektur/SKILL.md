@@ -60,7 +60,7 @@ Kern gelangt. Wer eine Klasse mit JavaFX-Bezug in `gkv-core` anlegt, bekommt
 einen Buildfehler — das ist beabsichtigt und kein Hindernis, das man umgeht.
 
 Der Grund: nur ein oberflächenfreier Kern lässt sich ohne laufende Anwendung
-testen. Die 88 Tests des Projekts hängen daran.
+testen. 138 der 183 Tests hängen daran.
 
 ## Pakete in gkv-core
 
@@ -80,6 +80,27 @@ testen. Die 88 Tests des Projekts hängen daran.
 
 `gkv-ui` enthält nur `App`, `Main`, `presentation.*` und `util.AppMessages`.
 
+## Aufbau von gkv-ui
+
+| Klasse | Aufgabe |
+|---|---|
+| `View` | Rahmen: Hauptszene, Menüleiste, Verteilung auf die Masken |
+| `AbrechnungsMaske` | Abrechnung zusammenstellen und anstoßen |
+| `GruppenMaske` | Gruppen anlegen, bearbeiten, löschen |
+| `PersonenMaske` | Teilnehmer und Dienstleister |
+| `Feldbau` | Eingabefelder erzeugen und auslesen |
+| `Maskenrahmen` | wo eine Maske erscheint |
+| `dialog.Dialoge` | melden, auswählen lassen, nachfragen |
+
+Eine Maske bekommt alles über den Konstruktor: Daten, Meldungen, Rahmen. Sie
+liefert aus ihrer Aufbaumethode einen nackten `Region` — **kein `ScrollPane`**.
+Dessen Inhalt hängt erst nach dem Aufbau der Darstellung im Knotenbaum, ein
+`lookup` auf die Bedienelemente liefe vorher ins Leere. Das Einhüllen macht
+`Maskenrahmen`.
+
+Bedienelemente, die ein Test erreichen muss, tragen eine feste Kennung als
+Konstante der Maske (`AbrechnungsMaske.ID_START` und so fort).
+
 ## Wo eine Änderung hingehört
 
 | Vorhaben | Ort |
@@ -91,11 +112,17 @@ testen. Die 88 Tests des Projekts hängen daran.
 | Neuer Wert aus der Blaupause | `dta/Leistungsparameter.java` |
 | Segment- oder Feldregeln | JSON unter `gkv-core/src/main/resources/segments/` |
 | Neue Kasse als Ziel | `gkv-core/src/main/resources/billing-office-endpoints.json` |
-| Etwas an der Oberfläche | `gkv-ui/presentation/` |
+| Etwas an der Oberfläche | die zuständige Maske unter `gkv-ui/presentation/` |
+| Eine neue Maske | eigene Klasse nach dem Muster von `GruppenMaske`, nicht in `View` |
+| Eine neue Art Eingabefeld | `presentation/Feldbau.java` |
+| Eine neue Art Meldung | `presentation/dialog/Dialoge.java` und die beiden Umsetzungen |
 
-**Fachlogik gehört nie in `View`.** Die Klasse ist mit rund 1.400 Zeilen
-ohnehin zu groß; neue Fachlogik kommt nach `application/` oder in den
-zuständigen Dienst und wird von der Oberfläche nur aufgerufen.
+**Fachlogik gehört nie in eine Maske.** Sie kommt nach `application/` oder in
+den zuständigen Dienst und wird von der Oberfläche nur aufgerufen.
+
+**Und nichts Neues in `View`.** Die Klasse war einmal 1.438 Zeilen lang und
+ist auf 610 zurückgebaut; sie ist der Rahmen, nicht der Ort für neue Masken.
+Eine neue Maske wird eine eigene Klasse nach dem Muster von `GruppenMaske`.
 
 ## Persistenz
 
@@ -145,13 +172,14 @@ vermeiden. Solche Abläufe müssen anwendungsseitig serialisiert werden, wie bei
 ## Der Versandablauf
 
 ```
-View
- └── AbrechnungService.createAndDispatch(...)
-      └── DtaDispatchService.generateAndRoute(...)
-           ├── 1. alle Nachrichten erzeugen      (DtaFactory)
-           ├── 2. alle prüfen                    (DtaValidationService)
-           │      └── ein Fehler ⇒ DtaValidierungsException, nichts wird versendet
-           └── 3. erst dann zustellen            (BillingOfficeTransport)
+AbrechnungsMaske
+ └── Abrechnungslauf  (= AbrechnungService::createAndDispatch)
+      └── AbrechnungService.createAndDispatch(...)
+           └── DtaDispatchService.generateAndRoute(...)
+                ├── 1. alle Nachrichten erzeugen  (DtaFactory)
+                ├── 2. alle prüfen                (DtaValidationService)
+                │      └── ein Fehler ⇒ DtaValidierungsException, nichts wird versendet
+                └── 3. erst dann zustellen        (BillingOfficeTransport)
 ```
 
 Die Reihenfolge ist wesentlich: erst alles prüfen, dann zustellen. Sonst wäre
@@ -193,6 +221,31 @@ Keine nackten `RuntimeException`. Vorhanden sind:
   `101560000`
 - `Information/Valide.DTA` ist die Messlatte: sie muss unbeanstandet
   durchlaufen; jeder Einzeltest verletzt danach genau eine Vorgabe
+
+### Oberflächentests
+
+Es gibt **kein TestFX**, und das ist Absicht: dessen Wert liegt im Nachstellen
+echter Eingaben. Seit die Dialoge hinter `Dialoge` liegen, blockiert nichts
+mehr, und die Masken lassen sich unmittelbar aufbauen und auswerten. Das
+erspart die Abhängigkeit von Monocle, das jeder JavaFX-Fassung hinterherhinkt.
+
+```java
+JavaFxLaufzeit.aufFxFaden(() -> {
+    Region maske = new GruppenMaske(new JavaFxUiFactory(), texte, dialoge,
+            datenbank, rahmen).formular(null);
+    ((Button) maske.lookup("#" + GruppenMaske.ID_SPEICHERN)).fire();
+    assertEquals(texte.get("msg.groupNameRequired"), dialoge.einzige().text());
+});
+```
+
+Die Ersatzstücke liegen unter `gkv-ui/src/test/java/.../presentation/`:
+`SpeicherRepository` (Daten im Speicher), `AufzeichnendeDialoge` (sammelt
+Meldungen, gibt vorgegebene Antworten), `AufzeichnenderRahmen` (merkt sich,
+was gezeigt wurde).
+
+Jede Änderung an einem Bedienelement muss auf dem JavaFX-Faden laufen — sonst
+schlägt sie fehl. Im Bauknecht braucht die Laufzeit eine Anzeige; der Workflow
+ruft deshalb `xvfb-run -a mvn test`.
 
 ## Was im Projekt bewusst so ist
 
