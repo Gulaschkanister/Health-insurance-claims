@@ -1,0 +1,79 @@
+@startuml GKVTransmitter_Praesentation_und_Persistenz
+!pragma layout smetana
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+package "de.gkvtransmitter" {
+  class Main
+  class App
+}
+package "presentation" {
+  class Controller
+  class View
+  interface UiFactory
+  class JavaFxUiFactory
+  class FactoryManager
+}
+package "presentation.builder" {
+  class FormBuilder
+  class MenuBuilder
+}
+package "presentation.controller" {
+  class EditFormController<T>
+}
+package "presentation.populator" {
+  abstract class EntityFieldPopulator<T>
+  class PatientFieldPopulator
+  class ServiceProviderFieldPopulator
+}
+package "hibernate.sqllite" {
+  class HibernateSqllite
+}
+package "util" {
+  class AppMessages
+  class FieldValidator
+  class TagConfigLoader
+  class TagList
+  abstract class ModifierInstance
+}
+
+Main --> App
+App --> Controller
+App --> View
+Controller --> ApplicationBootstrap
+Controller --> GlobalDefinitions
+Controller --> FactoryManager
+Controller --> HibernateSqllite
+View --> Controller
+View --> UiFactory
+View --> FormBuilder
+View --> MenuBuilder
+View --> EditFormController
+View --> PatientFieldPopulator
+View --> ServiceProviderFieldPopulator
+View --> DtaDispatchService
+JavaFxUiFactory ..|> UiFactory
+FactoryManager o-- "0..*" Factory
+FormBuilder --> UiFactory
+MenuBuilder --> UiFactory
+EditFormController --> EntityFieldPopulator
+PatientFieldPopulator --|> EntityFieldPopulator
+ServiceProviderFieldPopulator --|> EntityFieldPopulator
+EntityFieldPopulator --> FieldValidator
+HibernateSqllite --> HibernateUtil
+HibernateSqllite --> Patient
+HibernateSqllite --> ServiceProvider
+HibernateSqllite --> PersonGroup
+HibernateSqllite --> Blueprint
+TagConfigLoader --> TagList
+TagList o-- "0..*" ModifierInstance
+FieldValidator --> InputOption
+
+legend right
+  Praesentation und Datenzugriff sind getrennt dargestellt.
+  Die UI nutzt Services und Populatoren;
+  HibernateSqllite kapselt den Datenbankzugriff.
+endlegend
+@enduml

@@ -1,0 +1,128 @@
+@startuml GKVTransmitter_Domaene
+!pragma layout smetana
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+package "entity" {
+  abstract class Person {
+    -int id
+    -String firstname
+    -String lastname
+    -int plz
+    -int ik
+    -int kassenIk
+    -LocalDate birthDate
+  }
+  class Patient
+  class ServiceProvider
+  class PersonGroup {
+    -String name
+    -Set<Patient> patients
+    -Set<ServiceProvider> serviceProviders
+  }
+  class Blueprint {
+    -Long id
+    -String name
+    -String templateName
+    -String payload
+  }
+}
+
+package "model" {
+  class Abrechnung {
+    -Patient patient
+    -ServiceProvider provider
+    -Blueprint blueprint
+    -int appointments
+    -LocalDateTime createdAt
+  }
+  class Invoice {
+    -Map<String, SegmentDefinition> segments
+    -InvoiceType messageType
+  }
+  class DtaMessage {
+    -String sourceName
+    -String invoicerName
+    -List<SegmentInfo> segments
+    -Map<String, String> headerCodes
+  }
+}
+
+package "model.segment" {
+  class Segment {
+    -List<FieldValue> fieldValues
+    -SegmentDefinition definition
+  }
+  class SegmentDefinition {
+    -Map<Integer, FieldDefinition> fieldDefinitions
+    -String name
+    -boolean repeatable
+  }
+  class SegmentInfo {
+    -int position
+    -String segmentType
+    -InvoiceType messageType
+  }
+  class ValueFieldEntry {
+    -Object value
+    -InputOption inputField
+  }
+}
+
+package "model.segment.field" {
+  class FieldDefinition {
+    -int position
+    -FieldType type
+    -boolean mandatory
+    -int maxLength
+    -String name
+  }
+  class FieldValue {
+    -FieldDefinition definition
+    -Object value
+  }
+  enum FieldType {
+    DATE
+    NUMBER
+    STRING
+  }
+  enum PersonRole {
+    PATIENT
+    SERVICE_PROVIDER
+  }
+}
+
+enum InvoiceType {
+  SLLA
+  SLGA
+}
+enum InputOption {
+  CODE
+  NUMBER
+  STRING
+  DATE
+  TIME
+}
+
+Patient --|> Person
+ServiceProvider --|> Person
+PersonGroup o-- "0..*" Patient
+PersonGroup o-- "0..*" ServiceProvider
+Abrechnung --> Patient
+Abrechnung --> ServiceProvider
+Abrechnung --> Blueprint
+Invoice o-- "0..*" SegmentDefinition
+DtaMessage o-- "0..*" SegmentInfo
+SegmentInfo o-- "0..*" ValueFieldEntry
+Segment o-- "0..*" FieldValue
+Segment --> SegmentDefinition
+SegmentDefinition o-- "0..*" FieldDefinition
+FieldValue --> FieldDefinition
+Invoice --> InvoiceType
+SegmentInfo --> InvoiceType
+FieldDefinition --> FieldType
+FieldDefinition --> PersonRole
+ValueFieldEntry --> InputOption
+@enduml

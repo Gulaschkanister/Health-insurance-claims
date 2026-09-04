@@ -1,0 +1,93 @@
+@startuml GKVTransmitter_DTA_und_Versand
+!pragma layout smetana
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+package "parser" {
+  interface ParserFactory<T> {
+    +parse()
+  }
+  interface Factory {
+    +create()
+  }
+}
+package "parser.json" {
+  class JsonParserFactory {
+    -ObjectMapper objectMapper
+    -Map<InvoiceType, Invoice> profileByTypeCache
+    +parseProfiles()
+    +parseInvoices()
+    +parseSegments()
+  }
+}
+package "bootstrap" {
+  class ApplicationBootstrap {
+    -GlobalDefinitions globalDefinitions
+    -FactoryManager factoryManager
+    +initialize()
+  }
+}
+package "definition" {
+  class GlobalDefinitions {
+    -Map<InvoiceType, Invoice> profileCollection
+    -Map<String, DtaMessage> invoiceTemplateCollection
+    +getInstance()
+    +registerProfile(...)
+    +registerInvoiceTemplate(...)
+  }
+}
+package "dta" {
+  class DtaFactory {
+    +buildDtaFor(Abrechnung, long, String, String)
+    +writeDtaFile(String, Path, String)
+  }
+}
+package "dispatch" {
+  class DtaDispatchService {
+    -BillingOfficeEndpointRegistry endpointRegistry
+    -BillingOfficeTransport transport
+    +generateAndRoute(...)
+    +checkConfiguredEndpoints()
+    +parseResponse(String)
+  }
+  interface BillingOfficeTransport {
+    +send(Path, BillingOfficeEndpoint)
+    +probe(BillingOfficeEndpoint)
+  }
+  class FileBillingOfficeTransport
+  class BillingOfficeEndpointRegistry {
+    -Map<Integer, BillingOfficeEndpoint> endpoints
+    -Path fallbackRoot
+    +resolve(int, Path)
+  }
+  class BillingOfficeEndpoint <<record>>
+  class DispatchBatch
+}
+
+JsonParserFactory ..|> ParserFactory
+JsonParserFactory ..|> Factory
+FileBillingOfficeTransport ..|> BillingOfficeTransport
+ApplicationBootstrap --> JsonParserFactory
+ApplicationBootstrap --> GlobalDefinitions
+ApplicationBootstrap --> FactoryManager
+JsonParserFactory --> Invoice
+JsonParserFactory --> DtaMessage
+JsonParserFactory --> SegmentDefinition
+GlobalDefinitions o-- "0..*" Invoice
+GlobalDefinitions o-- "0..*" DtaMessage
+DtaDispatchService --> DtaFactory
+DtaDispatchService --> Abrechnung
+DtaDispatchService --> BillingOfficeEndpointRegistry
+DtaDispatchService --> BillingOfficeTransport
+DtaDispatchService --> DispatchBatch
+
+legend right
+  Ablauf: Bootstrap -> Parser -> Definitionen
+  Abrechnung -> DTA Factory -> Dispatch Service -> Transport
+  ..|> = Implementierung
+  -->  = Nutzung / Abhaengigkeit
+  o--  = enthaltene Sammlung
+endlegend
+@enduml

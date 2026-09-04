@@ -70,10 +70,24 @@ Nicht jede Struktur im Diagramm ist ein Design Pattern. Klassen wie `Patient` od
 
 ### Einordnung des PlantUML-Diagramms
 
-`Information/Projektklassen.puml` stellt diese Architektur als Klassen- und Abhängigkeitsdiagramm dar. Die Vererbung, Factory-Implementierungen, Domänenbeziehungen sowie die Abhängigkeiten zwischen UI, Bootstrap, Parser, DTA-Erzeugung, Versand und Persistenz sind enthalten. Die direkten Abhängigkeiten des `View` zu `Blueprint`, `PersonGroup`, `Abrechnung` und `DtaDispatchService` sind ebenfalls eingetragen.
+Die UML-Dokumentation ist in vier Ansichten aufgeteilt. `Information/Projektklassen.puml` ist die Paketübersicht; `01_Domaene.puml` zeigt das Domänenmodell, `02_DTA_und_Versand.puml` den Parsing-, Erzeugungs- und Versandablauf und `03_Praesentation_und_Persistenz.puml` die UI- und Datenbankseite. Die Vererbung, Factory-Implementierungen, Domänenbeziehungen sowie die wichtigsten Abhängigkeiten sind dadurch einzeln lesbar.
 
 Das Diagramm ist damit inhaltlich passend zum aktuellen Programmstand. Es ist bewusst kein vollständiges Diagramm aller JavaFX- und Hibernate-Typen, damit die fachlich wichtigen Beziehungen lesbar bleiben.
 
-## UML-Klassendiagramm
+## UML-Diagramme
 
-![UML-Klassendiagramm des GKVTransmitters](GKVTransmitterProjektklassen.png)
+### Paketübersicht
+
+![Paketübersicht des GKVTransmitters](GKVTransmitter_Uebersicht.png)
+
+### Domänenmodell
+
+![Domänenmodell des GKVTransmitters](GKVTransmitter_Domaene.png)
+
+### DTA und Versand
+
+![DTA-Verarbeitung und Versand](GKVTransmitter_DTA_und_Versand.png)
+
+### Präsentation und Persistenz
+
+![Präsentation und Persistenz](GKVTransmitter_Praesentation_und_Persistenz.png)
