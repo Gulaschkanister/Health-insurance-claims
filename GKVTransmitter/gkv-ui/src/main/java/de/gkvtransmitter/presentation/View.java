@@ -3,17 +3,13 @@ package de.gkvtransmitter.presentation;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,19 +31,11 @@ import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.Anwendungsverzeichnis;
 import de.gkvtransmitter.util.AppMessages;
-import de.gkvtransmitter.util.FieldValidator;
-import de.gkvtransmitter.util.ModifierInstance;
-import de.gkvtransmitter.util.TagConfigLoader;
-import de.gkvtransmitter.util.TagList;
-import de.gkvtransmitter.util.modifiers.MaxLengthModifier;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -55,9 +43,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
@@ -93,6 +79,9 @@ public class View {
     /** Alle Meldungen an den Anwender laufen hierueber, siehe {@link Dialoge}. */
     private final Dialoge dialoge = new JavaFxDialoge();
 
+    /** Baut die Eingabefelder der Formulare und liest sie wieder aus. */
+    private final Feldbau feldbau;
+
     /**
      * Der Platz, an dem die Masken erscheinen: die Mitte des Rahmens.
      *
@@ -103,6 +92,12 @@ public class View {
     private final Maskenrahmen rahmen = new Maskenrahmen() {
         @Override
         public void zeige(Region inhalt) {
+            // Was schon scrollt, wird nicht ein zweites Mal eingehuellt:
+            // EditFormController liefert bereits ein ScrollPane.
+            if (inhalt instanceof ScrollPane) {
+                skeleton.setCenter(inhalt);
+                return;
+            }
             ScrollPane scroll = new ScrollPane(inhalt);
             scroll.setFitToWidth(true);
             skeleton.setCenter(scroll);
@@ -120,6 +115,7 @@ public class View {
         this.messages = new AppMessages("/messages/ui-messages.json");
         this.objectMapper = new ObjectMapper();
         this.invoiceCodeOptions = loadInvoiceCodeOptions();
+        this.feldbau = new Feldbau(this.componentFactory, this.messages);
         this.patientPopulator = new PatientFieldPopulator();
         this.serviceProviderPopulator = new ServiceProviderFieldPopulator();
         this.abrechnungService = java.util.Objects.requireNonNull(abrechnungService,
@@ -504,148 +500,33 @@ public class View {
     }
 
     private void editPatient() {
-        Patient selectedPatient = selectEntity(
-            controller.getDatabase().getAllPatients(),
-            patientPopulator::getDisplayName,
-            messages.get("menu.patient"),
-            messages.get("label.selectPatient"));
-        if (selectedPatient == null) {
-            return;
-        }
-
-        EditFormController<Patient> editController = new EditFormController<>(
-                componentFactory,
-                messages,
-                patientPopulator,
-            () -> List.of(selectedPatient),
-                patient -> controller.getDatabase().savePatient(patient),
-                patient -> controller.getDatabase().deletePatient(patient),
-                false,
-                fieldName -> createInputFieldFromTagList(fieldName,
-                        TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
-                "Patient",
-            fc -> {
-            },
-            ec -> skeleton.setCenter(ec.buildEditForm())
-        );
-        skeleton.setCenter(editController.buildEditForm());
+        personenMaske().teilnehmerBearbeiten();
     }
 
     private void editServiceProvider() {
-        ServiceProvider selectedServiceProvider = selectEntity(
-            controller.getDatabase().getAllServiceProviders(),
-            serviceProviderPopulator::getDisplayName,
-            messages.get("menu.self"),
-            messages.get("label.selectServiceProvider"));
-        if (selectedServiceProvider == null) {
-            return;
-        }
-
-        EditFormController<ServiceProvider> editController = new EditFormController<>(
-                componentFactory,
-                messages,
-                serviceProviderPopulator,
-            () -> List.of(selectedServiceProvider),
-                sp -> controller.getDatabase().saveServiceProvider(sp),
-                sp -> controller.getDatabase().deleteServiceProvider(sp),
-                false,
-                fieldName -> createInputFieldFromTagList(fieldName,
-                        TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(fieldName)),
-                "ServiceProvider",
-                fc -> {
-                },
-                ec -> skeleton.setCenter(ec.buildEditForm())
-        );
-        skeleton.setCenter(editController.buildEditForm());
-        //TODO: Patienten bearbeiten
+        personenMaske().dienstleisterBearbeiten();
     }
 
     private void deletePatient() {
-        deleteEntity(
-                controller.getDatabase().getAllPatients(),
-                patientPopulator::getDisplayName,
-                patient -> controller.getDatabase().deletePatient(patient),
-                messages.get("msg.noPatients"),
-                messages.get("msg.patientDeleted"),
-            messages.get("label.selectPatient"));
+        personenMaske().teilnehmerLoeschen();
     }
 
     private void deleteServiceProvider() {
-        deleteEntity(
-                controller.getDatabase().getAllServiceProviders(),
-                serviceProviderPopulator::getDisplayName,
-                sp -> controller.getDatabase().deleteServiceProvider(sp),
-                messages.get("msg.noServiceProviders"),
-                messages.get("msg.selfDeleted"),
-            messages.get("label.selectServiceProvider"));
+        personenMaske().dienstleisterLoeschen();
     }
 
-    private <T> void deleteEntity(
-            List<T> entities,
-            Function<T, String> displayNameProvider,
-            Consumer<T> deleteAction,
-            String emptyMessage,
-            String successMessage,
-            String selectionLabel) {
-        if (entities == null || entities.isEmpty()) {
-            showInfoDialog(messages.get("dialog.info.title"), emptyMessage);
-            return;
-        }
-
-        List<String> displayNames = new ArrayList<>();
-        Map<String, T> entityByDisplayName = new LinkedHashMap<>();
-        for (T entity : entities) {
-            String displayName = displayNameProvider.apply(entity);
-            displayNames.add(displayName);
-            entityByDisplayName.put(displayName, entity);
-        }
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(displayNames.get(0), displayNames);
-        dialog.setTitle(messages.get("msg.deleteConfirmTitle"));
-        dialog.setHeaderText(messages.get("msg.deleteConfirmHeader"));
-        dialog.setContentText(selectionLabel);
-
-        Optional<String> selection = dialog.showAndWait();
-        if (selection.isEmpty()) {
-            return;
-        }
-
-        String chosenDisplayName = selection.get();
-        T entity = entityByDisplayName.get(chosenDisplayName);
-        if (entity == null) {
-            showErrorDialog(messages.get("dialog.error.title"), "Ausgewählter Eintrag konnte nicht gefunden werden.");
-            return;
-        }
-
-        Alert confirm = new Alert(AlertType.CONFIRMATION);
-        confirm.setTitle(messages.get("msg.deleteConfirmTitle"));
-        confirm.setHeaderText(messages.get("msg.deleteConfirmHeader"));
-        confirm.setContentText(String.format(messages.get("msg.deleteConfirmBody"), chosenDisplayName));
-
-        Optional<javafx.scene.control.ButtonType> result = confirm.showAndWait();
-        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
-            try {
-                deleteAction.accept(entity);
-                showInfoDialog(messages.get("dialog.info.title"), successMessage);
-            } catch (Exception e) {
-                showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Öffnet das Formular zur Erstellung eines neuen Patienten.
-     */
     private void createPerson() {
-        showCreatePersonForm(messages.get("title.patient.new"), false);
+        personenMaske().neuerTeilnehmer();
     }
 
-    /**
-     * Öffnet das Formular zur Erstellung eines neuen Service Providers
-     * (Selbst).
-     */
     private void createSelfPerson() {
-        showCreatePersonForm(messages.get("title.self.new"), true);
+        personenMaske().neuerDienstleister();
+    }
+
+    /** Baut die Personenmaske auf den aktuellen Rahmen, siehe {@link #gruppenMaske()}. */
+    private PersonenMaske personenMaske() {
+        return new PersonenMaske(componentFactory, messages, dialoge, controller.getDatabase(), rahmen,
+                feldbau, patientPopulator, serviceProviderPopulator);
     }
 
     private void createGroup() {
@@ -669,316 +550,6 @@ public class View {
      */
     private GruppenMaske gruppenMaske() {
         return new GruppenMaske(componentFactory, messages, dialoge, controller.getDatabase(), rahmen);
-    }
-
-    /**
-     * Laesst einen Eintrag aus einer Liste auswaehlen.
-     *
-     * @return der gewaehlte Eintrag, oder {@code null} bei Abbruch
-     */
-    private <T> T selectEntity(List<T> entities, Function<T, String> displayNameProvider, String title,
-            String contentText) {
-        return dialoge.waehleAus(title, contentText, entities, displayNameProvider).orElse(null);
-    }
-
-    /**
-     * Zeigt das Formular zur Erstellung eines neuen Patienten oder Service
-     * Providers an.
-     *
-     * @param titleText Der Titel des Formulars
-     * @param createServiceProvider Ob ein Service Provider (Selbst) oder ein
-     * Patient erstellt werden soll
-     */
-    private void showCreatePersonForm(String titleText, boolean createServiceProvider) {
-        Map<String, TagList> tagConfig = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
-        Map<String, Node> inputFields = new HashMap<>();
-        List<Node> fieldNodes = new ArrayList<>();
-
-        for (Map.Entry<String, TagList> entry : tagConfig.entrySet()) {
-            String fieldName = entry.getKey();
-            Node inputField = createInputFieldFromTagList(fieldName, entry.getValue());
-            inputFields.put(fieldName, inputField);
-
-            fieldNodes.add(componentFactory.createBorderPane(
-                    componentFactory.createLabel(messages.get("field." + fieldName)),
-                    inputField,
-                    null, null, null));
-        }
-
-        Button saveButton = componentFactory.createButton(messages.get("button.save"));
-        saveButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
-        saveButton.setOnAction(event -> savePerson(inputFields, createServiceProvider));
-
-        Button cancelButton = componentFactory.createButton(messages.get("button.cancel"));
-        cancelButton.setStyle("-fx-padding: 10; -fx-font-size: 14;");
-        cancelButton.setOnAction(event -> skeleton.setCenter(null));
-
-        HBox buttonBox = new HBox(10);
-        buttonBox.setPadding(new Insets(10));
-        buttonBox.getChildren().addAll(saveButton, cancelButton);
-
-        VBox vbox = new VBox(10);
-        vbox.setPadding(new Insets(20));
-        Label title = componentFactory.createLabel(titleText);
-        title.setStyle("-fx-font-size: 18; -fx-font-weight: bold;");
-        GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
-        vbox.getChildren().addAll(title, contentGrid, buttonBox);
-
-        ScrollPane scrollPane = new ScrollPane(vbox);
-        scrollPane.setFitToWidth(true);
-        skeleton.setCenter(scrollPane);
-    }
-
-    /**
-     * Speichert einen neuen Patienten oder Service Provider basierend auf den
-     * eingegebenen Daten.
-     *
-     * @param inputFields Die Map der Eingabefelder mit ihren zugehörigen
-     * UI-Komponenten
-     * @param saveAsServiceProvider Ob die Daten als Service Provider (Selbst)
-     * oder als Patient gespeichert werden sollen
-     */
-    private void savePerson(Map<String, Node> inputFields, boolean saveAsServiceProvider) {
-        try {
-            String firstname = getFieldText(inputFields.get("firstname"));
-            String lastname = getFieldText(inputFields.get("lastname"));
-            String street = getFieldText(inputFields.get("street"));
-            String country = getFieldText(inputFields.get("country"));
-            String housenumber = getFieldText(inputFields.get("housenumber"));
-            int plz = Integer.parseInt(getFieldText(inputFields.get("plz")));
-            int ik = Integer.parseInt(getFieldText(inputFields.get("ik")));
-            int kassenIk = Integer.parseInt(getFieldText(inputFields.get("kassenIk")));
-            LocalDate birthDate = null;
-            Node birthNode = inputFields.get("birthDate");
-            if (birthNode instanceof DatePicker dp) {
-                birthDate = dp.getValue();
-            }
-
-            if (saveAsServiceProvider) {
-                ServiceProvider sp = new ServiceProvider(firstname, lastname, street, country, housenumber, plz, ik, kassenIk, birthDate);
-                controller.getDatabase().saveServiceProvider(sp);
-            } else {
-                Patient p = new Patient(firstname, lastname, street, country, housenumber, plz, ik, kassenIk, birthDate);
-                controller.getDatabase().savePatient(p);
-            }
-
-            showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.patientCreated"));
-            skeleton.setCenter(null);
-        } catch (NumberFormatException e) {
-            showErrorDialog(messages.get("dialog.error.title"), messages.get("msg.invalidNumbers"));
-        } catch (Exception e) {
-            showErrorDialog(messages.get("dialog.error.title"), e.getMessage());
-        }
-    }
-
-    /**
-     * Erstellt ein Eingabefeld basierend auf der TagList-Konfiguration für ein
-     * bestimmtes Feld.
-     *
-     * @param fieldName - der Name des Feldes, für das das Eingabefeld erstellt
-     * werden soll
-     * @param tagList - die TagList, die die Konfiguration für das Feld enthält,
-     * einschließlich der InputOption und möglicher Modifier
-     * @return das erstellte Node, das als Eingabefeld für das angegebene Feld
-     * verwendet werden kann
-     */
-    private Node createInputFieldFromTagList(String fieldName, TagList tagList) {
-        if (tagList == null) {
-            return componentFactory.createTextField();
-        }
-
-        InputOption inputOption = tagList.getInputOption();
-        return switch (inputOption) {
-            case STRING -> {
-                TextField tf = componentFactory.createTextField();
-                applyMaxLengthModifier(tf, tagList);
-                yield tf;
-            }
-            case NUMBER -> {
-                Spinner<Integer> spinner = componentFactory.createSpinner(Integer.class, null, inputOption);
-                yield createValidatedSpinnerNode(fieldName, spinner, inputOption, "Integer");
-            }
-            case PERCENT, COST -> {
-                Spinner<BigDecimal> spinner = componentFactory.createSpinner(BigDecimal.class, null, inputOption);
-                yield createValidatedSpinnerNode(fieldName, spinner, inputOption, "BigDecimal");
-            }
-            case CODE ->
-                componentFactory.createComboBox(false);
-            case NUMBER_SUGGESTION ->
-                componentFactory.createComboBox(true);
-            case DATE, TIME ->
-                componentFactory.createDatePicker();
-            default ->
-                componentFactory.createTextField();
-        };
-    }
-
-    /**
-     * Erstellt ein validiertes Spinner-Node mit einem Fehlerlabel, das die
-     * Eingabe basierend auf dem Feldnamen, der InputOption und dem Java-Feldtyp
-     * validiert.
-     *
-     * @param fieldName - der Name des Feldes, das validiert werden soll, z.B.
-     * "plz" für Postleitzahl
-     * @param spinner - der Spinner, der validiert werden soll
-     * @param inputOption - die InputOption, die den Typ der Eingabe angibt,
-     * z.B. NUMBER oder PERCENT
-     * @param javaFieldType - der Java-Typ des Feldes, z.B. "Integer" oder
-     * "BigDecimal", der für die Validierung berücksichtigt werden kann
-     * @return ein Node, das den Spinner und ein Fehlerlabel enthält, das die
-     * Validierungsergebnisse anzeigt
-     */
-    private Node createValidatedSpinnerNode(String fieldName, Spinner<?> spinner,
-            InputOption inputOption, String javaFieldType) {
-        Label errorLabel = componentFactory.createLabel("");
-        errorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 11;");
-        errorLabel.setVisible(false);
-
-        VBox box = new VBox(4);
-        box.getChildren().addAll(spinner, errorLabel);
-
-        Runnable validate = () -> validateSpinner(spinner, fieldName, errorLabel, inputOption, javaFieldType);
-
-        spinner.valueProperty().addListener((obs, o, n) -> validate.run());
-        if (spinner.getEditor() != null) {
-            spinner.getEditor().textProperty().addListener((obs, o, n) -> validate.run());
-            spinner.getEditor().focusedProperty().addListener((obs, oldF, newF) -> {
-                if (!newF) {
-                    validate.run();
-                }
-            });
-        }
-
-        validate.run();
-        return box;
-    }
-
-    /**
-     * Erstellt ein Eingabefeld basierend auf der InputOption und anderen
-     * Parametern, die in der TagList definiert sind.
-     *
-     * @param spinner - der Spinner, der validiert werden soll
-     * @param fieldName - der Name des Feldes, das validiert werden soll, z.B.
-     * "plz" für Postleitzahl
-     * @param errorLabel - das Label, das Fehlermeldungen anzeigt, wenn die
-     * Validierung fehlschlägt
-     * @param inputOption - die InputOption, die den Typ der Eingabe angibt,
-     * z.B. NUMBER oder PERCENT
-     * @param javaFieldType - der Java-Typ des Feldes, z.B. "Integer" oder
-     * "BigDecimal", der für die Validierung berücksichtigt werden kann
-     */
-    private void validateSpinner(Spinner<?> spinner, String fieldName, Label errorLabel,
-            InputOption inputOption, String javaFieldType) {
-        String valText = "";
-        try {
-            if (spinner.getEditor() != null && !spinner.getEditor().getText().isBlank()) {
-                valText = spinner.getEditor().getText();
-            } else if (spinner.getValue() != null) {
-                valText = String.valueOf(spinner.getValue());
-            }
-        } catch (Exception ignored) {
-        }
-
-        if ("plz".equalsIgnoreCase(fieldName) && !valText.isBlank()) {
-            if (!valText.matches("\\d{5}")) {
-                errorLabel.setText("PLZ muss 5-stellig sein");
-                errorLabel.setVisible(true);
-                spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
-                return;
-            }
-        }
-
-        if (spinner.getValueFactory() instanceof SpinnerValueFactory.IntegerSpinnerValueFactory intVf) {
-            try {
-                int min = intVf.getMin();
-                int max = intVf.getMax();
-                if (!valText.isBlank()) {
-                    int cur = Integer.parseInt(valText);
-                    if (cur < min || cur > max) {
-                        errorLabel.setText(String.format("Wert muss zwischen %d und %d liegen", min, max));
-                        errorLabel.setVisible(true);
-                        spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
-                        return;
-                    }
-                }
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
-        FieldValidator.ValidationResult res = FieldValidator.validate(fieldName, valText, inputOption, javaFieldType);
-        if (res == null || res.isValid) {
-            errorLabel.setVisible(false);
-            spinner.setStyle(null);
-        } else {
-            errorLabel.setText(res.errorMessage != null ? res.errorMessage : "Ungültiger Wert");
-            errorLabel.setVisible(true);
-            spinner.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
-        }
-    }
-
-    /**
-     * Wendet den MaxLengthModifier aus der TagList auf ein TextField an, um die
-     * maximale Länge der Eingabe zu begrenzen.
-     *
-     * @param textField das TextField, auf das der MaxLengthModifier angewendet
-     * werden soll
-     * @param tagList die TagList, die die Modifier enthält, einschließlich des
-     * MaxLengthModifier
-     */
-    private void applyMaxLengthModifier(TextField textField, TagList tagList) {
-        for (ModifierInstance modifier : tagList.getModifierList()) {
-            if (modifier instanceof MaxLengthModifier mmod) {
-                int maxLength = mmod.getMaxLength();
-                textField.setTextFormatter(new TextFormatter<>(change -> {
-                    if (change.getControlNewText().length() <= maxLength) {
-                        return change;
-                    }
-                    return null;
-                }));
-            }
-        }
-    }
-
-    /**
-     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ. Wenn
-     * das Element in einer VBox verpackt ist, wird das erste Kind der VBox als
-     * Ziel für die Textgewinnung verwendet. Unterstützt verschiedene
-     * UI-Komponenten wie TextInputControl, Spinner, ComboBox und DatePicker, um
-     * den entsprechenden Textwert zurückzugeben. Wenn der Typ des UI-Elements
-     * nicht erkannt wird oder kein Text extrahiert werden kann, wird ein leerer
-     * String zurückgegeben.
-     *
-     * @param node das UI-Element, aus dem der Textwert extrahiert werden soll,
-     * z.B. ein TextField, Spinner, ComboBox oder DatePicker
-     * @return der Textwert des UI-Elements oder ein leerer String, wenn kein
-     * Text extrahiert werden kann
-     */
-    private String getFieldText(Node node) {
-        Node target = node;
-        if (node instanceof VBox v && !v.getChildren().isEmpty()) {
-            target = v.getChildren().get(0);
-        }
-
-        switch (target) {
-            case TextInputControl tic -> {
-                return tic.getText();
-            }
-            case Spinner<?> spinner -> {
-                Object value = spinner.getValue();
-                return value != null ? String.valueOf(value) : "";
-            }
-            case ComboBox<?> cb -> {
-                Object value = cb.getValue();
-                return value != null ? String.valueOf(value) : "";
-            }
-            case DatePicker dp -> {
-                var value = dp.getValue();
-                return value != null ? value.toString() : "";
-            }
-            default -> {
-            }
-        }
-        return "";
     }
 
     /**

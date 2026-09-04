@@ -62,11 +62,17 @@ class SpeicherRepository implements DataRepository {
 
     @Override
     public void savePatient(Patient patient) {
+        if (fehlerBeimSpeichern != null) {
+            throw fehlerBeimSpeichern;
+        }
         patienten.add(patient);
     }
 
     @Override
     public void saveServiceProvider(ServiceProvider serviceProvider) {
+        if (fehlerBeimSpeichern != null) {
+            throw fehlerBeimSpeichern;
+        }
         dienstleister.add(serviceProvider);
     }
 
