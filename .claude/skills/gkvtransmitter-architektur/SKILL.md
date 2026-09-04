@@ -1,6 +1,6 @@
 ---
 name: gkvtransmitter-architektur
-description: Aufbau des GKVTransmitter, Schichtenregeln und wo welche Änderung hingehört. Verwenden vor jeder Änderung am Code — beim Anlegen neuer Klassen, beim Ändern von Persistenz, Versand, Validierung oder Oberfläche, beim Bauen und Testen (nur über WSL), sowie bei Fragen zu Modulen, Paketen, Hibernate, SQLite oder JavaFX in diesem Projekt.
+description: Aufbau des GKVTransmitter, Schichtenregeln und wo welche Änderung hingehört. Verwenden vor jeder Änderung am Code — beim Anlegen neuer Klassen, beim Ändern von Persistenz, Versand, Validierung oder Oberfläche, beim Bauen, Testen und Paketieren, sowie bei Fragen zu Modulen, Paketen, Hibernate, SQLite, JavaFX oder zur Auslieferung dieses Projekts.
 ---
 
 # Aufbau des GKVTransmitter
