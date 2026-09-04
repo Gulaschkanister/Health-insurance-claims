@@ -16,13 +16,16 @@ import de.gkvtransmitter.util.modifiers.NumberModifier;
 import de.gkvtransmitter.util.modifiers.SpecialCharModifier;
 import de.gkvtransmitter.util.modifiers.TextModifier;
 
-public class TagConfigLoader {
+public final class TagConfigLoader {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private TagConfigLoader() {
+    }
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
      * Loads tag configuration from a JSON resource file and returns a Map of field names to TagLists.
-     * 
+     *
      * @param resourcePath the classpath resource path (e.g., "/tags/person-tags.json")
      * @return Map<String, TagList> with loaded configurations
      */
@@ -32,7 +35,7 @@ public class TagConfigLoader {
             if (inputStream == null) {
                 throw new IllegalArgumentException("Resource not found: " + resourcePath);
             }
-            JsonNode root = mapper.readTree(inputStream);
+            JsonNode root = MAPPER.readTree(inputStream);
             root.fields().forEachRemaining(entry -> {
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
@@ -73,11 +76,15 @@ public class TagConfigLoader {
             case "SPECIAL_CHAR" -> (ModifierInstance) new SpecialCharModifier();
             case "NO_DECIMAL_PLACE" -> (ModifierInstance) new NoDecimalPlaceModifier();
             case "MAX_LENGTH" -> {
-                if (value == null) throw new IllegalArgumentException("MAX_LENGTH requires a value");
+                if (value == null) {
+                    throw new IllegalArgumentException("MAX_LENGTH requires a value");
+                }
                 yield (ModifierInstance) new MaxLengthModifier(Integer.parseInt(value));
             }
             case "DECIMAL_PLACE" -> {
-                if (value == null) throw new IllegalArgumentException("DECIMAL_PLACE requires a value");
+                if (value == null) {
+                    throw new IllegalArgumentException("DECIMAL_PLACE requires a value");
+                }
                 yield (ModifierInstance) new DecimalPlaceModifier(Integer.parseInt(value));
             }
             default -> throw new IllegalArgumentException("Unknown modifier type: " + type);

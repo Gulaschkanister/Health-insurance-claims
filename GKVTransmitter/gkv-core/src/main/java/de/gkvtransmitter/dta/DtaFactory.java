@@ -28,7 +28,7 @@ import de.gkvtransmitter.model.Abrechnung;
  * auf 2 - richtig, solange genau zwei Nachrichten entstehen, aber still falsch,
  * sobald sich daran etwas aendert.</p>
  */
-public class DtaFactory {
+public final class DtaFactory {
 
     private static final DateTimeFormatter HEADER_TIME = DateTimeFormatter.ofPattern("yyyyMMdd:HHmm");
     private static final DateTimeFormatter BASIC_DATE = DateTimeFormatter.BASIC_ISO_DATE;

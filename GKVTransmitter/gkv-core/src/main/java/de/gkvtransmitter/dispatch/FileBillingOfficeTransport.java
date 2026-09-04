@@ -37,10 +37,13 @@ public class FileBillingOfficeTransport implements BillingOfficeTransport {
             return new BillingOfficeEndpointCheck(-1, "unbekannt", null, false, "Endpoint ist null");
         }
         if (!endpoint.enabled()) {
-            return new BillingOfficeEndpointCheck(endpoint.kassenIk(), endpoint.name(), endpoint.destinationDirectory(), false, "Endpoint ist deaktiviert");
+            return new BillingOfficeEndpointCheck(endpoint.kassenIk(), endpoint.name(),
+                    endpoint.destinationDirectory(), false, "Endpoint ist deaktiviert");
         }
         if (endpoint.transportType() != BillingOfficeTransportType.FILE) {
-            return new BillingOfficeEndpointCheck(endpoint.kassenIk(), endpoint.name(), endpoint.destinationDirectory(), false, "Transporttyp wird von File-Transport nicht unterstützt");
+            return new BillingOfficeEndpointCheck(endpoint.kassenIk(), endpoint.name(),
+                    endpoint.destinationDirectory(), false,
+                    "Transporttyp wird von File-Transport nicht unterstützt");
         }
 
         try {
@@ -53,7 +56,8 @@ public class FileBillingOfficeTransport implements BillingOfficeTransport {
                     writable,
                     writable ? "Zielverzeichnis ist erreichbar" : "Zielverzeichnis ist nicht beschreibbar");
         } catch (IOException e) {
-            return new BillingOfficeEndpointCheck(endpoint.kassenIk(), endpoint.name(), endpoint.destinationDirectory(), false, e.getMessage());
+            return new BillingOfficeEndpointCheck(endpoint.kassenIk(), endpoint.name(),
+                    endpoint.destinationDirectory(), false, e.getMessage());
         }
     }
 }

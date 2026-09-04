@@ -41,7 +41,7 @@ public class Person {
         this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
     }
 
-   
+
 
     public Person(String firstname, String lastname, String street, String country, String housenumber, int plz,
             int ik, int kassenIk, LocalDate birthDate) {

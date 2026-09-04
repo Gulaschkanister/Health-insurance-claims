@@ -168,6 +168,15 @@ Nach Nutzen geordnet:
 4. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
    fachliche Zulässigkeit geprüft. Dafür bräuchte es die Schlüsseltabellen aus
    Anlage 3 als JSON — dann wäre es eine weitere `ValidationRule`.
+5. **Die Summenfelder werden von Hand eingetragen, nicht gerechnet.**
+   `GES` Position 2 und 3 („Summe Leistung", „Summe Gesamtbetrag") und `BES`
+   Position 1 („Gesamtbetrag") stehen in den Segmentdateien auf
+   `"internal": false` und erscheinen deshalb im Blaupausenformular. Kein Code
+   berechnet sie aus den Einzelpositionen — das prüfte ich am 05.09.2026 nach.
+   Solange das so ist, ist die Einstufung richtig: setzte man sie auf
+   `internal`, blieben sie leer. Sobald jemand sie rechnet, gehören sie
+   umgestellt, denn eine von Hand getippte Summe, die den Positionen
+   widerspricht, ist genau das, was `DtaValidationService` zurückweist.
 
 ### E. Echter Übermittlungsweg
 
@@ -187,8 +196,28 @@ das Beste, was geht.
 - **Die Meldungsecke liegt über der Maske.** Bei schmalem Fenster kann eine
   stehende Fehlermeldung ein Eingabefeld verdecken. Sie lässt sich wegklicken;
   falls es stört, wäre die Maske in der Breite zu begrenzen.
-- **55 Checkstyle-Hinweise** (`mvn checkstyle:check`): 38 in `gkv-core`, 17 in
-  `gkv-ui`. Vor der Zerlegung waren es 69. Nicht blockierend.
+- **Checkstyle: 9 Warnungen, 216 Hinweise** (`mvn checkstyle:check`). Die
+  Warnungen waren am 05.09.2026 rund vierzig; übrig sind nur noch die, die eine
+  Entwurfsentscheidung verlangen und sich nicht mechanisch beheben lassen:
+
+  | Regel | Anzahl | Wo |
+  |---|---|---|
+  | `ParameterNumber` | 4 | `Patient`, `Person`, `ServiceProvider` (je 9), `EditFormController` (12) |
+  | `CyclomaticComplexity` | 5 | `BetragskonsistenzRegel`, `Feldbau`, beide `…FieldPopulator`, `View` |
+
+  Die vier Konstruktoren mit neun Parametern sind der eigentliche Befund: eine
+  Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte. Ein Builder
+  oder ein `record` für die Adresse wäre die Antwort — das ist aber ein
+  Eingriff in die Entitäten und gehört nicht nebenbei erledigt.
+
+  Die 216 Hinweise sind `INFO`: 145-mal fehlende `@param`/`@return`, 63-mal ein
+  Ternär-Operator, 8-mal fehlende Tags am Typ. Das ist eine
+  Dokumentationsrückstände, keine Warnung — und die Regel gegen den
+  Ternär-Operator ist Geschmackssache: aus `a ? b : c` vier Zeilen zu machen,
+  verschlechtert den Text.
+- **`-Xlint:all` ist seit dem 05.09.2026 im Bau eingeschaltet** (Eltern-`pom.xml`).
+  Vorher war gar kein Lint gesetzt, weshalb javac zu veralteten Aufrufen und
+  hängenden Javadoc-Blöcken schwieg. Bewusst **ohne** `-Werror`.
 - **CI baut mit JDK 21**, lokal wird JDK 25 genutzt. Bewusst, weil das Projekt
   `release=21` setzt — bei Problemen aber die erste Verdachtsstelle.
 - **`.docx` wird nicht automatisch erzeugt.** Nach Änderungen an

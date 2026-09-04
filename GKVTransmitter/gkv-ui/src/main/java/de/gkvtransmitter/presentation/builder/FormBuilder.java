@@ -41,6 +41,9 @@ public class FormBuilder {
 
     /**
      * Setzt den Formulartitel.
+     *
+     * @param title Die Ueberschrift ueber dem Formular.
+     * @return dieselbe Instanz, damit sich Aufrufe verketten lassen.
      */
     public FormBuilder withTitle(String title) {
         this.title = title;
@@ -61,7 +64,12 @@ public class FormBuilder {
     }
 
     /**
-     * Fügt ein Feld mit benutzerdefinierten Label hinzu.
+     * Fuegt ein Feld mit eigener Beschriftung hinzu.
+     *
+     * @param label Die Beschriftung, oder ihr Nachrichtenschluessel.
+     * @param field Das Bedienelement.
+     * @param useMessageKey Ob {@code label} als Nachrichtenschluessel zu lesen ist.
+     * @return dieselbe Instanz, damit sich Aufrufe verketten lassen.
      */
     public FormBuilder addField(String label, Node field, boolean useMessageKey) {
         String resolvedLabel = useMessageKey ? messages.get(label) : label;
@@ -82,7 +90,10 @@ public class FormBuilder {
     }
 
     /**
-     * Setzt die Anzahl der Grid-Spalten.
+     * Setzt die Anzahl der Spalten im Raster.
+     *
+     * @param columns Die Spaltenzahl.
+     * @return dieselbe Instanz, damit sich Aufrufe verketten lassen.
      */
     public FormBuilder withGridColumns(int columns) {
         this.gridColumns = columns;
@@ -90,7 +101,10 @@ public class FormBuilder {
     }
 
     /**
-     * Setzt den Abstand zwischen Feldern.
+     * Setzt den Abstand zwischen den Feldern.
+     *
+     * @param spacing Der Abstand in Bildpunkten.
+     * @return dieselbe Instanz, damit sich Aufrufe verketten lassen.
      */
     public FormBuilder withFieldSpacing(double spacing) {
         this.fieldSpacing = spacing;
@@ -98,7 +112,10 @@ public class FormBuilder {
     }
 
     /**
-     * Setzt den Padding des Formulars.
+     * Setzt den Innenabstand des Formulars.
+     *
+     * @param padding Der Innenabstand in Bildpunkten.
+     * @return dieselbe Instanz, damit sich Aufrufe verketten lassen.
      */
     public FormBuilder withPadding(double padding) {
         this.padding = padding;
@@ -149,7 +166,9 @@ public class FormBuilder {
     }
 
     /**
-     * Baut die Button-Leiste.
+     * Baut die Schaltflaechenleiste.
+     *
+     * @return Die Leiste mit allen hinzugefuegten Schaltflaechen.
      */
     private HBox buildButtonBox() {
         HBox buttonBox = new HBox(10);
@@ -166,7 +185,9 @@ public class FormBuilder {
     }
 
     /**
-     * Gibt alle Formularfelder als Map mit ihren Labels zurück.
+     * Gibt alle Formularfelder mit ihrer Beschriftung zurueck.
+     *
+     * @return Beschriftung auf Bedienelement, in der Reihenfolge des Aufbaus.
      */
     public Map<String, Node> getFieldMap() {
         Map<String, Node> map = new java.util.LinkedHashMap<>();
@@ -177,7 +198,9 @@ public class FormBuilder {
     }
 
     /**
-     * Gibt alle Formularfeld-Komponenten zurück.
+     * Gibt alle Bedienelemente des Formulars zurueck.
+     *
+     * @return Die Bedienelemente in der Reihenfolge des Aufbaus.
      */
     public List<Node> getFieldComponents() {
         return fields.stream().map(f -> f.component).toList();

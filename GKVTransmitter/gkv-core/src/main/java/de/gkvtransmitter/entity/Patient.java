@@ -13,7 +13,7 @@ public class Patient extends Person {
         super();
     }
 
-    
+
 
     public Patient(String firstname, String lastname, String street, String country, String housenumber, int plz,
             int ik, int kassenIk, LocalDate birthDate) {

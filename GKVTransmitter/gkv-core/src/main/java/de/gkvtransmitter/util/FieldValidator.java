@@ -6,18 +6,21 @@ import de.gkvtransmitter.enums.InputOption;
  * Generelle Validierungslogik für Formularfelder.
  * Erlaubt verschiedene Validierungen je nach InputOption und Feldtyp.
  */
-public class FieldValidator {
+public final class FieldValidator {
+
+    private FieldValidator() {
+    }
 
     /**
      * Validiert einen Feldwert basierend auf dem InputOption und Feldtyp.
-     * 
+     *
      * @param fieldName Name des Feldes (für Fehlermeldungen)
      * @param fieldValue Der zu validierende Wert
      * @param inputOption Der InputOption des Feldes
      * @param fieldJavaType Der Java-Typ des Feldes
      * @return Befund zu diesem Feld
      */
-    public static Feldbefund validate(String fieldName, String fieldValue, 
+    public static Feldbefund validate(String fieldName, String fieldValue,
                                            InputOption inputOption, String fieldJavaType) {
         if (fieldValue == null || fieldValue.isBlank()) {
             return Feldbefund.EMPTY;
@@ -52,7 +55,7 @@ public class FieldValidator {
             }
             return Feldbefund.VALID;
         } catch (NumberFormatException e) {
-            return new Feldbefund(false, 
+            return new Feldbefund(false,
                 String.format("%s muss eine gültige Zahl sein", fieldName));
         }
     }

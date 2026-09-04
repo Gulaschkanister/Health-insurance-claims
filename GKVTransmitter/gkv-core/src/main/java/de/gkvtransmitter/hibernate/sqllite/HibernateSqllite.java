@@ -25,7 +25,7 @@ import de.gkvtransmitter.repository.DataRepository;
  * <em>zweite</em> anlegte und zurueckgab, so dass jeder Aufruf von
  * {@code new HibernateSqllite().getInstance()} zwei Objekte erzeugte.</p>
  */
-public class HibernateSqllite implements DataRepository, AutoCloseable {
+public final class HibernateSqllite implements DataRepository, AutoCloseable {
 
     private final SessionFactory sessionFactory;
     private final TransactionRunner runner;

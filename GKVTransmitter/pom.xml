@@ -98,6 +98,22 @@
                     <version>3.11.0</version>
                     <configuration>
                         <release>${maven.compiler.release}</release>
+                        <!--
+                            Ohne -Xlint schweigt javac zu fast allem: veraltete
+                            Aufrufe, rohe Typen, verwaiste Dokumentationsbloecke.
+                            Am 05.09.2026 fielen so ein veraltetes
+                            Hibernate-Setting und ein haengender Javadoc-Block
+                            erst auf, als sie von Hand gesucht wurden - im Bau
+                            waren beide unsichtbar.
+
+                            Bewusst ohne -Werror: eine Bibliothek, die morgen
+                            etwas als veraltet markiert, soll den Bau nicht
+                            anhalten. Die Warnung soll sichtbar sein, nicht
+                            toedlich.
+                        -->
+                        <compilerArgs>
+                            <arg>-Xlint:all</arg>
+                        </compilerArgs>
                         <annotationProcessorPaths>
                             <path>
                                 <groupId>org.projectlombok</groupId>

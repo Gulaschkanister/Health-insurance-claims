@@ -149,7 +149,7 @@ public abstract class EntityFieldPopulator<T> {
      */
     protected void populateDateField(Node target, String fieldName, T entity) {
         var dateValue = getDateFieldValue(fieldName, entity);
-        
+
         if (dateValue == null) {
             return;
         }
@@ -182,7 +182,8 @@ public abstract class EntityFieldPopulator<T> {
      */
     private void populateSpinner(Spinner<?> spinner, String value) {
         try {
-            if (spinner.getValueFactory() instanceof javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory intVf) {
+            if (spinner.getValueFactory()
+                    instanceof javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory intVf) {
                 int intValue = Integer.parseInt(value);
                 intVf.setValue(intValue);
             }

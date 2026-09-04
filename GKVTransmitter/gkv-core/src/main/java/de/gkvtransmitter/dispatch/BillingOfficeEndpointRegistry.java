@@ -59,7 +59,8 @@ public class BillingOfficeEndpointRegistry {
             return endpoint;
         }
         Path destinationRoot = fallbackDestinationRoot != null ? fallbackDestinationRoot : fallbackRoot;
-        return BillingOfficeEndpoint.fileEndpoint(kassenIk, "Kasse " + kassenIk, destinationRoot.resolve(String.valueOf(kassenIk)));
+        return BillingOfficeEndpoint.fileEndpoint(kassenIk, "Kasse " + kassenIk,
+                destinationRoot.resolve(String.valueOf(kassenIk)));
     }
 
     public Map<Integer, BillingOfficeEndpoint> getEndpoints() {

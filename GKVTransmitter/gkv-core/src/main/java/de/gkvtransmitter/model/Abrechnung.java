@@ -21,9 +21,23 @@ public class Abrechnung {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Patient getPatient() { return patient; }
-    public ServiceProvider getProvider() { return provider; }
-    public Blueprint getBlueprint() { return blueprint; }
-    public int getAppointments() { return appointments; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public ServiceProvider getProvider() {
+        return provider;
+    }
+
+    public Blueprint getBlueprint() {
+        return blueprint;
+    }
+
+    public int getAppointments() {
+        return appointments;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }
