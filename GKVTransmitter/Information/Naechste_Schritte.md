@@ -18,7 +18,8 @@ Erledigt und geprüft:
 - 138 Tests, `BUILD SUCCESS`, Anwendung startet und legt Testdaten an
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
-**Nichts davon ist gepusht.** Der Branch liegt nur lokal.
+Der Branch liegt auf `origin`; der jeweils letzte Commit kann noch fehlen
+(`git status` zeigt es als „ahead“).
 
 ## Sofort zu entscheiden
 
@@ -26,9 +27,9 @@ Erledigt und geprüft:
 
 Der Branch ist fertig und grün. Zur Wahl stehen:
 
-- **Merge nach `main`** — `git merge --no-ff feature/kern-architektur`
-- **Pull Request** — dann `git push -u origin feature/kern-architektur` und
-  über GitHub zusammenführen
+- **Pull Request** über GitHub — vorher `git push`, damit der Remote-Stand
+  vollständig ist
+- **Merge nach `main`** — `git switch main && git merge --no-ff feature/kern-architektur`
 
 Zu beachten: Die drei Commits `632e906`, `475321d`, `6460b78` stammen aus
 `origin/refactor` und liegen bereits auf dem Remote. Meine 14 Commits tragen
