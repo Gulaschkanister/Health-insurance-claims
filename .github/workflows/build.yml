@@ -23,9 +23,13 @@ jobs:
           # Beschleunigt Folgeläufe, indem ~/.m2 zwischengespeichert wird.
           cache: 'maven'
 
+      # Die Oberflächentests in gkv-ui fahren die JavaFX-Laufzeit hoch, und die
+      # verlangt eine Anzeige - auch wenn kein Fenster gezeigt wird. xvfb-run
+      # stellt eine virtuelle bereit; ohne sie scheitert jeder dieser Tests mit
+      # "Unable to open DISPLAY". Auf den GitHub-Läufern ist Xvfb vorhanden.
       - name: Übersetzen und Tests ausführen
         working-directory: GKVTransmitter
-        run: mvn -B --no-transfer-progress test
+        run: xvfb-run -a mvn -B --no-transfer-progress test
 
       # Läuft auch, wenn Tests fehlgeschlagen sind - sonst fehlt genau dann
       # der Bericht, den man braucht.

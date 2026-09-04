@@ -68,5 +68,13 @@
   "msg.invalidNumbers": "PLZ und IK müssen Zahlen sein!",
   "msg.deleteConfirmTitle": "Bestätigung",
   "msg.deleteConfirmHeader": "Eintrag löschen?",
-  "msg.deleteConfirmBody": "Soll %s wirklich gelöscht werden?"
+  "msg.deleteConfirmBody": "Soll %s wirklich gelöscht werden?",
+  "label.select": "Auswählen",
+  "label.name": "Name",
+  "label.id": "ID",
+  "label.providers": "Dienstleister",
+  "label.patients": "Patienten",
+  "msg.noParticipantsSelected": "Keine Teilnehmer ausgewählt.",
+  "msg.batchesCreated": "%d DTA-Batches erzeugt:",
+  "msg.dispatchFailed": "Fehler beim Versand der DTA-Dateien: "
 }

@@ -24,15 +24,17 @@ import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.application.AbrechnungService;
-import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import de.gkvtransmitter.presentation.builder.MenuBuilder;
 import de.gkvtransmitter.presentation.controller.EditFormController;
+import de.gkvtransmitter.presentation.dialog.Dialoge;
+import de.gkvtransmitter.presentation.dialog.JavaFxDialoge;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
+import de.gkvtransmitter.util.Anwendungsverzeichnis;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.FieldValidator;
 import de.gkvtransmitter.util.ModifierInstance;
@@ -87,6 +89,9 @@ public class View {
     private final PatientFieldPopulator patientPopulator;
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
     private final AbrechnungService abrechnungService;
+
+    /** Alle Meldungen an den Anwender laufen hierueber, siehe {@link Dialoge}. */
+    private final Dialoge dialoge = new JavaFxDialoge();
 
     public View(Controller controller, AbrechnungService abrechnungService) {
         this.controller = controller;
@@ -304,221 +309,19 @@ public class View {
      * Builds and shows the Abrechnung (settlement) panel where user can select
      * a blueprint, a service provider and participating patients.
      */
+    /**
+     * Zeigt die Abrechnungsmaske.
+     *
+     * <p>Der Aufbau liegt in {@link AbrechnungsMaske}; hier bleibt nur das
+     * Einhaengen in den Rahmen. Das umschliessende {@code ScrollPane} entsteht
+     * erst hier, weil sein Inhalt sonst nicht durchsuchbar waere - die Maske
+     * liefert deshalb den nackten Bereich.</p>
+     */
     private void createAbrechnung() {
-        List<de.gkvtransmitter.entity.Blueprint> blueprints = controller.getDatabase().getAllBlueprints();
-        List<PersonGroup> groups = controller.getDatabase().getAllPersonGroups();
-
-        VBox root = new VBox(10);
-        root.setPadding(new Insets(20));
-
-        Label title = componentFactory.createLabel(messages.get("menu.settlement"));
-
-        // Blueprint selector
-        Label bpLabel = componentFactory.createLabel(messages.get("label.selectBlueprint"));
-        ComboBox<de.gkvtransmitter.entity.Blueprint> bpCombo = new ComboBox<>();
-        bpCombo.setPrefWidth(400);
-        if (blueprints != null && !blueprints.isEmpty()) {
-            bpCombo.getItems().addAll(blueprints);
-            bpCombo.setConverter(new javafx.util.StringConverter<de.gkvtransmitter.entity.Blueprint>() {
-                @Override
-                public String toString(de.gkvtransmitter.entity.Blueprint object) {
-                    return object == null ? "" : object.getName();
-                }
-
-                @Override
-                public de.gkvtransmitter.entity.Blueprint fromString(String string) {
-                    return null;
-                }
-            });
-            // no default selection for blueprint
-        }
-
-        // Group selector (optional)
-        Label groupLabel = componentFactory.createLabel(messages.get("label.selectGroupForSettlement"));
-        ComboBox<PersonGroup> groupCombo = new ComboBox<>();
-        groupCombo.setPrefWidth(400);
-        if (groups != null && !groups.isEmpty()) {
-            groupCombo.getItems().addAll(groups);
-            groupCombo.setConverter(new javafx.util.StringConverter<PersonGroup>() {
-                @Override
-                public String toString(PersonGroup object) {
-                    return object == null ? "" : object.getName();
-                }
-
-                @Override
-                public PersonGroup fromString(String string) {
-                    return null;
-                }
-            });
-            // no default selection for group
-        }
-
-        // Note: Dienstleister-Dropdown removed; Dienstleister werden in der Tabelle angezeigt
-
-        // no quick-selects or role filters; show tables for group members
-
-        // Combined members: providers + patients tables
-        Label patsLabel = componentFactory.createLabel(messages.get("label.selectPatients"));
-        GridPane providerGrid = new GridPane();
-        providerGrid.setHgap(8);
-        providerGrid.setVgap(6);
-        Label provHeader = componentFactory.createLabel("Dienstleister");
-
-        GridPane patientGrid = new GridPane();
-        patientGrid.setHgap(8);
-        patientGrid.setVgap(6);
-        Label patHeader = componentFactory.createLabel("Patienten");
-
-        List<javafx.scene.control.CheckBox> providerBoxes = new ArrayList<>();
-        List<ServiceProvider> providerEntities = new ArrayList<>();
-
-        List<javafx.scene.control.CheckBox> patientBoxes = new ArrayList<>();
-        List<Spinner<Integer>> patientSpinners = new ArrayList<>();
-        List<Patient> patientEntities = new ArrayList<>();
-
-        // helper to (re)build checklist from group or all lists
-        VBox membersBox = new VBox(8);
-
-        Runnable buildChecklist = () -> {
-            membersBox.getChildren().clear();
-            providerBoxes.clear();
-            providerEntities.clear();
-            patientBoxes.clear();
-            patientSpinners.clear();
-            patientEntities.clear();
-
-            List<Patient> sourcePatients = new ArrayList<>();
-            List<ServiceProvider> sourceProviders = new ArrayList<>();
-
-            if (groupCombo.getValue() != null) {
-                PersonGroup sel = groupCombo.getValue();
-                if (sel.getPatients() != null) sourcePatients.addAll(sel.getPatients());
-                if (sel.getServiceProviders() != null) sourceProviders.addAll(sel.getServiceProviders());
-            }
-
-            // provider table header
-            providerGrid.getChildren().clear();
-            providerGrid.add(componentFactory.createLabel("Auswählen"), 0, 0);
-            providerGrid.add(componentFactory.createLabel("Name"), 1, 0);
-            providerGrid.add(componentFactory.createLabel("ID"), 2, 0);
-            int prow = 1;
-            for (ServiceProvider prov : sourceProviders) {
-                CheckBox cb = componentFactory.createCheckBox("");
-                javafx.scene.control.Label name = componentFactory.createLabel(prov.getFirstname() + " " + prov.getLastname());
-                javafx.scene.control.Label idLbl = componentFactory.createLabel(String.valueOf(prov.getId()));
-                providerGrid.add(cb, 0, prow);
-                providerGrid.add(name, 1, prow);
-                providerGrid.add(idLbl, 2, prow);
-                providerBoxes.add(cb);
-                providerEntities.add(prov);
-                prow++;
-            }
-
-            // patient table header and rows
-            patientGrid.getChildren().clear();
-            patientGrid.add(componentFactory.createLabel("Auswählen"), 0, 0);
-            patientGrid.add(componentFactory.createLabel("Name"), 1, 0);
-            patientGrid.add(componentFactory.createLabel("ID"), 2, 0);
-            patientGrid.add(componentFactory.createLabel(messages.get("label.appointments")), 3, 0);
-            int r = 1;
-            for (Patient p : sourcePatients) {
-                CheckBox cb = componentFactory.createCheckBox("");
-                javafx.scene.control.Label name = componentFactory.createLabel(p.getFirstname() + " " + p.getLastname());
-                javafx.scene.control.Label idLbl = componentFactory.createLabel(String.valueOf(p.getId()));
-                Spinner<Integer> spinner = componentFactory.createSpinner(Integer.class, null, InputOption.NUMBER);
-                spinner.setPrefWidth(100);
-                spinner.getValueFactory().setValue(1);
-                patientGrid.add(cb, 0, r);
-                patientGrid.add(name, 1, r);
-                patientGrid.add(idLbl, 2, r);
-                patientGrid.add(spinner, 3, r);
-                patientBoxes.add(cb);
-                patientSpinners.add(spinner);
-                patientEntities.add(p);
-                r++;
-            }
-
-            if (providerEntities.isEmpty() && patientEntities.isEmpty()) {
-                membersBox.getChildren().add(componentFactory.createLabel(messages.get("msg.noPatients")));
-            } else {
-                if (!providerEntities.isEmpty()) membersBox.getChildren().addAll(provHeader, providerGrid);
-                if (!patientEntities.isEmpty()) membersBox.getChildren().addAll(patHeader, patientGrid);
-            }
-        };
-
-        // initial build
-        buildChecklist.run();
-
-        // rebuild on group changes
-        groupCombo.setOnAction(ev -> buildChecklist.run());
-
-        // rebuild on group changes (single handler)
-        // (filters/quick-selects removed)
-
-        Button start = componentFactory.createButton(messages.get("button.startSettlement"));
-        start.setOnAction(ev -> {
-            if (blueprints == null || blueprints.isEmpty()) {
-                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.noBlueprints"));
-                return;
-            }
-            if (groupCombo.getValue() == null) {
-                showInfoDialog(messages.get("dialog.info.title"), messages.get("msg.selectGroupRequired"));
-                return;
-            }
-            de.gkvtransmitter.entity.Blueprint chosen = bpCombo.getValue();
-
-            List<Patient> selectedPatients = new ArrayList<>();
-            Map<Integer, Integer> appointments = new LinkedHashMap<>();
-
-            for (int i = 0; i < patientBoxes.size(); i++) {
-                javafx.scene.control.CheckBox cb = patientBoxes.get(i);
-                if (cb.isSelected()) {
-                    Patient p = patientEntities.get(i);
-                    selectedPatients.add(p);
-                    Spinner<Integer> spn = patientSpinners.get(i);
-                    Integer count = spn != null ? spn.getValue() : 0;
-                    appointments.put(p.getId(), count != null ? count : 0);
-                }
-            }
-
-            // For per-participant DTA: generate one DTA file per selected patient
-            if (selectedPatients.isEmpty()) {
-                showInfoDialog(messages.get("dialog.info.title"), "Keine Teilnehmer ausgewählt.");
-                return;
-            }
-
-            PersonGroup selGroup = groupCombo.getValue();
-            // Fester Ort im Datenverzeichnis des Benutzers. Ein relativer
-            // Pfad haette bei einer ausgelieferten Anwendung im jeweiligen
-            // Startverzeichnis gelegen.
-            java.nio.file.Path outDir = de.gkvtransmitter.util.Anwendungsverzeichnis.versandordner();
-            java.util.List<DispatchBatch> batches;
-            try {
-                batches = abrechnungService.createAndDispatch(selectedPatients, selGroup, chosen, appointments, outDir);
-            } catch (de.gkvtransmitter.dispatch.DtaValidierungsException e) {
-                // Beanstandungen einzeln anzeigen: die Anwenderin soll alle auf
-                // einmal sehen und nicht nach jeder Korrektur neu anstossen.
-                zeigePruefbericht(e.getBericht());
-                return;
-            } catch (RuntimeException e) {
-                showErrorDialog(messages.get("dialog.error.title"),
-                        "Fehler beim Versand der DTA-Dateien: " + e.getMessage());
-                return;
-            }
-
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("%d DTA-Batches erzeugt:\n", batches.size()));
-            for (DispatchBatch batch : batches) {
-                sb.append("Kassen-IK: ").append(batch.getKassenIk()).append('\n');
-                for (java.nio.file.Path pth : batch.getFiles()) {
-                    sb.append(pth.toString()).append('\n');
-                }
-            }
-            showInfoDialog(messages.get("dialog.info.title"), sb.toString());
-        });
-
-        root.getChildren().addAll(title, bpLabel, bpCombo, groupLabel, groupCombo, patsLabel, membersBox, start);
-        ScrollPane scroll = new ScrollPane(root);
+        AbrechnungsMaske maske = new AbrechnungsMaske(componentFactory, messages, dialoge,
+                controller.getDatabase(), abrechnungService::createAndDispatch,
+                Anwendungsverzeichnis::versandordner);
+        ScrollPane scroll = new ScrollPane(maske.erzeuge());
         scroll.setFitToWidth(true);
         skeleton.setCenter(scroll);
     }
@@ -1334,65 +1137,18 @@ public class View {
     }
 
     /**
-     * Zeigt einen Informationsdialog mit dem angegebenen Titel und der
-     * Nachricht an.
+     * Zeigt einen Informationsdialog an.
      *
-     * @param title Der Titel des Informationsdialogs
-     * @param message Die Nachricht, die im Informationsdialog angezeigt werden
-     * soll
+     * <p>Bleibt oeffentlich, weil {@code App} bei einem Startfehler darauf
+     * zurueckgreift, bevor es ueberhaupt eine Maske gibt.</p>
      */
-    /**
-     * Zeigt einen Pruefbericht mit allen Beanstandungen.
-     *
-     * <p>Fehler und Warnungen stehen getrennt, weil sie unterschiedliche
-     * Bedeutung haben: Fehler haben den Versand aufgehalten, Warnungen sind
-     * Hinweise. Ohne die Trennung waere aus der Liste nicht ersichtlich, was
-     * behoben werden muss.</p>
-     */
-    private void zeigePruefbericht(de.gkvtransmitter.validator.ValidationReport bericht) {
-        StringBuilder text = new StringBuilder();
-        text.append("Die Abrechnung wurde nicht versendet.").append(System.lineSeparator());
-        text.append(System.lineSeparator());
-
-        if (!bericht.getErrors().isEmpty()) {
-            text.append("Zu beheben:").append(System.lineSeparator());
-            for (de.gkvtransmitter.validator.ValidationMessage befund : bericht.getErrors()) {
-                text.append("  - ").append(befund.text());
-                if (!befund.ort().isEmpty()) {
-                    text.append("  [").append(befund.ort()).append(']');
-                }
-                text.append(System.lineSeparator());
-            }
-        }
-        if (!bericht.getWarnings().isEmpty()) {
-            text.append(System.lineSeparator()).append("Hinweise:").append(System.lineSeparator());
-            for (de.gkvtransmitter.validator.ValidationMessage befund : bericht.getWarnings()) {
-                text.append("  - ").append(befund.text()).append(System.lineSeparator());
-            }
-        }
-        showErrorDialog("Pruefung nicht bestanden", text.toString());
-    }
-
     public void showInfoDialog(String title, String message) {
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.setContentText(message);
-        alert.showAndWait();
+        dialoge.zeigeInfo(title, message);
     }
 
-    /**
-     * Zeigt einen Fehlerdialog mit dem angegebenen Titel und der Nachricht an.
-     *
-     * @param title Der Titel des Fehlerdialogs
-     * @param message Die Nachricht, die im Fehlerdialog angezeigt werden soll
-     */
+    /** Zeigt einen Fehlerdialog an. */
     public void showErrorDialog(String title, String message) {
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(title);
-        alert.setContentText(message);
-        alert.showAndWait();
+        dialoge.zeigeFehler(title, message);
     }
 
     /**
