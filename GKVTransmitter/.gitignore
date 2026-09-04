@@ -3,4 +3,7 @@ target/
 *.iml
 .vscode/
 *.db
+# SQLite legt im WAL-Modus zwei Begleitdateien neben der Datenbank an.
+*.db-shm
+*.db-wal
 /dta_output

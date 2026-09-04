@@ -44,4 +44,59 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Startet die Anwendung mit Debug-Anschluss auf Port 5005 und wartet,
+            bis sich ein Debugger verbunden hat (suspend=y). Ohne das Warten
+            waere die Initialisierung - Bootstrap, JSON-Profile, Datenbank -
+            durchgelaufen, bevor man einen Haltepunkt setzen kann.
+
+                mvn -Pdebug -pl gkv-ui javafx:run
+
+            Danach in der Entwicklungsumgebung an Port 5005 anhaengen.
+            Das Plugin startet einen eigenen Prozess; die Optionen muessen
+            deshalb hier stehen und nicht am mvn-Aufruf.
+        -->
+        <profile>
+            <id>debug</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>de.gkvtransmitter.Main</mainClass>
+                            <options>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005</option>
+                            </options>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Wie "debug", laeuft aber sofort los, statt auf den Debugger zu
+            warten. Fuer den Fall, dass ein Fehler erst nach dem Start auftritt
+            und man sich zwischendurch anhaengen will.
+        -->
+        <profile>
+            <id>debug-nowait</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>de.gkvtransmitter.Main</mainClass>
+                            <options>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</option>
+                            </options>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

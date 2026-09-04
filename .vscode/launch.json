@@ -2,12 +2,38 @@
   "version": "0.2.0",
   "configurations": [
     {
+      // Haengt sich an eine bereits laufende Anwendung an, die mit
+      //   mvn -Pdebug -pl gkv-ui javafx:run
+      // gestartet wurde. Diese Variante funktioniert auch, wenn die
+      // Anwendung in WSL laeuft und VS Code unter Windows.
       "type": "java",
-      "name": "Debug GKVTransmitter",
+      "name": "An laufende Anwendung anhaengen (Port 5005)",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "projectName": "gkv-ui"
+    },
+    {
+      // Startet die Anwendung direkt aus VS Code. Setzt voraus, dass ein
+      // JDK 21 und die Java-Erweiterung dort verfuegbar sind, wo VS Code
+      // laeuft - unter Windows ist derzeit beides nicht installiert.
+      "type": "java",
+      "name": "GKVTransmitter starten",
       "request": "launch",
       "mainClass": "de.gkvtransmitter.Main",
       "projectName": "gkv-ui",
-      "cwd": "${workspaceFolder}/GKVTransmitter"
+      "cwd": "${workspaceFolder}/GKVTransmitter/gkv-ui"
+    },
+    {
+      // Wie oben, aber mit getrennter Datenbank und Testdaten, damit die
+      // eigentlichen Daten unberuehrt bleiben.
+      "type": "java",
+      "name": "GKVTransmitter starten (Testdaten, eigene DB)",
+      "request": "launch",
+      "mainClass": "de.gkvtransmitter.Main",
+      "projectName": "gkv-ui",
+      "cwd": "${workspaceFolder}/GKVTransmitter/gkv-ui",
+      "vmArgs": "-Dgkv.db.path=${workspaceFolder}/GKVTransmitter/probe.db -Dgkv.testdaten=true"
     }
   ]
 }

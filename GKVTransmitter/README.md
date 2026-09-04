@@ -32,10 +32,45 @@ die Fachlichkeit ohne laufende Oberfläche testbar.
 ## Bauen und starten
 
 ```bash
-mvn clean test           # übersetzen und alle Tests
-mvn clean package        # Pakete bauen
-mvn -pl gkv-ui javafx:run   # Anwendung starten
+mvn clean test                        # übersetzen und alle Tests
+mvn clean package                     # Pakete bauen
+mvn install -DskipTests               # Kern ins lokale Repository legen
+mvn -pl gkv-ui javafx:run             # Anwendung starten
 ```
+
+`-pl gkv-ui` baut `gkv-core` **nicht** mit. Vor dem ersten Start und nach jeder
+Änderung am Kern muss deshalb `mvn install -DskipTests` gelaufen sein — sonst
+bricht der Start mit „Could not find artifact de.gkv:gkv-core" ab.
+
+## Debuggen
+
+Die Anwendung mit Debug-Anschluss starten:
+
+```bash
+mvn install -DskipTests
+mvn -Pdebug -pl gkv-ui javafx:run
+```
+
+Die JVM wartet dann auf Port 5005, bis sich ein Debugger verbunden hat. Das
+Warten ist Absicht: sonst wären Bootstrap, Laden der JSON-Profile und
+Datenbankaufbau längst durch, bevor sich ein Haltepunkt setzen lässt. Soll die
+Anwendung sofort loslaufen, stattdessen `-Pdebug-nowait` verwenden.
+
+Anschließend in VS Code die Konfiguration **„An laufende Anwendung anhaengen
+(Port 5005)"** starten.
+
+> Zum Debuggen in VS Code wird die Erweiterung *Extension Pack for Java*
+> benötigt. Sie ist auf diesem Rechner nicht installiert, ebenso wenig ein JDK
+> unter Windows. Die Konfiguration *„GKVTransmitter starten"* setzt beides
+> voraus; die Anhäng-Variante kommt damit aus, dass die Anwendung in WSL läuft.
+
+Einzelnen Test debuggen:
+
+```bash
+mvn -Dmaven.surefire.debug -Dtest=DtaValidationServiceTest test -pl gkv-core
+```
+
+Auch hier wartet die JVM auf Port 5005.
 
 Statische Prüfung (meldet, blockiert nicht):
 
