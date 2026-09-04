@@ -6,7 +6,7 @@
       "name": "Debug GKVTransmitter",
       "request": "launch",
       "mainClass": "de.gkvtransmitter.Main",
-      "projectName": "gkv-transmitter",
+      "projectName": "gkv-ui",
       "cwd": "${workspaceFolder}/GKVTransmitter"
     }
   ]

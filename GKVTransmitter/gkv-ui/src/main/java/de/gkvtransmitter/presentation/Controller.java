@@ -2,6 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
+import de.gkvtransmitter.factory.FactoryManager;
 import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
 import de.gkvtransmitter.repository.DataRepository;
 

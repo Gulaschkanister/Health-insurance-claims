@@ -1,9 +1,8 @@
-package de.gkvtransmitter.presentation;
+package de.gkvtransmitter.factory;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import de.gkvtransmitter.factory.Factory;
 
 /**
  * Zentrale Registry fuer Factory-Instanzen.
