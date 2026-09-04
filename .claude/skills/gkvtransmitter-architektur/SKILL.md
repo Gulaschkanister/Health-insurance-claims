@@ -5,22 +5,44 @@ description: Aufbau des GKVTransmitter, Schichtenregeln und wo welche Änderung 
 
 # Aufbau des GKVTransmitter
 
-## Bauen und Testen — nur über WSL
+## Bauen und Testen
 
-Auf dem Entwicklungsrechner sind unter Windows **weder `java` noch `mvn`
-installiert**. Ein direkter Aufruf scheitert mit „command not found" und sieht
-nach einem kaputten Projekt aus. Die Toolchain liegt in WSL:
+Die Toolchain steht unter Windows **und** in WSL zur Verfügung:
 
 ```bash
-wsl -e bash -lc "cd /mnt/c/Projekte/gkv/Health-insurance-claims/GKVTransmitter && mvn -B test"
+mvn -B test                                      # Windows: JDK 25, Maven 3.9.16
+mvn -B test -pl gkv-core                         # nur ein Modul
+mvn -B test -pl gkv-core -Dtest=DtaValidationServiceTest
 ```
 
-Dort liegen OpenJDK 25 und Maven 3.9.4. Übersetzt wird gegen
-`maven.compiler.release=21`. Maven gibt beim Start JVM-Warnungen zu jansi und
-guava aus — die sind harmlos und kein Projektfehler.
+Übersetzt wird gegen `maven.compiler.release=21`, gebaut mit JDK 25.
 
-Einzelnes Modul: `mvn -B test -pl gkv-core`.
-Einzelner Test: `mvn -B test -pl gkv-core -Dtest=DtaValidationServiceTest`.
+**Für das Auslieferungspaket ist die Windows-Toolchain zwingend.** `jpackage`
+erzeugt immer nur für das System, auf dem es läuft — aus WSL entstünde ein
+Linux-Paket.
+
+Beim Bauen erscheinen JVM-Warnungen zu `sun.misc.Unsafe` (Lombok) und
+`System::load` (SQLite-Treiber). Beide sind harmlos und kein Projektfehler.
+
+Bei PowerShell 5.1: `2>&1` auf ein natives Programm wie `java -version` erzeugt
+einen `NativeCommandError`, obwohl der Aufruf erfolgreich war. Nicht als Fehler
+missdeuten — die Umleitung einfach weglassen.
+
+## Auslieferung
+
+```bash
+mvn -Ppaket clean package
+```
+
+Ergebnis: `gkv-ui/target/paket/GKVTransmitter/` — Startprogramm plus
+mitgelieferte Java-Laufzeit, rund 166 MB. Auf dem Zielrechner muss nichts
+installiert sein, auch kein Java.
+
+**Datenablage:** `Anwendungsverzeichnis` legt sie am Benutzerprofil fest
+(`%LOCALAPPDATA%\GKVTransmitter`), nicht am Arbeitsverzeichnis. Wer einen neuen
+Pfad einführt, nutzt `Anwendungsverzeichnis.aufloesen(...)` — ein relativer Pfad
+läge sonst je nach Startart woanders, bei einer ausgelieferten Anwendung etwa in
+`C:\Program Files`, wo sich gar nicht schreiben lässt.
 
 ## Die zwei Module
 
