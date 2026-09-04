@@ -42,6 +42,10 @@ public final class SessionFactoryProvider {
     public static SessionFactory create(DatabaseSettings settings) {
         Objects.requireNonNull(settings, "settings must not be null");
 
+        // Muss vor dem Verbindungsaufbau geschehen: SQLite legt eine Datenbank
+        // nur in einem bereits vorhandenen Verzeichnis an.
+        settings.sicherstelleVerzeichnis();
+
         StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
                 .configure("hibernate.cfg.xml")
                 .applySetting(AvailableSettings.URL, settings.getJdbcUrl())

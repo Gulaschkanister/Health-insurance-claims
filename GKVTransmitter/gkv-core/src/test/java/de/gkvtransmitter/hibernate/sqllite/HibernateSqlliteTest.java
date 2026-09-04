@@ -130,6 +130,43 @@ class HibernateSqlliteTest {
     }
 
     @Test
+    @DisplayName("Nach dem Speichern traegt das uebergebene Objekt seine ID")
+    void schreibtIdInDasUebergebeneObjekt() {
+        Patient neu = patient("Nora", "Neu");
+        assertEquals(0, neu.getId(), "vor dem Speichern hat der Patient keine ID");
+
+        repository.savePatient(neu);
+
+        assertTrue(neu.getId() > 0,
+                "Das Speichern muss die vergebene ID in das uebergebene Objekt zurueckschreiben, "
+                        + "sonst laesst es sich danach nicht weiterverwenden. War: " + neu.getId());
+    }
+
+    @Test
+    @DisplayName("Frisch gespeicherte Objekte lassen sich unmittelbar zu einer Gruppe verbinden")
+    void verbindetFrischGespeicherteObjekte() {
+        // Genau der Ablauf beim Anlegen von Testdaten: erst die Personen
+        // speichern, dann dieselben Objekte in eine Gruppe stecken. Ohne
+        // zurueckgeschriebene ID haetten sie alle die ID 0 und die Gruppe
+        // liesse sich nicht speichern.
+        Patient p1 = patient("Otto", "Ohne");
+        Patient p2 = patient("Paula", "Peters");
+        ServiceProvider sp = provider("Quirin", "Quast");
+        repository.savePatient(p1);
+        repository.savePatient(p2);
+        repository.saveServiceProvider(sp);
+
+        PersonGroup gruppe = new PersonGroup("Frisch verbunden");
+        gruppe.setPatients(new LinkedHashSet<>(List.of(p1, p2)));
+        gruppe.setServiceProviders(new LinkedHashSet<>(List.of(sp)));
+        repository.savePersonGroup(gruppe);
+
+        PersonGroup geladen = repository.getAllPersonGroups().get(0);
+        assertEquals(2, geladen.getPatients().size());
+        assertEquals(1, geladen.getServiceProviders().size());
+    }
+
+    @Test
     @DisplayName("Eine Gruppe haelt ihre Patienten und Leistungserbringer")
     void speichertGruppeMitMitgliedern() {
         Patient p = patient("Gustav", "Gross");
@@ -202,6 +239,26 @@ class HibernateSqlliteTest {
         repository.savePatient(patient("Karl", "Kunz"));
 
         assertTrue(Files.exists(dbFile), "erwartete Datenbankdatei unter " + dbFile);
+    }
+
+    @Test
+    @DisplayName("Ein noch nicht vorhandenes Datenverzeichnis wird angelegt")
+    void legtFehlendesVerzeichnisAn() {
+        // SQLite legt eine Datenbank nur in einem bereits vorhandenen
+        // Verzeichnis an. Fehlte es, meldete Hibernate lediglich "Cannot get a
+        // connection as the driver manager is not properly initialized" - was
+        // den eigentlichen Grund nicht erkennen liess. Betroffen war jeder
+        // erste Start gegen ein frisches Datenverzeichnis.
+        Path nochNichtVorhanden = tempDir.resolve("neu").resolve("tiefer").resolve("gkv.db");
+        assertTrue(Files.notExists(nochNichtVorhanden.getParent()));
+
+        try (HibernateSqllite frisch =
+                HibernateSqllite.open(DatabaseSettings.forFile(nochNichtVorhanden))) {
+            frisch.savePatient(patient("Lena", "Lang"));
+
+            assertEquals(1, frisch.getAllPatients().size());
+        }
+        assertTrue(Files.exists(nochNichtVorhanden), "erwartete Datenbankdatei unter " + nochNichtVorhanden);
     }
 
     // --- Datenaustauschreferenz ------------------------------------------

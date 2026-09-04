@@ -53,11 +53,38 @@ public class HibernateSqllite implements DataRepository, AutoCloseable {
         sessionFactory.close();
     }
 
+    /**
+     * Speichert ein Objekt und schreibt die vergebene ID in das uebergebene
+     * Objekt zurueck.
+     *
+     * <p>Der Unterschied zwischen den beiden Wegen ist wesentlich:
+     * {@code persist} nimmt das uebergebene Objekt selbst in die Sitzung auf
+     * und traegt die erzeugte ID dort ein. {@code merge} legt dagegen eine
+     * verwaltete Kopie an und laesst das Original unberuehrt - es behaelt seine
+     * ID 0.</p>
+     *
+     * <p>Das faellt erst spaeter auf: wer ein frisch gespeichertes Objekt
+     * gleich weiterverwendet, etwa um es einer Gruppe zuzuordnen, arbeitet mit
+     * einem Objekt ohne ID. Seit die Fremdschluessel durchgesetzt werden,
+     * scheitert das Speichern der Gruppe daran.</p>
+     *
+     * @param istNeu ob das Objekt noch nie gespeichert wurde
+     */
+    private void speichere(String beschreibung, Object objekt, boolean istNeu) {
+        runner.writeVoid(beschreibung, session -> {
+            if (istNeu) {
+                session.persist(objekt);
+            } else {
+                session.merge(objekt);
+            }
+        });
+    }
+
     // --- Patient ---------------------------------------------------------
 
     @Override
     public void savePatient(Patient patient) {
-        runner.writeVoid("Patient speichern", session -> session.merge(patient));
+        speichere("Patient speichern", patient, patient.getId() == 0);
     }
 
     @Override
@@ -80,7 +107,7 @@ public class HibernateSqllite implements DataRepository, AutoCloseable {
 
     @Override
     public void saveServiceProvider(ServiceProvider serviceProvider) {
-        runner.writeVoid("Leistungserbringer speichern", session -> session.merge(serviceProvider));
+        speichere("Leistungserbringer speichern", serviceProvider, serviceProvider.getId() == 0);
     }
 
     @Override
@@ -98,7 +125,7 @@ public class HibernateSqllite implements DataRepository, AutoCloseable {
 
     @Override
     public void savePersonGroup(PersonGroup personGroup) {
-        runner.writeVoid("Gruppe speichern", session -> session.merge(personGroup));
+        speichere("Gruppe speichern", personGroup, personGroup.getId() == 0);
     }
 
     @Override
@@ -116,7 +143,7 @@ public class HibernateSqllite implements DataRepository, AutoCloseable {
 
     @Override
     public void saveBlueprint(Blueprint blueprint) {
-        runner.writeVoid("Blaupause speichern", session -> session.merge(blueprint));
+        speichere("Blaupause speichern", blueprint, blueprint.getId() == null);
     }
 
     @Override

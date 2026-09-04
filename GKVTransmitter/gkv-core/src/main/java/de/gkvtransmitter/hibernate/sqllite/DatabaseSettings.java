@@ -1,5 +1,7 @@
 package de.gkvtransmitter.hibernate.sqllite;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
@@ -76,10 +78,39 @@ public final class DatabaseSettings {
     private final String schemaMode;
     private final String beschreibung;
 
-    private DatabaseSettings(String jdbcUrl, String schemaMode, String beschreibung) {
+    /** Die Datenbankdatei, oder {@code null} bei einer Datenbank im Arbeitsspeicher. */
+    private final Path datenbankDatei;
+
+    private DatabaseSettings(String jdbcUrl, String schemaMode, String beschreibung, Path datenbankDatei) {
         this.jdbcUrl = jdbcUrl;
         this.schemaMode = schemaMode;
         this.beschreibung = beschreibung;
+        this.datenbankDatei = datenbankDatei;
+    }
+
+    /**
+     * Legt das Verzeichnis der Datenbankdatei an, falls es fehlt.
+     *
+     * <p>Noetig, weil SQLite eine Datenbank nur in einem bereits vorhandenen
+     * Verzeichnis anlegt. Fehlt es, meldet Hibernate lediglich "Cannot get a
+     * connection as the driver manager is not properly initialized" - eine
+     * Meldung, die den eigentlichen Grund nicht erkennen laesst. Betroffen war
+     * jeder erste Start gegen ein noch nicht existierendes Datenverzeichnis.</p>
+     */
+    public void sicherstelleVerzeichnis() {
+        if (datenbankDatei == null) {
+            return;
+        }
+        Path verzeichnis = datenbankDatei.getParent();
+        if (verzeichnis == null || Files.isDirectory(verzeichnis)) {
+            return;
+        }
+        try {
+            Files.createDirectories(verzeichnis);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Datenverzeichnis konnte nicht angelegt werden: " + verzeichnis, e);
+        }
     }
 
     /**
@@ -93,14 +124,14 @@ public final class DatabaseSettings {
         Path datei = pfad == null
                 ? standardPfad()
                 : Anwendungsverzeichnis.aufloesen(Paths.get(pfad)).toAbsolutePath();
-        return new DatabaseSettings(dateiUrl(datei), modus, datei.toString());
+        return new DatabaseSettings(dateiUrl(datei), modus, datei.toString(), datei);
     }
 
     /** Richtet die Einstellungen auf eine konkrete Datei aus. */
     public static DatabaseSettings forFile(Path databaseFile) {
         Objects.requireNonNull(databaseFile, "databaseFile must not be null");
         Path absolut = databaseFile.toAbsolutePath();
-        return new DatabaseSettings(dateiUrl(absolut), "update", absolut.toString());
+        return new DatabaseSettings(dateiUrl(absolut), "update", absolut.toString(), absolut);
     }
 
     /**
@@ -114,7 +145,7 @@ public final class DatabaseSettings {
     public static DatabaseSettings inMemory(String name) {
         Objects.requireNonNull(name, "name must not be null");
         String url = "jdbc:sqlite:file:" + name + "?mode=memory&cache=shared&busy_timeout=" + BUSY_TIMEOUT_MS;
-        return new DatabaseSettings(url, "create", "In-Memory (" + name + ")");
+        return new DatabaseSettings(url, "create", "In-Memory (" + name + ")", null);
     }
 
     private static String dateiUrl(Path datei) {
