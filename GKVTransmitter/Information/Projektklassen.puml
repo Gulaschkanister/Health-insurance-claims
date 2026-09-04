@@ -6,50 +6,88 @@ skinparam shadowing false
 skinparam linetype ortho
 skinparam componentStyle rectangle
 
-package "Praesentation" as presentation {
-  [JavaFX UI]
-}
-package "Anwendung" as application {
-  [Controller / Bootstrap]
-}
-package "Parser und Definitionen" as parsing {
-  [JSON Parser]
-  [Global Definitions]
-}
-package "Domaene" as domain {
-  [Entity und Model]
-  [Segmentdefinitionen]
-}
-package "DTA-Verarbeitung" as dta {
-  [DTA Factory]
-  [Dispatch Service]
-}
-package "Versand" as dispatch {
-  [Transport]
-  [Kassen-Endpunkte]
-}
-package "Persistenz" as persistence {
-  [Hibernate / SQLite]
-}
-package "Validierung" as validation {
-  [Field Validator]
-  [Tag-Konfiguration]
+title Uebersicht: zwei Module, ein Weg von der Eingabe zur Kasse
+
+package "gkv-ui  (JavaFX)" as ui #F2F6FA {
+  [App / Main]
+  [View]
+  [Controller]
 }
 
-presentation --> application
-presentation --> domain
-application --> parsing
-application --> persistence
-parsing --> domain
-domain --> validation
-application --> dta
-dta --> domain
-dta --> dispatch
-domain --> persistence
+package "gkv-core  (ohne JavaFX)" as core #F7F7F2 {
+
+  package "Anwendung" as application {
+    [AbrechnungService]
+  }
+  package "Start und Definitionen" as parsing {
+    [ApplicationBootstrap]
+    [JsonParserFactory]
+    [GlobalDefinitions]
+  }
+  package "Domaene" as domain {
+    [Entity und Model]
+    [Segmentdefinitionen]
+  }
+  package "DTA-Verarbeitung" as dta {
+    [DtaFactory]
+    [DtaDocument]
+    [Leistungsparameter]
+  }
+  package "Validierung" as validation #FFF3D6 {
+    [DtaValidationService]
+    [ValidationRule x6]
+    [ValidationReport]
+  }
+  package "Versand" as dispatch {
+    [DtaDispatchService]
+    [BillingOfficeTransport]
+    [Kassen-Endpunkte]
+    [BillingOfficeResponseParser]
+  }
+  package "Persistenz" as persistence {
+    [DataRepository]
+    [HibernateSqllite]
+    [SQLite-Datei]
+  }
+}
+
+[App / Main] --> [View]
+[App / Main] --> [Controller]
+[View] --> [Controller]
+[View] --> [AbrechnungService]
+[Controller] --> [ApplicationBootstrap]
+[Controller] --> [DataRepository]
+
+[ApplicationBootstrap] --> [JsonParserFactory]
+[JsonParserFactory] --> [GlobalDefinitions]
+[JsonParserFactory] --> [Segmentdefinitionen]
+
+[AbrechnungService] --> [DtaDispatchService]
+[DtaDispatchService] --> [DtaFactory]
+[DtaFactory] --> [Entity und Model]
+[DtaFactory] --> [Leistungsparameter]
+
+[DtaDispatchService] --> [DtaValidationService]
+[DtaValidationService] --> [DtaDocument]
+[DtaValidationService] --> [ValidationRule x6]
+[DtaValidationService] --> [ValidationReport]
+
+[DtaDispatchService] --> [BillingOfficeTransport]
+[BillingOfficeTransport] --> [Kassen-Endpunkte]
+[DtaDispatchService] --> [BillingOfficeResponseParser]
+
+[DataRepository] <|.. [HibernateSqllite]
+[HibernateSqllite] --> [SQLite-Datei]
+[HibernateSqllite] --> [Entity und Model]
 
 legend right
-  Paketuebersicht des GKVTransmitters
-  Pfeil = Abhaengigkeit zwischen Verantwortungsbereichen
-  Details befinden sich in den drei Detaildiagrammen.
+  gkv-core ist frei von JavaFX. Eine Enforcer-Regel im Build
+  laesst das Uebersetzen fehlschlagen, sobald sich das aendert -
+  nur so bleibt der Kern ohne Oberflaeche testbar.
+
+  Die Validierung sitzt zwischen Erzeugung und Versand:
+  erst werden alle Nachrichten geprueft, dann geht die erste hinaus.
+
+  Einzelheiten in den drei Detaildiagrammen.
 endlegend
 @enduml

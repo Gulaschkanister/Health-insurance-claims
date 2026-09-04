@@ -5,6 +5,8 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
+title Fachliches Modell
+
 package "entity" {
   abstract class Person {
     -int id
@@ -101,7 +103,11 @@ enum InvoiceType {
 enum InputOption {
   CODE
   NUMBER
+  NUMBER_SUGGESTION
+  COST
+  PERCENT
   STRING
+  BOOLEAN
   DATE
   TIME
 }
@@ -125,4 +131,10 @@ SegmentInfo --> InvoiceType
 FieldDefinition --> FieldType
 FieldDefinition --> PersonRole
 ValueFieldEntry --> InputOption
+legend right
+  Das fachliche Modell ist vom Umbau unberuehrt geblieben.
+  Entity-Klassen werden persistiert, model-Klassen nicht.
+  Abrechnung verbindet Patient, Leistungserbringer und Blaupause
+  mit der Terminanzahl und ist die Vorlage der DTA-Nachricht.
+endlegend
 @enduml

@@ -6,15 +6,16 @@ erfassen, prüfen, in das DTA-Format umwandeln und an die zuständige Kasse
 
 ## Voraussetzungen
 
-- JDK 21
-- Maven 3.9+
+**Zum Benutzen:** nichts. Die ausgelieferte Anwendung bringt ihre eigene
+Java-Laufzeit mit (siehe [Auslieferung](#auslieferung)).
 
-> **Hinweis für diesen Entwicklungsrechner:** Unter Windows sind weder `java`
-> noch `mvn` installiert. Die Toolchain liegt in WSL:
->
-> ```bash
-> wsl -e bash -lc "cd /mnt/c/Projekte/gkv/Health-insurance-claims/GKVTransmitter && mvn -B test"
-> ```
+**Zum Entwickeln:** JDK 21 oder neuer und Maven 3.9+. Auf diesem
+Entwicklungsrechner installiert sind Temurin JDK 25 (LTS) unter
+`C:\Program Files\Eclipse Adoptium` und Maven 3.9.16 unter
+`C:\Tools\apache-maven-3.9.16`, beide im PATH.
+
+Zusätzlich für die Dokumentation: PlantUML (`C:\Tools\plantuml\plantuml.jar`)
+zum Rendern der Diagramme und Pandoc für die Word-Fassung.
 
 ## Aufbau
 
@@ -79,11 +80,43 @@ mvn checkstyle:check
 mvn pmd:check
 ```
 
+## Auslieferung
+
+```bash
+mvn -Ppaket clean package
+```
+
+Ergebnis: `gkv-ui/target/paket/GKVTransmitter/` — ein Ordner mit `GKVTransmitter.exe`
+und mitgelieferter Java-Laufzeit, rund 166 MB. Auf dem Zielrechner muss **nichts**
+installiert sein, auch kein Java. Kopieren, Doppelklick, fertig.
+
+`jpackage` erzeugt immer für das System, auf dem es läuft — ein Windows-Paket
+entsteht also nur unter Windows.
+
+## Wo die Daten liegen
+
+Alle Daten liegen im Profil des angemeldeten Benutzers, **nicht** im
+Arbeitsverzeichnis:
+
+| Betriebssystem | Ort |
+|---|---|
+| Windows | `%LOCALAPPDATA%\GKVTransmitter` |
+| macOS | `~/Library/Application Support/GKVTransmitter` |
+| Linux | `$XDG_DATA_HOME/gkvtransmitter`, sonst `~/.local/share/gkvtransmitter` |
+
+Darunter `database.db` sowie `dta_output/` mit den erzeugten und zugestellten
+Dateien. Für eine Sicherung genügt eine Kopie dieses Ordners.
+
+Der Ablageort hängt am Benutzer und nicht daran, von wo gestartet wurde — sonst
+läge die Datenbank je nach Startart auf dem Desktop oder in `C:\Program Files`,
+wo sich gar nicht schreiben lässt.
+
 ## Konfiguration
 
 | Systemeigenschaft | Umgebungsvariable | Standard | Bedeutung |
 |---|---|---|---|
-| `gkv.db.path` | `GKV_DB_PATH` | `database.db` | Ort der SQLite-Datei |
+| `gkv.home` | `GKV_HOME` | Benutzerprofil | Ablageort aller Daten |
+| `gkv.db.path` | `GKV_DB_PATH` | `database.db` im Ablageort | Ort der SQLite-Datei |
 | `gkv.db.schema` | `GKV_DB_SCHEMA` | `update` | Umgang mit dem Schema |
 | `gkv.testdaten` | – | `false` | Testdaten beim Start anlegen |
 
@@ -155,11 +188,26 @@ GKVTransmitter/
 ├── gkv-core/                  Fachlicher Kern
 ├── gkv-ui/                    JavaFX-Oberfläche
 └── Information/               Fachdokumentation
+    ├── GKVTransmitter_Dokumentation.md    Gesamtdokumentation (Quelle)
+    ├── GKVTransmitter_Dokumentation.docx  daraus erzeugte Word-Fassung
     ├── Vision.md              Ziel und Architektur
+    ├── *.puml / *.png         UML-Diagramme mit gerenderten Bildern
     ├── Abrechnung_Checkliste_kurz.md
     ├── codes/                 Codelisten des Verfahrens
     ├── Valide.DTA             gültige Referenznachricht
     └── Anlage_*.pdf           verbindliche Vorgaben
+```
+
+## Dokumentation aktualisieren
+
+Die Diagramme werden aus den `.puml`-Quellen gerendert, die Word-Fassung aus der
+Markdown-Quelle erzeugt — beide sind **abgeleitet** und nicht von Hand zu
+bearbeiten:
+
+```bash
+cd Information
+java -jar C:/Tools/plantuml/plantuml.jar -tpng -charset UTF-8 "*.puml"
+pandoc GKVTransmitter_Dokumentation.md -o GKVTransmitter_Dokumentation.docx --toc --toc-depth=2
 ```
 
 ## Agentische Unterstützung

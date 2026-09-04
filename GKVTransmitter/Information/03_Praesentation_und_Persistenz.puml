@@ -5,55 +5,104 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
-package "de.gkvtransmitter" {
-  class Main
-  class App
+title Oberflaeche und Datenzugriff
+
+package "gkv-ui" #F2F6FA {
+  package "de.gkvtransmitter" {
+    class Main {
+      +main(String[])
+    }
+    class App {
+      +start(Stage)
+    }
+  }
+  package "presentation" {
+    class Controller {
+      +getGlobalDefinitions()
+      +getFactoryManager()
+      +getDatabase() : DataRepository
+    }
+    class View {
+      +createMainScene()
+      -createAbrechnung()
+      -zeigePruefbericht(ValidationReport)
+    }
+    interface UiFactory
+    class JavaFxUiFactory
+  }
+  package "presentation.builder" {
+    class FormBuilder
+    class MenuBuilder
+  }
+  package "presentation.controller" {
+    class EditFormController<T>
+  }
+  package "presentation.populator" {
+    abstract class EntityFieldPopulator<T>
+    class PatientFieldPopulator
+    class ServiceProviderFieldPopulator
+  }
+  package "ui-util" as uiutil {
+    class AppMessages
+  }
 }
-package "presentation" {
-  class Controller
-  class View
-  interface UiFactory
-  class JavaFxUiFactory
-  class FactoryManager
+
+package "gkv-core" #F7F7F2 {
+  package "application" {
+    class AbrechnungService
+  }
+  package "factory" {
+    class FactoryManager
+  }
+  package "repository" {
+    interface DataRepository {
+      +savePatient()
+      +getAllPatients()
+      +savePersonGroup()
+      +saveBlueprint()
+      +nextDtaInterchangeReference()
+    }
+  }
+  package "hibernate.sqllite" {
+    class HibernateSqllite {
+      +open(DatabaseSettings)
+      +close()
+    }
+    class DatabaseSettings {
+      +fromEnvironment()
+      +forFile(Path)
+      +getJdbcUrl()
+      +getSchemaMode()
+    }
+    class SessionFactoryProvider {
+      +create(DatabaseSettings)
+    }
+    class TransactionRunner {
+      +read(String, Function)
+      +write(String, Function)
+    }
+    class PersistenceOperationException
+  }
+  package "util" {
+    class Anwendungsverzeichnis {
+      +basis()
+      +datenbank()
+      +versandordner()
+      +aufloesen(Path)
+    }
+    class FieldValidator
+    class TagConfigLoader
+    class TagList
+    abstract class ModifierInstance
+  }
 }
-package "application" {
-  class AbrechnungService
-}
-package "presentation.builder" {
-  class FormBuilder
-  class MenuBuilder
-}
-package "presentation.controller" {
-  class EditFormController<T>
-}
-package "presentation.populator" {
-  abstract class EntityFieldPopulator<T>
-  class PatientFieldPopulator
-  class ServiceProviderFieldPopulator
-}
-package "hibernate.sqllite" {
-  class HibernateSqllite
-}
-package "repository" {
-  interface DataRepository
-}
-package "util" {
-  class AppMessages
-  class FieldValidator
-  class TagConfigLoader
-  class TagList
-  abstract class ModifierInstance
-}
+
+class "SQLite-Datei im Benutzerprofil" as db <<Datei>>
 
 Main --> App
 App --> Controller
 App --> View
 App --> AbrechnungService
-Controller --> ApplicationBootstrap
-Controller --> GlobalDefinitions
-Controller --> FactoryManager
-Controller --> DataRepository
-Controller ..> HibernateSqllite
 View --> Controller
 View --> UiFactory
 View --> FormBuilder
@@ -62,28 +111,41 @@ View --> EditFormController
 View --> PatientFieldPopulator
 View --> ServiceProviderFieldPopulator
 View --> AbrechnungService
-AbrechnungService --> DtaDispatchService
+View --> AppMessages
+View --> Anwendungsverzeichnis
+Controller --> FactoryManager
+Controller --> DataRepository
+Controller ..> HibernateSqllite
 JavaFxUiFactory ..|> UiFactory
-FactoryManager o-- "0..*" Factory
 FormBuilder --> UiFactory
 MenuBuilder --> UiFactory
 EditFormController --> EntityFieldPopulator
 PatientFieldPopulator --|> EntityFieldPopulator
 ServiceProviderFieldPopulator --|> EntityFieldPopulator
 EntityFieldPopulator --> FieldValidator
-HibernateSqllite --> HibernateUtil
+
 HibernateSqllite ..|> DataRepository
-HibernateSqllite --> Patient
-HibernateSqllite --> ServiceProvider
-HibernateSqllite --> PersonGroup
-HibernateSqllite --> Blueprint
+HibernateSqllite --> SessionFactoryProvider
+HibernateSqllite --> TransactionRunner
+SessionFactoryProvider --> DatabaseSettings
+DatabaseSettings --> Anwendungsverzeichnis
+TransactionRunner ..> PersistenceOperationException
+HibernateSqllite --> db
+
 TagConfigLoader --> TagList
 TagList o-- "0..*" ModifierInstance
-FieldValidator --> InputOption
 
 legend right
-  Praesentation und Datenzugriff sind getrennt dargestellt.
-  Die UI nutzt Services und Populatoren;
-  HibernateSqllite kapselt den Datenbankzugriff.
+  DataRepository ist der Vertrag, HibernateSqllite die Umsetzung.
+  Der Controller kennt nur den Vertrag - die Datenbank waere
+  austauschbar, ohne die Oberflaeche zu beruehren.
+
+  Anwendungsverzeichnis bestimmt den Ablageort. Datenbank und
+  Versandordner haengen am Benutzerprofil und nicht am
+  Arbeitsverzeichnis, damit die ausgelieferte Anwendung ihre
+  Daten unabhaengig vom Startort wiederfindet.
+
+  TransactionRunner buendelt Sitzung und Transaktion an einer
+  Stelle; zuvor stand derselbe Block in zwoelf Methoden.
 endlegend
 @enduml

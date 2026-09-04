@@ -5,6 +5,8 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 skinparam linetype ortho
 
+title DTA-Erzeugung, Pruefung und Versand
+
 package "parser" {
   interface ParserFactory<T> {
     +parse()
@@ -15,8 +17,6 @@ package "parser" {
 }
 package "parser.json" {
   class JsonParserFactory {
-    -ObjectMapper objectMapper
-    -Map<InvoiceType, Invoice> profileByTypeCache
     +parseProfiles()
     +parseInvoices()
     +parseSegments()
@@ -24,70 +24,187 @@ package "parser.json" {
 }
 package "bootstrap" {
   class ApplicationBootstrap {
-    -GlobalDefinitions globalDefinitions
-    -FactoryManager factoryManager
     +initialize()
   }
 }
 package "definition" {
   class GlobalDefinitions {
-    -Map<InvoiceType, Invoice> profileCollection
-    -Map<String, DtaMessage> invoiceTemplateCollection
     +getInstance()
-    +registerProfile(...)
-    +registerInvoiceTemplate(...)
+    +registerProfile()
+    +registerInvoiceTemplate()
   }
 }
+package "factory" {
+  class FactoryManager {
+    +addFactory()
+    +getSpecificFactory()
+  }
+}
+
 package "dta" {
-  class DtaFactory {
-    +buildDtaFor(Abrechnung, long, String, String)
-    +writeDtaFile(String, Path, String)
+  class DtaFactory <<utility>> {
+    +buildDtaFor(Abrechnung, ref, senderIk, receiverIk)
+    +writeDtaFile()
+  }
+  class DtaDocument {
+    +parse(String) : DtaDocument
+    +mitTag(String)
+    +anzahlMitTag(String)
+  }
+  class DtaSegment <<record>> {
+    +tag
+    +elements
+    +element(int)
+    +komponente(int, int)
+    +ort()
+  }
+  class Leistungsparameter <<record>> {
+    +einzelbetrag
+    +abrechnungscode
+    +tarifkennzeichen
+    +positionsnummer
+    +ausBlueprint(Blueprint)
   }
 }
+
+package "validator" #FFF3D6 {
+  class DtaValidationService {
+    +standard()
+    +pruefe(String) : ValidationReport
+    +mitZusaetzlicherRegel(ValidationRule)
+  }
+  interface ValidationRule {
+    +getName()
+    +pruefe(DtaDocument, Builder)
+  }
+  class ValidationReport {
+    +hatFehler()
+    +istVersandfaehig()
+    +getErrors()
+    +getWarnings()
+  }
+  class ValidationMessage <<record>> {
+    +severity
+    +code
+    +ort
+    +text
+  }
+  enum ValidationSeverity {
+    INFO
+    WARNING
+    ERROR
+  }
+}
+
+package "validator.rules" #FFF3D6 {
+  class SegmentSyntaxRegel
+  class NachrichtenRahmenRegel
+  class NachrichtenAbschlussRegel
+  class InstitutionskennzeichenRegel
+  class VersichertenangabenRegel
+  class BetragskonsistenzRegel
+}
+
 package "dispatch" {
   class DtaDispatchService {
-    -BillingOfficeEndpointRegistry endpointRegistry
-    -BillingOfficeTransport transport
-    +generateAndRoute(...)
+    +generateAndRoute(List<Abrechnung>, Path)
+    +pruefe(List<Abrechnung>)
     +checkConfiguredEndpoints()
     +parseResponse(String)
   }
   interface BillingOfficeTransport {
-    +send(Path, BillingOfficeEndpoint)
-    +probe(BillingOfficeEndpoint)
+    +send(Path, Endpoint)
+    +probe(Endpoint)
   }
   class FileBillingOfficeTransport
+  class SimulierterKassenTransport {
+    +letzteAntwort(int)
+  }
+  class SimulierteKassenGegenstelle {
+    +empfange(String)
+    +empfangeDatei(Path)
+  }
+  class BillingOfficeResponseParser {
+    +parse(String)
+  }
   class BillingOfficeEndpointRegistry {
-    -Map<Integer, BillingOfficeEndpoint> endpoints
-    -Path fallbackRoot
+    +loadDefault()
     +resolve(int, Path)
   }
   class BillingOfficeEndpoint <<record>>
   class DispatchBatch
+  class BillingOfficeResponse
+  enum BillingOfficeResponseType {
+    ACCEPTED
+    REJECTED
+    SYNTAX_ERROR
+    TECHNICAL_ERROR
+    UNKNOWN
+  }
+  class DtaValidierungsException
+  class DispatchException
 }
 
-JsonParserFactory ..|> ParserFactory
+package "application" {
+  class AbrechnungService {
+    +createAndDispatch(...)
+  }
+}
+
 JsonParserFactory ..|> Factory
-FileBillingOfficeTransport ..|> BillingOfficeTransport
+JsonParserFactory ..|> ParserFactory
 ApplicationBootstrap --> JsonParserFactory
 ApplicationBootstrap --> GlobalDefinitions
 ApplicationBootstrap --> FactoryManager
-JsonParserFactory --> Invoice
-JsonParserFactory --> DtaMessage
-JsonParserFactory --> SegmentDefinition
-GlobalDefinitions o-- "0..*" Invoice
-GlobalDefinitions o-- "0..*" DtaMessage
+FactoryManager o-- "0..*" Factory
+
+AbrechnungService --> DtaDispatchService
+
 DtaDispatchService --> DtaFactory
-DtaDispatchService --> Abrechnung
-DtaDispatchService --> BillingOfficeEndpointRegistry
+DtaDispatchService --> DtaValidationService
 DtaDispatchService --> BillingOfficeTransport
+DtaDispatchService --> BillingOfficeEndpointRegistry
+DtaDispatchService --> BillingOfficeResponseParser
+DtaDispatchService ..> DtaValidierungsException
+DtaDispatchService ..> DispatchException
 DtaDispatchService --> DispatchBatch
 
+DtaFactory --> Leistungsparameter
+DtaValidationService --> DtaDocument
+DtaValidationService o-- "1..*" ValidationRule
+DtaValidationService --> ValidationReport
+DtaDocument o-- "0..*" DtaSegment
+ValidationReport o-- "0..*" ValidationMessage
+ValidationMessage --> ValidationSeverity
+DtaValidierungsException --> ValidationReport
+
+SegmentSyntaxRegel ..|> ValidationRule
+NachrichtenRahmenRegel ..|> ValidationRule
+NachrichtenAbschlussRegel ..|> ValidationRule
+InstitutionskennzeichenRegel ..|> ValidationRule
+VersichertenangabenRegel ..|> ValidationRule
+BetragskonsistenzRegel ..|> ValidationRule
+
+FileBillingOfficeTransport ..|> BillingOfficeTransport
+SimulierterKassenTransport ..|> BillingOfficeTransport
+SimulierterKassenTransport o-- BillingOfficeTransport
+SimulierterKassenTransport --> SimulierteKassenGegenstelle
+SimulierteKassenGegenstelle --> DtaValidationService
+BillingOfficeResponseParser --> BillingOfficeResponse
+BillingOfficeResponse --> BillingOfficeResponseType
+BillingOfficeEndpointRegistry o-- "0..*" BillingOfficeEndpoint
+
 legend right
-  Ablauf: Bootstrap -> Parser -> Definitionen
-  Abrechnung -> DTA Factory -> Dispatch Service -> Transport
-  ..|> = Implementierung
-  -->  = Nutzung / Abhaengigkeit
-  o--  = enthaltene Sammlung
+  Die Pruefung liegt zwischen Erzeugung und Zustellung.
+  DtaDispatchService erzeugt erst alle Nachrichten, prueft sie,
+  und stellt nur zu, wenn keine beanstandet wird - sonst laege
+  bei einem Fehler in der Mitte des Laufs bereits ein Teil bei
+  der Kasse.
+
+  Geprueft wird gegen DtaDocument, also gegen die zurueckgelesene
+  Nachricht, nicht gegen Zeichenketten im Ergebnis.
+
+  SimulierterKassenTransport umschliesst einen anderen Transport,
+  statt ihn zu ersetzen.
 endlegend
 @enduml
