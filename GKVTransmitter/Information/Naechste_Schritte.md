@@ -158,25 +158,49 @@ inzwischen auch `Meldungen`, und die Ersatzstücke liegen unter
 
 Nach Nutzen geordnet:
 
-1. **Stornierung und Nachberechnung** — heute gar nicht vorhanden. Sobald real
+1. **Der Rechnungsbetrag lässt sich über die Oberfläche nicht einstellen.**
+   Das ist der schwerwiegendste offene Punkt im ganzen Programm — gefunden am
+   05.09.2026.
+
+   `Leistungsparameter.ausBlueprint` sucht in der Blaupause nach dem Feld
+   **„Durchschnittlicher Einzelbetrag"**. Dieses Feld trägt in
+   `segments/enf.json` die Markierung `"person": "SERVICE_PROVIDER"`, und
+   `View.createFormular` blendet genau solche Felder aus
+   (`getPersonRole() == null` ist Bedingung). Es steht also in keinem Formular,
+   kann in keiner Blaupause landen, und `ausBlueprint` fällt jedes Mal auf
+   `VORBELEGUNG` zurück.
+
+   **Folge: jede erzeugte Rechnung lautet auf 15.000,00 € je Termin.** Bei drei
+   Terminen 45.000,00 € — nachzulesen in `DtaFactoryTest`, das genau das prüft.
+   Derselbe Weg betrifft „Zuzahlung pro Position" und die
+   Abrechnungspositionsnummer.
+
+   Der Wert 15.000,00 stammt aus `Information/Valide.DTA` und ist ausdrücklich
+   als Rückfallebene benannt, nicht als fachliche Vorgabe. Für einen
+   Geburtsvorbereitungskurs ist er um Größenordnungen zu hoch.
+
+   Zu klären ist, wo der Betrag hingehört: in die Blaupause (dann muss das Feld
+   ins Formular, also die `person`-Markierung weg) oder an den Dienstleister
+   (dann braucht `ServiceProvider` ein Betragsfeld — heute hat die Entität
+   keines). **Vor dem ersten echten Versand muss das entschieden sein.**
+2. **Stornierung und Nachberechnung** — heute gar nicht vorhanden. Sobald real
    abgerechnet wird, wird das gebraucht.
-2. **Umsatzsteuersatz** ist mit 19 fest in `DtaFactory` verdrahtet
+3. **Umsatzsteuersatz** ist mit 19 fest in `DtaFactory` verdrahtet
    (`UMSATZSTEUERSATZ`). Gehört in die Blaupause, analog zu
    `Leistungsparameter`.
-3. **Weitere Leistungsbereiche** — abgedeckt ist nur SGS H mit Abrechnungscode
+4. **Weitere Leistungsbereiche** — abgedeckt ist nur SGS H mit Abrechnungscode
    `61`. Die Struktur dafür steht, es fehlen die Daten aus Anlage 3.
-4. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
+5. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
    fachliche Zulässigkeit geprüft. Dafür bräuchte es die Schlüsseltabellen aus
    Anlage 3 als JSON — dann wäre es eine weitere `ValidationRule`.
-5. **Die Summenfelder werden von Hand eingetragen, nicht gerechnet.**
-   `GES` Position 2 und 3 („Summe Leistung", „Summe Gesamtbetrag") und `BES`
-   Position 1 („Gesamtbetrag") stehen in den Segmentdateien auf
-   `"internal": false` und erscheinen deshalb im Blaupausenformular. Kein Code
-   berechnet sie aus den Einzelpositionen — das prüfte ich am 05.09.2026 nach.
-   Solange das so ist, ist die Einstufung richtig: setzte man sie auf
-   `internal`, blieben sie leer. Sobald jemand sie rechnet, gehören sie
-   umgestellt, denn eine von Hand getippte Summe, die den Positionen
-   widerspricht, ist genau das, was `DtaValidationService` zurückweist.
+6. **Die Summenfelder im Formular sind wirkungslos.** `GES` Position 2 und 3
+   und `BES` Position 1 stehen auf `"internal": false` und erscheinen deshalb
+   im Blaupausenformular. `DtaFactory` rechnet die Summen aber selbst aus
+   Einzelbetrag mal Menge und setzt die Segmentzeilen per `String.format`
+   zusammen — die JSON-Definitionen steuern Formular und Prüfung, nicht die
+   Erzeugung. Was dort eingetippt wird, erreicht die Nachricht nie. Die Felder
+   gehören auf `internal`, damit das Formular nicht nach etwas fragt, das es
+   nicht verwendet.
 
 ### E. Echter Übermittlungsweg
 

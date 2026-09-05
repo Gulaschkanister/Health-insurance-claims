@@ -178,11 +178,13 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
      * Ohne Kennzeichen sind nur die Segmentverweise in den beiden Profildateien,
      * die keine Felder sind und es deshalb auch nicht brauchen.</p>
      *
-     * <p>Offen bleibt eine fachliche Frage, die nicht hierher gehoert: die
-     * Summenfelder in GES und BES stehen auf {@code false}, werden also von Hand
-     * eingetragen, obwohl sie sich aus den Einzelpositionen ergeben. Solange sie
-     * niemand berechnet, ist die Einstufung richtig; sie steht als offener Punkt
-     * in {@code Information/Naechste_Schritte.md}.</p>
+     * <p>Wichtig fuer das Verstaendnis: diese Definitionen steuern das
+     * Blaupausenformular und die Pruefung, <em>nicht</em> die Erzeugung der
+     * Nachricht. {@code DtaFactory} setzt die Segmentzeilen selbst zusammen und
+     * rechnet die Summen in GES und BES aus Einzelbetrag und Menge. Was im
+     * Formular unter "Summe Gesamtbetrag" eingetippt wird, erreicht die
+     * Nachricht also nie. Dass diese Felder auf {@code "internal": false}
+     * stehen, ist deshalb irrefuehrend - siehe {@code Naechste_Schritte.md}.</p>
      */
     private SegmentDefinition parseSegmentFromResource(String segmentName, boolean repeatable) {
         String resourcePath = "segments/" + segmentName.toLowerCase(Locale.ROOT) + ".json";
