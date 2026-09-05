@@ -499,7 +499,7 @@ class PersonenMaskeTest {
      * Maske - jetzt geht er wirklich denselben.</p>
      */
     private Node bedienelement(Region formular, String feldname) {
-        return new Feldbau(new JavaFxUiFactory(), texte).bedienelement(feld(formular, feldname));
+        return Feldbau.bedienelement(feld(formular, feldname));
     }
 
     /** Die sichtbare Beanstandung unter einem Feld, oder {@code null}. */

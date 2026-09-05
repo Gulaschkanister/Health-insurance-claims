@@ -410,7 +410,7 @@ public final class Bedienung {
                     new de.gkvtransmitter.util.AppMessages("/messages/ui-messages.json"));
 
     private static Node huelleAufloesen(Node feld) {
-        return FELDBAU.bedienelement(feld);
+        return Feldbau.bedienelement(feld);
     }
 
     private Node suche(String kennung) {

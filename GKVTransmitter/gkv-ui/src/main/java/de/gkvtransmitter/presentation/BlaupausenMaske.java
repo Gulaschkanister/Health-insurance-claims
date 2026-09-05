@@ -348,7 +348,7 @@ public class BlaupausenMaske {
         if (wert == null || wert.isBlank()) {
             return;
         }
-        Node bedienelement = feldbau.bedienelement(feld);
+        Node bedienelement = Feldbau.bedienelement(feld);
         if (bedienelement instanceof javafx.scene.control.TextInputControl eingabe) {
             eingabe.setText(wert);
         } else if (bedienelement instanceof javafx.scene.control.ComboBox<?> auswahl) {

@@ -295,7 +295,7 @@ public class Feldbau {
      * Bedienelement als Eigenschaft mit sich. Der Rueckgriff auf das erste
      * Kind bleibt fuer Huellen, die anderswo gebaut wurden.</p>
      */
-    public Node bedienelement(Node feld) {
+    public static Node bedienelement(Node feld) {
         if (feld instanceof VBox huelle) {
             Object hinterlegt = huelle.getProperties().get(BEDIENELEMENT);
             if (hinterlegt instanceof Node element) {

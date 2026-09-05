@@ -4,7 +4,6 @@ import javafx.scene.Node;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextInputControl;
-import javafx.scene.layout.VBox;
 
 /**
  * Abstrakte Basis für die Populierung von Formularfeldern mit Entity-Daten.
@@ -103,16 +102,27 @@ public abstract class EntityFieldPopulator<T> {
     }
 
     /**
-     * Packt ein Feld aus, das in einer VBox verpackt sein könnte.
+     * Packt ein Feld aus, das in einer Hülle stecken könnte.
+     *
+     * <p>Über {@link de.gkvtransmitter.presentation.Feldbau#bedienelement} und
+     * <b>nicht</b> über das erste Kind. Genau das stand hier bis zum
+     * 05.09.2026, und es war seit demselben Tag falsch: seit neben dem
+     * Bedienelement ein Info-Zeichen stehen kann, ist das erste Kind eine
+     * Zeile aus beidem. {@code extractFieldValue} bekam damit eine
+     * {@code HBox}, lieferte {@code ""}, und {@code setEntityFieldValue}
+     * überging den Leerwert — <b>das Bearbeiten schrieb nichts mehr und
+     * meldete Erfolg.</b></p>
+     *
+     * <p>Kein Test schlug fehl. Die Maskentests benutzen einen eigenen,
+     * einfachen Populator, und die Personenmaskentests prüften, <em>dass</em>
+     * gespeichert wird, nicht <em>was</em>. Der Weg zum Bedienelement gehört
+     * deshalb an eine Stelle und nicht an drei.</p>
      *
      * @param field Das möglicherweise verpackte Feld
      * @return Das eigentliche UI-Element
      */
     private Node unwrapField(Node field) {
-        if (field instanceof VBox v && !v.getChildren().isEmpty()) {
-            return v.getChildren().get(0);
-        }
-        return field;
+        return de.gkvtransmitter.presentation.Feldbau.bedienelement(field);
     }
 
     /**

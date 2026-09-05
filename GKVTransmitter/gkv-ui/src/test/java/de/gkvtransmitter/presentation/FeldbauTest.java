@@ -173,7 +173,7 @@ class FeldbauTest {
         @DisplayName("Ein einziger Vorschlag wird ein ausgefuelltes Textfeld, kein Aufklappmenue")
         void einVorschlagIstKeineAuswahl() {
             JavaFxLaufzeit.aufFxFaden(() -> {
-                Node bedienelement = feldbau.bedienelement(
+                Node bedienelement = Feldbau.bedienelement(
                         feldbau.erzeugeFeld("Abrechnungscode", null, "", List.of("61")));
 
                 assertInstanceOf(TextField.class, bedienelement,
@@ -186,7 +186,7 @@ class FeldbauTest {
         @DisplayName("Mehrere Vorschlaege werden ein Auswahlfeld, das beschreibbar bleibt")
         void mehrereVorschlaege() {
             JavaFxLaufzeit.aufFxFaden(() -> {
-                Node bedienelement = feldbau.bedienelement(
+                Node bedienelement = Feldbau.bedienelement(
                         feldbau.erzeugeFeld("Umsatzsteuersatz", null, "", List.of("19", "7", "0")));
 
                 assertInstanceOf(ComboBox.class, bedienelement);
@@ -279,7 +279,7 @@ class FeldbauTest {
         @Test
         @DisplayName("Das Bedienelement bleibt auffindbar, auch neben dem Zeichen")
         void bedienelementBleibtErreichbar() {
-            JavaFxLaufzeit.aufFxFaden(() -> assertInstanceOf(TextField.class, feldbau.bedienelement(
+            JavaFxLaufzeit.aufFxFaden(() -> assertInstanceOf(TextField.class, Feldbau.bedienelement(
                     feldbau.erzeugeFeld("firstname", beschreibung("firstname")))));
         }
     }
@@ -337,7 +337,7 @@ class FeldbauTest {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
 
-                ((TextField) feldbau.bedienelement(feld)).setText("10831040");
+                ((TextField) Feldbau.bedienelement(feld)).setText("10831040");
 
                 assertFalse(beanstandungszeile(feld).isVisible(),
                         "Acht von neun Zwischenstaenden einer IK-Eingabe sind falsch");
@@ -349,7 +349,7 @@ class FeldbauTest {
         void beanstandungErscheint() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
-                TextField eingabe = (TextField) feldbau.bedienelement(feld);
+                TextField eingabe = (TextField) Feldbau.bedienelement(feld);
                 eingabe.setText("108310401");
 
                 Optional<String> befund = feldbau.beanstandung(feld);
@@ -367,7 +367,7 @@ class FeldbauTest {
         void beanstandungVerschwindet() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
-                TextField eingabe = (TextField) feldbau.bedienelement(feld);
+                TextField eingabe = (TextField) Feldbau.bedienelement(feld);
                 eingabe.setText("108310401");
                 feldbau.beanstandung(feld);
                 assertTrue(beanstandungszeile(feld).isVisible());

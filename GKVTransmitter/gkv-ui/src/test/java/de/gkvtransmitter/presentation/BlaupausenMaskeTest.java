@@ -342,7 +342,7 @@ class BlaupausenMaskeTest {
     private Node bedienelement(Region formular, String feldname) {
         Node feld = feld(formular, feldname);
         assertNotNull(feld, "Feld nicht gefunden: " + feldname);
-        return new Feldbau(new JavaFxUiFactory(), texte).bedienelement(feld);
+        return Feldbau.bedienelement(feld);
     }
 
     private String wertVon(Region formular, String feldname) {
