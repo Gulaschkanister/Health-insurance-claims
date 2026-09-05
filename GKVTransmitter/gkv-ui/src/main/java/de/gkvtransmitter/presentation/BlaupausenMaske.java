@@ -199,11 +199,17 @@ public class BlaupausenMaske {
 
         TextField namensfeld = bausteine.createTextField();
         namensfeld.setId(ID_NAME);
-        namensfeld.setPrefWidth(320);
+        namensfeld.setPrefWidth(420);
         namensfeld.setPromptText(texte.get("label.blueprintName"));
+        // Der Vorschlag hiess einmal "<voller Vorlagenname>-blueprint" und
+        // stand damit als "Geburtsvorbereitungskurs, Einzelabrechnung-bluepri"
+        // abgeschnitten im Feld - ein englisches Wort in einer deutschen
+        // Oberflaeche, angehaengt an einen Namen, der ohnehin zu lang war.
+        // Jetzt der Kursname; wer mehrere Blaupausen je Kurs fuehrt, benennt
+        // sie ohnehin von Hand.
         namensfeld.setText(vorhandene != null && vorhandene.getName() != null
                 ? vorhandene.getName()
-                : vorlagenname + "-blueprint");
+                : View.kursname(vorlagenname));
 
         HBox namenszeile = new HBox(10, bausteine.createLabel(texte.get("label.blueprintName")), namensfeld);
 

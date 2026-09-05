@@ -16,7 +16,9 @@ import de.gkvtransmitter.util.Institutionskennzeichen;
 import de.gkvtransmitter.util.ModifierInstance;
 import de.gkvtransmitter.util.TagList;
 import de.gkvtransmitter.util.modifiers.MaxLengthModifier;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -24,6 +26,10 @@ import javafx.scene.control.Spinner;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
@@ -57,6 +63,10 @@ public class Feldbau {
     public static final String STIL_FEHLER = "feld-fehler";
     /** Stilklasse der Zeile mit der Erklaerung. */
     public static final String STIL_HINWEIS = "feld-hinweis";
+    /** Stilklasse des Info-Zeichens neben einem Feld. */
+    public static final String STIL_INFOZEICHEN = "info-zeichen";
+    /** Vorsatz der Kennung eines Info-Zeichens, gefolgt vom Feldnamen. */
+    public static final String ID_INFO = "feld-info-";
 
     /** Vorsatz der Schluessel, unter denen die Erklaerungen stehen. */
     private static final String HINWEIS_SCHLUESSEL = "help.";
@@ -100,17 +110,25 @@ public class Feldbau {
         beanstandung.setWrapText(true);
         verbergen(beanstandung);
 
-        VBox feld = new VBox(3, bedienelement);
         Optional<String> text = (erklaerung == null || erklaerung.isBlank())
                 ? erklaerung(feldname, beschreibung)
                 : Optional.of(erklaerung);
+
+        VBox feld = new VBox(3, kopfzeile(bedienelement, feldname, text));
         text.ifPresent(inhalt -> {
             Label hinweis = bausteine.createLabel(inhalt);
             hinweis.getStyleClass().add(STIL_HINWEIS);
             hinweis.setWrapText(true);
+            if (!stetsSichtbar(feldname)) {
+                verbergen(hinweis);
+            }
             feld.getChildren().add(hinweis);
         });
         feld.getChildren().add(beanstandung);
+        // Das Bedienelement steckt jetzt in einer Zeile mit dem Info-Zeichen
+        // und ist nicht mehr das erste Kind. Wer es sucht, findet es hier -
+        // unabhaengig davon, wie das Feld sonst noch umgebaut wird.
+        feld.getProperties().put(BEDIENELEMENT, bedienelement);
 
         // Dieselbe Pruefung fuer beides: den Fokuswechsel und den Abruf beim
         // Speichern. Es waren einmal zwei, und nur eine merkte sich, dass
@@ -122,6 +140,113 @@ public class Feldbau {
 
     /** Schluessel, unter dem ein Feld seine eigene Pruefung mit sich fuehrt. */
     private static final String PRUEFUNG = "gkv.pruefung";
+
+    /** Schluessel, unter dem ein Feld sein Bedienelement mit sich fuehrt. */
+    private static final String BEDIENELEMENT = "gkv.bedienelement";
+
+    /**
+     * Felder, deren Erklaerung ausgeklappt bleibt.
+     *
+     * <p>Simons Vorschlag war, alle Erklaerungen hinter ein Info-Zeichen zu
+     * legen: die Formulare sind lang, und die Erklaerung wird meist nur beim
+     * ersten Mal gebraucht. Dagegen steht ein Einwand, der ebenso stimmt -
+     * <b>was hinter einem Zeichen liegt, liest niemand.</b></p>
+     *
+     * <p>Der Mittelweg: eingeklappt ist die Regel, ausgeklappt die Ausnahme.
+     * Und zwar dort, wo der richtige Wert sich nicht erraten laesst und ein
+     * falscher teuer ist:</p>
+     *
+     * <ul>
+     *   <li>die beiden Institutionskennzeichen - sie werden vergeben, man
+     *       kann sie sich nicht ausdenken, und ein falsches laesst die Kasse
+     *       die ganze Lieferung abweisen;</li>
+     *   <li>Positionsnummer und Tarifkennzeichen - sie stehen im Vertrag
+     *       beziehungsweise in Anlage 3, nirgends sonst;</li>
+     *   <li>die beiden Betraege - hier entscheidet die Schreibweise mit Komma
+     *       und zwei Nachkommastellen ueber Annahme oder Syntaxfehler.</li>
+     * </ul>
+     *
+     * <p>Alles andere - Vorname, Strasse, Ort - erklaert sich von selbst; dort
+     * stand unter dem Feld ohnehin nur die Hoechstlaenge.</p>
+     *
+     * <p>Die Liste steht bewusst hier und nicht in den JSON-Dateien: sie ist
+     * eine Aussage darueber, was <em>jemand am Bildschirm</em> braucht, keine
+     * ueber das Datenformat.</p>
+     */
+    private static final List<String> STETS_ERKLAERT = List.of(
+            "ik", "kassenIk",
+            "Abrechnungspositionsnummer", "Tarifkennzeichen",
+            "Durchschnittlicher Einzelbetrag", "Zuzahlung pro Position");
+
+    private static boolean stetsSichtbar(String feldname) {
+        return STETS_ERKLAERT.stream().anyMatch(name -> name.equalsIgnoreCase(feldname));
+    }
+
+    /**
+     * Bedienelement und Info-Zeichen nebeneinander.
+     *
+     * <p>Ohne Erklaerung kein Zeichen: eines, hinter dem nichts liegt, ist
+     * eine Falle. Dieselbe Regel gilt in der Statuszeile.</p>
+     */
+    private Node kopfzeile(Node bedienelement, String feldname, Optional<String> erklaerung) {
+        HBox zeile = new HBox(6, bedienelement, beiwerk(feldname, erklaerung));
+        zeile.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(bedienelement, Priority.ALWAYS);
+        if (bedienelement instanceof Region breit) {
+            breit.setMaxWidth(Double.MAX_VALUE);
+        }
+        return zeile;
+    }
+
+    /**
+     * Was rechts neben dem Bedienelement steht: das Zeichen oder sein Platz.
+     *
+     * <p>Der Platz bleibt auch dann frei, wenn kein Zeichen dort steht. Sonst
+     * waeren die Felder mit stehender Erklaerung siebzehn Punkte breiter als
+     * die uebrigen, und in einem zweispaltigen Formular faellt genau das auf -
+     * am gezeichneten Bild sofort zu sehen gewesen.</p>
+     */
+    private Node beiwerk(String feldname, Optional<String> erklaerung) {
+        if (erklaerung.isEmpty() || stetsSichtbar(feldname)) {
+            Region platzhalter = new Region();
+            platzhalter.setMinWidth(BREITE_INFOZEICHEN);
+            platzhalter.setPrefWidth(BREITE_INFOZEICHEN);
+            return platzhalter;
+        }
+        Button zeichen = bausteine.createButton("i");
+        zeichen.getStyleClass().add(STIL_INFOZEICHEN);
+        zeichen.setId(ID_INFO + feldname);
+        zeichen.setFocusTraversable(false);
+        // Der Text haengt zusaetzlich als Kurzhinweis daran. Wer mit der Maus
+        // darueberfaehrt, muss nicht erst klicken - und wer klickt, bekommt
+        // ihn stehend, weil ein Kurzhinweis von selbst wieder verschwindet.
+        zeichen.setTooltip(new Tooltip(erklaerung.get()));
+        zeichen.setOnAction(ereignis -> erklaerungUmschalten(zeichen));
+        return zeichen;
+    }
+
+    /** Kantenlaenge des Info-Zeichens, wie in {@code gkv.css} festgelegt. */
+    private static final double BREITE_INFOZEICHEN = 17;
+
+    /** Klappt die Erklaerung unter dem Feld auf oder wieder zu. */
+    private void erklaerungUmschalten(Node zeichen) {
+        Node feld = zeichen.getParent() == null ? null : zeichen.getParent().getParent();
+        if (!(feld instanceof VBox huelle)) {
+            return;
+        }
+        huelle.getChildren().stream()
+                .filter(Label.class::isInstance)
+                .map(Label.class::cast)
+                .filter(zeile -> zeile.getStyleClass().contains(STIL_HINWEIS))
+                .findFirst()
+                .ifPresent(zeile -> {
+                    if (zeile.isVisible()) {
+                        verbergen(zeile);
+                    } else {
+                        zeigen(zeile);
+                    }
+                });
+    }
 
     /**
      * Prueft ein Feld erneut und zeigt die Beanstandung an.
@@ -161,10 +286,24 @@ public class Feldbau {
         return befunde;
     }
 
-    /** Das Bedienelement eines Feldes, ohne Erklaerung und Beanstandung. */
+    /**
+     * Das Bedienelement eines Feldes, ohne Erklaerung und Beanstandung.
+     *
+     * <p>Bis zum 05.09.2026 war das schlicht das erste Kind der Huelle. Seit
+     * neben dem Bedienelement ein Info-Zeichen stehen kann, ist das erste Kind
+     * mitunter eine Zeile aus beidem - deshalb fuehrt das Feld sein
+     * Bedienelement als Eigenschaft mit sich. Der Rueckgriff auf das erste
+     * Kind bleibt fuer Huellen, die anderswo gebaut wurden.</p>
+     */
     public Node bedienelement(Node feld) {
-        if (feld instanceof VBox huelle && !huelle.getChildren().isEmpty()) {
-            return huelle.getChildren().get(0);
+        if (feld instanceof VBox huelle) {
+            Object hinterlegt = huelle.getProperties().get(BEDIENELEMENT);
+            if (hinterlegt instanceof Node element) {
+                return element;
+            }
+            if (!huelle.getChildren().isEmpty()) {
+                return huelle.getChildren().get(0);
+            }
         }
         return feld;
     }
@@ -486,10 +625,24 @@ public class Feldbau {
         Optional<String> grenze = hoechstlaenge(beschreibung)
                 .map(hoechstens -> String.format(texte.get("help.maxLength"), hoechstens));
 
-        if (eigener.isPresent() && grenze.isPresent()) {
+        if (eigener.isPresent() && grenze.isPresent() && !festeLaenge(feldname)) {
             return Optional.of(eigener.get() + " " + grenze.get());
         }
         return eigener.or(() -> grenze);
+    }
+
+    /**
+     * Ob das Feld eine feste Laenge hat und keine Hoechstlaenge.
+     *
+     * <p>Unter dem IK stand "... neunstellig ... Hoechstens 9 Zeichen.", unter
+     * der Postleitzahl "Fuenfstellig ... Hoechstens 5 Zeichen." - zweimal
+     * dasselbe, und beim zweiten Mal falsch: ein achtstelliges IK ist nicht
+     * etwa kuerzer und damit in Ordnung, es ist ungueltig. {@link #pruefe}
+     * verlangt fuer genau diese Felder eine <em>feste</em> Laenge; die
+     * Erklaerung sagt es dort selbst, und die allgemeine Zeile entfaellt.</p>
+     */
+    private boolean festeLaenge(String feldname) {
+        return istKennzeichen(feldname) || "plz".equalsIgnoreCase(feldname);
     }
 
     // --- Kleinkram -------------------------------------------------------

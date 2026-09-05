@@ -85,6 +85,14 @@ public final class Vorschau {
             klicke(szene, GruppenMaske.ID_NEU);
             schreibe(szene, ziel.resolve("formular-gruppe.png"));
 
+            // Das laengste Formular der Anwendung, und das einzige, dessen
+            // Erklaerungen aus den Segmentdefinitionen stammen statt aus
+            // ui-messages.json. Genau hier faellt auf, ob die Info-Zeichen
+            // etwas bringen.
+            oeffne(szene, "Blaupausen");
+            klicke(szene, BlaupausenMaske.ID_NEU);
+            schreibe(szene, ziel.resolve("formular-blaupause.png"));
+
             // NOCH OFFEN: die Bildlaufleiste bekommt die Vorschau nicht zu
             // Gesicht. Ein Schnappschuss nimmt die Groesse der Szene, und die
             // aendert sich nicht, wenn man dem Fenster nachtraeglich eine

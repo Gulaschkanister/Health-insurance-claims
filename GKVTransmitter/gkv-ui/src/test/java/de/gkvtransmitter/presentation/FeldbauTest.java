@@ -3,6 +3,8 @@ package de.gkvtransmitter.presentation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -18,6 +20,7 @@ import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -195,6 +198,92 @@ class FeldbauTest {
         }
     }
 
+    /**
+     * Das Info-Zeichen an den Feldern.
+     *
+     * <p>Simons Vorschlag gegen lange Formulare, mit dem Einwand dagegen:
+     * was hinter einem Zeichen liegt, liest niemand. Umgesetzt als
+     * Mittelweg - eingeklappt ist die Regel, ausgeklappt die Ausnahme, und
+     * zwar dort, wo ein falscher Wert die Lieferung kostet.</p>
+     */
+    @Nested
+    @DisplayName("Info-Zeichen")
+    class Infozeichen {
+
+        @Test
+        @DisplayName("Am IK bleibt die Erklaerung stehen, ohne Zeichen zum Aufklappen")
+        void wichtigesBleibtOffen() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
+
+                assertTrue(hinweiszeile(feld).isVisible(),
+                        "Ein IK kann man sich nicht ausdenken - das muss dastehen");
+                assertNull(infozeichen(feld, "kassenIk"),
+                        "Ein Zeichen ohne Wirkung waere nur ein Punkt mehr");
+            });
+        }
+
+        @Test
+        @DisplayName("Am Vornamen liegt die Erklaerung hinter dem Zeichen")
+        void uebrigesLiegtDahinter() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node feld = feldbau.erzeugeFeld("firstname", beschreibung("firstname"));
+
+                assertFalse(hinweiszeile(feld).isVisible());
+                assertFalse(hinweiszeile(feld).isManaged(),
+                        "Sonst bliebe die Zeile leer stehen und das Formular waere gleich lang");
+                assertNotNull(infozeichen(feld, "firstname"));
+            });
+        }
+
+        @Test
+        @DisplayName("Ein Klick klappt die Erklaerung auf und wieder zu")
+        void zeichenKlapptAufUndZu() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node feld = feldbau.erzeugeFeld("firstname", beschreibung("firstname"));
+                Button zeichen = infozeichen(feld, "firstname");
+
+                zeichen.fire();
+                assertTrue(hinweiszeile(feld).isVisible());
+                assertTrue(hinweiszeile(feld).isManaged());
+
+                zeichen.fire();
+                assertFalse(hinweiszeile(feld).isVisible());
+            });
+        }
+
+        @Test
+        @DisplayName("Der Text haengt auch als Kurzhinweis am Zeichen")
+        void zeichenTraegtDenText() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Button zeichen = infozeichen(
+                        feldbau.erzeugeFeld("firstname", beschreibung("firstname")), "firstname");
+
+                assertNotNull(zeichen.getTooltip());
+                assertEquals(hinweiszeile(feldbau.erzeugeFeld("firstname", beschreibung("firstname")))
+                        .getText(), zeichen.getTooltip().getText());
+            });
+        }
+
+        /**
+         * Ein Zeichen, hinter dem nichts liegt, ist eine Falle. Dieselbe
+         * Regel gilt fuer das Zeichen in der Statuszeile.
+         */
+        @Test
+        @DisplayName("Ohne Erklaerung gibt es kein Zeichen")
+        void keinZeichenOhneErklaerung() {
+            JavaFxLaufzeit.aufFxFaden(() -> assertNull(
+                    infozeichen(feldbau.erzeugeFeld("ohneHilfe", null), "ohneHilfe")));
+        }
+
+        @Test
+        @DisplayName("Das Bedienelement bleibt auffindbar, auch neben dem Zeichen")
+        void bedienelementBleibtErreichbar() {
+            JavaFxLaufzeit.aufFxFaden(() -> assertInstanceOf(TextField.class, feldbau.bedienelement(
+                    feldbau.erzeugeFeld("firstname", beschreibung("firstname")))));
+        }
+    }
+
     @Nested
     @DisplayName("Erklaerungen")
     class Erklaerungen {
@@ -302,6 +391,16 @@ class FeldbauTest {
         return zeilenMitStil(feldbau.erzeugeFeld(feldname, beschreibung(feldname)), Feldbau.STIL_HINWEIS)
                 .stream().findFirst().map(Label::getText)
                 .orElseThrow(() -> new AssertionError("Keine Erklaerung unter " + feldname));
+    }
+
+    private static Label hinweiszeile(Node feld) {
+        return zeilenMitStil(feld, Feldbau.STIL_HINWEIS).stream().findFirst()
+                .orElseThrow(() -> new AssertionError("Keine Zeile fuer die Erklaerung"));
+    }
+
+    /** Das Info-Zeichen eines Feldes, oder {@code null}, wenn es keines gibt. */
+    private static Button infozeichen(Node feld, String feldname) {
+        return (Button) feld.lookup("#" + Feldbau.ID_INFO + feldname);
     }
 
     private static Label beanstandungszeile(Node feld) {

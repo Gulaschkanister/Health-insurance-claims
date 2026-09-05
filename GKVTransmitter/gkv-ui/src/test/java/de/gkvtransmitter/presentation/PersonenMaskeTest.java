@@ -493,11 +493,13 @@ class PersonenMaskeTest {
     /**
      * Das Bedienelement eines Feldes.
      *
-     * <p>Jedes Feld traegt Erklaerung und Beanstandung unter sich; das
-     * Bedienelement ist deshalb das erste Kind der Huelle.</p>
+     * <p>Ueber {@code Feldbau} und nicht ueber das erste Kind der Huelle: seit
+     * neben dem Bedienelement ein Info-Zeichen stehen kann, ist das erste Kind
+     * mitunter eine Zeile aus beidem. Der Test ging denselben Weg wie die
+     * Maske - jetzt geht er wirklich denselben.</p>
      */
     private Node bedienelement(Region formular, String feldname) {
-        return ((VBox) feld(formular, feldname)).getChildren().get(0);
+        return new Feldbau(new JavaFxUiFactory(), texte).bedienelement(feld(formular, feldname));
     }
 
     /** Die sichtbare Beanstandung unter einem Feld, oder {@code null}. */
