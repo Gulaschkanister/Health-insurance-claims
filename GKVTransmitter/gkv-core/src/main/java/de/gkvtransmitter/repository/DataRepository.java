@@ -31,6 +31,16 @@ public interface DataRepository {
 
     void saveBlueprint(Blueprint blueprint);
 
+    /**
+     * Loescht eine Blaupause.
+     *
+     * <p>Fehlte bis zum 05.09.2026 als einzige der gefuehrten Entitaeten. Eine
+     * einmal angelegte Blaupause liess sich weder ansehen noch berichtigen
+     * noch entfernen - sie blieb als Name im Auswahlfeld der Abrechnung
+     * stehen, einen Klick vom Versand entfernt.</p>
+     */
+    void deleteBlueprint(Blueprint blueprint);
+
     List<Blueprint> getAllBlueprints();
 
     long nextDtaInterchangeReference();

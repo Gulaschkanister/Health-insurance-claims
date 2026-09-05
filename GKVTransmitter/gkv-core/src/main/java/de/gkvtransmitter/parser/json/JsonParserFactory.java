@@ -134,16 +134,8 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
                     }
 
                     valueFields = ensureTemplateValueFields(messageType, segmentType, valueFields);
-                    Map<String, String> valueFieldJavaTypes = buildValueFieldJavaTypes(messageType, segmentType,
-                            valueFields);
-                    Map<String, InputOption> valueFieldInputTypes = buildValueFieldInputTypes(messageType,
-                            segmentType, valueFields);
-                    Map<String, Boolean> valueFieldInternal = buildValueFieldInternal(messageType, segmentType,
-                            valueFields);
-                        Map<String, PersonRole> valueFieldPersonRoles = buildValueFieldPersonRoles(messageType,
-                            segmentType, valueFields);
-                    Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields,
-                            valueFieldJavaTypes, valueFieldInputTypes, valueFieldInternal, valueFieldPersonRoles);
+                    Map<String, FieldDefinition> felder = felderNachSchluessel(messageType, segmentType);
+                    Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields, felder);
 
                     // Erstelle SegmentInfo mit Position, Typ und MessageType
                     segments.add(new SegmentInfo(position, segmentType, messageType, groupTag, typedValueFields));
@@ -325,134 +317,59 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         return valueFields;
     }
 
-    private Map<String, String> buildValueFieldJavaTypes(InvoiceType messageType, String segmentType,
-            Map<String, String> valueFields) {
-        Map<String, String> valueFieldJavaTypes = new LinkedHashMap<>();
+    /**
+     * Ordnet jedem Formularschluessel seine Felddefinition zu.
+     *
+     * <p>Hier lagen bis zum 05.09.2026 vier fast gleiche Methoden
+     * nebeneinander - je eine fuer Java-Typ, Eingabeart, {@code internal} und
+     * Personenrolle. Jede baute dieselbe Zuordnung erneut auf, jede mit
+     * derselben Schluesselbildung. Wer eine Eigenschaft ergaenzen wollte,
+     * musste eine fuenfte danebenstellen; wer eine der vier aenderte, konnte
+     * die anderen unbemerkt auseinanderlaufen lassen. Genau diese Art von
+     * Auseinanderlaufen hat den Einzelbetrag unerreichbar gemacht.</p>
+     *
+     * <p>Jetzt entsteht die Zuordnung einmal, und die Eigenschaften werden
+     * daraus gelesen.</p>
+     */
+    private Map<String, FieldDefinition> felderNachSchluessel(InvoiceType messageType, String segmentType) {
+        Map<String, FieldDefinition> nachSchluessel = new LinkedHashMap<>();
         SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
         if (definition == null) {
-            valueFields.keySet().forEach(key -> valueFieldJavaTypes.put(key, "String"));
-            return valueFieldJavaTypes;
+            return nachSchluessel;
         }
 
-        Map<String, String> keyToJavaType = new LinkedHashMap<>();
-        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
+        List<FieldDefinition> geordnet = definition.getFieldDefinitions().entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
-        for (FieldDefinition field : orderedFields) {
-            String baseKey = toFormFieldKey(field.getName());
-            String key = baseKey;
-            if (keyToJavaType.containsKey(key)) {
-                key = key + "_" + field.getPosition();
+        for (FieldDefinition feld : geordnet) {
+            String schluessel = toFormFieldKey(feld.getName());
+            if (nachSchluessel.containsKey(schluessel)) {
+                schluessel = schluessel + "_" + feld.getPosition();
             }
-            keyToJavaType.put(key, mapFieldTypeToJavaType(field.getType()));
+            nachSchluessel.put(schluessel, feld);
         }
-
-        valueFields.keySet().forEach(key -> valueFieldJavaTypes.put(key, keyToJavaType.getOrDefault(key, "String")));
-        return valueFieldJavaTypes;
+        return nachSchluessel;
     }
 
     private Map<String, ValueFieldEntry> buildTypedValueFields(Map<String, String> rawValueFields,
-            Map<String, String> valueFieldJavaTypes,
-            Map<String, InputOption> valueFieldInputTypes,
-            Map<String, Boolean> valueFieldInternal,
-            Map<String, PersonRole> valueFieldPersonRoles) {
+            Map<String, FieldDefinition> felder) {
         Map<String, ValueFieldEntry> typedValueFields = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : rawValueFields.entrySet()) {
             String key = entry.getKey();
-            String rawValue = entry.getValue();
-            String javaType = valueFieldJavaTypes.getOrDefault(key, "String");
-            Object typedValue = parseValueByJavaType(rawValue, javaType);
-            boolean internal = valueFieldInternal.getOrDefault(key, false);
-            PersonRole personRole = valueFieldPersonRoles.get(key);
-            typedValueFields.put(key,
-                    new ValueFieldEntry(typedValue, javaType, valueFieldInputTypes.get(key), internal, personRole));
+            FieldDefinition feld = felder.get(key);
+            String javaType = feld == null ? "String" : mapFieldTypeToJavaType(feld.getType());
+            typedValueFields.put(key, new ValueFieldEntry(
+                    parseValueByJavaType(entry.getValue(), javaType),
+                    javaType,
+                    feld == null ? null : feld.getInputType(),
+                    feld != null && feld.isInternal(),
+                    feld == null ? null : feld.getPersonRole(),
+                    feld == null ? 0 : feld.getMaxLength(),
+                    feld == null ? "" : feld.getBeschreibung()));
         }
         return typedValueFields;
-    }
-
-    private Map<String, PersonRole> buildValueFieldPersonRoles(InvoiceType messageType, String segmentType,
-            Map<String, String> valueFields) {
-        Map<String, PersonRole> valueFieldPersonRoles = new LinkedHashMap<>();
-        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
-        if (definition == null) {
-            valueFields.keySet().forEach(key -> valueFieldPersonRoles.put(key, null));
-            return valueFieldPersonRoles;
-        }
-
-        Map<String, PersonRole> keyToPersonRole = new LinkedHashMap<>();
-        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-
-        for (FieldDefinition field : orderedFields) {
-            String baseKey = toFormFieldKey(field.getName());
-            String key = baseKey;
-            if (keyToPersonRole.containsKey(key)) {
-                key = key + "_" + field.getPosition();
-            }
-            keyToPersonRole.put(key, field.getPersonRole());
-        }
-
-        valueFields.keySet().forEach(key -> valueFieldPersonRoles.put(key, keyToPersonRole.get(key)));
-        return valueFieldPersonRoles;
-    }
-
-    private Map<String, InputOption> buildValueFieldInputTypes(InvoiceType messageType, String segmentType,
-            Map<String, String> valueFields) {
-        Map<String, InputOption> valueFieldInputTypes = new LinkedHashMap<>();
-        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
-        if (definition == null) {
-            return valueFieldInputTypes;
-        }
-
-        Map<String, InputOption> keyToInputType = new LinkedHashMap<>();
-        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-
-        for (FieldDefinition field : orderedFields) {
-            String baseKey = toFormFieldKey(field.getName());
-            String key = baseKey;
-            if (keyToInputType.containsKey(key)) {
-                key = key + "_" + field.getPosition();
-            }
-            keyToInputType.put(key, field.getInputType());
-        }
-
-        valueFields.keySet().forEach(key -> valueFieldInputTypes.put(key, keyToInputType.get(key)));
-        return valueFieldInputTypes;
-    }
-
-    private Map<String, Boolean> buildValueFieldInternal(InvoiceType messageType, String segmentType,
-            Map<String, String> valueFields) {
-        Map<String, Boolean> valueFieldInternal = new LinkedHashMap<>();
-        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
-        if (definition == null) {
-            valueFields.keySet().forEach(key -> valueFieldInternal.put(key, false));
-            return valueFieldInternal;
-        }
-
-        Map<String, Boolean> keyToInternal = new LinkedHashMap<>();
-        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-
-        for (FieldDefinition field : orderedFields) {
-            String baseKey = toFormFieldKey(field.getName());
-            String key = baseKey;
-            if (keyToInternal.containsKey(key)) {
-                key = key + "_" + field.getPosition();
-            }
-            keyToInternal.put(key, field.isInternal());
-        }
-
-        valueFields.keySet().forEach(key -> valueFieldInternal.put(key, keyToInternal.getOrDefault(key, false)));
-        return valueFieldInternal;
     }
 
     private InputOption parseValueByEnum(String rawValue) throws RuntimeException {
@@ -521,7 +438,9 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         InputOption inputType = parseValueByEnum(fieldNode.path("inputType").asText());
         boolean internal = fieldNode.path("internal").asBoolean(false);
         PersonRole personRole = parsePersonRole(fieldNode.path("person").asText(""));
-        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType, internal, personRole);
+        String beschreibung = fieldNode.path("description").asText("");
+        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType, internal,
+                personRole, beschreibung);
     }
 
     private PersonRole parsePersonRole(String rawPersonRole) {

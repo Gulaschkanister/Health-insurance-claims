@@ -12,6 +12,7 @@
       "maxLength": 3,
       "mandatory": false,
       "example": "19",
+      "description": "Umsatzsteuersatz in Prozent als ganze Zahl, etwa 19 für 19 %. Leer lassen, wenn keine Umsatzsteuer anfällt.",
       "validation": {
         "pattern": "^[0-9]{1,3}$",
         "description": "Prozentsatz als Zahl (z.B. 19 für 19%)"

@@ -15,10 +15,12 @@ Erledigt und geprüft:
 - Validierungsstufe als Tor vor dem Versand, sechs Regeln
 - Kassen-Kommunikation: Antwortauswertung berichtigt, simulierte Gegenstelle
 - Datenablage im Benutzerprofil, eigenständiges Windows-Paket über `jpackage`
-- `View` von 1438 auf 531 Zeilen zerlegt, vier Masken herausgelöst
+- `View` von 1438 auf rund 300 Zeilen zerlegt, fünf Masken herausgelöst
 - **Oberfläche neu: Seitenleiste, Listen, Meldungsecke, Stylesheet**
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
-- **232 Tests**, davon 94 in `gkv-ui`, `BUILD SUCCESS`
+- **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
+  ist einstellbar** (war er nie, siehe D)
+- **255 Tests**, davon 108 in `gkv-ui`, `BUILD SUCCESS`
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
 Der Branch liegt auf `origin`; die jeweils letzten Commits können noch fehlen
@@ -126,23 +128,26 @@ Storno gibt es fachlich noch gar nicht (siehe D).
 Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
 „Termine für alle“ und die mitrechnende Zusammenfassung.
 
-### B. Die letzte Maske: `createFormular`
+### B. Von Simon gewünscht, noch offen
 
-`View` ist mit 531 Zeilen die zweitgrößte Klasse des Projekts (größte:
-`JsonParserFactory` mit 530). Was übrig ist:
+1. **Weitere Vorlage: „Rückbildungskurs nach Geburten".** Anzulegen als eigene
+   Datei unter `gkv-core/src/main/resources/invoices/`, nach dem Muster von
+   `antenatal_class_single.json`, und in `JsonParserFactory.INVOICE_FILES`
+   einzutragen. Fachlich zu klären ist, ob sich Abrechnungscode,
+   Positionsnummer oder Tarifkennzeichen vom Geburtsvorbereitungskurs
+   unterscheiden — das steht in Anlage 3 beziehungsweise im Vertrag und ist
+   nicht zu raten.
+2. **Auswahl und Suche von Personen in einer Gruppe verbessern.** Die
+   `GruppenMaske` zeigt Teilnehmer und Dienstleister heute als eine ungefilterte
+   Liste von Kontrollkästchen. Bei mehr als einer Handvoll Personen wird das
+   unübersichtlich; ein Suchfeld wie in den Übersichten fehlt, und man sieht
+   nicht auf einen Blick, wer schon angehakt ist. `Listenbau` bringt Suche und
+   Zeilenaufbau bereits mit.
 
-- `createFormular` samt `collectVisibleFieldValues` — die Blaupausenmaske
-- `createCodeDropdownForInvoiceField`, `resolveCodeOptionsForField`,
-  `normalizeFieldKey`, `loadInvoiceCodeOptions` — die Code-Auswahllisten
-- Hauptszene, Navigation, `seedTestData`
-
-Vorschlag: eine `BlaupausenMaske` nach dem Muster der drei vorhandenen, und
-die Code-Listen als eigene Klasse daneben — sie sind reine JSON-Auswertung und
-ließen sich ohne JavaFX prüfen.
-
-Dazu gehört auch eine **Übersicht der gespeicherten Blaupausen**. Heute gibt
-es nur „neu anlegen“; eine gespeicherte Blaupause lässt sich weder ansehen
-noch ändern noch löschen.
+**Erledigt am 05.09.2026:** die Blaupausenmaske. Sie liegt jetzt als
+`BlaupausenMaske` neben den anderen (Übersicht mit Suche, Bearbeiten und
+Löschen), `View` ist von 531 auf rund 300 Zeilen geschrumpft, und
+`DataRepository` hat endlich ein `deleteBlueprint`.
 
 ### C. `EditFormController` hat keine Tests
 
@@ -234,13 +239,13 @@ das Beste, was geht.
 - **Die Meldungsecke liegt über der Maske.** Bei schmalem Fenster kann eine
   stehende Fehlermeldung ein Eingabefeld verdecken. Sie lässt sich wegklicken;
   falls es stört, wäre die Maske in der Breite zu begrenzen.
-- **Checkstyle: 9 Warnungen, 216 Hinweise** (`mvn checkstyle:check`). Die
+- **Checkstyle: 10 Warnungen** (`mvn checkstyle:check`). Die
   Warnungen waren am 05.09.2026 rund vierzig; übrig sind nur noch die, die eine
   Entwurfsentscheidung verlangen und sich nicht mechanisch beheben lassen:
 
   | Regel | Anzahl | Wo |
   |---|---|---|
-  | `ParameterNumber` | 4 | `Patient`, `Person`, `ServiceProvider` (je 9), `EditFormController` (12) |
+  | `ParameterNumber` | 5 | `Patient`, `Person`, `ServiceProvider`, `FieldDefinition` (je 9), `EditFormController` (12) |
   | `CyclomaticComplexity` | 5 | `BetragskonsistenzRegel`, `Feldbau`, beide `…FieldPopulator`, `View` |
 
   Die vier Konstruktoren mit neun Parametern sind der eigentliche Befund: eine

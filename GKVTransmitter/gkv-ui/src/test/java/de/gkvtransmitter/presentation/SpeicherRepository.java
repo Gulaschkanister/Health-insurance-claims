@@ -124,7 +124,16 @@ class SpeicherRepository implements DataRepository {
 
     @Override
     public void saveBlueprint(Blueprint blueprint) {
+        if (fehlerBeimSpeichern != null) {
+            throw fehlerBeimSpeichern;
+        }
+        blaupausen.remove(blueprint);
         blaupausen.add(blueprint);
+    }
+
+    @Override
+    public void deleteBlueprint(Blueprint blueprint) {
+        blaupausen.remove(blueprint);
     }
 
     @Override

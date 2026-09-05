@@ -215,6 +215,24 @@ class HibernateSqlliteTest {
         assertNotNull(geladen.get(0).getCreatedAt());
     }
 
+    @Test
+    @DisplayName("Eine Blaupause laesst sich wieder loeschen")
+    void loeschtBlaupause() {
+        repository.saveBlueprint(new Blueprint("Kurs A", "tpl", "{}", OffsetDateTime.now()));
+        repository.saveBlueprint(new Blueprint("Kurs B", "tpl", "{}", OffsetDateTime.now()));
+
+        List<Blueprint> vorher = repository.getAllBlueprints();
+        repository.deleteBlueprint(vorher.stream()
+                .filter(b -> "Kurs A".equals(b.getName()))
+                .findFirst()
+                .orElseThrow());
+
+        List<Blueprint> nachher = repository.getAllBlueprints();
+        assertEquals(1, nachher.size());
+        assertEquals("Kurs B", nachher.get(0).getName(),
+                "Es muss die benannte Blaupause verschwinden, nicht irgendeine");
+    }
+
     // --- Regressionstest zum Datenverlust --------------------------------
 
     @Test

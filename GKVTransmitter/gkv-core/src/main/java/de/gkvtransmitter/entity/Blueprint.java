@@ -43,6 +43,17 @@ public class Blueprint {
         return id;
     }
 
+    /**
+     * Setzt die Kennnummer.
+     *
+     * <p>Im Betrieb vergibt Hibernate sie; gebraucht wird der Setzer, um eine
+     * Blaupause ohne Datenbank aufzubauen. Die uebrigen Entitaeten haben ihn
+     * seit je, nur diese nicht.</p>
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }

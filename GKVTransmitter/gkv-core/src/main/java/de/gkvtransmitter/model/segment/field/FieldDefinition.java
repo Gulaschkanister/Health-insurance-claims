@@ -18,19 +18,26 @@ public class FieldDefinition {
     private final InputOption inputType;
     private final boolean internal;
     private final PersonRole personRole;
+    /** Was in das Feld gehoert, aus der Segmentdefinition. Kann leer sein. */
+    private final String beschreibung;
 
     public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
             InputOption inputType) {
-        this(position, type, isMandatory, maxLength, name, inputType, false, null);
+        this(position, type, isMandatory, maxLength, name, inputType, false, null, "");
     }
 
     public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
             InputOption inputType, boolean internal) {
-        this(position, type, isMandatory, maxLength, name, inputType, internal, null);
+        this(position, type, isMandatory, maxLength, name, inputType, internal, null, "");
     }
 
     public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
             InputOption inputType, boolean internal, PersonRole personRole) {
+        this(position, type, isMandatory, maxLength, name, inputType, internal, personRole, "");
+    }
+
+    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
+            InputOption inputType, boolean internal, PersonRole personRole, String beschreibung) {
         this.position = position;
         this.type = type;
         this.isMandatory = isMandatory;
@@ -39,5 +46,6 @@ public class FieldDefinition {
         this.inputType = inputType;
         this.internal = internal;
         this.personRole = personRole;
+        this.beschreibung = beschreibung == null ? "" : beschreibung;
     }
 }

@@ -147,6 +147,11 @@ public final class HibernateSqllite implements DataRepository, AutoCloseable {
     }
 
     @Override
+    public void deleteBlueprint(Blueprint blueprint) {
+        runner.writeVoid("Blaupause loeschen", session -> session.remove(session.merge(blueprint)));
+    }
+
+    @Override
     public List<Blueprint> getAllBlueprints() {
         return runner.read("Blaupausen laden",
                 session -> session.createQuery("FROM Blueprint", Blueprint.class).getResultList());

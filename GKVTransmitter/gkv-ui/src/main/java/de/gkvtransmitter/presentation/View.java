@@ -2,11 +2,8 @@ package de.gkvtransmitter.presentation;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,10 +16,7 @@ import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.application.AbrechnungService;
-import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.model.DtaMessage;
-import de.gkvtransmitter.model.segment.SegmentInfo;
-import de.gkvtransmitter.model.segment.ValueFieldEntry;
 import de.gkvtransmitter.presentation.meldung.Bildschirmmeldungen;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
@@ -30,20 +24,7 @@ import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.Anwendungsverzeichnis;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.application.Platform;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.Spinner;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputControl;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 
 /**
  * Der Einstieg in die Oberflaeche.
@@ -58,8 +39,8 @@ public class View {
     private final Controller controller;
     private final AppMessages messages;
     private final ObjectMapper objectMapper;
-    private final Map<String, List<String>> invoiceCodeOptions;
-    private Map<String, String> currentInvoiceHeaderCodes = Map.of();
+    /** Die hinterlegten Abrechnungscodes, siehe {@link #ladeAbrechnungscodes()}. */
+    private final List<String> abrechnungscodes;
 
     private final PatientFieldPopulator patientPopulator;
     private final ServiceProviderFieldPopulator serviceProviderPopulator;
@@ -82,7 +63,7 @@ public class View {
         this.componentFactory = new JavaFxUiFactory();
         this.messages = new AppMessages("/messages/ui-messages.json");
         this.objectMapper = new ObjectMapper();
-        this.invoiceCodeOptions = loadInvoiceCodeOptions();
+        this.abrechnungscodes = ladeAbrechnungscodes();
         this.feldbau = new Feldbau(this.componentFactory, this.messages);
         this.patientPopulator = new PatientFieldPopulator();
         this.serviceProviderPopulator = new ServiceProviderFieldPopulator();
@@ -136,11 +117,18 @@ public class View {
         hauptfenster.ergaenzeBereich(messages.get("menu.groups"),
                 () -> hauptfenster.zeige(gruppenMaske().liste()));
 
+        hauptfenster.ergaenzeBereich(messages.get("menu.blueprints"),
+                () -> hauptfenster.zeige(blaupausenMaske().liste()));
+
+        // Die Vorlagen stehen weiter einzeln in der Leiste: sie sind der Weg zu
+        // einer neuen Blaupause. Zuvor waren sie der einzige Weg ueberhaupt -
+        // was einmal gespeichert war, tauchte nur noch als Name im Auswahlfeld
+        // der Abrechnung auf.
         Set<String> vorlagen = controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet();
         if (!vorlagen.isEmpty()) {
             hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.templates"));
             for (String name : vorlagen) {
-                hauptfenster.ergaenzeBereich(name, () -> createFormular(name));
+                hauptfenster.ergaenzeBereich(name, () -> blaupausenMaske().neu(name));
             }
         }
 
@@ -182,115 +170,6 @@ public class View {
     }
 
     /**
-     * Erstellt und zeigt das Formular für die angegebene Rechnungsvorlage.
-     *
-     * @param invoiceName Der Name der Rechnungsvorlage, die geladen werden
-     * soll.
-     */
-    private void createFormular(String invoiceName) {
-        DtaMessage dtaMessage = controller.getGlobalDefinitions().getInvoiceTemplateCollection().get(invoiceName);
-        if (dtaMessage == null) {
-            meldungen.fehler(messages.get("msg.noTemplate"));
-            return;
-        }
-        this.currentInvoiceHeaderCodes = dtaMessage.getHeaderCodes();
-        Map<String, Node> allFieldNodes = new HashMap<>();
-        for (SegmentInfo info : dtaMessage.getSegments()) {
-            for (Map.Entry<String, ValueFieldEntry> entry : info.getValueFields().entrySet()) {
-                if (!entry.getValue().isInternal() && entry.getValue().getPersonRole() == null) {
-                        Node inputField = createInputfieldFromTag(
-                            entry.getValue().getInputField(),
-                            entry.getKey());
-                    allFieldNodes.put(entry.getKey(), inputField);
-                }
-            }
-        }
-
-        VBox vbox = new VBox(14);
-        vbox.getStyleClass().add("maske");
-
-        Label title = componentFactory.createLabel(invoiceName);
-        title.getStyleClass().add("masken-titel");
-        // Der Name stand frueher in einem eigenen Fenster, das erst nach dem
-        // Klick aufging. Jetzt liegt er im Formular: man sieht beim Ausfuellen,
-        // unter welchem Namen die Blaupause landet, und kann ihn aendern, ohne
-        // erst etwas ausloesen zu muessen.
-        TextField blaupausenname = componentFactory.createTextField();
-        blaupausenname.setId("blaupause-name");
-        blaupausenname.setPromptText(messages.get("label.blueprintName"));
-        blaupausenname.setText(invoiceName + "-blueprint");
-        blaupausenname.setPrefWidth(240);
-
-        Button saveBlueprintBtn = componentFactory.createButton(messages.get("button.saveBlueprint"));
-        saveBlueprintBtn.getStyleClass().add("schaltflaeche-haupt");
-        saveBlueprintBtn.setOnAction(evt ->
-                speichereBlaupause(invoiceName, blaupausenname.getText(), allFieldNodes));
-
-        HBox titleRow = new HBox(10, title, blaupausenname, saveBlueprintBtn);
-        titleRow.setAlignment(Pos.CENTER_LEFT);
-        vbox.getChildren().add(titleRow);
-        List<Node> fieldNodes = new ArrayList<>();
-        for (Map.Entry<String, Node> entry : allFieldNodes.entrySet()) {
-            fieldNodes.add(componentFactory.createBorderPane(
-                    componentFactory.createLabel(entry.getKey()),
-                    entry.getValue(),
-                    null, null, null));
-
-        }
-
-        GridPane contentGrid = componentFactory.createGridPane(2, fieldNodes.toArray(Node[]::new));
-        vbox.getChildren().add(contentGrid);
-
-        hauptfenster.zeige(vbox);
-        this.currentInvoiceHeaderCodes = Map.of();
-    }
-
-    /** Legt aus den ausgefuellten Feldern eine Blaupause an. */
-    private void speichereBlaupause(String invoiceName, String name, Map<String, Node> allFieldNodes) {
-        if (name == null || name.isBlank()) {
-            meldungen.hinweis(messages.get("msg.blueprintNameRequired"));
-            return;
-        }
-        try {
-            Map<String, Object> values = collectVisibleFieldValues(allFieldNodes);
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("template", invoiceName);
-            payload.put("headerCodes", this.currentInvoiceHeaderCodes);
-            payload.put("fields", values);
-            String json = objectMapper.writeValueAsString(payload);
-            controller.getDatabase().saveBlueprint(
-                    new Blueprint(name.trim(), invoiceName, json, OffsetDateTime.now()));
-            meldungen.erfolg(messages.get("msg.blueprintSaved"));
-        } catch (Exception e) {
-            meldungen.fehler(e.getMessage());
-        }
-    }
-
-    private Map<String, Object> collectVisibleFieldValues(Map<String, Node> fieldNodes) {
-        Map<String, Object> result = new LinkedHashMap<>();
-        for (Map.Entry<String, Node> e : fieldNodes.entrySet()) {
-            String key = e.getKey();
-            Node node = e.getValue();
-            Object value = null;
-            if (node instanceof TextField) {
-                value = ((TextField) node).getText();
-            } else if (node instanceof ComboBox) {
-                value = ((ComboBox<?>) node).getValue();
-            } else if (node instanceof DatePicker) {
-                value = ((DatePicker) node).getValue();
-            } else if (node instanceof Spinner) {
-                value = ((Spinner<?>) node).getValue();
-            } else if (node instanceof CheckBox) {
-                value = ((CheckBox) node).isSelected();
-            } else if (node instanceof TextInputControl) {
-                value = ((TextInputControl) node).getText();
-            }
-            result.put(key, value);
-        }
-        return result;
-    }
-
-    /**
      * Zeigt die Abrechnungsmaske.
      *
      * <p>Der Aufbau liegt in {@link AbrechnungsMaske}; hier bleibt nur das
@@ -306,163 +185,64 @@ public class View {
     }
 
     /**
-     * Gibt den Textwert eines UI-Elements zurück, abhängig von dessen Typ.
+     * Liefert der Blaupausenmaske ihre Vorlagen und Codelisten.
      *
-     * @param inputOption - die Eingabeoption, die den Typ des UI-Elements
-     * angibt
-     * @param directName - der direkte Name des Feldes, der für spezielle Fälle
-     * wie Code-Auswahl verwendet werden kann
-     * @param visible - ob das Feld sichtbar ist, was für die Rückgabe
-     * berücksichtigt werden könnte
-     * @param javaFieldType - der Java-Typ des Feldes, der für die Rückgabe
-     * berücksichtigt werden könnte
-     * @return der Textwert des UI-Elements als String
+     * <p>Frueher baute {@code View} das Blaupausenformular selbst - rund 270
+     * Zeilen, mit eigener Felderzeugung ohne Erklaerung und ohne Pruefung, und
+     * mit Codelisten fuer Rechnungsart und Statuscode, die beide gar nicht
+     * mehr im Formular stehen. Geblieben ist die Codeliste, die wirklich eine
+     * Auswahl hergibt: die Abrechnungscodes.</p>
      */
-    private Node createInputfieldFromTag(InputOption inputOption, String directName) {
-        if (inputOption == null) {
-            return null;
-        }
+    private BlaupausenMaske.Vorlagen vorlagen() {
+        return new BlaupausenMaske.Vorlagen() {
+            @Override
+            public Map<String, DtaMessage> alle() {
+                return controller.getGlobalDefinitions().getInvoiceTemplateCollection();
+            }
 
-        return switch (inputOption) {
-            case CODE ->
-                createCodeDropdownForInvoiceField(directName);
-            case NUMBER_SUGGESTION ->
-                componentFactory.createComboBox(true);
-            case NUMBER ->
-                componentFactory.createSpinner(Integer.class);
-            case STRING ->
-                componentFactory.createTextField();
-            case PERCENT, COST ->
-                componentFactory.createSpinner(BigDecimal.class);
-            case BOOLEAN ->
-                componentFactory.createCheckBox(directName);
-            case DATE ->
-                componentFactory.createDatePicker();
-            default ->
-                throw new IllegalArgumentException("Unbekannter InputType: " + inputOption);
+            @Override
+            public List<String> auswahlFuer(String feldname) {
+                return "Abrechnungscode".equals(feldname) ? abrechnungscodes : List.of();
+            }
         };
     }
 
     /**
-     * Erstellt ein Dropdown-Menü für Felder, die mit Codes gefüllt werden
-     * sollen, basierend auf dem Feldnamen.
+     * Die hinterlegten Abrechnungscodes.
      *
-     * @param fieldName der Name des Feldes, für das das Dropdown erstellt
-     * werden soll
-     * @return ein Node, das ein ComboBox mit den entsprechenden Code-Optionen
-     * enthält, oder eine leere ComboBox, wenn keine Optionen gefunden wurden
+     * <p>Ein Tarifkennzeichen steht bewusst nicht daneben: es wird vertraglich
+     * vereinbart, es gibt dafuer keine allgemeine Liste. Ein leeres Auswahlfeld
+     * dafuer anzubieten waere schlimmer als ein Textfeld - man klappte es auf
+     * und faende nichts.</p>
      */
-    private Node createCodeDropdownForInvoiceField(String fieldName) {
-        List<String> options = resolveCodeOptionsForField(fieldName);
-        String normalized = normalizeFieldKey(fieldName);
-        String headerDefault = this.currentInvoiceHeaderCodes.getOrDefault(normalized,
-                this.currentInvoiceHeaderCodes.get(fieldName));
-
-        if (options.isEmpty()) {
-            TextField tf = componentFactory.createTextField();
-            if (headerDefault != null && !headerDefault.isBlank()) {
-                tf.setText(headerDefault);
-            } else {
-                tf.setPromptText("Keine Codes vorhanden");
-            }
-            return tf;
-        }
-
-        ComboBox<String> comboBox = new ComboBox<>();
-        comboBox.setPrefWidth(300);
-        comboBox.getItems().addAll(options);
-
-        if (headerDefault != null && !headerDefault.isBlank()) {
-            if (comboBox.getItems().contains(headerDefault)) {
-                comboBox.getSelectionModel().select(headerDefault);
-            } else {
-                comboBox.getItems().add(0, headerDefault);
-                comboBox.getSelectionModel().selectFirst();
-            }
-        } else {
-            comboBox.getSelectionModel().selectFirst();
-        }
-
-        return comboBox;
-    }
-
-    /**
-     * Löst die entsprechenden Code-Optionen für ein gegebenes Feld basierend
-     * auf dem
-     *
-     * @param fieldName der Name des Feldes, für das die Code-Optionen aufgelöst
-     * werden sollen
-     * @return eine Liste von Code-Optionen, die für das angegebene Feld
-     * relevant sind, oder eine leere Liste, wenn keine Optionen gefunden wurden
-     */
-    private List<String> resolveCodeOptionsForField(String fieldName) {
-        String normalized = normalizeFieldKey(fieldName);
-
-        if (normalized.contains("rechnungsart")) {
-            return invoiceCodeOptions.getOrDefault("rechnungsarten", List.of());
-        }
-        if (normalized.contains("status") || normalized.contains("summen")) {
-            return invoiceCodeOptions.getOrDefault("ges_statuscodes", List.of());
-        }
-        return List.of();
-    }
-
-    /**
-     * Normalisiert einen Feldnamen, indem er in Kleinbuchstaben umgewandelt und
-     * alle
-     *
-     * @param key der Nicht-Alphanumerischen Zeichen entfernt werden, um eine
-     * konsistente Basis für die Erkennung von Schlüsselwörtern wie
-     * "rechnungsart" oder "status" zu schaffen, unabhängig von der
-     * ursprünglichen Formatierung des Feldnamens.
-     * @return der normalisierte Feldname, der nur aus Kleinbuchstaben und
-     * Zahlen besteht, oder ein leerer String, wenn der Eingabewert null ist
-     */
-    private String normalizeFieldKey(String key) {
-        return key.toLowerCase().replaceAll("[^a-z0-9]", "");
-    }
-
-    /**
-     * Lädt die Code-Optionen für Rechnungsarten und GES-Statuscodes aus den
-     *
-     * @return eine Map, die die geladenen Code-Optionen enthält, gruppiert nach
-     * Kategorie (z.B. "rechnungsarten", "ges_statuscodes"), oder eine leere
-     * Map, wenn keine Optionen geladen werden konnten
-     */
-    private Map<String, List<String>> loadInvoiceCodeOptions() {
-        Map<String, List<String>> options = new LinkedHashMap<>();
-        try (InputStream is = getClass().getResourceAsStream("/codes/rechnungsarten.json")) {
-            if (is != null) {
-                JsonNode root = objectMapper.readTree(is);
-                List<String> rechnungsarten = new ArrayList<>();
-                if (root.isArray()) {
-                    for (JsonNode node : root) {
-                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
-                        rechnungsarten.add(value);
+    private List<String> ladeAbrechnungscodes() {
+        List<String> codes = new ArrayList<>();
+        try (InputStream quelle = getClass().getResourceAsStream("/codes/abrechnungscodes.json")) {
+            if (quelle != null) {
+                JsonNode wurzel = objectMapper.readTree(quelle).path("codes");
+                if (wurzel.isArray()) {
+                    for (JsonNode eintrag : wurzel) {
+                        String code = eintrag.path("code").asText("");
+                        if (!code.isBlank()) {
+                            codes.add(code);
+                        }
                     }
                 }
-                options.put("rechnungsarten", rechnungsarten);
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            // Ohne Liste bleibt das Feld eine freie Eingabe. Das ist besser als
+            // ein Start, der an einer Codeliste scheitert.
+            return List.of();
         }
-
-        try (InputStream is = getClass().getResourceAsStream("/codes/ges_statuscodes.json")) {
-            if (is != null) {
-                JsonNode root = objectMapper.readTree(is);
-                List<String> statuscodes = new ArrayList<>();
-                if (root.isArray()) {
-                    for (JsonNode node : root) {
-                        String value = node.get("value") != null ? node.get("value").asText() : node.asText();
-                        statuscodes.add(value);
-                    }
-                }
-                options.put("ges_statuscodes", statuscodes);
-            }
-        } catch (IOException ignored) {
-        }
-
-        return options;
+        return codes;
     }
+
+    /** Baut die Blaupausenmaske auf den aktuellen Rahmen, siehe {@link #gruppenMaske()}. */
+    private BlaupausenMaske blaupausenMaske() {
+        return new BlaupausenMaske(componentFactory, messages, meldungen, controller.getDatabase(),
+                hauptfenster, feldbau, vorlagen());
+    }
+
 
     /** Baut die Personenmaske auf den aktuellen Rahmen, siehe {@link #gruppenMaske()}. */
     private PersonenMaske personenMaske() {

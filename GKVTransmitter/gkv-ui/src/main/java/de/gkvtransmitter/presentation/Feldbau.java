@@ -2,6 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -72,7 +73,24 @@ public class Feldbau {
      * @param beschreibung wie das Feld auszusehen hat, oder {@code null}
      */
     public Node erzeugeFeld(String feldname, TagList beschreibung) {
-        Node bedienelement = bedienelementFuer(beschreibung);
+        return erzeugeFeld(feldname, beschreibung, null, List.of());
+    }
+
+    /**
+     * Baut ein Feld mit mitgegebener Erklaerung und Auswahlliste.
+     *
+     * <p>Fuer Felder, die nicht aus einer Tag-Datei stammen, sondern aus den
+     * Segmentdefinitionen: dort steht die Erklaerung als {@code description}
+     * neben dem Feld und muss nicht noch einmal in
+     * {@code ui-messages.json} gepflegt werden.</p>
+     *
+     * @param feldname     Name des Feldes, auch Schluessel fuer {@code help.}
+     * @param beschreibung wie das Feld auszusehen hat, oder {@code null}
+     * @param erklaerung   was hineingehoert; hat Vorrang vor {@code help.}
+     * @param auswahl      hinterlegte Werte, oder leer fuer freie Eingabe
+     */
+    public Node erzeugeFeld(String feldname, TagList beschreibung, String erklaerung, List<String> auswahl) {
+        Node bedienelement = bedienelementFuer(beschreibung, auswahl == null ? List.of() : auswahl);
 
         Label beanstandung = bausteine.createLabel("");
         beanstandung.getStyleClass().add(STIL_FEHLER);
@@ -80,8 +98,11 @@ public class Feldbau {
         verbergen(beanstandung);
 
         VBox feld = new VBox(3, bedienelement);
-        erklaerung(feldname, beschreibung).ifPresent(text -> {
-            Label hinweis = bausteine.createLabel(text);
+        Optional<String> text = (erklaerung == null || erklaerung.isBlank())
+                ? erklaerung(feldname, beschreibung)
+                : Optional.of(erklaerung);
+        text.ifPresent(inhalt -> {
+            Label hinweis = bausteine.createLabel(inhalt);
             hinweis.getStyleClass().add(STIL_HINWEIS);
             hinweis.setWrapText(true);
             feld.getChildren().add(hinweis);
@@ -126,24 +147,60 @@ public class Feldbau {
 
     // --- Aufbau ----------------------------------------------------------
 
-    private Node bedienelementFuer(TagList beschreibung) {
+    /**
+     * Ab welcher Stellenzahl ein Zaehler keinem mehr nuetzt.
+     *
+     * <p>Auf- und Ab-Pfeile lohnen sich bei einem Verarbeitungskennzeichen
+     * {@code 01}. Bei einer neunstelligen Positionsnummer oder einer
+     * Postleitzahl klickt sie niemand hoch - man tippt. Ein Zaehler schadet
+     * dort sogar doppelt: er steht mit einer Null vorbelegt da, und was
+     * hineingetippt und nicht mit der Eingabetaste bestaetigt wird, liefert
+     * {@code getValue()} gar nicht erst zurueck. Genau daher stammte der
+     * Eindruck, eine Eingabe verschwinde wieder.</p>
+     */
+    private static final int ZAEHLERGRENZE = 2;
+
+    private Node bedienelementFuer(TagList beschreibung, List<String> auswahl) {
         if (beschreibung == null) {
             return bausteine.createTextField();
         }
         InputOption art = beschreibung.getInputOption();
+        int grenze = hoechstlaenge(beschreibung).orElse(0);
         return switch (art) {
-            case STRING -> {
-                TextField feld = bausteine.createTextField();
-                hoechstlaenge(beschreibung).ifPresent(grenze -> begrenze(feld, grenze));
-                yield feld;
-            }
-            case NUMBER -> zaehler(Integer.class);
-            case PERCENT, COST -> zaehler(BigDecimal.class);
-            case CODE -> bausteine.createComboBox(false);
-            case NUMBER_SUGGESTION -> bausteine.createComboBox(true);
+            case STRING -> textfeld(grenze);
+            case NUMBER -> grenze > ZAEHLERGRENZE ? textfeld(grenze) : zaehler(Integer.class);
+            case PERCENT, COST -> grenze > ZAEHLERGRENZE ? textfeld(grenze) : zaehler(BigDecimal.class);
+            // Ohne hinterlegte Werte waere ein Auswahlfeld eine Zumutung: es
+            // liesse sich aufklappen und enthielte nichts. Das Tarifkennzeichen
+            // ist vertraglich vereinbart, es gibt dafuer keine Codeliste.
+            case CODE -> auswahl.isEmpty() ? textfeld(grenze) : auswahlfeld(auswahl);
+            case NUMBER_SUGGESTION -> auswahl.isEmpty() ? textfeld(grenze) : auswahlfeld(auswahl);
             case DATE, TIME -> bausteine.createDatePicker();
             default -> bausteine.createTextField();
         };
+    }
+
+    /**
+     * Ein Textfeld, hoechstens so lang wie erlaubt.
+     *
+     * <p>Ohne Platzhalter: was hineingehoert, steht in der Erklaerung darunter.
+     * Ein Platzhalter "0,00" ueber der Erklaerung "als ganze Zahl" widerspraeche
+     * ihr - zwei Angaben, die sich widersprechen, sind schlechter als eine.</p>
+     */
+    private TextField textfeld(int grenze) {
+        TextField feld = bausteine.createTextField();
+        if (grenze > 0) {
+            begrenze(feld, grenze);
+        }
+        return feld;
+    }
+
+    private ComboBox<String> auswahlfeld(List<String> auswahl) {
+        ComboBox<String> feld = new ComboBox<>();
+        feld.getItems().addAll(auswahl);
+        feld.setEditable(true);
+        feld.setMaxWidth(Double.MAX_VALUE);
+        return feld;
     }
 
     private <T> Spinner<T> zaehler(Class<T> art) {
