@@ -30,6 +30,9 @@ public final class Institutionskennzeichen {
     private static final int ERSTE_PRUEFSTELLE = 3;
     private static final int LETZTE_PRUEFSTELLE = 8;
 
+    /** Ein nicht ausgefuelltes Feld, kein Kennzeichen. */
+    private static final String LEER = "0".repeat(LAENGE);
+
     private Institutionskennzeichen() {
     }
 
@@ -45,6 +48,13 @@ public final class Institutionskennzeichen {
         }
         String bereinigt = ik.trim();
         if (bereinigt.length() != LAENGE || !bereinigt.chars().allMatch(Character::isDigit)) {
+            return false;
+        }
+        // Lauter Nullen bestehen die Pruefziffer (0 mod 10 ist 0), sind aber
+        // kein vergebenes Kennzeichen, sondern ein nicht ausgefuelltes Feld:
+        // ein int ohne Zuweisung ist 0, und istGueltig(0) lieferte deshalb
+        // true. Eine Person ohne IK kam so durch jede Pruefung bis zur Kasse.
+        if (LEER.equals(bereinigt)) {
             return false;
         }
         int erwartet = berechnePruefziffer(bereinigt);

@@ -231,14 +231,29 @@ class BlaupausenMaskeTest {
             });
         }
 
+        /**
+         * Simons Einwand, umgesetzt.
+         *
+         * <p>{@code codes/abrechnungscodes.json} enthaelt genau einen Eintrag.
+         * Bis zum 05.09.2026 wurde daraus ein Aufklappmenue mit einer Zeile -
+         * man klappte es auf, um zu erfahren, dass es nichts zu waehlen gibt.
+         * Jetzt steht der Wert schon im Feld.</p>
+         *
+         * <p>Ob der Code ueberhaupt ins Formular gehoert, ist damit
+         * <em>nicht</em> entschieden: waere er je Vorlage fest, koennte er ganz
+         * verschwinden. Das haengt daran, ob ein kuenftiger Leistungsbereich
+         * einen anderen Code braucht, und steht in Anlage 3.</p>
+         */
         @Test
-        @DisplayName("bieten den Abrechnungscode zur Auswahl an, weil es dafuer eine Liste gibt")
-        void auswahlWoEsWerteGibt() {
+        @DisplayName("fuellen den Abrechnungscode vor, statt ein Menue mit einer Zeile anzubieten")
+        void einVorschlagStattAufklappmenue() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Region formular = maske().formular(VORLAGE, null);
 
-                assertTrue(bedienelement(formular, "Abrechnungscode") instanceof ComboBox,
-                        "Fuer Abrechnungscodes liegt eine Liste bei");
+                Node bedienelement = bedienelement(formular, "Abrechnungscode");
+                assertFalse(bedienelement instanceof ComboBox,
+                        "Ein Menue mit einer einzigen Zeile ist Bedienlast ohne Nutzen");
+                assertEquals("61", ((TextField) bedienelement).getText());
             });
         }
 

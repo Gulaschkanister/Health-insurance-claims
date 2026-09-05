@@ -209,11 +209,21 @@ public class Feldbau {
     private static final int ZAEHLERGRENZE = 2;
 
     private Node bedienelementFuer(TagList beschreibung, List<String> auswahl) {
+        InputOption art = beschreibung == null ? InputOption.STRING : beschreibung.getInputOption();
+        int grenze = hoechstlaenge(beschreibung).orElse(0);
+
+        // Hinterlegte Werte schlagen die Art des Feldes. Zuvor entschied die
+        // Art zuerst, und die Vorschlagsmechanik traf deshalb genau die
+        // falschen Felder: der Abrechnungscode bekam ein Aufklappmenue mit
+        // einer einzigen Zeile, waehrend der Umsatzsteuersatz - wo drei
+        // Vorschlaege helfen - als PERCENT zum leeren Textfeld wurde.
+        if (!auswahl.isEmpty() && art != InputOption.DATE && art != InputOption.TIME) {
+            return vorschlagsfeld(auswahl, grenze);
+        }
         if (beschreibung == null) {
             return bausteine.createTextField();
         }
-        InputOption art = beschreibung.getInputOption();
-        int grenze = hoechstlaenge(beschreibung).orElse(0);
+
         return switch (art) {
             case STRING -> textfeld(grenze);
             case NUMBER -> grenze > ZAEHLERGRENZE ? textfeld(grenze) : zaehler(Integer.class);
@@ -221,11 +231,34 @@ public class Feldbau {
             // Ohne hinterlegte Werte waere ein Auswahlfeld eine Zumutung: es
             // liesse sich aufklappen und enthielte nichts. Das Tarifkennzeichen
             // ist vertraglich vereinbart, es gibt dafuer keine Codeliste.
-            case CODE -> auswahl.isEmpty() ? textfeld(grenze) : auswahlfeld(auswahl);
-            case NUMBER_SUGGESTION -> auswahl.isEmpty() ? textfeld(grenze) : auswahlfeld(auswahl);
+            case CODE, NUMBER_SUGGESTION -> textfeld(grenze);
             case DATE, TIME -> bausteine.createDatePicker();
             default -> bausteine.createTextField();
         };
+    }
+
+    /**
+     * Ein Feld mit hinterlegten Vorschlaegen.
+     *
+     * <p><b>Ein einziger Vorschlag ist keine Auswahl.</b> Simons Einwand galt
+     * dem Abrechnungscode: {@code codes/abrechnungscodes.json} enthaelt genau
+     * einen Eintrag, und ein Aufklappmenue mit einer Zeile ist Bedienlast ohne
+     * Nutzen - man klappt es auf, um zu erfahren, dass es nichts zu waehlen
+     * gibt. Es wird deshalb ein Textfeld, in dem der Wert schon steht.</p>
+     *
+     * <p>Das Feld bleibt bewusst beschreibbar, in beiden Faellen. Ein Vorschlag
+     * darf nichts ausschliessen: kaeme ein Leistungsbereich mit einem anderen
+     * Code hinzu oder gaelte einmal ein anderer Umsatzsteuersatz, waere ein
+     * gesperrtes Feld eine Sackgasse - und die Codeliste laesst sich schneller
+     * falsch pflegen als ein Vertrag geschlossen ist.</p>
+     */
+    private Node vorschlagsfeld(List<String> auswahl, int grenze) {
+        if (auswahl.size() == 1) {
+            TextField feld = textfeld(grenze);
+            feld.setText(auswahl.get(0));
+            return feld;
+        }
+        return auswahlfeld(auswahl);
     }
 
     /**
@@ -338,9 +371,7 @@ public class Feldbau {
         }
         String bereinigt = wert.trim();
         if (istKennzeichen(feldname)) {
-            return Institutionskennzeichen.istGueltig(bereinigt)
-                    ? Optional.empty()
-                    : Optional.of(texte.get("msg.invalidIk"));
+            return beanstandeKennzeichen(bereinigt);
         }
         if ("plz".equalsIgnoreCase(feldname) && !bereinigt.matches("\\d{5}")) {
             return Optional.of(texte.get("msg.invalidPlz"));
@@ -358,6 +389,36 @@ public class Feldbau {
             return Optional.empty();
         }
         return Optional.of(befund.errorMessage == null ? texte.get("msg.invalidValue") : befund.errorMessage);
+    }
+
+    /**
+     * Beanstandet ein Institutionskennzeichen und nennt den Ausweg.
+     *
+     * <p>Die alte Meldung lautete "Die Pruefziffer stimmt nicht. Ein IK hat
+     * neun Ziffern." und war eine Sackgasse: sie sagte nicht, dass man sich
+     * kein IK ausdenken kann. Wer neun plausible Ziffern eintippte, stand vor
+     * einer Ablehnung ohne Hinweis, wie er zu einer gueltigen Zahl kaeme - denn
+     * dafuer muss man die Pruefziffer ausrechnen.</p>
+     *
+     * <p>Ausrechnen kann {@link Institutionskennzeichen#berechnePruefziffer}
+     * das laengst; es wurde nur nirgends angezeigt. Jetzt steht die richtige
+     * Ziffer in der Beanstandung. Das macht aus der Sackgasse einen Hinweis -
+     * und ist keine Einladung, sich ein IK zu bauen: die Ziffer passt zu den
+     * <em>eingegebenen</em> acht Stellen, ob es dieses IK gibt, sagt sie
+     * nicht.</p>
+     */
+    Optional<String> beanstandeKennzeichen(String wert) {
+        if (Institutionskennzeichen.istGueltig(wert)) {
+            return Optional.empty();
+        }
+        if (!wert.matches("\\d{" + Institutionskennzeichen.LAENGE + "}")) {
+            return Optional.of(texte.get("msg.invalidIkLength"));
+        }
+        String vorderteil = wert.substring(0, Institutionskennzeichen.LAENGE - 1);
+        int pruefziffer = Institutionskennzeichen.berechnePruefziffer(wert);
+        return Optional.of(texte.get("msg.invalidIk") + " "
+                + String.format(texte.get("msg.ikPruefziffer"),
+                        vorderteil, pruefziffer, vorderteil + pruefziffer));
     }
 
     /**

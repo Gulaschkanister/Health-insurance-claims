@@ -2,6 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
@@ -54,8 +56,40 @@ class FeldbauTest {
         @Test
         @DisplayName("Ein IK mit falscher Pruefziffer wird beanstandet")
         void falschePruefziffer() {
-            assertEquals(Optional.of(texte.get("msg.invalidIk")),
-                    feldbau.pruefe("kassenIk", beschreibung("kassenIk"), "108310401"));
+            assertTrue(feldbau.pruefe("kassenIk", beschreibung("kassenIk"), "108310401")
+                    .orElseThrow().startsWith(texte.get("msg.invalidIk")));
+        }
+
+        /**
+         * Der Ausweg aus der Sackgasse.
+         *
+         * <p>Die alte Meldung sagte nur, dass die Pruefziffer nicht stimmt.
+         * Wer neun plausible Ziffern eingetippt hatte, wusste danach nicht,
+         * wie er zu einer gueltigen Zahl kaeme - es gibt dafuer keinen Weg
+         * ausser Rechnen. Die richtige Ziffer steht deshalb in der
+         * Beanstandung.</p>
+         */
+        @Test
+        @DisplayName("Die Beanstandung nennt die Pruefziffer, die passen wuerde")
+        void nenntDieRichtigePruefziffer() {
+            String befund = feldbau.pruefe("kassenIk", beschreibung("kassenIk"), "123456789")
+                    .orElseThrow();
+
+            assertTrue(befund.contains("123456780"), befund);
+        }
+
+        /**
+         * Ein nicht ausgefuelltes Feld ist kein Kennzeichen.
+         *
+         * <p>Lauter Nullen bestehen die Pruefziffer - 0 mod 10 ist 0 -, und
+         * ein {@code int} ohne Zuweisung ist 0. {@code istGueltig(0)} lieferte
+         * deshalb {@code true}: eine Person ganz ohne IK kam durch jede
+         * Pruefung bis zur Kasse.</p>
+         */
+        @Test
+        @DisplayName("Lauter Nullen sind kein gueltiges IK")
+        void nullenSindKeinKennzeichen() {
+            assertTrue(feldbau.pruefe("ik", beschreibung("ik"), "000000000").isPresent());
         }
 
         @Test
@@ -76,7 +110,8 @@ class FeldbauTest {
         @Test
         @DisplayName("Ein zu kurzes IK wird beanstandet")
         void zuKurz() {
-            assertTrue(feldbau.pruefe("ik", beschreibung("ik"), "1083104").isPresent());
+            assertEquals(Optional.of(texte.get("msg.invalidIkLength")),
+                    feldbau.pruefe("ik", beschreibung("ik"), "1083104"));
         }
 
         @Test
@@ -115,6 +150,48 @@ class FeldbauTest {
         void langeGenug() {
             assertEquals(Optional.empty(),
                     feldbau.pruefe("firstname", beschreibung("firstname"), "x".repeat(100)));
+        }
+    }
+
+    /**
+     * Was aus hinterlegten Vorschlaegen wird.
+     *
+     * <p>Simons Einwand: "Wenn es fuer bestimmte Abrechnungscodes nur eine
+     * Auswahl gibt, waere es sinnlos, ein Dropdown dafuer zu nutzen." Er hat
+     * recht - und die Mechanik war zusaetzlich verkehrt herum eingesetzt: das
+     * einzige Feld mit hinterlegten Werten hatte genau einen, und der
+     * Umsatzsteuersatz, wo drei Vorschlaege helfen, hatte gar keine.</p>
+     */
+    @Nested
+    @DisplayName("Vorschlaege")
+    class Vorschlaege {
+
+        @Test
+        @DisplayName("Ein einziger Vorschlag wird ein ausgefuelltes Textfeld, kein Aufklappmenue")
+        void einVorschlagIstKeineAuswahl() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node bedienelement = feldbau.bedienelement(
+                        feldbau.erzeugeFeld("Abrechnungscode", null, "", List.of("61")));
+
+                assertInstanceOf(TextField.class, bedienelement,
+                        "Ein Menue mit einer Zeile ist Bedienlast ohne Nutzen");
+                assertEquals("61", ((TextField) bedienelement).getText());
+            });
+        }
+
+        @Test
+        @DisplayName("Mehrere Vorschlaege werden ein Auswahlfeld, das beschreibbar bleibt")
+        void mehrereVorschlaege() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node bedienelement = feldbau.bedienelement(
+                        feldbau.erzeugeFeld("Umsatzsteuersatz", null, "", List.of("19", "7", "0")));
+
+                assertInstanceOf(ComboBox.class, bedienelement);
+                ComboBox<?> auswahl = (ComboBox<?>) bedienelement;
+                assertEquals(List.of("19", "7", "0"), auswahl.getItems());
+                assertTrue(auswahl.isEditable(),
+                        "Ein Vorschlag darf nichts ausschliessen - es kann ein anderer Satz gelten");
+            });
         }
     }
 
@@ -188,10 +265,10 @@ class FeldbauTest {
 
                 Optional<String> befund = feldbau.beanstandung(feld);
 
-                assertEquals(Optional.of(texte.get("msg.invalidIk")), befund);
+                assertTrue(befund.orElseThrow().startsWith(texte.get("msg.invalidIk")), befund.orElseThrow());
                 Label zeile = beanstandungszeile(feld);
                 assertTrue(zeile.isVisible(), "Die Beanstandung muss auch zu sehen sein");
-                assertEquals(texte.get("msg.invalidIk"), zeile.getText());
+                assertEquals(befund.orElseThrow(), zeile.getText());
                 assertTrue(eingabe.getStyleClass().contains(Feldbau.STIL_FEHLERHAFT));
             });
         }

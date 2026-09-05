@@ -81,6 +81,30 @@ class InstitutionskennzeichenTest {
         assertFalse(Institutionskennzeichen.istGueltig(-1L));
     }
 
+    /**
+     * Das nicht ausgefuellte Feld.
+     *
+     * <p>Lauter Nullen bestehen die Rechnung: alle Stellen 3 bis 8 sind 0,
+     * die Summe ist 0, und 0 mod 10 ist 0 - genau die letzte Ziffer. Ein
+     * {@code int} ohne Zuweisung ist 0, und {@code Person.ik} ist ein
+     * {@code int}. Eine Person, bei der niemand ein IK eingetragen hatte, kam
+     * so durch die Eingabepruefung, durch die Speicherpruefung und durch die
+     * Validierung vor dem Versand - bis die Kasse die Lieferung zurueckwies.</p>
+     *
+     * <p>Gefunden am 05.09.2026, als die Beanstandung die richtige Pruefziffer
+     * nennen sollte und dabei auffiel, dass sie fuer 000000000 keine zu nennen
+     * hatte.</p>
+     */
+    @Test
+    @DisplayName("Lauter Nullen sind kein Kennzeichen, obwohl die Pruefziffer stimmt")
+    void erkenntDasLeereFeld() {
+        assertEquals(0, Institutionskennzeichen.berechnePruefziffer("000000000"),
+                "Die Rechnung geht auf - das ist ja das Tueckische daran");
+        assertFalse(Institutionskennzeichen.istGueltig("000000000"));
+        assertFalse(Institutionskennzeichen.istGueltig(0L),
+                "Ein int ohne Zuweisung ist 0; das darf kein gueltiges IK sein");
+    }
+
     @Test
     @DisplayName("Die Pruefziffer wird nach dem dokumentierten Verfahren berechnet")
     void berechnetPruefziffer() {

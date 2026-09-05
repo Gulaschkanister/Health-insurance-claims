@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import de.gkvtransmitter.entity.Patient;
@@ -17,7 +18,6 @@ import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
-import de.gkvtransmitter.util.Institutionskennzeichen;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
@@ -384,13 +384,22 @@ public class PersonenMaske {
         if (person.getBirthDate() == null) {
             befunde.add(String.format(texte.get("msg.required"), texte.get("field.birthDate")));
         }
-        if (!Institutionskennzeichen.istGueltig(person.getIk())) {
-            befunde.add(texte.get("field.ik") + ": " + texte.get("msg.invalidIk"));
-        }
-        if (!Institutionskennzeichen.istGueltig(person.getKassenIk())) {
-            befunde.add(texte.get("field.kassenIk") + ": " + texte.get("msg.invalidIk"));
-        }
+        kennzeichen("field.ik", person.getIk()).ifPresent(befunde::add);
+        kennzeichen("field.kassenIk", person.getKassenIk()).ifPresent(befunde::add);
         return befunde;
+    }
+
+    /**
+     * Beanstandet ein IK mit demselben Text wie das Feld darunter.
+     *
+     * <p>Der Weg ueber {@code Feldbau} ist hier ein Umweg - die Person traegt
+     * das IK schon als Zahl -, aber er haelt die beiden Meldungen zusammen.
+     * Zuvor stand hier ein eigener Text; wer den einen aenderte, hatte den
+     * anderen nicht mitgeaendert.</p>
+     */
+    private Optional<String> kennzeichen(String beschriftung, int ik) {
+        return feldbau.beanstandeKennzeichen(String.format("%09d", Math.max(ik, 0)))
+                .map(befund -> texte.get(beschriftung) + ": " + befund);
     }
 
     private String text(Map<String, Node> felder, String feldname) {
