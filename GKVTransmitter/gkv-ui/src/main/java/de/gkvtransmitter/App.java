@@ -41,7 +41,10 @@ public class App extends Application {
             // Programm, der in der Statuszeile abgeschnitten wurde. Er gehoert
             // ohnehin dorthin, wo auch die Texte liegen: in die View.
             Scene scene = view.createMainScene(900, 600);
-            stage.setTitle(View.PROGRAMMNAME);
+            // Gebunden statt gesetzt: die Leiste nennt den offenen Bereich,
+            // und der wechselt. Siehe Hauptfenster.fenstertitel - warum die
+            // Titelleiste die von Windows bleibt, steht dort.
+            stage.titleProperty().bind(view.fenstertitel());
             stage.getIcons().addAll(Programmsymbol.alle());
             stage.setScene(scene);
             stage.show();

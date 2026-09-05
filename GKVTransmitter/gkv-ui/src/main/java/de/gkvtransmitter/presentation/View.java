@@ -98,6 +98,17 @@ public class View {
     }
 
     /**
+     * Der Fenstertitel, der dem offenen Bereich folgt.
+     *
+     * <p>Bis zum 05.09.2026 stand in der Titelleiste immer nur
+     * "GKVTransmitter". In der Taskleiste und beim Umschalten zwischen
+     * Fenstern sagte das nichts darueber, wo man gerade ist.</p>
+     */
+    public javafx.beans.property.ReadOnlyStringProperty fenstertitel() {
+        return hauptfenster.fenstertitel();
+    }
+
+    /**
      * Schreibt in die Statuszeile, wie viele Vorlagen geladen sind.
      *
      * <p>Dort stand bis zum 05.09.2026 eine Aufzaehlung der JSON-Dateinamen
@@ -161,6 +172,29 @@ public class View {
 
         hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.dev"));
         hauptfenster.ergaenzeBereich(messages.get("nav.testdata"), this::seedTestData);
+
+        erklaereBereiche();
+    }
+
+    /**
+     * Ein Satz unter jeder Ueberschrift.
+     *
+     * <p>In der Kopfzeile stand bis zum 05.09.2026 nur das Wort aus der
+     * Seitenleiste, das daneben ohnehin hervorgehoben ist - eine Zeile, die
+     * nichts sagte, was man nicht schon sah. Der Satz beantwortet stattdessen
+     * die Frage, die sich beim ersten Oeffnen stellt: wozu ist dieser Bereich
+     * da, und was tue ich hier als Naechstes.</p>
+     *
+     * <p>Die Vorlagen bekommen keinen: sie tragen ihren Kursnamen und fuehren
+     * unmittelbar in ein Formular, das sich selbst erklaert.</p>
+     */
+    private void erklaereBereiche() {
+        hauptfenster.erklaereBereich(messages.get("menu.settlement"), messages.get("intro.settlement"));
+        hauptfenster.erklaereBereich(messages.get("menu.patient"), messages.get("intro.patient"));
+        hauptfenster.erklaereBereich(messages.get("menu.self"), messages.get("intro.self"));
+        hauptfenster.erklaereBereich(messages.get("menu.groups"), messages.get("intro.groups"));
+        hauptfenster.erklaereBereich(messages.get("menu.blueprints"), messages.get("intro.blueprints"));
+        hauptfenster.erklaereBereich(messages.get("nav.testdata"), messages.get("intro.testdata"));
     }
 
     /**

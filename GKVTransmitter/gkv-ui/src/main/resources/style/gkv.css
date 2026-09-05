@@ -107,6 +107,16 @@
     -fx-text-fill: -farbe-text;
 }
 
+/*
+ * Der Satz unter der Ueberschrift. Er sagt, wozu der Bereich da ist - die
+ * Ueberschrift allein wiederholte nur das Wort, das daneben in der
+ * Seitenleiste ohnehin hervorgehoben steht.
+ */
+.kopf-untertitel {
+    -fx-font-size: 12px;
+    -fx-text-fill: -farbe-text-still;
+}
+
 .inhalt {
     -fx-background-color: -farbe-grund;
     -fx-padding: 0;

@@ -45,6 +45,15 @@ public final class Vorschau {
         Path ziel = Path.of(args.length > 0 ? args[0] : "target/vorschau");
         java.nio.file.Files.createDirectories(ziel);
 
+        // Der Pfad wird von Anwendungsverzeichnis aufgeloest und landet
+        // deshalb unter %LOCALAPPDATA%, nicht neben den Bildern. Ein
+        // "rm -rf target/vorschau" trifft ihn also nicht, und die Testdaten
+        // haeuften sich von Lauf zu Lauf: in der Teilnehmerliste stand Anna
+        // Berger zweimal, dreimal, viermal. Deshalb hier von Hand raeumen -
+        // eine Vorschau soll immer dasselbe zeigen.
+        Path datenbank = de.gkvtransmitter.util.Anwendungsverzeichnis
+                .aufloesen(ziel.resolve("vorschau.db"));
+        java.nio.file.Files.deleteIfExists(datenbank);
         System.setProperty("gkv.db.path", ziel.resolve("vorschau.db").toString());
         System.setProperty("gkv.testdaten", "true");
 
@@ -93,12 +102,12 @@ public final class Vorschau {
             klicke(szene, BlaupausenMaske.ID_NEU);
             schreibe(szene, ziel.resolve("formular-blaupause.png"));
 
-            // NOCH OFFEN: die Bildlaufleiste bekommt die Vorschau nicht zu
-            // Gesicht. Ein Schnappschuss nimmt die Groesse der Szene, und die
-            // aendert sich nicht, wenn man dem Fenster nachtraeglich eine
-            // andere Hoehe gibt, ohne es zu zeigen. Wer die Leiste pruefen
-            // will, baut hier eine zweite, kleinere Szene auf - oder sieht
-            // sich die Anwendung an.
+            // Die Bildlaufleiste steht in teilnehmer.png: die Testdaten
+            // ergeben mehr Zeilen, als bei 720 Punkten Hoehe hineinpassen.
+            // Sie hier vergeblich ueber die Fensterhoehe erzwingen zu wollen,
+            // war ein Umweg - ein Schnappschuss nimmt die Groesse der Szene,
+            // und die aendert sich nicht, wenn man dem ungezeigten Fenster
+            // nachtraeglich eine andere Hoehe gibt. Genug Inhalt tut es auch.
         });
 
         System.out.println("Vorschau in " + ziel.toAbsolutePath());

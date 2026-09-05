@@ -86,6 +86,13 @@
   "nav.section.templates": "Vorlagen",
   "nav.section.dev": "Entwicklung",
   "nav.testdata": "Testdaten anlegen",
+
+  "intro.settlement": "Gruppe und Blaupause wählen, Termine eintragen, prüfen und an die Kassen übermitteln.",
+  "intro.patient": "Die Frauen, für die abgerechnet wird — mit Anschrift und dem IK ihrer Krankenkasse.",
+  "intro.self": "Wer die Leistung erbringt und die Rechnung stellt. Meist genau ein Eintrag.",
+  "intro.groups": "Ein Kurs als Teilnehmerkreis. Eine Gruppe rechnet man in einem Zug ab.",
+  "intro.blueprints": "Was ein Kurs kostet und unter welcher Position er abgerechnet wird — je Kurs einmal festgelegt.",
+  "intro.testdata": "Legt Beispieldaten an, um die Abrechnung durchzuspielen. Nicht für den Echtbetrieb.",
   "msg.testDataCreated": "Testdaten angelegt: %d Dienstleister, %d Teilnehmerinnen, %d Gruppen, %d Blaupausen.",
   "app.subtitle": "Abrechnung mit gesetzlichen Krankenkassen",
   "status.templatesLoaded": "%d Vorlagen geladen",

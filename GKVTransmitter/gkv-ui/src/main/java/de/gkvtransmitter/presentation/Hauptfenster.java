@@ -44,13 +44,35 @@ public class Hauptfenster implements Maskenrahmen {
     public static final String ID_STATUS = "statuszeile";
     /** Kennung des Info-Zeichens neben der Statuszeile. */
     public static final String ID_STATUS_INFO = "statuszeile-info";
+    /** Kennung der Zeile unter der Ueberschrift. */
+    public static final String ID_UNTERTITEL = "kopf-untertitel";
 
     private final BorderPane geruest = new BorderPane();
     private final VBox seitenleiste = new VBox();
     private final ToggleGroup navigationsgruppe = new ToggleGroup();
     private final ScrollPane inhaltsbereich = new ScrollPane();
     private final Label ueberschrift = new Label();
+    private final Label untertitel = new Label();
     private final Label statuszeile = new Label();
+
+    /**
+     * Der Fenstertitel, gebunden an den offenen Bereich.
+     *
+     * <p>Die Titelleiste ist die von Windows und bleibt es auch. Sie selbst zu
+     * zeichnen hiesse {@code StageStyle.UNDECORATED} und Verschieben,
+     * Groessenaenderung, Maximieren und Schliessen von Hand nachzubauen - und
+     * dabei das Andocken zu verlieren, mit dem man ein Fenster an den
+     * Bildschirmrand zieht. Fuer eine Anwendung, in der jemand einen Monat
+     * lang arbeitet, ist das ein schlechter Tausch: man gewaenne Aussehen und
+     * verloere Bedienung.</p>
+     *
+     * <p>Was sich <em>ohne</em> diesen Tausch verbessern liess, ist der Inhalt
+     * der Leiste. Dort stand immer nur "GKVTransmitter"; in der Taskleiste und
+     * beim Umschalten zwischen Fenstern sagte das nichts darueber, wo man
+     * gerade ist. Jetzt steht der offene Bereich davor.</p>
+     */
+    private final javafx.beans.property.ReadOnlyStringWrapper fenstertitel =
+            new javafx.beans.property.ReadOnlyStringWrapper(View.PROGRAMMNAME);
     /** Das Info-Zeichen rechts neben der Statuszeile, siehe {@link #setzeStatusInfo}. */
     private final Button statusinfo = new Button("i");
     private final HBox statusbereich = new HBox(8);
@@ -71,7 +93,12 @@ public class Hauptfenster implements Maskenrahmen {
 
         ueberschrift.setId(ID_TITEL);
         ueberschrift.getStyleClass().add("kopf-titel");
-        VBox kopfzeile = new VBox(ueberschrift);
+        untertitel.setId(ID_UNTERTITEL);
+        untertitel.getStyleClass().add("kopf-untertitel");
+        untertitel.setWrapText(true);
+        untertitel.setVisible(false);
+        untertitel.setManaged(false);
+        VBox kopfzeile = new VBox(2, ueberschrift, untertitel);
         kopfzeile.getStyleClass().add("kopfzeile");
 
         inhaltsbereich.getStyleClass().add("inhalt");
@@ -213,7 +240,36 @@ public class Hauptfenster implements Maskenrahmen {
         }
         offenerBereich = beschriftung;
         ueberschrift.setText(beschriftung);
+        setzeUntertitel(untertitel.getProperties().get(beschriftung));
+        fenstertitel.set(beschriftung + " – " + View.PROGRAMMNAME);
         oeffnen.run();
+    }
+
+    /**
+     * Hinterlegt eine Zeile, die unter der Ueberschrift eines Bereichs steht.
+     *
+     * <p>Die Kopfzeile trug bisher nur ein Wort - "Teilnehmer", "Gruppen" -
+     * und darunter kam sofort die Liste. Ein Satz dazu, was der Bereich ist,
+     * kostet nichts und beantwortet die Frage, die sich beim ersten Mal
+     * stellt. Fehlt er, bleibt die Zeile weg und nimmt keinen Platz.</p>
+     */
+    public void erklaereBereich(String beschriftung, String satz) {
+        untertitel.getProperties().put(beschriftung, satz);
+        if (beschriftung.equals(offenerBereich)) {
+            setzeUntertitel(satz);
+        }
+    }
+
+    private void setzeUntertitel(Object satz) {
+        boolean vorhanden = satz instanceof String text && !text.isBlank();
+        untertitel.setText(vorhanden ? String.valueOf(satz) : "");
+        untertitel.setVisible(vorhanden);
+        untertitel.setManaged(vorhanden);
+    }
+
+    /** Der Fenstertitel; folgt dem offenen Bereich. */
+    public javafx.beans.property.ReadOnlyStringProperty fenstertitel() {
+        return fenstertitel.getReadOnlyProperty();
     }
 
     public void setzeStatus(String text) {
