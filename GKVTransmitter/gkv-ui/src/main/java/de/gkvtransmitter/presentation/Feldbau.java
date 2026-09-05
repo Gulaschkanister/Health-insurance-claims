@@ -2,9 +2,12 @@ package de.gkvtransmitter.presentation;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.util.AppMessages;
@@ -110,7 +113,67 @@ public class Feldbau {
         feld.getChildren().add(beanstandung);
 
         ueberwache(feldname, beschreibung, bedienelement, beanstandung);
+        feld.getProperties().put(PRUEFUNG,
+                (Supplier<Optional<String>>) () -> zeigeBefund(feldname, beschreibung, bedienelement, beanstandung));
         return feld;
+    }
+
+    /** Schluessel, unter dem ein Feld seine eigene Pruefung mit sich fuehrt. */
+    private static final String PRUEFUNG = "gkv.pruefung";
+
+    /**
+     * Prueft ein Feld erneut und zeigt die Beanstandung an.
+     *
+     * <p>Die Pruefung lief bisher nur beim Verlassen des Feldes. Wer ein
+     * Formular ausfuellte und sofort speicherte, ohne das letzte Feld je
+     * verlassen zu haben, bekam nie eine Beanstandung zu sehen - und die Maske
+     * speicherte, weil sie gar nicht fragte. Der Fehler fiel dann erst beim
+     * Versand auf, Wochen spaeter und als Ablehnung der ganzen Lieferung.</p>
+     *
+     * @return die Beanstandung, oder leer wenn das Feld in Ordnung ist
+     */
+    @SuppressWarnings("unchecked")
+    public Optional<String> beanstandung(Node feld) {
+        if (feld == null) {
+            return Optional.empty();
+        }
+        Object pruefung = feld.getProperties().get(PRUEFUNG);
+        if (pruefung instanceof Supplier<?> abruf) {
+            return (Optional<String>) abruf.get();
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Prueft alle Felder und liefert die Beanstandungen in einer Liste.
+     *
+     * <p>Prueft <em>alle</em>, nicht bis zur ersten: wer drei Felder falsch
+     * ausgefuellt hat, soll das in einem Zug sehen und nicht dreimal
+     * hintereinander speichern muessen.</p>
+     */
+    public List<String> beanstandungen(Collection<Node> felder) {
+        List<String> befunde = new ArrayList<>();
+        for (Node feld : felder) {
+            beanstandung(feld).ifPresent(befunde::add);
+        }
+        return befunde;
+    }
+
+    private Optional<String> zeigeBefund(String feldname, TagList beschreibung, Node bedienelement,
+            Label beanstandung) {
+        Optional<String> befund = pruefe(feldname, beschreibung, textVon(bedienelement));
+        if (befund.isEmpty()) {
+            beanstandung.setText("");
+            verbergen(beanstandung);
+            bedienelement.getStyleClass().remove(STIL_FEHLERHAFT);
+        } else {
+            beanstandung.setText(befund.get());
+            zeigen(beanstandung);
+            if (!bedienelement.getStyleClass().contains(STIL_FEHLERHAFT)) {
+                bedienelement.getStyleClass().add(STIL_FEHLERHAFT);
+            }
+        }
+        return befund;
     }
 
     /** Das Bedienelement eines Feldes, ohne Erklaerung und Beanstandung. */

@@ -110,9 +110,12 @@ class GruppenMaskeTest {
         @Test
         @DisplayName("Der Name wird ohne umgebende Leerzeichen gespeichert")
         void nameGetrimmt() {
+            datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Region formular = neuesFormular();
                 namensfeld(formular).setText("  Montagsgruppe  ");
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                anhaken(formular, GruppenMaske.ID_DIENSTLEISTER + 9);
                 speichern(formular).fire();
 
                 assertEquals("Montagsgruppe", einzigeGespeicherte().getName());
@@ -122,13 +125,35 @@ class GruppenMaskeTest {
         @Test
         @DisplayName("Nach dem Speichern wird der Bereich geraeumt")
         void bereichGeraeumt() {
+            datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Region formular = neuesFormular();
                 namensfeld(formular).setText("Montagsgruppe");
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                anhaken(formular, GruppenMaske.ID_DIENSTLEISTER + 9);
                 speichern(formular).fire();
 
                 assertEquals(1, rahmen.wieOftGeleert());
                 assertEquals(texte.get("msg.groupCreated"), meldungen.einzige().text());
+            });
+        }
+
+        @Test
+        @DisplayName("Eine Gruppe ohne Teilnehmer oder Dienstleister wird abgewiesen")
+        void unvollstaendigeGruppe() {
+            datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                namensfeld(formular).setText("Montagsgruppe");
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                // Dienstleister absichtlich nicht angehakt.
+                speichern(formular).fire();
+
+                assertTrue(datenbank.gespeicherteGruppen().isEmpty(),
+                        "Ohne Dienstleister fehlt der Abrechnung das Absender-IK");
+                assertTrue(meldungen.einzige().text().contains(texte.get("msg.groupNeedsProvider")),
+                        meldungen.einzige().text());
+                assertEquals(0, rahmen.wieOftGeleert(), "Die Eingaben duerfen nicht verlorengehen");
             });
         }
 
@@ -160,10 +185,13 @@ class GruppenMaskeTest {
         @Test
         @DisplayName("Ein Fehlschlag beim Speichern wird gemeldet und der Bereich bleibt stehen")
         void speichernScheitert() {
-            datenbank.scheitertBeimSpeichern(new IllegalStateException("Datenbank gesperrt"));
+            datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"))
+                    .scheitertBeimSpeichern(new IllegalStateException("Datenbank gesperrt"));
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Region formular = neuesFormular();
                 namensfeld(formular).setText("Montagsgruppe");
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                anhaken(formular, GruppenMaske.ID_DIENSTLEISTER + 9);
                 speichern(formular).fire();
 
                 AufzeichnendeMeldungen.Meldung meldung = meldungen.einzige();
@@ -268,13 +296,14 @@ class GruppenMaskeTest {
         void aendertVorhandene() {
             Patient anna = patient(1, "Anna");
             PersonGroup vorhanden = gruppe(7, "Alt");
-            datenbank.mitPatient(anna).mitGruppe(vorhanden);
+            datenbank.mitPatient(anna).mitDienstleister(dienstleister(9, "Max")).mitGruppe(vorhanden);
 
             JavaFxLaufzeit.aufFxFaden(() -> {
                 bearbeitenKnopf(maske().liste(), 7).fire();
                 Region formular = rahmen.inhalt();
                 namensfeld(formular).setText("Neu");
                 anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                anhaken(formular, GruppenMaske.ID_DIENSTLEISTER + 9);
                 speichern(formular).fire();
 
                 assertEquals(List.of(vorhanden), datenbank.gespeicherteGruppen());

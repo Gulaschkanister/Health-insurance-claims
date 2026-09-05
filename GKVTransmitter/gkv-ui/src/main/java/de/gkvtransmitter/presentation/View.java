@@ -2,7 +2,6 @@ package de.gkvtransmitter.presentation;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +10,7 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
-import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.application.AbrechnungService;
 import de.gkvtransmitter.model.DtaMessage;
@@ -21,6 +18,7 @@ import de.gkvtransmitter.presentation.meldung.Bildschirmmeldungen;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
+import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.Anwendungsverzeichnis;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.application.Platform;
@@ -30,8 +28,8 @@ import javafx.scene.Scene;
  * Der Einstieg in die Oberflaeche.
  *
  * <p>Baut die Hauptszene, fuellt die Seitenleiste und verteilt von dort auf
- * die Masken. Die Blaupausenmaske ({@code createFormular}) liegt als einzige
- * noch hier; sie ist der naechste Kandidat fuer eine eigene Klasse.</p>
+ * die Masken. Seit dem 05.09.2026 baut sie keine Maske mehr selbst; geblieben
+ * sind Szene, Navigation und die Testdaten.</p>
  */
 public class View {
 
@@ -262,42 +260,31 @@ public class View {
     }
 
     /**
-     * Dev helper: creates a test blueprint, a group with 3 participants and 1 provider
+     * Legt einen Satz Testdaten an, mit dem sich die Anwendung durchspielen
+     * laesst.
+     *
+     * <p>Die Daten selbst stehen in {@link Testdaten} - als eigene Klasse,
+     * damit ein Test nachweisen kann, dass eine Abrechnung damit die Pruefung
+     * besteht. Als private Methode hier war das nicht moeglich, und genau
+     * deshalb fiel nie auf, dass die vorigen Testdaten es nicht taten.</p>
      */
     private void seedTestData() {
         try {
-            // create service provider
-            ServiceProvider prov = new ServiceProvider("Max", "Muster", "Musterstr.", "DE", "1",
-                    12345, 1001, 2001, null);
-            controller.getDatabase().saveServiceProvider(prov);
+            DataRepository datenbank = controller.getDatabase();
 
-            // create participants
-            Patient p1 = new Patient("Anna", "A", "Str1", "DE", "1", 11111, 101, 201, null);
-            Patient p2 = new Patient("Bernd", "B", "Str2", "DE", "2", 22222, 102, 202, null);
-            Patient p3 = new Patient("Clara", "C", "Str3", "DE", "3", 33333, 103, 203, null);
-            controller.getDatabase().savePatient(p1);
-            controller.getDatabase().savePatient(p2);
-            controller.getDatabase().savePatient(p3);
+            List<ServiceProvider> dienstleister = Testdaten.dienstleister();
+            dienstleister.forEach(datenbank::saveServiceProvider);
 
-            // create group
-            PersonGroup group = new PersonGroup();
-            group.setName("Testgruppe 1");
-            java.util.Set<Patient> ps = new java.util.LinkedHashSet<>();
-            ps.add(p1);
-            ps.add(p2);
-            ps.add(p3);
-            group.setPatients(ps);
-            java.util.Set<ServiceProvider> ss = new java.util.LinkedHashSet<>();
-            ss.add(prov);
-            group.setServiceProviders(ss);
-            controller.getDatabase().savePersonGroup(group);
+            List<Patient> teilnehmerinnen = Testdaten.teilnehmerinnen();
+            teilnehmerinnen.forEach(datenbank::savePatient);
 
-            // create simple blueprint
-            String payload = "{\"template\":\"test\",\"fields\":{}}";
-            Blueprint bp = new Blueprint("Test Blaupause", "test-template", payload, OffsetDateTime.now());
-            controller.getDatabase().saveBlueprint(bp);
+            Testdaten.gruppen(teilnehmerinnen, dienstleister).forEach(datenbank::savePersonGroup);
 
-            meldungen.erfolg("Testdaten angelegt: 1 Dienstleister, 3 Teilnehmer, 1 Gruppe, 1 Blaupause.");
+            controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet().stream()
+                    .findFirst()
+                    .ifPresent(vorlage -> Testdaten.blaupausen(vorlage).forEach(datenbank::saveBlueprint));
+
+            meldungen.erfolg(messages.get("msg.testDataCreated"));
         } catch (Exception e) {
             meldungen.fehler(e.getMessage());
         }

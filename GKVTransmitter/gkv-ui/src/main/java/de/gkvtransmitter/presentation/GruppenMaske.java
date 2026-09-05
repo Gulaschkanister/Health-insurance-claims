@@ -191,9 +191,28 @@ public class GruppenMaske {
             return;
         }
 
+        Set<Patient> gewaehlteTeilnehmer = angehakte(patienten, teilnehmerKaestchen);
+        Set<ServiceProvider> gewaehlteDienstleister = angehakte(dienstleister, dienstleisterKaestchen);
+
+        // Eine Gruppe ohne Teilnehmer oder ohne Dienstleister laesst sich nicht
+        // abrechnen: der Lauf erzeugt keine einzige Nachricht beziehungsweise
+        // hat kein Absender-IK. Das erst in der Abrechnungsmaske zu bemerken
+        // heisst, bis dahin mit einer Gruppe gearbeitet zu haben, die keine ist.
+        List<String> fehlt = new ArrayList<>();
+        if (gewaehlteTeilnehmer.isEmpty()) {
+            fehlt.add(texte.get("msg.groupNeedsPatients"));
+        }
+        if (gewaehlteDienstleister.isEmpty()) {
+            fehlt.add(texte.get("msg.groupNeedsProvider"));
+        }
+        if (!fehlt.isEmpty()) {
+            meldungen.fehler(texte.get("msg.notSaved") + "\n· " + String.join("\n· ", fehlt));
+            return;
+        }
+
         gruppe.setName(name);
-        gruppe.setPatients(angehakte(patienten, teilnehmerKaestchen));
-        gruppe.setServiceProviders(angehakte(dienstleister, dienstleisterKaestchen));
+        gruppe.setPatients(gewaehlteTeilnehmer);
+        gruppe.setServiceProviders(gewaehlteDienstleister);
 
         try {
             datenbank.savePersonGroup(gruppe);

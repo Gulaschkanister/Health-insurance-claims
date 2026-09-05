@@ -261,6 +261,12 @@ public class PersonenMaske {
      * angelegt wurde.</p>
      */
     private void speichere(Map<String, Node> felder, boolean alsDienstleister) {
+        List<String> beanstandungen = pruefe(felder);
+        if (!beanstandungen.isEmpty()) {
+            meldungen.fehler(texte.get("msg.notSaved") + "\n· " + String.join("\n· ", beanstandungen));
+            return;
+        }
+
         String vorname = text(felder, "firstname");
         String nachname = text(felder, "lastname");
         String strasse = text(felder, "street");
@@ -296,6 +302,42 @@ public class PersonenMaske {
 
         meldungen.erfolg(texte.get(alsDienstleister ? "msg.selfCreated" : "msg.patientCreated"));
         rahmen.leeren();
+    }
+
+    /**
+     * Angaben, ohne die sich eine Person nicht abrechnen laesst.
+     *
+     * <p>Die Auswahl folgt dem, was {@code DtaValidationService} vor dem
+     * Versand verlangt: {@code VersichertenangabenRegel} braucht Vor- und
+     * Nachname sowie ein Geburtsdatum, {@code InstitutionskennzeichenRegel}
+     * beide Kennzeichen mit richtiger Pruefziffer. Wird die Regel dort
+     * erweitert, gehoert sie hier nachgezogen - sonst laesst die Maske etwas
+     * durch, das die Kasse zurueckweist.</p>
+     */
+    private static final Map<String, String> PFLICHTANGABEN = Map.of(
+            "firstname", "field.firstname",
+            "lastname", "field.lastname",
+            "ik", "field.ik",
+            "kassenIk", "field.kassenIk",
+            "birthDate", "field.birthDate");
+
+    /**
+     * Prueft das Formular, ehe gespeichert wird.
+     *
+     * <p>Zuvor speicherte die Maske alles, was sich in die Felder tippen liess.
+     * Ein IK mit falscher Pruefziffer wanderte unbeanstandet in die Datenbank
+     * und fiel erst beim Versand auf - als Ablehnung der ganzen Lieferung, mit
+     * allen anderen Abrechnungen des Laufs im Schlepptau. Wer bis dahin mit
+     * diesen Stammdaten gearbeitet hat, hat auf falscher Grundlage gearbeitet.</p>
+     */
+    private List<String> pruefe(Map<String, Node> felder) {
+        List<String> befunde = new ArrayList<>(feldbau.beanstandungen(felder.values()));
+        PFLICHTANGABEN.forEach((feldname, beschriftung) -> {
+            if (text(felder, feldname).isBlank()) {
+                befunde.add(String.format(texte.get("msg.required"), texte.get(beschriftung)));
+            }
+        });
+        return befunde;
     }
 
     private String text(Map<String, Node> felder, String feldname) {

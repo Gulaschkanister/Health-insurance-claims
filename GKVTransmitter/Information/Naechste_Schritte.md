@@ -143,6 +143,36 @@ Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
    unübersichtlich; ein Suchfeld wie in den Übersichten fehlt, und man sieht
    nicht auf einen Blick, wer schon angehakt ist. `Listenbau` bringt Suche und
    Zeilenaufbau bereits mit.
+3. **Woher kommt das Tarifkennzeichen — und wovon hängt es ab?**
+   Offene Frage von Simon, die vor dem ersten echten Versand beantwortet sein
+   muss.
+
+   **Was das Projekt belegt** (`Abrechnung_Datenerklaerung_test.md`,
+   `codes/03_leistungscodes_sgs_h.json`): fünfstellig numerisch, zweiter Teil
+   des Kompositfelds `Abrechnungscode:Tarifkennzeichen` im `ENF`, im Beispiel
+   `61:00000`. Herkunft laut Unterlagen: **Vertrag, dazu Anlage 3,
+   Schlüssel 8.1.5.2.** Eine allgemeine Codeliste gibt es nicht — deshalb steht
+   im Formular ein Textfeld und kein Auswahlfeld.
+
+   **Personenabhängig ist es nicht.** Es steht in der Leistungszeile, nicht in
+   den Angaben zur versicherten Person: es beschreibt die erbrachte Leistung
+   und die Gruppe des Leistungserbringers, nicht die Teilnehmerin. Ob es sich
+   je nach gesetzlicher oder privater Versicherung unterschiede, stellt sich
+   nicht — privat Versicherte werden gar nicht über diesen Weg abgerechnet.
+
+   **Offen ist, ob es je Kasse verschieden ist.** Der Vertrag besteht zwischen
+   Leistungserbringerin und Kassenseite; ob dabei alle Kassen dasselbe
+   Kennzeichen führen oder jede ihr eigenes, geht aus den Unterlagen hier nicht
+   hervor. **Das ist nicht zu raten** — die Antwort steht in Anlage 3,
+   Abschnitt 8.1.5.2, im eigenen Vertrag oder ist bei der Datenannahmestelle
+   beziehungsweise dem Verband zu erfragen.
+
+   **Warum das für den Entwurf zählt:** heute steht das Tarifkennzeichen in der
+   Blaupause, und eine Blaupause gilt für einen Kurs. Ist das Kennzeichen je
+   Kasse verschieden, reicht das nicht — dann bräuchte es eine Zuordnung
+   Kasse → Tarifkennzeichen, und die Blaupause dürfte es nicht mehr fest
+   führen. Solange die Frage offen ist, sollte niemand mehrere Blaupausen nur
+   deshalb anlegen.
 
 **Erledigt am 05.09.2026:** die Blaupausenmaske. Sie liegt jetzt als
 `BlaupausenMaske` neben den anderen (Übersicht mit Suche, Bearbeiten und

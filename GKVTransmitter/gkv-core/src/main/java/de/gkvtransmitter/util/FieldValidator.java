@@ -46,8 +46,15 @@ public final class FieldValidator {
             if ("int".equalsIgnoreCase(fieldJavaType) || "Integer".equalsIgnoreCase(fieldJavaType)) {
                 Integer.valueOf(fieldValue);
             } else if ("BigDecimal".equalsIgnoreCase(fieldJavaType)) {
-                java.math.BigDecimal parsedValue = new java.math.BigDecimal(fieldValue);
-                parsedValue.toPlainString();
+                // Ueber Betrag, nicht ueber new BigDecimal(...): Geldbetraege
+                // werden in diesem Umfeld mit Komma geschrieben, und das
+                // Formular verlangt es ausdruecklich. Der unbesehene
+                // Konstruktor wies genau die Schreibweise zurueck, zu der die
+                // Erklaerung unter dem Feld auffordert.
+                if (Betrag.lese(fieldValue).isEmpty()) {
+                    return new Feldbefund(false,
+                        String.format("%s muss ein Betrag sein, etwa 12,50", fieldName));
+                }
             } else if ("double".equalsIgnoreCase(fieldJavaType)) {
                 Double.valueOf(fieldValue);
             } else if ("long".equalsIgnoreCase(fieldJavaType)) {

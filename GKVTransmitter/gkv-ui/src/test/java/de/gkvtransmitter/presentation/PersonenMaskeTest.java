@@ -364,7 +364,15 @@ class PersonenMaskeTest {
         return maske().formular("Ueberschrift", alsDienstleister);
     }
 
-    /** Traegt einen vollstaendigen, gueltigen Satz Werte ein. */
+    /**
+     * Traegt einen vollstaendigen, gueltigen Satz Werte ein.
+     *
+     * <p>Gueltig heisst seit dem 05.09.2026 mehr als vorher: die Maske
+     * speichert nicht mehr, was sich nicht abrechnen laesst. Das IK stand hier
+     * auf {@code 101} - drei Stellen statt neun -, und ein Geburtsdatum fehlte
+     * ganz. Beides haette die Kasse zurueckgewiesen; die Maske liess es
+     * durch, und die Tests bestaetigten das.</p>
+     */
     private void fuelleAus(Region formular) {
         text(formular, "firstname").setText("Anna");
         text(formular, "lastname").setText("Muster");
@@ -372,9 +380,15 @@ class PersonenMaskeTest {
         text(formular, "country").setText("DE");
         text(formular, "housenumber").setText("1");
         zahl(formular, "plz", 12345);
-        zahl(formular, "ik", 101);
+        zahl(formular, "ik", IK_DIENSTLEISTER);
         zahl(formular, "kassenIk", KASSEN_IK);
+        kalender(formular, "birthDate").setValue(GEBURTSTAG);
     }
+
+    /** Ein IK mit richtiger Pruefziffer, siehe {@code Institutionskennzeichen}. */
+    private static final int IK_DIENSTLEISTER = 261914007;
+
+    private static final java.time.LocalDate GEBURTSTAG = java.time.LocalDate.of(1990, 5, 17);
 
     private TextField text(Region formular, String feldname) {
         return (TextField) bedienelement(formular, feldname);
@@ -384,9 +398,23 @@ class PersonenMaskeTest {
         return (DatePicker) bedienelement(formular, feldname);
     }
 
+    /**
+     * Traegt eine Zahl ein.
+     *
+     * <p>Zahlenfelder mit mehr als zwei Stellen sind seit dem 05.09.2026
+     * Textfelder statt Zaehler - Auf- und Ab-Pfeile nuetzen bei einer
+     * neunstelligen Nummer niemandem, und ein Zaehler gab eine nicht
+     * bestaetigte Eingabe gar nicht erst zurueck. Der Helfer beherrscht
+     * weiterhin beides, damit er auch fuer kurze Felder taugt.</p>
+     */
     private void zahl(Region formular, String feldname, int wert) {
+        Node bedienelement = bedienelement(formular, feldname);
+        if (bedienelement instanceof TextField eingabe) {
+            eingabe.setText(String.valueOf(wert));
+            return;
+        }
         @SuppressWarnings("unchecked")
-        Spinner<Integer> zaehler = (Spinner<Integer>) bedienelement(formular, feldname);
+        Spinner<Integer> zaehler = (Spinner<Integer>) bedienelement;
         zaehler.getValueFactory().setValue(wert);
     }
 

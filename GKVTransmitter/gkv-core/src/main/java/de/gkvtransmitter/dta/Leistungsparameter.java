@@ -142,35 +142,9 @@ public record Leistungsparameter(
         return Optional.of(wert.trim());
     }
 
-    /**
-     * Liest einen Betrag sowohl in deutscher als auch in englischer
-     * Schreibweise.
-     *
-     * <p>Die Oberflaeche speichert Formularwerte so, wie sie eingegeben wurden.
-     * Je nach Eingabefeld steht dort {@code 15000,00} oder {@code 15000.00}.</p>
-     *
-     * <p>Der Punkt ist mehrdeutig: in {@code 15.000,00} trennt er Tausender, in
-     * {@code 1234.56} die Nachkommastellen. Entschieden wird am Komma - ist
-     * eines vorhanden, ist es das Dezimaltrennzeichen und Punkte trennen
-     * Tausender; fehlt es, ist der Punkt das Dezimaltrennzeichen. Ein Wert wie
-     * {@code 15.000} ohne Komma wird damit als 15,0 gelesen. Das ist bewusst
-     * so: die andere Auslegung wuerde {@code 1234.56} um den Faktor 100
-     * verfaelschen, was auf einer Rechnung schwerer wiegt.</p>
-     */
+    /** Liest einen Betrag, siehe {@link de.gkvtransmitter.util.Betrag}. */
     private static Optional<BigDecimal> leseBetrag(String wert) {
-        Optional<String> bereinigt = leseText(wert);
-        if (bereinigt.isEmpty()) {
-            return Optional.empty();
-        }
-        String ohneLeerzeichen = bereinigt.get().replace(" ", "");
-        String normalisiert = ohneLeerzeichen.indexOf(',') >= 0
-                ? ohneLeerzeichen.replace(".", "").replace(',', '.')
-                : ohneLeerzeichen;
-        try {
-            return Optional.of(new BigDecimal(normalisiert));
-        } catch (NumberFormatException e) {
-            return Optional.empty();
-        }
+        return de.gkvtransmitter.util.Betrag.lese(wert);
     }
 
     /** Der Betrag in DTA-Schreibweise, also mit Komma als Trennzeichen. */

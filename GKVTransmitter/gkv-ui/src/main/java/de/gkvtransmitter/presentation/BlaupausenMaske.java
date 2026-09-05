@@ -64,6 +64,15 @@ public class BlaupausenMaske {
     /** Nachsatz der Kennung einer Loeschen-Schaltflaeche. */
     public static final String AKTION_LOESCHEN = "loeschen";
 
+    /**
+     * Feldname des Preises je Termin.
+     *
+     * <p>Muss mit dem Namen in {@code segments/enf.json} uebereinstimmen, weil
+     * {@link de.gkvtransmitter.dta.Leistungsparameter} genau danach sucht. Der Test
+     * {@code BlaupausenfelderTest} haelt das zusammen.</p>
+     */
+    static final String FELD_EINZELBETRAG = "Durchschnittlicher Einzelbetrag";
+
     private static final DateTimeFormatter ANGELEGT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final UiFactory bausteine;
@@ -239,6 +248,19 @@ public class BlaupausenMaske {
         Map<String, String> werte = new LinkedHashMap<>();
         felder.forEach((feldname, feld) -> werte.put(feldname, feldbau.textVon(feld)));
 
+        List<String> beanstandungen = new ArrayList<>(feldbau.beanstandungen(felder.values()));
+        // Ohne Preis greift die Vorbelegung aus Leistungsparameter - 15.000,00
+        // je Termin. Das faellt niemandem auf, weil nichts fehlschlaegt: die
+        // Nachricht entsteht, durchlaeuft die Pruefung und geht an die Kasse.
+        // Eine Blaupause ohne Preis ist deshalb schlimmer als gar keine.
+        if (werte.getOrDefault(FELD_EINZELBETRAG, "").isBlank()) {
+            beanstandungen.add(texte.get("msg.blueprintNeedsPrice"));
+        }
+        if (!beanstandungen.isEmpty()) {
+            meldungen.fehler(texte.get("msg.notSaved") + "\n· " + String.join("\n· ", beanstandungen));
+            return;
+        }
+
         try {
             Map<String, Object> inhalt = new LinkedHashMap<>();
             inhalt.put("template", vorlagenname);
@@ -328,7 +350,7 @@ public class BlaupausenMaske {
 
     /** Der Preis je Termin, wie er in der Blaupause steht. */
     private String preis(Blueprint blaupause) {
-        String wert = werteAus(blaupause).get("Durchschnittlicher Einzelbetrag");
+        String wert = werteAus(blaupause).get(FELD_EINZELBETRAG);
         return wert == null || wert.isBlank() ? texte.get("label.notSet") : wert;
     }
 
