@@ -130,7 +130,7 @@
         "description": "Siehe Schlüssel Anlage 3 Abschnitt 8.1.14"
       },
       "inputType": "CODE",
-      "internal": false
+      "internal": true
     },
     {
       "position": 7,

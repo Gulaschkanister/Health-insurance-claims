@@ -158,49 +158,63 @@ inzwischen auch `Meldungen`, und die Ersatzstücke liegen unter
 
 Nach Nutzen geordnet:
 
-1. **Der Rechnungsbetrag lässt sich über die Oberfläche nicht einstellen.**
-   Das ist der schwerwiegendste offene Punkt im ganzen Programm — gefunden am
-   05.09.2026.
-
-   `Leistungsparameter.ausBlueprint` sucht in der Blaupause nach dem Feld
-   **„Durchschnittlicher Einzelbetrag"**. Dieses Feld trägt in
-   `segments/enf.json` die Markierung `"person": "SERVICE_PROVIDER"`, und
-   `View.createFormular` blendet genau solche Felder aus
-   (`getPersonRole() == null` ist Bedingung). Es steht also in keinem Formular,
-   kann in keiner Blaupause landen, und `ausBlueprint` fällt jedes Mal auf
-   `VORBELEGUNG` zurück.
-
-   **Folge: jede erzeugte Rechnung lautet auf 15.000,00 € je Termin.** Bei drei
-   Terminen 45.000,00 € — nachzulesen in `DtaFactoryTest`, das genau das prüft.
-   Derselbe Weg betrifft „Zuzahlung pro Position" und die
-   Abrechnungspositionsnummer.
-
-   Der Wert 15.000,00 stammt aus `Information/Valide.DTA` und ist ausdrücklich
-   als Rückfallebene benannt, nicht als fachliche Vorgabe. Für einen
-   Geburtsvorbereitungskurs ist er um Größenordnungen zu hoch.
-
-   Zu klären ist, wo der Betrag hingehört: in die Blaupause (dann muss das Feld
-   ins Formular, also die `person`-Markierung weg) oder an den Dienstleister
-   (dann braucht `ServiceProvider` ein Betragsfeld — heute hat die Entität
-   keines). **Vor dem ersten echten Versand muss das entschieden sein.**
-2. **Stornierung und Nachberechnung** — heute gar nicht vorhanden. Sobald real
+1. **Stornierung und Nachberechnung** — heute gar nicht vorhanden. Sobald real
    abgerechnet wird, wird das gebraucht.
-3. **Umsatzsteuersatz** ist mit 19 fest in `DtaFactory` verdrahtet
-   (`UMSATZSTEUERSATZ`). Gehört in die Blaupause, analog zu
-   `Leistungsparameter`.
-4. **Weitere Leistungsbereiche** — abgedeckt ist nur SGS H mit Abrechnungscode
+2. **Weitere Leistungsbereiche** — abgedeckt ist nur SGS H mit Abrechnungscode
    `61`. Die Struktur dafür steht, es fehlen die Daten aus Anlage 3.
-5. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
+3. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
    fachliche Zulässigkeit geprüft. Dafür bräuchte es die Schlüsseltabellen aus
    Anlage 3 als JSON — dann wäre es eine weitere `ValidationRule`.
-6. **Die Summenfelder im Formular sind wirkungslos.** `GES` Position 2 und 3
-   und `BES` Position 1 stehen auf `"internal": false` und erscheinen deshalb
-   im Blaupausenformular. `DtaFactory` rechnet die Summen aber selbst aus
-   Einzelbetrag mal Menge und setzt die Segmentzeilen per `String.format`
-   zusammen — die JSON-Definitionen steuern Formular und Prüfung, nicht die
-   Erzeugung. Was dort eingetippt wird, erreicht die Nachricht nie. Die Felder
-   gehören auf `internal`, damit das Formular nicht nach etwas fragt, das es
-   nicht verwendet.
+4. **Rechnungsnummer und Belegnummer sind fest verdrahtet.** `DtaFactory`
+   schreibt `REC+00000000:0` und leitet die Belegnummer aus Zeit und laufender
+   Nummer ab. Eine echte Sammel- und Einzelrechnungsnummer führt das Programm
+   nicht. Vor einem echten Versand zu klären.
+
+#### Erledigt am 05.09.2026: der Rechnungsbetrag war nicht einstellbar
+
+Steht hier, weil der Fehler lehrreich ist und die Gegenmaßnahmen erhalten
+bleiben müssen.
+
+`Leistungsparameter.ausBlueprint` suchte in der Blaupause nach
+**„Durchschnittlicher Einzelbetrag"**. Dieses Feld trug in `segments/enf.json`
+eine `person`-Markierung, und `View.createFormular` blendet solche Felder aus.
+Es stand damit in keinem Formular, konnte in keiner Blaupause landen, und
+`ausBlueprint` fiel jedes Mal auf `VORBELEGUNG` zurück: **jede Rechnung lautete
+auf 15.000,00 € je Termin.** Abrechnungscode und Tarifkennzeichen waren aus
+einem zweiten Grund unerreichbar — sie sind Komponenten eines Kompositfelds,
+und `JsonParserFactory` las `components` überhaupt nicht.
+
+Kein Test schlug fehl, weil alle gegen die Vorbelegung prüften. Der Bruch lag
+**zwischen** zwei je für sich fehlerfreien Bausteinen: einer JSON-Datei und
+einer Klasse, die Namen darin sucht.
+
+Geändert wurde:
+
+- `enf.json`: `person`-Markierungen entfernt; Einzelbetrag,
+  Abrechnungspositionsnummer und Zuzahlung stehen im Formular; Anzahl/Menge und
+  Leistungsdatum auf `internal`, weil die Anwendung sie aus der Abrechnung setzt
+- `JsonParserFactory` liest `components` (Streckung der Positionen um
+  `KOMPOSITFAKTOR`, damit die Reihenfolge hält)
+- `ges.json`, `bes.json`, `fkt.json`, `rec.json`, `unb.json`: die Felder, die
+  `DtaFactory` selbst setzt, auf `internal` — das Formular fragte nach Werten,
+  die es anschließend verwarf
+- Umsatzsteuersatz kommt aus der Blaupause statt aus einer Konstanten
+- `Leistungsparameter.BLAUPAUSENFELDER` macht die gesuchten Namen prüfbar
+
+**Die Gegenmaßnahme nicht entfernen:** `BlaupausenfelderTest` geht denselben Weg
+wie die Maske (`parseInvoices()`, gleiche Filterbedingung) und schlägt fehl,
+sobald `Leistungsparameter` einen Namen sucht, den kein Formular anbietet.
+`DtaFactoryTest$AusDerBlaupause` prüft am anderen Ende, dass die Werte in der
+Nachricht ankommen. Wer eine Angabe zur Blaupause hinzufügt, trägt sie in
+`BLAUPAUSENFELDER` ein — dann sagt der Test, ob die Kette hält.
+
+Die Blaupausenmaske fragt jetzt sechs Felder ab, und alle sechs werden gelesen:
+Umsatzsteuersatz, Abrechnungscode, Tarifkennzeichen, Abrechnungspositionsnummer,
+Durchschnittlicher Einzelbetrag, Zuzahlung pro Position.
+
+**Offen bleibt:** `VORBELEGUNG.einzelbetrag` steht weiter auf 15.000,00. Als
+Rückfallebene für eine leere Blaupause ist das ein stiller Fehlbetrag — besser
+wäre, eine Blaupause ohne Betrag gar nicht erst versenden zu lassen.
 
 ### E. Echter Übermittlungsweg
 

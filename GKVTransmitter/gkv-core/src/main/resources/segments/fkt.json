@@ -26,9 +26,9 @@
       "maxLength": 1,
       "mandatory": false,
       "example": "",
-      "description": "Konditional, kann leer sein",
+      "description": "Konditional, bleibt leer. Setzt die Anwendung (FKT+01++...)",
       "inputType": "STRING",
-      "internal": false
+      "internal": true
     },
     {
       "position": 3,

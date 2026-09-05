@@ -16,7 +16,7 @@
       "description": "Bruttosumme aller Leistungen für diesen Fall/Beleg (= Summe aller ENF)",
       "fieldArt": "M",
       "inputType": "COST",
-      "internal": false
+      "internal": true
     }
   ]
 }

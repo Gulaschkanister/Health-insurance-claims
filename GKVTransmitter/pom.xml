@@ -111,8 +111,16 @@
                             anhalten. Die Warnung soll sichtbar sein, nicht
                             toedlich.
                         -->
+                        <!--
+                            "processing" ist ausgenommen: Lombok ist der einzige
+                            angemeldete Prozessor, und javac meldet sonst bei
+                            jedem Bau, dass niemand die JPA- und
+                            JUnit-Annotationen "beansprucht" hat. Das ist der
+                            Normalfall und keine Beanstandung - eine Meldung,
+                            die immer erscheint, liest bald niemand mehr.
+                        -->
                         <compilerArgs>
-                            <arg>-Xlint:all</arg>
+                            <arg>-Xlint:all,-processing</arg>
                         </compilerArgs>
                         <annotationProcessorPaths>
                             <path>

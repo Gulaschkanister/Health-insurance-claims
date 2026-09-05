@@ -59,11 +59,10 @@
       "maxLength": 9,
       "mandatory": true,
       "example": "306050601",
-      "description": "Positionsnummer gültig für diesen Leistungsbereich (Anlage 3, Abschnitt 8.2)",
+      "description": "Positionsnummer gültig für diesen Leistungsbereich (Anlage 3, Abschnitt 8.2). Gehört zur Leistung, steht deshalb in der Blaupause",
       "fieldArt": "M",
       "inputType": "NUMBER",
-      "person": "SERVICE_PROVIDER",
-      "internal": true
+      "internal": false
     },
     {
       "position": 4,
@@ -73,11 +72,10 @@
       "mandatory": true,
       "example": "08,00",
       "format": "X,XX",
-      "description": "Leistungsmenge mit 2 Nachkommastellen (z.B. Anzahl Sitzungen, Minuten)",
+      "description": "Leistungsmenge mit 2 Nachkommastellen. Setzt die Anwendung aus der Terminanzahl der Abrechnung, nicht aus der Blaupause",
       "fieldArt": "M",
       "inputType": "NUMBER",
-      "person": "SERVICE_PROVIDER",
-      "internal": false
+      "internal": true
     },
     {
       "position": 5,
@@ -87,10 +85,9 @@
       "mandatory": true,
       "example": "15000,00",
       "format": "X,XX",
-      "description": "Durchschnittlicher Einzelbetrag mit 2 Nachkommastellen (= Fazit Menge * Preis)",
+      "description": "Preis je Termin mit 2 Nachkommastellen. Gehört zur Leistung und ist für alle Teilnehmenden gleich, steht deshalb in der Blaupause",
       "fieldArt": "M",
       "inputType": "COST",
-      "person": "SERVICE_PROVIDER",
       "internal": false
     },
     {
@@ -101,11 +98,10 @@
       "mandatory": true,
       "example": "20240301",
       "format": "YYYYMMDD",
-      "description": "Datum der Leistungserbringung oder Abrechnungsperiode Start",
+      "description": "Datum der Leistungserbringung. Setzt die Anwendung aus der Abrechnung, nicht aus der Blaupause",
       "fieldArt": "M",
       "inputType": "DATE",
-      "person": "SERVICE_PROVIDER",
-      "internal": false
+      "internal": true
     },
     {
       "position": 7,
@@ -115,10 +111,9 @@
       "mandatory": false,
       "example": "0,00",
       "format": "X,XX",
-      "description": "Zuzahlung des Versicherten pro Position mit 2 Nachkommastellen",
+      "description": "Zuzahlung des Versicherten je Position mit 2 Nachkommastellen. Hängt an der Leistungsposition, steht deshalb in der Blaupause",
       "fieldArt": "K",
       "inputType": "NUMBER",
-      "person": "PATIENT",
       "internal": false
     }
   ],

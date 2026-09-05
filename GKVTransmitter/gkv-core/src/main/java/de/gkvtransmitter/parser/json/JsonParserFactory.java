@@ -195,11 +195,38 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         if (fieldsNode.isArray()) {
             for (JsonNode fieldNode : fieldsNode) {
                 FieldDefinition fieldDefinition = toFieldDefinition(fieldNode);
-                fieldDefinitions.put(fieldDefinition.getPosition(), fieldDefinition);
+                int platz = fieldDefinition.getPosition() * KOMPOSITFAKTOR;
+                fieldDefinitions.put(platz, fieldDefinition);
+
+                JsonNode komponenten = fieldNode.path("components");
+                if (komponenten.isArray()) {
+                    for (JsonNode komponente : komponenten) {
+                        FieldDefinition teil = toFieldDefinition(komponente);
+                        fieldDefinitions.put(platz + teil.getPosition(), teil);
+                    }
+                }
             }
         }
         return new SegmentDefinition(fieldDefinitions, segmentName, repeatable);
     }
+
+    /**
+     * Abstand zwischen zwei Feldern eines Segments, damit die Komponenten eines
+     * Kompositfelds dazwischen Platz haben.
+     *
+     * <p>Bis zum 05.09.2026 wurden {@code components} gar nicht gelesen. Damit
+     * waren Abrechnungscode und Tarifkennzeichen - beide Teil des Kompositfelds
+     * "Leistungserbringergruppe" im ENF - in keinem Formular erreichbar,
+     * obwohl {@link de.gkvtransmitter.dta.Leistungsparameter} genau nach diesen
+     * Namen sucht. Sie fielen deshalb immer auf die Vorbelegung zurueck.</p>
+     *
+     * <p>Die Position dient nur als Schluessel und zur Unterscheidung
+     * gleichlautender Namen; sie hat keine Bedeutung fuer die erzeugte
+     * Nachricht, die {@code DtaFactory} selbst zusammensetzt. Die Streckung
+     * haelt die Reihenfolge: Feld 2 liegt auf 200, seine Komponenten auf 201
+     * und 202, Feld 3 auf 300.</p>
+     */
+    private static final int KOMPOSITFAKTOR = 100;
 
     private void ensureProfileCache() {
         if (profileByTypeCache != null) {

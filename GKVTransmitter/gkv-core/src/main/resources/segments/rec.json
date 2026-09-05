@@ -61,7 +61,7 @@
         "description": "Art der Rechnung"
       },
       "inputType": "CODE",
-      "internal": false
+      "internal": true
     }
   ]
 }

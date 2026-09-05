@@ -36,9 +36,6 @@ public final class DtaFactory {
     /** Ortsangabe, solange die Stammdaten keinen Ort fuehren. */
     private static final String ORT_UNBEKANNT = "ORT";
 
-    /** Umsatzsteuersatz in Prozent, wie im Referenzbeispiel. */
-    private static final String UMSATZSTEUERSATZ = "19";
-
     private DtaFactory() {
     }
 
@@ -85,7 +82,7 @@ public final class DtaFactory {
         slga.add(String.format("UNH+%s+SLGA:21:0:0'", slgaRef));
         slga.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
         slga.add(String.format("REC+00000000:0+%s+1'", serviceDate.minusDays(1).format(BASIC_DATE)));
-        slga.add(String.format("UST+%s'", UMSATZSTEUERSATZ));
+        slga.add(String.format("UST+%s'", leistung.umsatzsteuersatz()));
         slga.add(String.format("GES+00+%s+%s'", sum, sum));
         slga.add(String.format("GES+99+%s+%s'", sum, sum));
         slga.add(buildProviderNameSegment(a.getProvider()));
