@@ -24,6 +24,7 @@ class SpeicherRepository implements DataRepository {
     private final List<Blueprint> blaupausen = new ArrayList<>();
 
     private final List<PersonGroup> gespeicherteGruppen = new ArrayList<>();
+    private final List<Patient> gespeichertePatienten = new ArrayList<>();
 
     private long naechsteReferenz = 1;
 
@@ -60,12 +61,26 @@ class SpeicherRepository implements DataRepository {
         return List.copyOf(gespeicherteGruppen);
     }
 
+    /**
+     * Die Teilnehmer, die tatsaechlich zum Speichern uebergeben wurden.
+     *
+     * <p>Nicht dasselbe wie {@link #getAllPatients()}: wer einen vorhandenen
+     * Teilnehmer bearbeitet, uebergibt ihn erneut, und dann stuende er dort
+     * zweimal. Hier steht, was der Speicherweg wirklich erreicht hat.</p>
+     */
+    List<Patient> gespeichertePatienten() {
+        return List.copyOf(gespeichertePatienten);
+    }
+
     @Override
     public void savePatient(Patient patient) {
         if (fehlerBeimSpeichern != null) {
             throw fehlerBeimSpeichern;
         }
-        patienten.add(patient);
+        gespeichertePatienten.add(patient);
+        if (!patienten.contains(patient)) {
+            patienten.add(patient);
+        }
     }
 
     @Override

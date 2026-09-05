@@ -35,8 +35,23 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
             "profiles/slla-profile.json",
             "profiles/slga-profile.json");
 
+    /**
+     * Die Nachrichtenvorlagen, die die Blaupausenmaske zur Auswahl stellt.
+     *
+     * <p>Eine Vorlage legt <b>nur die Segmentfolge und den Anzeigenamen</b>
+     * fest. Der Name ist zugleich der Schluessel, unter dem eine Blaupause ihre
+     * Vorlage wiederfindet ({@code Blueprint.templateName}) - er darf deshalb
+     * nicht mehr geaendert werden, sobald Blaupausen darauf zeigen.</p>
+     *
+     * <p>Der Block {@code codes} in den Dateien wird zwar eingelesen und haengt
+     * als {@code headerCodes} an der {@link DtaMessage}, aber <b>niemand liest
+     * ihn aus</b>. Die abrechnungsrelevanten Werte - Abrechnungscode,
+     * Tarifkennzeichen, Positionsnummer, Einzelbetrag - stehen in der Blaupause,
+     * nicht in der Vorlage. Wer hier einen Code aendert, aendert nichts.</p>
+     */
     private static final List<String> INVOICE_FILES = List.of(
-            "invoices/antenatal_class_single.json");
+            "invoices/antenatal_class_single.json",
+            "invoices/postnatal_class_single.json");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private Map<InvoiceType, Invoice> profileByTypeCache;

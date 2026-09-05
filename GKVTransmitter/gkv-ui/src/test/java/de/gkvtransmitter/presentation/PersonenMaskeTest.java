@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -349,6 +351,73 @@ class PersonenMaskeTest {
                 assertNotNull(rahmen.inhalt(), "Das Bearbeitungsformular muss gezeigt werden");
             });
         }
+
+        /**
+         * Die Gegenprobe zum Anlegen.
+         *
+         * <p>Seit dem 05.09.2026 laesst sich keine ungueltige Person mehr
+         * <em>anlegen</em>. Das Bearbeiten lief aber ueber
+         * {@code EditFormController}, und der uebertrug die Eingaben ungeprueft
+         * in die Person und reichte sie weiter. Die schaerfere Eingangspruefung
+         * haette so nur den Weg verlagert, auf dem falsche Stammdaten
+         * entstehen - man haette Anna richtig angelegt und danach kaputt
+         * bearbeitet, mit demselben Ergebnis: "Pruefung nicht bestanden" beim
+         * Versand.</p>
+         */
+        @Test
+        @DisplayName("Eine Person mit falschem IK laesst sich nicht speichern")
+        void ungueltigeAenderungWirdAbgewiesen() {
+            // patient(...) traegt bewusst das IK 101 und kein Geburtsdatum -
+            // genau die Daten, die die Kasse zurueckweisen wuerde.
+            datenbank.mitPatient(patient(1, "Anna"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                zeilenknopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN).fire();
+                aktualisieren(rahmen.inhalt()).fire();
+
+                assertEquals(AufzeichnendeMeldungen.Art.FEHLER, meldungen.einzige().art());
+                assertTrue(datenbank.gespeichertePatienten().isEmpty(),
+                        "Eine Person, die sich nicht abrechnen laesst, darf nicht in die Datenbank");
+            });
+        }
+
+        @Test
+        @DisplayName("Die Beanstandung nennt beide Ursachen, nicht nur die erste")
+        void nenntAlleUrsachen() {
+            datenbank.mitPatient(patient(1, "Anna"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                zeilenknopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN).fire();
+                aktualisieren(rahmen.inhalt()).fire();
+
+                String text = meldungen.einzige().text();
+                assertTrue(text.contains(texte.get("field.birthDate")),
+                        "Das fehlende Geburtsdatum fehlt in der Meldung: " + text);
+                assertTrue(text.contains(texte.get("msg.invalidIk")),
+                        "Das falsche Kennzeichen fehlt in der Meldung: " + text);
+            });
+        }
+
+        @Test
+        @DisplayName("Eine gueltige Person laesst sich weiterhin speichern")
+        void gueltigeAenderungGehtDurch() {
+            Patient anna = patient(1, "Anna");
+            anna.setIk(IK_DIENSTLEISTER);
+            anna.setKassenIk(KASSEN_IK);
+            anna.setBirthDate(LocalDate.of(1990, 5, 17));
+            datenbank.mitPatient(anna);
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                zeilenknopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1,
+                        PersonenMaske.AKTION_BEARBEITEN).fire();
+                aktualisieren(rahmen.inhalt()).fire();
+
+                assertEquals(List.of(anna), datenbank.gespeichertePatienten());
+                assertEquals(texte.get("msg.saved"), meldungen.einzige().text());
+            });
+        }
     }
 
     // --- Aufbau und Bedienung -------------------------------------------
@@ -452,6 +521,28 @@ class PersonenMaskeTest {
 
     private Button zeilenknopf(Region liste, String kennungsvorsatz, int personId, String aktion) {
         return (Button) liste.lookup("#" + kennungsvorsatz + Listenbau.ZEILE + personId + "-" + aktion);
+    }
+
+    /**
+     * Die Schaltflaeche "Aktualisieren" im Bearbeitungsformular.
+     *
+     * <p>Das Formular kommt als {@code ScrollPane}; dessen Inhalt haengt erst
+     * im Knotenbaum, wenn die Darstellung erzeugt ist, und die entsteht erst in
+     * einer Szene. Ohne diesen Schritt fande der {@code lookup} nichts.</p>
+     */
+    private Button aktualisieren(Region formular) {
+        assertNotNull(formular, "Es wurde kein Formular gezeigt");
+        new Scene(formular);
+        formular.applyCss();
+        formular.layout();
+
+        List<Button> treffer = formular.lookupAll(".button").stream()
+                .filter(Button.class::isInstance)
+                .map(Button.class::cast)
+                .filter(knopf -> texte.get("button.update").equals(knopf.getText()))
+                .toList();
+        assertEquals(1, treffer.size(), "Erwartet war genau eine Schaltflaeche zum Aktualisieren");
+        return treffer.get(0);
     }
 
     private Button loeschenKnopf(Region liste, String kennungsvorsatz, int personId) {

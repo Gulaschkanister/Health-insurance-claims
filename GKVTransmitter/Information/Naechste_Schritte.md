@@ -20,7 +20,7 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **255 Tests**, davon 108 in `gkv-ui`, `BUILD SUCCESS`
+- **293 Tests**, davon 141 in `gkv-ui`, `BUILD SUCCESS`
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
 Der Branch liegt auf `origin`; die jeweils letzten Commits können noch fehlen
@@ -130,20 +130,7 @@ Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
 
 ### B. Von Simon gewünscht, noch offen
 
-1. **Weitere Vorlage: „Rückbildungskurs nach Geburten".** Anzulegen als eigene
-   Datei unter `gkv-core/src/main/resources/invoices/`, nach dem Muster von
-   `antenatal_class_single.json`, und in `JsonParserFactory.INVOICE_FILES`
-   einzutragen. Fachlich zu klären ist, ob sich Abrechnungscode,
-   Positionsnummer oder Tarifkennzeichen vom Geburtsvorbereitungskurs
-   unterscheiden — das steht in Anlage 3 beziehungsweise im Vertrag und ist
-   nicht zu raten.
-2. **Auswahl und Suche von Personen in einer Gruppe verbessern.** Die
-   `GruppenMaske` zeigt Teilnehmer und Dienstleister heute als eine ungefilterte
-   Liste von Kontrollkästchen. Bei mehr als einer Handvoll Personen wird das
-   unübersichtlich; ein Suchfeld wie in den Übersichten fehlt, und man sieht
-   nicht auf einen Blick, wer schon angehakt ist. `Listenbau` bringt Suche und
-   Zeilenaufbau bereits mit.
-3. **Woher kommt das Tarifkennzeichen — und wovon hängt es ab?**
+1. **Woher kommt das Tarifkennzeichen — und wovon hängt es ab?**
    Offene Frage von Simon, die vor dem ersten echten Versand beantwortet sein
    muss.
 
@@ -179,15 +166,103 @@ Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
 Löschen), `View` ist von 531 auf rund 300 Zeilen geschrumpft, und
 `DataRepository` hat endlich ein `deleteBlueprint`.
 
-### C. `EditFormController` hat keine Tests
+**Erledigt am 05.09.2026: die Vorlage „Rückbildungskurs nach Geburten".** Sie
+liegt als `invoices/postnatal_class_single.json` und steht in
+`JsonParserFactory.INVOICE_FILES`.
 
-Die knapp 300 Zeilen tragen das gesamte **Bearbeiten** von Personen. Die
-Personenmaske prüft nur, dass das Formular erscheint — was darin geschieht,
-ist ungeprüft. Das ist jetzt die größte ungedeckte Stelle.
+Sie ist bis auf den Anzeigenamen mit der Geburtsvorbereitung identisch, und das
+ist richtig so: eine Vorlage legt **nur die Segmentfolge und den Namen** fest.
+Beide Kurse werden im Leistungsbereich SGS H abgerechnet und ergeben dieselbe
+Nachricht. Was sie unterscheidet — Abrechnungspositionsnummer, Abrechnungscode,
+Preis — steht seit dem Umbau vom 05.09.2026 in der **Blaupause**, nicht in der
+Vorlage. Die passende Positionsnummer für die Rückbildungsgymnastik steht in
+Anlage 3 beziehungsweise im Vertrag; sie wird beim Anlegen der Blaupause
+eingetragen und ist hier nicht zu raten.
 
-Der Weg dahin ist frei: die Klasse bekommt alles über den Konstruktor,
-inzwischen auch `Meldungen`, und die Ersatzstücke liegen unter
-`gkv-ui/src/test/`.
+Dabei aufgefallen: der Block `codes` in den Vorlagendateien wird zwar eingelesen
+und hängt als `headerCodes` an der `DtaMessage`, aber **niemand liest ihn aus**.
+Wer dort einen Code ändert, ändert nichts. Vermerkt im Javadoc von
+`INVOICE_FILES`.
+
+`VorlagenTest` hält fest, was dabei zu beachten ist: Vorlagennamen müssen
+**paarweise verschieden** sein. `GlobalDefinitions.registerInvoiceTemplate` legt
+sie in einer Abbildung über den Namen ab — zwei gleiche verdrängten einander
+stillschweigend, und jede Blaupause, die auf die verdrängte zeigt, ließe sich
+nicht mehr öffnen. Genau so verhielt sich die alte Testdaten-Blaupause mit ihrem
+`test-template`.
+
+**Erledigt am 05.09.2026: Suche in den Mitgliederlisten der Gruppenmaske.**
+Über Teilnehmern und Dienstleistern steht je ein Suchfeld und ein Zähler
+„x von y ausgewählt".
+
+Zwei Entscheidungen dabei, die nicht offensichtlich sind:
+
+- Die Suche **blendet aus, statt zu entfernen** (`setVisible` *und* `setManaged`,
+  sonst bliebe die Lücke stehen). Ein ausgeblendetes Kästchen behält seinen
+  Haken; wer erst Anna sucht und anhakt und dann Bea, verliert Anna nicht. Der
+  Zähler steht genau deshalb daneben — sonst wäre eine Auswahl zu sehen, die
+  kleiner ist als sie ist.
+- Die Zuordnung Kästchen → Person liegt jetzt in einer `Map`, nicht mehr in zwei
+  parallelen Listen mit gemeinsamem Index. Der alte Gleichlauf war eine stille
+  Bedingung: hätte jemand die Personen sortiert oder gefiltert, ohne die
+  Kästchen mitzuziehen, wären **die falschen Personen** in der Gruppe gelandet,
+  ohne dass irgendetwas fehlschlägt. Erst dadurch ist die Suche gefahrlos.
+
+Neun Tests in `GruppenMaskeTest$MitgliederSuchen`.
+
+### C. Oberflächentests: was noch fehlt
+
+**Erledigt am 05.09.2026:** `EditFormController` hat 14 Tests
+(`EditFormControllerTest`). Er trug das gesamte **Bearbeiten** von Personen und
+war die größte ungedeckte Stelle. Der Test fand dabei sofort etwas, das kein
+anderer Test finden konnte — siehe unten.
+
+Der Zugang führt über `onFormReady`: der Controller reicht dort den Behälter
+heraus. Ein `lookup` auf das zurückgegebene `ScrollPane` geht ins Leere, solange
+dessen Inhalt noch nicht im Knotenbaum hängt; wer das braucht, hängt es kurz in
+eine `Scene` und ruft `applyCss()` und `layout()` — so machen es
+`EditFormControllerTest.aufbauen` und `PersonenMaskeTest.aktualisieren`.
+
+Was in `gkv-ui` **weiterhin ohne Test** ist, nach Nutzen geordnet:
+
+| Klasse | Zeilen | Warum das zählt |
+|---|---|---|
+| `EntityFieldPopulator` + die zwei Populatoren | 194 + 89 + 90 | Sie übersetzen zwischen Eingabefeld und Entität, **in beide Richtungen**. Ein Fehler dort schreibt einen Wert in das falsche Feld, ohne dass etwas fehlschlägt — dieselbe Art Fehler wie beim Einzelbetrag. `EditFormControllerTest` benutzt bewusst einen eigenen, einfachen Populator und prüft die echten deshalb *nicht* mit. |
+| `View` | 292 | Der Einstieg: Navigation, Vorlagen, Abrechnungscodes, Testdaten. Sein Aufbau lässt sich prüfen, seit die Masken heraus sind. |
+| `Controller` | 75 | Lädt Profile und Vorlagen beim Start. Schlägt das fehl, startet die Anwendung nicht. |
+| `Maskenkopf`, `Abrechnungslauf` | 45 + 32 | Klein und unauffällig; ein Test wäre schnell geschrieben. |
+| `Bildschirmmeldungen` | 88 | Die einzige Umsetzung von `Meldungen`, die wirklich etwas anzeigt. `Benachrichtigungen` ist geprüft, dieser Weg dahin nicht. |
+| `JavaFxUiFactory` | 210 | Reine Fabrik ohne eigene Entscheidungen. Am ehesten verzichtbar. |
+
+**`FormBuilder` (234 Zeilen) braucht keinen Test, sondern eine Entscheidung: er
+wird von nichts benutzt.** Kein Aufruf, kein Import, in keinem Modul. `Vision.md`
+und `PROGRESS_UPDATE_v3.md` führen ihn weiter als eingesetztes Entwurfsmuster,
+zusammen mit einem `MenuBuilder`, den es gar nicht mehr gibt — die Menüleiste
+wurde durch die Seitenleiste ersetzt. Entweder löschen (und die beiden Dokumente
+nachziehen) oder tatsächlich verwenden; ihn ungenutzt und dokumentiert stehen zu
+lassen ist die schlechteste der drei Möglichkeiten.
+
+#### Erledigt am 05.09.2026: das Bearbeiten prüfte nichts
+
+Beim Schreiben der Tests kam heraus, dass die schärfere Eingangsprüfung vom
+Vortag nur den Weg verlagert hatte, auf dem falsche Stammdaten entstehen.
+
+*Anlegen* prüfte seit dem 05.09.2026 — `PersonenMaske.speichere` ruft
+`pruefe(...)`. *Bearbeiten* lief über `EditFormController.saveEntity`, und der
+übertrug die Eingaben in die Person und reichte sie **ungeprüft** weiter. Eine
+richtig angelegte Person ließ sich also nachträglich kaputtbearbeiten: IK auf
+`101` gesetzt, Geburtsdatum geleert, „Erfolgreich gespeichert!". Der Fehler kam
+erst beim Versand zurück — genau das, was verhindert werden sollte.
+
+Umgesetzt als `PersonenMaske.gepruefteSpeicherung(...)`: die Beanstandung reist
+als Ausnahme, `saveEntity` fängt sie und meldet ihren Text, ohne das Formular zu
+leeren. **Kein dreizehnter Konstruktorparameter** — der Konstruktor trägt bereits
+zwölf und steht deshalb als Checkstyle-Befund in Abschnitt F.
+
+Geprüft wird an der fertigen Person, nicht an den Feldern: Vor- und Nachname,
+Geburtsdatum, beide IK gegen die Prüfziffer. Dieselbe Auswahl wie beim Anlegen.
+Die drei Tests in `PersonenMaskeTest$Bearbeiten` schlagen nachweislich fehl,
+wenn man die Prüfung wieder herausnimmt.
 
 ### D. Fachliche Lücken
 
@@ -276,7 +351,7 @@ das Beste, was geht.
   | Regel | Anzahl | Wo |
   |---|---|---|
   | `ParameterNumber` | 5 | `Patient`, `Person`, `ServiceProvider`, `FieldDefinition` (je 9), `EditFormController` (12) |
-  | `CyclomaticComplexity` | 5 | `BetragskonsistenzRegel`, `Feldbau`, beide `…FieldPopulator`, `View` |
+  | `CyclomaticComplexity` | 5 | `BetragskonsistenzRegel` (11), `Feldbau` an zwei Stellen (je 12), beide `…FieldPopulator` (je 16) |
 
   Die vier Konstruktoren mit neun Parametern sind der eigentliche Befund: eine
   Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte. Ein Builder
@@ -347,8 +422,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 232 Tests
-mvn clean test -pl gkv-ui            # nur die 94 Oberflächentests
+mvn clean test                       # alle 293 Tests
+mvn clean test -pl gkv-ui            # nur die 141 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

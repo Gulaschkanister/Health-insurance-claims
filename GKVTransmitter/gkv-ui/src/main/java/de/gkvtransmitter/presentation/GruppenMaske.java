@@ -1,11 +1,13 @@
 package de.gkvtransmitter.presentation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.gkvtransmitter.entity.Patient;
@@ -45,6 +47,18 @@ public class GruppenMaske {
     public static final String ID_TEILNEHMER = "gruppe-teilnehmer-";
     /** Vorsatz der Auswahlkaestchen je Dienstleister, gefolgt von dessen Kennnummer. */
     public static final String ID_DIENSTLEISTER = "gruppe-dienstleister-";
+    /** Kennung des Suchfelds ueber den Teilnehmern. */
+    public static final String ID_TEILNEHMER_SUCHE = "gruppe-teilnehmer-suche";
+    /** Kennung des Suchfelds ueber den Dienstleistern. */
+    public static final String ID_DIENSTLEISTER_SUCHE = "gruppe-dienstleister-suche";
+    /** Kennung der Zeile "x von y ausgewaehlt" ueber den Teilnehmern. */
+    public static final String ID_TEILNEHMER_ZAEHLER = "gruppe-teilnehmer-zaehler";
+    /** Kennung der Zeile "x von y ausgewaehlt" ueber den Dienstleistern. */
+    public static final String ID_DIENSTLEISTER_ZAEHLER = "gruppe-dienstleister-zaehler";
+    /** Kennung des Hinweises, wenn die Suche nichts findet (Teilnehmer). */
+    public static final String ID_TEILNEHMER_LEER = "gruppe-teilnehmer-leer";
+    /** Kennung des Hinweises, wenn die Suche nichts findet (Dienstleister). */
+    public static final String ID_DIENSTLEISTER_LEER = "gruppe-dienstleister-leer";
     /** Kennung der Schaltflaeche, die ein leeres Formular oeffnet. */
     public static final String ID_NEU = "gruppe-neu";
     /** Kennungsvorsatz der Gruppenliste. */
@@ -152,17 +166,17 @@ public class GruppenMaske {
         namensfeld.setPrefWidth(400);
         namensfeld.setText(gruppe.getName() != null ? gruppe.getName() : "");
 
-        List<CheckBox> teilnehmerKaestchen = new ArrayList<>();
-        VBox teilnehmerBereich = kaestchenliste(texte.get("label.groupPatients"), patienten,
-                texte.get("msg.noPatients"), ID_TEILNEHMER,
-                person -> enthaelt(gruppe.getPatients(), person.getId()),
-                GruppenMaske::personenname, teilnehmerKaestchen);
+        Auswahlliste<Patient> teilnehmerauswahl = new Auswahlliste<>(
+                texte.get("label.groupPatients"), patienten, texte.get("msg.noPatients"),
+                ID_TEILNEHMER, ID_TEILNEHMER_SUCHE, ID_TEILNEHMER_ZAEHLER, ID_TEILNEHMER_LEER,
+                person -> enthaelt(gruppe.getPatients(), person.getId()));
 
-        List<CheckBox> dienstleisterKaestchen = new ArrayList<>();
-        VBox dienstleisterBereich = kaestchenliste(texte.get("label.groupServiceProviders"), dienstleister,
-                texte.get("msg.noServiceProviders"), ID_DIENSTLEISTER,
-                person -> enthaelt(gruppe.getServiceProviders(), person.getId()),
-                GruppenMaske::personenname, dienstleisterKaestchen);
+        Auswahlliste<ServiceProvider> dienstleisterauswahl = new Auswahlliste<>(
+                texte.get("label.groupServiceProviders"), dienstleister,
+                texte.get("msg.noServiceProviders"),
+                ID_DIENSTLEISTER, ID_DIENSTLEISTER_SUCHE, ID_DIENSTLEISTER_ZAEHLER,
+                ID_DIENSTLEISTER_LEER,
+                person -> enthaelt(gruppe.getServiceProviders(), person.getId()));
 
         HBox namenszeile = new HBox(10, bausteine.createLabel(texte.get("label.groupName")), namensfeld);
 
@@ -170,29 +184,28 @@ public class GruppenMaske {
         speichern.setId(ID_SPEICHERN);
         speichern.getStyleClass().add("schaltflaeche-haupt");
         speichern.setOnAction(ereignis -> speichere(gruppe, bearbeitet, namensfeld,
-                patienten, teilnehmerKaestchen, dienstleister, dienstleisterKaestchen));
+                teilnehmerauswahl, dienstleisterauswahl));
 
         Button abbrechen = bausteine.createButton(texte.get("button.cancel"));
         abbrechen.setId(ID_ABBRECHEN);
         abbrechen.getStyleClass().add("schaltflaeche-still");
         abbrechen.setOnAction(ereignis -> rahmen.leeren());
 
-        wurzel.getChildren().addAll(ueberschrift, namenszeile, teilnehmerBereich, dienstleisterBereich,
-                new HBox(10, speichern, abbrechen));
+        wurzel.getChildren().addAll(ueberschrift, namenszeile, teilnehmerauswahl.ansicht(),
+                dienstleisterauswahl.ansicht(), new HBox(10, speichern, abbrechen));
         return wurzel;
     }
 
     private void speichere(PersonGroup gruppe, boolean bearbeitet, TextField namensfeld,
-            List<Patient> patienten, List<CheckBox> teilnehmerKaestchen,
-            List<ServiceProvider> dienstleister, List<CheckBox> dienstleisterKaestchen) {
+            Auswahlliste<Patient> teilnehmerauswahl, Auswahlliste<ServiceProvider> dienstleisterauswahl) {
         String name = namensfeld.getText() != null ? namensfeld.getText().trim() : "";
         if (name.isBlank()) {
             meldungen.hinweis(texte.get("msg.groupNameRequired"));
             return;
         }
 
-        Set<Patient> gewaehlteTeilnehmer = angehakte(patienten, teilnehmerKaestchen);
-        Set<ServiceProvider> gewaehlteDienstleister = angehakte(dienstleister, dienstleisterKaestchen);
+        Set<Patient> gewaehlteTeilnehmer = teilnehmerauswahl.gewaehlte();
+        Set<ServiceProvider> gewaehlteDienstleister = dienstleisterauswahl.gewaehlte();
 
         // Eine Gruppe ohne Teilnehmer oder ohne Dienstleister laesst sich nicht
         // abrechnen: der Lauf erzeugt keine einzige Nachricht beziehungsweise
@@ -225,46 +238,120 @@ public class GruppenMaske {
     }
 
     /**
-     * Baut eine beschriftete Liste von Auswahlkaestchen.
+     * Eine beschriftete Liste von Auswahlkaestchen mit Suche und Zaehler.
      *
-     * <p>Die Kaestchen landen in {@code kaestchen}, in derselben Reihenfolge
-     * wie {@code personen}. Auf diesem Gleichlauf beruht
-     * {@link #angehakte(List, List)}.</p>
+     * <p>Zuvor waren das zwei parallele Listen - die Personen und ihre
+     * Kaestchen -, und das Einsammeln der Auswahl lief ueber den gemeinsamen
+     * Index. Dieser Gleichlauf war eine stille Bedingung: haette jemand die
+     * Personen sortiert oder gefiltert, ohne die Kaestchen mitzuziehen, waeren
+     * die falschen Personen in der Gruppe gelandet, ohne dass irgendetwas
+     * fehlschlaegt. Die Zuordnung liegt jetzt in einer Abbildung und kann nicht
+     * mehr auseinanderlaufen - erst dadurch ist die Suche gefahrlos.</p>
+     *
+     * <p>Die Suche <b>blendet aus, statt zu entfernen</b>. Ein ausgeblendetes
+     * Kaestchen behaelt seinen Haken; wer erst Anna sucht und anhakt und dann
+     * Bea, verliert Anna nicht. Genau deshalb steht der Zaehler daneben: sonst
+     * waere eine Auswahl zu sehen, die kleiner ist als sie ist.</p>
      */
-    private <T extends Person> VBox kaestchenliste(String beschriftung,
-            List<T> personen, String hinweisWennLeer, String kennungsvorsatz,
-            Predicate<T> istGewaehlt,
-            Function<T, String> anzeige, List<CheckBox> kaestchen) {
-        VBox bereich = new VBox(6, bausteine.createLabel(beschriftung));
-        if (personen.isEmpty()) {
-            bereich.getChildren().add(bausteine.createLabel(hinweisWennLeer));
+    private final class Auswahlliste<T extends Person> {
+
+        private final VBox bereich;
+        private final Map<CheckBox, T> zuordnung = new LinkedHashMap<>();
+        private final Label zaehler;
+        private final Label ohneTreffer;
+        private final int gesamt;
+
+        private Auswahlliste(String beschriftung, List<T> personen, String hinweisWennLeer,
+                String kennungsvorsatz, String kennungSuche, String kennungZaehler,
+                String kennungLeer, Predicate<T> istGewaehlt) {
+            this.gesamt = personen.size();
+            this.zaehler = bausteine.createLabel("");
+            this.zaehler.setId(kennungZaehler);
+            this.zaehler.getStyleClass().add("feld-hinweis");
+            this.ohneTreffer = bausteine.createLabel("");
+            this.ohneTreffer.setId(kennungLeer);
+            this.ohneTreffer.getStyleClass().add("feld-hinweis");
+            this.ohneTreffer.setVisible(false);
+            this.ohneTreffer.setManaged(false);
+
+            Label ueberschrift = bausteine.createLabel(beschriftung);
+            this.bereich = new VBox(6, ueberschrift);
+
+            if (personen.isEmpty()) {
+                bereich.getChildren().add(bausteine.createLabel(hinweisWennLeer));
+                return;
+            }
+
+            VBox kaestchenbereich = new VBox(4);
+            for (T person : personen) {
+                CheckBox kaestchen = bausteine.createCheckBox(personenname(person));
+                kaestchen.setId(kennungsvorsatz + person.getId());
+                kaestchen.setSelected(istGewaehlt.test(person));
+                kaestchen.selectedProperty().addListener((wert, vorher, nachher) -> zaehleNeu());
+                zuordnung.put(kaestchen, person);
+                kaestchenbereich.getChildren().add(kaestchen);
+            }
+
+            TextField suche = bausteine.createTextField();
+            suche.setId(kennungSuche);
+            suche.setPromptText(texte.get("label.searchMember"));
+            suche.setPrefWidth(300);
+            suche.textProperty().addListener((wert, vorher, nachher) -> filtere(nachher));
+
+            bereich.getChildren().addAll(new HBox(12, suche, zaehler), ohneTreffer, kaestchenbereich);
+            zaehleNeu();
+        }
+
+        /**
+         * Blendet aus, was nicht passt.
+         *
+         * <p>{@code setManaged(false)} muss mitlaufen: ohne das bliebe die
+         * Luecke stehen, wo das Kaestchen war, und die Liste waere nach der
+         * Suche genauso lang wie vorher.</p>
+         */
+        private void filtere(String suchbegriff) {
+            String gesucht = suchbegriff == null ? "" : suchbegriff.trim().toLowerCase(Locale.GERMAN);
+            int sichtbar = 0;
+            for (Map.Entry<CheckBox, T> eintrag : zuordnung.entrySet()) {
+                boolean passt = gesucht.isEmpty()
+                        || personenname(eintrag.getValue()).toLowerCase(Locale.GERMAN).contains(gesucht);
+                eintrag.getKey().setVisible(passt);
+                eintrag.getKey().setManaged(passt);
+                if (passt) {
+                    sichtbar++;
+                }
+            }
+            boolean leer = sichtbar == 0;
+            ohneTreffer.setText(leer ? String.format(texte.get("msg.noMatch"), gesucht) : "");
+            ohneTreffer.setVisible(leer);
+            ohneTreffer.setManaged(leer);
+        }
+
+        private void zaehleNeu() {
+            zaehler.setText(String.format(texte.get("label.selectedCount"), gewaehlte().size(), gesamt));
+        }
+
+        private Region ansicht() {
             return bereich;
         }
-        for (T person : personen) {
-            CheckBox kaestchenFuerPerson = bausteine.createCheckBox(anzeige.apply(person));
-            kaestchenFuerPerson.setId(kennungsvorsatz + person.getId());
-            kaestchenFuerPerson.setSelected(istGewaehlt.test(person));
-            kaestchen.add(kaestchenFuerPerson);
-            bereich.getChildren().add(kaestchenFuerPerson);
-        }
-        return bereich;
-    }
 
-    /**
-     * Sammelt die angehakten Personen ein.
-     *
-     * <p>Bewusst ein {@code LinkedHashSet}: die Anzeigereihenfolge bleibt
-     * damit erhalten, und die Abrechnungsmaske listet die Mitglieder spaeter
-     * so auf, wie sie hier ausgewaehlt wurden.</p>
-     */
-    private <T> Set<T> angehakte(List<T> personen, List<CheckBox> kaestchen) {
-        Set<T> gewaehlt = new LinkedHashSet<>();
-        for (int i = 0; i < kaestchen.size(); i++) {
-            if (kaestchen.get(i).isSelected()) {
-                gewaehlt.add(personen.get(i));
-            }
+        /**
+         * Die angehakten Personen.
+         *
+         * <p>Bewusst ein {@code LinkedHashSet}: die Anzeigereihenfolge bleibt
+         * erhalten, und die Abrechnungsmaske listet die Mitglieder spaeter so
+         * auf, wie sie hier stehen. Ausgeblendete Kaestchen zaehlen mit - ein
+         * Suchbegriff im Feld darf die Gruppe nicht beschneiden.</p>
+         */
+        private Set<T> gewaehlte() {
+            Set<T> gewaehlt = new LinkedHashSet<>();
+            zuordnung.forEach((kaestchen, person) -> {
+                if (kaestchen.isSelected()) {
+                    gewaehlt.add(person);
+                }
+            });
+            return gewaehlt;
         }
-        return gewaehlt;
     }
 
     private boolean enthaelt(Set<? extends Person> personen, int id) {

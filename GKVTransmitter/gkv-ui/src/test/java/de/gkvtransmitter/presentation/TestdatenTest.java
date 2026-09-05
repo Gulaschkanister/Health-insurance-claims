@@ -1,6 +1,5 @@
 package de.gkvtransmitter.presentation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -100,17 +99,33 @@ class TestdatenTest {
         @Test
         @DisplayName("zeigen auf eine Vorlage, die es gibt")
         void zeigenAufEchteVorlage() {
-            String vorlage = ersteVorlage();
+            List<String> vorhandene = vorlagen();
 
-            Testdaten.blaupausen(vorlage).forEach(b ->
-                    assertEquals(vorlage, b.getTemplateName(),
-                            "Sonst laesst sich die Blaupause nicht einmal oeffnen"));
+            Testdaten.blaupausen(vorhandene).forEach(b ->
+                    assertTrue(vorhandene.contains(b.getTemplateName()),
+                            b.getName() + " zeigt auf " + b.getTemplateName()
+                                    + " - so laesst sie sich nicht einmal oeffnen"));
+        }
+
+        @Test
+        @DisplayName("decken jede vorhandene Vorlage ab")
+        void deckenJedeVorlageAb() {
+            List<String> vorhandene = vorlagen();
+            List<String> benutzte = Testdaten.blaupausen(vorhandene).stream()
+                    .map(Blueprint::getTemplateName)
+                    .distinct()
+                    .toList();
+
+            for (String vorlage : vorhandene) {
+                assertTrue(benutzte.contains(vorlage),
+                        "Zu \"" + vorlage + "\" gibt es keine Blaupause zum Ausprobieren");
+            }
         }
 
         @Test
         @DisplayName("tragen einen Preis und fallen nicht auf die Vorbelegung zurueck")
         void tragenEigenenPreis() {
-            for (Blueprint blaupause : Testdaten.blaupausen(ersteVorlage())) {
+            for (Blueprint blaupause : Testdaten.blaupausen(vorlagen())) {
                 Leistungsparameter parameter = Leistungsparameter.ausBlueprint(blaupause);
 
                 assertFalse(parameter.einzelbetrag().equals(Leistungsparameter.VORBELEGUNG.einzelbetrag()),
@@ -129,40 +144,49 @@ class TestdatenTest {
             List<ServiceProvider> dienstleister = Testdaten.dienstleister();
             List<Patient> teilnehmerinnen = Testdaten.teilnehmerinnen();
             List<PersonGroup> gruppen = Testdaten.gruppen(teilnehmerinnen, dienstleister);
-            Blueprint blaupause = Testdaten.blaupausen(ersteVorlage()).get(0);
 
             DtaValidationService pruefung = DtaValidationService.standard();
             long referenz = 1;
 
-            for (PersonGroup gruppe : gruppen) {
-                ServiceProvider leiterin = gruppe.getServiceProviders().iterator().next();
-                for (Patient teilnehmerin : gruppe.getPatients()) {
-                    // Kennnummern vergibt sonst Hibernate; ohne sie waere die
-                    // Versichertennummer im INV lauter Nullen und wuerde als
-                    // fehlend beanstandet.
-                    teilnehmerin.setId((int) referenz);
-                    String dta = DtaFactory.buildDtaFor(
-                            new Abrechnung(teilnehmerin, leiterin, blaupause, TERMINE),
-                            referenz++,
-                            String.valueOf(leiterin.getIk()),
-                            String.valueOf(teilnehmerin.getKassenIk()));
+            // Ueber alle Blaupausen, nicht nur die erste: sonst bliebe die
+            // zweite Kursvorlage ungeprueft, und gerade sie ist neu.
+            for (Blueprint blaupause : Testdaten.blaupausen(vorlagen())) {
+                for (PersonGroup gruppe : gruppen) {
+                    ServiceProvider leiterin = gruppe.getServiceProviders().iterator().next();
+                    for (Patient teilnehmerin : gruppe.getPatients()) {
+                        // Kennnummern vergibt sonst Hibernate; ohne sie waere die
+                        // Versichertennummer im INV lauter Nullen und wuerde als
+                        // fehlend beanstandet.
+                        teilnehmerin.setId((int) referenz);
+                        String dta = DtaFactory.buildDtaFor(
+                                new Abrechnung(teilnehmerin, leiterin, blaupause, TERMINE),
+                                referenz++,
+                                String.valueOf(leiterin.getIk()),
+                                String.valueOf(teilnehmerin.getKassenIk()));
 
-                    ValidationReport bericht = pruefung.pruefe(dta);
-                    assertTrue(bericht.istVersandfaehig(),
-                            "Abrechnung fuer " + teilnehmerin.getFirstname() + " beanstandet:\n"
-                                    + bericht.getMessages().stream()
-                                            .map(ValidationMessage::toString)
-                                            .reduce("", (a, b) -> a + "\n" + b)
-                                    + "\n\n" + dta);
+                        ValidationReport bericht = pruefung.pruefe(dta);
+                        assertTrue(bericht.istVersandfaehig(),
+                                "Abrechnung fuer " + teilnehmerin.getFirstname() + " mit \""
+                                        + blaupause.getName() + "\" beanstandet:\n"
+                                        + bericht.getMessages().stream()
+                                                .map(ValidationMessage::toString)
+                                                .reduce("", (a, b) -> a + "\n" + b)
+                                        + "\n\n" + dta);
+                    }
                 }
             }
         }
     }
 
-    private static String ersteVorlage() {
+    /** Die Namen der vorhandenen Nachrichtenvorlagen, so wie {@code View} sie liest. */
+    private static List<String> vorlagen() {
+        List<String> namen = new ArrayList<>();
         for (DtaMessage nachricht : new JsonParserFactory().parseInvoices()) {
-            return nachricht.getInvoicerName();
+            namen.add(nachricht.getInvoicerName());
         }
-        throw new IllegalStateException("Keine Vorlage vorhanden");
+        if (namen.isEmpty()) {
+            throw new IllegalStateException("Keine Vorlage vorhanden");
+        }
+        return List.copyOf(namen);
     }
 }

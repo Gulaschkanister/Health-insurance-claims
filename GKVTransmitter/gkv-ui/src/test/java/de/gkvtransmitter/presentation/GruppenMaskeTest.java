@@ -314,6 +314,163 @@ class GruppenMaskeTest {
         }
     }
 
+    /**
+     * Die Suche in den Mitgliederlisten.
+     *
+     * <p>Der heikle Punkt ist nicht das Filtern, sondern was mit einem Haken
+     * geschieht, den die Suche gerade ausblendet. Wuerde er verlorengehen,
+     * entstuende eine Gruppe, in der jemand fehlt, den man angehakt hat - und
+     * das faellt erst bei der Abrechnung auf, wenn ueberhaupt.</p>
+     */
+    @Nested
+    @DisplayName("Mitglieder suchen")
+    class MitgliederSuchen {
+
+        @Test
+        @DisplayName("Das Suchfeld blendet aus, wer nicht passt")
+        void blendetAus() {
+            datenbank.mitPatient(patient(1, "Anna")).mitPatient(patient(2, "Bernd"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE).setText("bernd");
+
+                assertFalse(kaestchen(formular, GruppenMaske.ID_TEILNEHMER + 1).isVisible(),
+                        "Anna passt nicht zur Suche");
+                assertTrue(kaestchen(formular, GruppenMaske.ID_TEILNEHMER + 2).isVisible());
+            });
+        }
+
+        @Test
+        @DisplayName("Ausgeblendete Kaestchen belegen keinen Platz mehr")
+        void nimmtDenPlatzMit() {
+            datenbank.mitPatient(patient(1, "Anna")).mitPatient(patient(2, "Bernd"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE).setText("bernd");
+
+                assertFalse(kaestchen(formular, GruppenMaske.ID_TEILNEHMER + 1).isManaged(),
+                        "Ohne setManaged(false) bliebe die Luecke stehen und die Liste"
+                                + " waere nach der Suche so lang wie vorher");
+            });
+        }
+
+        @Test
+        @DisplayName("Ein Haken ueberlebt es, wenn die Suche ihn ausblendet")
+        void hakenUeberlebtDieSuche() {
+            datenbank.mitPatient(patient(1, "Anna")).mitPatient(patient(2, "Bernd"))
+                    .mitDienstleister(dienstleister(9, "Max"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                namensfeld(formular).setText("Montagsgruppe");
+                TextField suche = suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE);
+
+                suche.setText("anna");
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                suche.setText("bernd");
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 2);
+                anhaken(formular, GruppenMaske.ID_DIENSTLEISTER + 9);
+                speichern(formular).fire();
+
+                assertEquals(List.of(1, 2), kennungen(einzigeGespeicherte().getPatients()),
+                        "Anna wurde angehakt und dann ausgeblendet - sie gehoert trotzdem dazu");
+            });
+        }
+
+        @Test
+        @DisplayName("Der Zaehler nennt Angehakte und Gesamtzahl")
+        void zaehlerNenntBeides() {
+            datenbank.mitPatient(patient(1, "Anna")).mitPatient(patient(2, "Bernd"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                assertEquals(String.format(texte.get("label.selectedCount"), 0, 2),
+                        zaehler(formular, GruppenMaske.ID_TEILNEHMER_ZAEHLER).getText());
+
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+
+                assertEquals(String.format(texte.get("label.selectedCount"), 1, 2),
+                        zaehler(formular, GruppenMaske.ID_TEILNEHMER_ZAEHLER).getText(),
+                        "Der Zaehler muss dem Haken folgen, sonst sagt er nichts aus");
+            });
+        }
+
+        @Test
+        @DisplayName("Der Zaehler zaehlt auch mit, was die Suche gerade verbirgt")
+        void zaehlerZaehltVerborgeneMit() {
+            datenbank.mitPatient(patient(1, "Anna")).mitPatient(patient(2, "Bernd"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                anhaken(formular, GruppenMaske.ID_TEILNEHMER + 1);
+                suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE).setText("bernd");
+
+                assertEquals(String.format(texte.get("label.selectedCount"), 1, 2),
+                        zaehler(formular, GruppenMaske.ID_TEILNEHMER_ZAEHLER).getText(),
+                        "Genau dafuer steht der Zaehler da: die Auswahl ist groesser als das Sichtbare");
+            });
+        }
+
+        @Test
+        @DisplayName("Findet die Suche nichts, steht das da - statt einer leeren Flaeche")
+        void hinweisOhneTreffer() {
+            datenbank.mitPatient(patient(1, "Anna"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                Label hinweis = zaehler(formular, GruppenMaske.ID_TEILNEHMER_LEER);
+                assertFalse(hinweis.isVisible(), "Ohne Suchbegriff gibt es nichts zu melden");
+
+                suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE).setText("zzz");
+
+                assertTrue(hinweis.isVisible());
+                assertEquals(String.format(texte.get("msg.noMatch"), "zzz"), hinweis.getText());
+            });
+        }
+
+        @Test
+        @DisplayName("Die Suche der Teilnehmer laesst die Dienstleister in Ruhe")
+        void beideListenSindUnabhaengig() {
+            datenbank.mitPatient(patient(1, "Anna")).mitDienstleister(dienstleister(9, "Max"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE).setText("zzz");
+
+                assertFalse(kaestchen(formular, GruppenMaske.ID_TEILNEHMER + 1).isVisible());
+                assertTrue(kaestchen(formular, GruppenMaske.ID_DIENSTLEISTER + 9).isVisible(),
+                        "Ein Suchbegriff darf nur die Liste treffen, ueber der er steht");
+            });
+        }
+
+        @Test
+        @DisplayName("Die Suche unterscheidet nicht zwischen gross und klein")
+        void ohneRuecksichtAufSchreibweise() {
+            datenbank.mitPatient(patient(1, "Anna"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+                suchfeldFuer(formular, GruppenMaske.ID_TEILNEHMER_SUCHE).setText("ANNA");
+
+                assertTrue(kaestchen(formular, GruppenMaske.ID_TEILNEHMER + 1).isVisible());
+            });
+        }
+
+        @Test
+        @DisplayName("Ohne Personen gibt es kein Suchfeld, sondern den Hinweis")
+        void ohnePersonenKeinSuchfeld() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+
+                assertNull(formular.lookup("#" + GruppenMaske.ID_TEILNEHMER_SUCHE),
+                        "Ein Suchfeld ueber einer leeren Liste waere nur Zierde");
+                assertTrue(zeilentexte(formular).contains(texte.get("msg.noPatients")));
+            });
+        }
+    }
+
     @Nested
     @DisplayName("Loeschen")
     class Loeschen {
@@ -400,6 +557,18 @@ class GruppenMaskeTest {
 
     private void anhaken(Region formular, String kennung) {
         kaestchen(formular, kennung).setSelected(true);
+    }
+
+    private TextField suchfeldFuer(Region formular, String kennung) {
+        TextField feld = (TextField) formular.lookup("#" + kennung);
+        assertNotNull(feld, "Kein Suchfeld mit der Kennung " + kennung);
+        return feld;
+    }
+
+    private Label zaehler(Region formular, String kennung) {
+        Label beschriftung = (Label) formular.lookup("#" + kennung);
+        assertNotNull(beschriftung, "Keine Beschriftung mit der Kennung " + kennung);
+        return beschriftung;
     }
 
     private Button bearbeitenKnopf(Region liste, int gruppenId) {

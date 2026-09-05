@@ -280,9 +280,11 @@ public class View {
 
             Testdaten.gruppen(teilnehmerinnen, dienstleister).forEach(datenbank::savePersonGroup);
 
-            controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet().stream()
-                    .findFirst()
-                    .ifPresent(vorlage -> Testdaten.blaupausen(vorlage).forEach(datenbank::saveBlueprint));
+            // Alle Vorlagen, nicht nur die erste: seit es einen zweiten Kurs
+            // gibt, soll auch der eine Blaupause zum Ausprobieren haben.
+            Testdaten.blaupausen(List.copyOf(
+                            controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()))
+                    .forEach(datenbank::saveBlueprint);
 
             meldungen.erfolg(messages.get("msg.testDataCreated"));
         } catch (Exception e) {

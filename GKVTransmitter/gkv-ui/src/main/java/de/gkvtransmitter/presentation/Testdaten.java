@@ -2,6 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -91,17 +92,32 @@ public final class Testdaten {
     }
 
     /**
-     * Zwei Blaupausen auf derselben Vorlage, mit verschiedenen Preisen.
+     * Blaupausen zu den vorhandenen Nachrichtenvorlagen.
      *
-     * <p>Verschieden, damit sichtbar wird, dass der Preis wirkt - eine einzige
-     * Blaupause verriete nicht, ob der Betrag ueberhaupt gelesen wird.</p>
+     * <p>Zwei auf der ersten Vorlage, mit <b>verschiedenen Preisen</b> - eine
+     * einzige verriete nicht, ob der Betrag ueberhaupt gelesen wird oder ob
+     * still die Vorbelegung von 15.000,00 greift. Dazu je eine auf jeder
+     * weiteren Vorlage, damit auch der zweite Kurs einen Fall hat.</p>
      *
-     * @param vorlage Name der Nachrichtenvorlage
+     * @param vorlagen Namen der Nachrichtenvorlagen, mindestens eine
      */
-    public static List<Blueprint> blaupausen(String vorlage) {
-        return List.of(
-                blaupause("Kurs Vormittag", vorlage, "12,50"),
-                blaupause("Kurs Abend", vorlage, "14,00"));
+    public static List<Blueprint> blaupausen(List<String> vorlagen) {
+        if (vorlagen.isEmpty()) {
+            return List.of();
+        }
+        List<Blueprint> alle = new ArrayList<>(List.of(
+                blaupause("Kurs Vormittag", vorlagen.get(0), "12,50"),
+                blaupause("Kurs Abend", vorlagen.get(0), "14,00")));
+        for (int i = 1; i < vorlagen.size(); i++) {
+            alle.add(blaupause(kursname(vorlagen.get(i)), vorlagen.get(i), "13,25"));
+        }
+        return List.copyOf(alle);
+    }
+
+    /** Der Kursname ohne den Zusatz zur Abrechnungsart. */
+    private static String kursname(String vorlage) {
+        int komma = vorlage.indexOf(',');
+        return komma < 0 ? vorlage : vorlage.substring(0, komma);
     }
 
     private static Patient teilnehmerin(String vorname, String nachname, String strasse, String hausnummer,

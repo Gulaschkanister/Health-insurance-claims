@@ -17,6 +17,7 @@ import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
+import de.gkvtransmitter.util.Institutionskennzeichen;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
@@ -160,7 +161,7 @@ public class PersonenMaske {
     private void zeigeTeilnehmerform(Patient teilnehmer) {
         EditFormController<Patient> steuerung = new EditFormController<>(bausteine, texte, meldungen, teilnehmerFelder,
                 () -> List.of(teilnehmer),
-                datenbank::savePatient,
+                gepruefteSpeicherung(datenbank::savePatient),
                 datenbank::deletePatient,
                 false,
                 feldname -> feldbau.erzeugeFeld(feldname, feldbeschreibung(feldname)),
@@ -174,7 +175,7 @@ public class PersonenMaske {
         EditFormController<ServiceProvider> steuerung = new EditFormController<>(bausteine, texte, meldungen,
                 dienstleisterFelder,
                 () -> List.of(dienstleister),
-                datenbank::saveServiceProvider,
+                gepruefteSpeicherung(datenbank::saveServiceProvider),
                 datenbank::deleteServiceProvider,
                 false,
                 feldname -> feldbau.erzeugeFeld(feldname, feldbeschreibung(feldname)),
@@ -337,6 +338,58 @@ public class PersonenMaske {
                 befunde.add(String.format(texte.get("msg.required"), texte.get(beschriftung)));
             }
         });
+        return befunde;
+    }
+
+    /**
+     * Legt dieselbe Pruefung vor das Speichern im Bearbeiten-Formular.
+     *
+     * <p>Das Anlegen prueft seit dem 05.09.2026, das <b>Bearbeiten</b> nicht:
+     * {@code EditFormController.saveEntity} uebertrug die Eingaben in die
+     * Person und reichte sie ungeprueft weiter. Eine richtig angelegte Person
+     * liess sich also nachtraeglich kaputtbearbeiten - IK auf {@code 101}
+     * gesetzt, Geburtsdatum geleert -, und der Fehler kam erst beim Versand
+     * zurueck. Die schaerfere Eingangspruefung haette so nur den Weg
+     * verlagert, auf dem falsche Stammdaten entstehen.</p>
+     *
+     * <p>Die Beanstandung reist als Ausnahme: {@code saveEntity} faengt sie und
+     * meldet ihren Text, ohne das Formular zu leeren - die Eingaben bleiben
+     * also stehen. Ein zusaetzlicher Konstruktorparameter waere der andere Weg
+     * gewesen; der Konstruktor traegt bereits zwoelf und ist deswegen als
+     * Checkstyle-Befund vermerkt.</p>
+     */
+    private <T extends Person> Consumer<T> gepruefteSpeicherung(Consumer<T> speichern) {
+        return person -> {
+            List<String> beanstandungen = pruefe(person);
+            if (!beanstandungen.isEmpty()) {
+                throw new IllegalArgumentException(
+                        texte.get("msg.notSaved") + "\n· " + String.join("\n· ", beanstandungen));
+            }
+            speichern.accept(person);
+        };
+    }
+
+    /**
+     * Dieselben Pflichtangaben wie beim Anlegen, nur an der fertigen Person
+     * statt an den Eingabefeldern gemessen.
+     */
+    private List<String> pruefe(Person person) {
+        List<String> befunde = new ArrayList<>();
+        if (person.getFirstname() == null || person.getFirstname().isBlank()) {
+            befunde.add(String.format(texte.get("msg.required"), texte.get("field.firstname")));
+        }
+        if (person.getLastname() == null || person.getLastname().isBlank()) {
+            befunde.add(String.format(texte.get("msg.required"), texte.get("field.lastname")));
+        }
+        if (person.getBirthDate() == null) {
+            befunde.add(String.format(texte.get("msg.required"), texte.get("field.birthDate")));
+        }
+        if (!Institutionskennzeichen.istGueltig(person.getIk())) {
+            befunde.add(texte.get("field.ik") + ": " + texte.get("msg.invalidIk"));
+        }
+        if (!Institutionskennzeichen.istGueltig(person.getKassenIk())) {
+            befunde.add(texte.get("field.kassenIk") + ": " + texte.get("msg.invalidIk"));
+        }
         return befunde;
     }
 
