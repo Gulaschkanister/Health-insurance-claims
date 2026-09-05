@@ -235,7 +235,7 @@ for (Map.Entry<String, ValueFieldEntry> entry : valueFields.entrySet()) {
 | Double Spinner | ✅ Fertig | NEU v3.0 |
 | TextFormatter | ✅ Fertig | Für € und % |
 | Internal-Feld Filter | ✅ Fertig | NEU v3.0 |
-| Dynamic FormBuilder | ✅ Fertig | Seit v2.0 |
+| Dynamic FormBuilder | ❌ Zurückgebaut | Am 05.09.2026 gelöscht — wurde von nichts benutzt |
 
 ---
 

@@ -415,7 +415,7 @@ class PersonenMaskeTest {
                 aktualisieren(rahmen.inhalt()).fire();
 
                 assertEquals(List.of(anna), datenbank.gespeichertePatienten());
-                assertEquals(texte.get("msg.saved"), meldungen.einzige().text());
+                assertEquals(texte.get("msg.patientUpdated"), meldungen.einzige().text());
             });
         }
     }

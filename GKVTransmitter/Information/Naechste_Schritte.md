@@ -20,13 +20,44 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **294 Tests**, davon 142 in `gkv-ui`, `BUILD SUCCESS`
+- **296 Tests**, davon 144 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
-Der Branch liegt auf `origin`; die jeweils letzten Commits können noch fehlen
-(`git status` zeigt es als „ahead“).
+**Der lokale Stand ist 21 Commits vor `origin`.** Vor dem nächsten Umbau einmal
+`git push` — sonst hängt viel unveröffentlichte Arbeit an einem Rechner.
 
-## Was zuletzt geschah: die Oberfläche
+## Was zuletzt geschah (05.09.2026, letzte Sitzung)
+
+Drei Dinge, in dieser Reihenfolge.
+
+**1. Die offenen Punkte B1, B2 und C abgearbeitet.** Die Vorlage
+„Rückbildungskurs nach Geburten", Suche und Zähler in den Mitgliederlisten der
+Gruppenmaske, und `EditFormControllerTest` mit 14 Tests. Die Einzelheiten stehen
+in den jeweiligen Abschnitten; der wichtigste Fund war, dass **das Bearbeiten
+gar nicht prüfte** — die schärfere Eingangsprüfung vom selben Tag hatte nur den
+Weg verlagert, auf dem falsche Stammdaten entstehen.
+
+**2. Simons Sammlung aufgenommen** — vierzehn Punkte, jetzt die Abschnitte
+B 1–4, G, H, I und J. Vier davon enthielten eine Faktenfrage; die ist
+nachgeprüft und nicht übernommen worden. Was dabei herauskam, steht bei den
+Punkten selbst.
+
+**3. Code-Pflege.** Zwei tote Klassen entfernt (siehe C), fünfzehn unbenutzte
+Meldungsschlüssel aus `ui-messages.json`, und zwei Meldungen berichtigt:
+
+- Das **Bearbeiten** meldete „Erfolgreich gespeichert!", ohne zu sagen, *was*.
+  Beim Anlegen war genau das schon einmal berichtigt worden; die passenden Texte
+  lagen seither unbenutzt in `ui-messages.json`. `EditFormController` bildet den
+  Schlüssel jetzt aus dem Typnamen (`msg.patientUpdated`), wie er es bei
+  `title.<typ>.edit` und `msg.no<Typ>s` schon tat, und weicht über das neue
+  `AppMessages.get(schluessel, ersatz)` auf `msg.saved` aus, wenn es für eine Art
+  keinen eigenen Text gibt. Ohne diesen Ausweg stünde bei einer Lücke der
+  Schlüsselname in der Oberfläche.
+- Die Meldung nach dem Anlegen der Testdaten nannte „2 Blaupausen", nachdem es
+  drei geworden waren. Sie **zählt jetzt**, statt die Zahl im Text zu führen.
+  Eine Zahl im Meldungstext veraltet beim nächsten Zusatz still.
+
+## Was davor geschah: die Oberfläche
 
 Vier Wünsche standen im Raum — keine Popups, effiziente Monatsbearbeitung,
 automatische Abrechnung, schöneres Aussehen. Drei davon sind umgesetzt; die
@@ -337,13 +368,23 @@ Was in `gkv-ui` **weiterhin ohne Test** ist, nach Nutzen geordnet:
 | `Bildschirmmeldungen` | 88 | Die einzige Umsetzung von `Meldungen`, die wirklich etwas anzeigt. `Benachrichtigungen` ist geprüft, dieser Weg dahin nicht. |
 | `JavaFxUiFactory` | 210 | Reine Fabrik ohne eigene Entscheidungen. Am ehesten verzichtbar. |
 
-**`FormBuilder` (234 Zeilen) braucht keinen Test, sondern eine Entscheidung: er
-wird von nichts benutzt.** Kein Aufruf, kein Import, in keinem Modul. `Vision.md`
-und `PROGRESS_UPDATE_v3.md` führen ihn weiter als eingesetztes Entwurfsmuster,
-zusammen mit einem `MenuBuilder`, den es gar nicht mehr gibt — die Menüleiste
-wurde durch die Seitenleiste ersetzt. Entweder löschen (und die beiden Dokumente
-nachziehen) oder tatsächlich verwenden; ihn ungenutzt und dokumentiert stehen zu
-lassen ist die schlechteste der drei Möglichkeiten.
+**Erledigt am 05.09.2026: `FormBuilder` ist gelöscht** (234 Zeilen), er wurde
+von nichts benutzt — kein Aufruf, kein Import, in keinem Modul. Zusammen mit
+`DtaProfile` (8 Zeilen, leeres Markierungsinterface, keine Implementierung).
+`Vision.md` und `PROGRESS_UPDATE_v3.md` führten den `FormBuilder` weiter als
+eingesetztes Entwurfsmuster, zusammen mit einem `MenuBuilder`, den es gar nicht
+mehr gibt; beide Dokumente sind nachgezogen. In `Vision.md` steht in der Zeile
+jetzt, was das Muster hier **wirklich** verkörpert: `Listenbau` und `Feldbau`.
+
+Die Suche danach lohnt sich gelegentlich wieder — sie kostet eine Zeile:
+
+```bash
+for f in $(find gkv-core/src/main/java gkv-ui/src/main/java -name "*.java"); do
+  n=$(basename "$f" .java)
+  [ "$(grep -rl "\b$n\b" --include=*.java gkv-core/src gkv-ui/src | grep -vc "/$n.java$")" = 0 ] \
+    && echo "unreferenziert: $f"
+done
+```
 
 #### Erledigt am 05.09.2026: das Bearbeiten prüfte nichts
 
@@ -671,12 +712,12 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 294 Tests
-mvn clean test -pl gkv-ui            # nur die 142 Oberflächentests
+mvn clean test                       # alle 296 Tests
+mvn clean test -pl gkv-ui            # nur die 144 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005
-mvn checkstyle:check                 # 55 Hinweise, nicht blockierend
+mvn checkstyle:check                 # 10 Warnungen, nicht blockierend
 
 cd Information
 java -jar C:/Tools/plantuml/plantuml.jar -tpng -charset UTF-8 "*.puml"

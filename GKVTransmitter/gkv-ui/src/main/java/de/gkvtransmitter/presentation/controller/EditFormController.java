@@ -227,7 +227,13 @@ public class EditFormController<T> {
             }
 
             entitySaver.accept(entity);
-            meldungen.erfolg(messages.get("msg.saved"));
+            // Nach der Rolle benannt, so wie beim Anlegen: dort stand einmal in
+            // beiden Faellen "Teilnehmer erfolgreich erstellt!", auch wenn ein
+            // Dienstleister entstand. Beim Bearbeiten war es dieselbe Luecke -
+            // "Erfolgreich gespeichert!" sagt nicht, was gespeichert wurde. Die
+            // Schluessel dafuer lagen unbenutzt in ui-messages.json.
+            meldungen.erfolg(messages.get(
+                    "msg." + entityTypeName.toLowerCase(java.util.Locale.ROOT) + "Updated", "msg.saved"));
             onChanged.accept(this);
             formContainer.getChildren().clear();
         } catch (NumberFormatException e) {

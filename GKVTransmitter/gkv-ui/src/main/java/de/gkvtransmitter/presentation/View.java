@@ -10,9 +10,11 @@ import java.util.Set;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.gkvtransmitter.entity.Patient;
-import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.application.AbrechnungService;
+import de.gkvtransmitter.entity.Blueprint;
+import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.PersonGroup;
+import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.model.DtaMessage;
 import de.gkvtransmitter.presentation.meldung.Bildschirmmeldungen;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
@@ -278,15 +280,20 @@ public class View {
             List<Patient> teilnehmerinnen = Testdaten.teilnehmerinnen();
             teilnehmerinnen.forEach(datenbank::savePatient);
 
-            Testdaten.gruppen(teilnehmerinnen, dienstleister).forEach(datenbank::savePersonGroup);
+            List<PersonGroup> gruppen = Testdaten.gruppen(teilnehmerinnen, dienstleister);
+            gruppen.forEach(datenbank::savePersonGroup);
 
             // Alle Vorlagen, nicht nur die erste: seit es einen zweiten Kurs
             // gibt, soll auch der eine Blaupause zum Ausprobieren haben.
-            Testdaten.blaupausen(List.copyOf(
-                            controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()))
-                    .forEach(datenbank::saveBlueprint);
+            List<Blueprint> blaupausen = Testdaten.blaupausen(List.copyOf(
+                    controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet()));
+            blaupausen.forEach(datenbank::saveBlueprint);
 
-            meldungen.erfolg(messages.get("msg.testDataCreated"));
+            // Gezaehlt statt in den Text geschrieben: die Meldung nannte "2
+            // Blaupausen", nachdem es drei geworden waren. Eine Zahl, die im
+            // Meldungstext steht, veraltet beim naechsten Zusatz still.
+            meldungen.erfolg(String.format(messages.get("msg.testDataCreated"),
+                    dienstleister.size(), teilnehmerinnen.size(), gruppen.size(), blaupausen.size()));
         } catch (Exception e) {
             meldungen.fehler(e.getMessage());
         }

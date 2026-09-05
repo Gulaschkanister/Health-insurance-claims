@@ -81,7 +81,7 @@ Die Patterns und ihre Fundstellen im Programm und in dieser Dokumentation sind:
 | Registry Pattern | `GlobalDefinitions`, `FactoryManager` und `BillingOfficeEndpointRegistry` verwalten Profile, Fabriken bzw. Versandziele | Klassen in `definition`, `factory` und `dispatch` |
 | Factory Pattern | `JsonParserFactory` erzeugt aus JSON die fachlichen Definitionen; `Factory` beschreibt die Erzeugungsschnittstelle | `JsonParserFactory ..|> Factory` und Paket `parser.json` |
 | Abstract-Factory-ähnlicher Ansatz | `UiFactory` kapselt die Erzeugung verschiedener JavaFX-Komponenten; `JavaFxUiFactory` implementiert sie | `JavaFxUiFactory ..|> UiFactory` und Paket `presentation` (Modul `gkv-ui`) |
-| Builder Pattern | `FormBuilder` und `MenuBuilder` erstellen UI-Strukturen schrittweise | Paket `presentation.builder` |
+| Builder Pattern | `Listenbau` baut eine durchsuchbare Liste mit Schaltflächen je Zeile schrittweise auf; `Feldbau` erzeugt Eingabefelder samt Erklärung und Prüfung | Klassen `Listenbau` und `Feldbau` im Paket `presentation` (Modul `gkv-ui`) |
 | Strategy-/Adapter-Ansatz | `BillingOfficeTransport` definiert den Versandvertrag; `FileBillingOfficeTransport` stellt Dateien zu | `FileBillingOfficeTransport ..|> BillingOfficeTransport` und Paket `dispatch` |
 | Decorator | `SimulierterKassenTransport` umschließt einen beliebigen Transport und ergänzt eine Rückmeldung, statt ihn zu ersetzen | Paket `dispatch`, UML-Ansicht „DTA und Versand“ |
 | Chain of Responsibility / Regelwerk | `DtaValidationService` führt austauschbare `ValidationRule`-Umsetzungen über dieselbe Nachricht | Pakete `validator` und `validator.rules` |

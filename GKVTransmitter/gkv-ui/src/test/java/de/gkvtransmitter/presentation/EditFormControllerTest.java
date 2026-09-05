@@ -191,8 +191,44 @@ class EditFormControllerTest {
 
                 assertEquals(List.of(anna), gespeichert);
                 assertEquals("Annika", anna.werte.get("firstname"));
-                assertEquals(texte.get("msg.saved"), meldungen.einzige().text());
+                assertEquals(texte.get("msg.patientUpdated"), meldungen.einzige().text());
                 assertEquals(1, wieOftGeaendert, "Die Uebersicht muss neu geladen werden");
+            });
+        }
+
+        /**
+         * Die Meldung nennt die Rolle.
+         *
+         * <p>Beim Anlegen wurde das schon einmal berichtigt - dort stand in
+         * beiden Faellen "Teilnehmer erfolgreich erstellt!", auch wenn ein
+         * Dienstleister entstand. Beim Bearbeiten blieb es bei "Erfolgreich
+         * gespeichert!", waehrend die passenden Texte unbenutzt in
+         * {@code ui-messages.json} lagen.</p>
+         */
+        @Test
+        @DisplayName("nennt die Meldung, was gespeichert wurde")
+        void meldungNenntDieRolle() {
+            bestand.add(new Eintrag("Martina Sander"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                steuerung(false, "ServiceProvider").buildEditForm();
+                knopf(texte.get("button.update")).fire();
+
+                assertEquals(texte.get("msg.serviceproviderUpdated"), meldungen.einzige().text());
+            });
+        }
+
+        @Test
+        @DisplayName("weicht auf den allgemeinen Text aus, wenn es fuer die Art keinen gibt")
+        void ausweichtextFuerUnbekannteArt() {
+            bestand.add(new Eintrag("Irgendwas"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                steuerung(false, "Blueprint").buildEditForm();
+                knopf(texte.get("button.update")).fire();
+
+                assertEquals(texte.get("msg.saved"), meldungen.einzige().text(),
+                        "Sonst stuende der Schluessel msg.blueprintUpdated in der Oberflaeche");
             });
         }
 
@@ -364,6 +400,10 @@ class EditFormControllerTest {
     // --- Aufbau ----------------------------------------------------------
 
     private EditFormController<Eintrag> steuerung(boolean mitLoeschen) {
+        return steuerung(mitLoeschen, "Patient");
+    }
+
+    private EditFormController<Eintrag> steuerung(boolean mitLoeschen, String art) {
         return new EditFormController<>(
                 new JavaFxUiFactory(), texte, meldungen, new EintragFelder(),
                 () -> bestand,
@@ -380,7 +420,7 @@ class EditFormControllerTest {
                     feld.setId(feldname);
                     return feld;
                 },
-                "Patient",
+                art,
                 fertig -> {
                     behaelter = fertig;
                     wieOftFormularFertig++;

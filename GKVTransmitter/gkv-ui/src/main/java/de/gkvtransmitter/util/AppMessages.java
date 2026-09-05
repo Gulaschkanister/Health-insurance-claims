@@ -20,6 +20,21 @@ public class AppMessages {
         return messages.getOrDefault(key, key);
     }
 
+    /**
+     * Holt einen Text und weicht auf einen zweiten Schluessel aus, wenn es den
+     * ersten nicht gibt.
+     *
+     * <p>Fuer zusammengesetzte Schluessel wie {@code msg.patientUpdated}: sie
+     * entstehen aus einem Typnamen und muessen nicht fuer jeden Typ hinterlegt
+     * sein. Ohne diesen Ausweg stuende bei einem fehlenden Schluessel der
+     * Schluessel selbst in der Oberflaeche - {@link #get(String)} gibt ihn
+     * zurueck, damit eine Luecke beim Entwickeln auffaellt, aber im Betrieb
+     * waere das eine Zumutung.</p>
+     */
+    public String get(String key, String ersatzSchluessel) {
+        return messages.containsKey(key) ? messages.get(key) : get(ersatzSchluessel);
+    }
+
     private Map<String, String> loadMessages(String resourcePath) {
         try (InputStream inputStream = AppMessages.class.getResourceAsStream(resourcePath)) {
             if (inputStream == null) {

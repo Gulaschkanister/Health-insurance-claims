@@ -83,7 +83,7 @@ Main.java -> App.java (JavaFX) -> Controller -> ApplicationBootstrap -> JsonPars
 #### Unvollständige / TODO Classes
 - ❌ `ValidationResult.java` - Nur leeres Skeleton mit TODO-Kommentar
 - ❌ `ValidationRule.java` - Wahrscheinlich auch unvollständig
-- ❌ `DtaProfile.java` - Existiert, Inhalt unbekannt
+- ✅ `DtaProfile.java` — am 05.09.2026 geloescht: leeres Markierungsinterface ohne Implementierung und ohne Verwendung
 - ❌ `View.java` - Leere Klasse (Presentation Layer)
 
 **Qualitätsindikator:** 60% - Basis-Modelle gut, Geschäftslogik (Validierung) fehlt
