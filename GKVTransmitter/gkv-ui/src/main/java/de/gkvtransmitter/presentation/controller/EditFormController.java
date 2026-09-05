@@ -232,8 +232,9 @@ public class EditFormController<T> {
             // Dienstleister entstand. Beim Bearbeiten war es dieselbe Luecke -
             // "Erfolgreich gespeichert!" sagt nicht, was gespeichert wurde. Die
             // Schluessel dafuer lagen unbenutzt in ui-messages.json.
-            meldungen.erfolg(messages.get(
-                    "msg." + entityTypeName.toLowerCase(java.util.Locale.ROOT) + "Updated", "msg.saved"));
+            meldungen.erfolg(String.format(messages.get(
+                    "msg." + entityTypeName.toLowerCase(java.util.Locale.ROOT) + "Updated", "msg.saved"),
+                    populator.getDisplayName(entity)));
             onChanged.accept(this);
             formContainer.getChildren().clear();
         } catch (NumberFormatException e) {
@@ -264,7 +265,7 @@ public class EditFormController<T> {
             meldungen.fehler(e.getMessage());
             return;
         }
-        meldungen.erfolg(messages.get("msg.deleted"));
+        meldungen.erfolg(String.format(messages.get("msg.deleted"), populator.getDisplayName(entity)));
         onChanged.accept(this);
         formContainer.getChildren().clear();
     }

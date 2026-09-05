@@ -340,6 +340,43 @@ class AbrechnungsMaskeTest {
             });
         }
 
+        /**
+         * Die eingetippte Zahl gilt, auch ohne Eingabetaste.
+         *
+         * <p>Bis zum 05.09.2026 nicht: ein beschreibbarer {@code Spinner}
+         * uebernimmt getippten Text nur bei der Eingabetaste, und wer statt
+         * dessen auf "Setzen" klickte, rechnete mit dem alten Wert ab. Auf dem
+         * Bildschirm stand dabei die ganze Zeit die richtige Zahl - "Termine
+         * fuer alle: 8", und jede Zeile bekam einen. Die Rechnung an die Kasse
+         * lautete auf ein Achtel.</p>
+         *
+         * <p>Kein Test fand das, weil alle den Wert ueber
+         * {@code getValueFactory().setValue(...)} setzten und damit am Editor
+         * vorbei - also genau <em>nicht</em> den Weg gingen, den jemand am
+         * Bildschirm geht. Dieser Test tippt in den Editor.</p>
+         */
+        @Test
+        @DisplayName("Eine eingetippte Terminzahl gilt auch ohne Eingabetaste")
+        void getippteTerminzahlGilt() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                @SuppressWarnings("unchecked")
+                Spinner<Integer> fuerAlle =
+                        (Spinner<Integer>) maske.lookup("#" + AbrechnungsMaske.ID_TERMINE_ALLE);
+                fuerAlle.getEditor().setText("8");
+                knopf(maske, AbrechnungsMaske.ID_TERMINE_SETZEN).fire();
+                start(maske).fire();
+
+                assertEquals(Map.of(1, 8, 2, 8), laeufe.get(0).termine(),
+                        "Was im Feld steht, muss auch abgerechnet werden");
+            });
+        }
+
         @Test
         @DisplayName("Sind Teilnehmer angehakt, gilt die Terminzahl nur fuer diese")
         void termineNurFuerAngehakte() {

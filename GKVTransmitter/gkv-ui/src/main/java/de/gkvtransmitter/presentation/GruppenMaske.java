@@ -138,7 +138,7 @@ public class GruppenMaske {
             meldungen.fehler(e.getMessage());
             return;
         }
-        meldungen.erfolg(texte.get("msg.groupDeleted"));
+        meldungen.erfolg(String.format(texte.get("msg.groupDeleted"), gruppe.getName()));
         rahmen.leeren();
     }
 
@@ -233,7 +233,7 @@ public class GruppenMaske {
             meldungen.fehler(e.getMessage());
             return;
         }
-        meldungen.erfolg(texte.get(bearbeitet ? "msg.groupUpdated" : "msg.groupCreated"));
+        meldungen.erfolg(String.format(texte.get(bearbeitet ? "msg.groupUpdated" : "msg.groupCreated"), name));
         rahmen.leeren();
     }
 

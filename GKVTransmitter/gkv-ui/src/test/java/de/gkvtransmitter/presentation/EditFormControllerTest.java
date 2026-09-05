@@ -191,7 +191,7 @@ class EditFormControllerTest {
 
                 assertEquals(List.of(anna), gespeichert);
                 assertEquals("Annika", anna.werte.get("firstname"));
-                assertEquals(texte.get("msg.patientUpdated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.patientUpdated"), "Anna Muster"), meldungen.einzige().text());
                 assertEquals(1, wieOftGeaendert, "Die Uebersicht muss neu geladen werden");
             });
         }
@@ -214,7 +214,7 @@ class EditFormControllerTest {
                 steuerung(false, "ServiceProvider").buildEditForm();
                 knopf(texte.get("button.update")).fire();
 
-                assertEquals(texte.get("msg.serviceproviderUpdated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.serviceproviderUpdated"), "Martina Sander"), meldungen.einzige().text());
             });
         }
 
@@ -346,7 +346,7 @@ class EditFormControllerTest {
                 knopf(texte.get("button.delete")).fire();
 
                 assertEquals(List.of(anna), geloescht);
-                assertEquals(texte.get("msg.deleted"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.deleted"), "Anna Muster"), meldungen.einzige().text());
                 assertEquals(1, wieOftGeaendert);
                 assertTrue(behaelter.getChildren().isEmpty());
             });

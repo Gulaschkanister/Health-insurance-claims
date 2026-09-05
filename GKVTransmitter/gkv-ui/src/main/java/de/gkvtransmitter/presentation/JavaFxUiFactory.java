@@ -159,6 +159,7 @@ public class JavaFxUiFactory implements UiFactory {
                             Integer.MIN_VALUE, Integer.MAX_VALUE, 0));
             spinner.setEditable(true);
             spinner.setPrefWidth(300);
+            uebernimmBeimVerlassen(spinner);
             @SuppressWarnings("unchecked")
             Spinner<T> casted = (Spinner<T>) spinner;
             return casted;
@@ -185,11 +186,43 @@ public class JavaFxUiFactory implements UiFactory {
             Spinner<BigDecimal> spinner = new Spinner<>(vf);
             spinner.setEditable(true);
             spinner.setPrefWidth(300);
+            uebernimmBeimVerlassen(spinner);
             @SuppressWarnings("unchecked")
             Spinner<T> casted = (Spinner<T>) spinner;
             return casted;
         }
         throw new IllegalArgumentException("Unsupported type: " + type);
+    }
+
+    /**
+     * Laesst einen beschreibbaren Zähler seine Eingabe übernehmen, wenn er den
+     * Fokus verliert.
+     *
+     * <p><b>Ohne das geht eine Eingabe verloren.</b> Ein {@code Spinner} mit
+     * {@code setEditable(true)} übernimmt getippten Text nur bei der
+     * Eingabetaste; wer eine Zahl eintippt und danach auf eine Schaltfläche
+     * klickt, für den liefert {@code getValue()} weiterhin den alten Wert.
+     * Nichts schlägt dabei fehl — die Zahl steht sichtbar im Feld und wird
+     * trotzdem nicht verwendet.</p>
+     *
+     * <p>In der Abrechnungsmaske war das keine Schönheitsfrage: „Termine für
+     * alle: 8" und dann „Setzen" ergab acht Zeilen mit <em>einem</em> Termin.
+     * Die Rechnung an die Kasse lautete auf ein Achtel des richtigen Betrags,
+     * und auf dem Bildschirm stand die ganze Zeit die 8. Gefunden am
+     * 05.09.2026 vom Bedienwerkzeug, nicht von einem Test — die Tests setzten
+     * den Wert über {@code getValueFactory().setValue(...)} und gingen damit
+     * am Editor vorbei.</p>
+     *
+     * <p>Für die Formularfelder war dieselbe Falle schon behoben, dort aber
+     * durch den Verzicht auf den Zähler (siehe {@code Feldbau}). Hier ergibt
+     * ein Zähler Sinn — Termine zählt man in kleinen Schritten hoch.</p>
+     */
+    private static void uebernimmBeimVerlassen(Spinner<?> zaehler) {
+        zaehler.focusedProperty().addListener((wert, hatteFokus, hatFokus) -> {
+            if (!hatFokus) {
+                zaehler.commitValue();
+            }
+        });
     }
 
     /**

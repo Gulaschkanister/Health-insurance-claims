@@ -422,7 +422,19 @@ public class AbrechnungsMaske {
             return je;
         }
 
+        /**
+         * Die Zahl in einem Zähler — auch die gerade erst getippte.
+         *
+         * <p>{@code commitValue()} zuerst: ein beschreibbarer Zähler übernimmt
+         * getippten Text sonst nur bei der Eingabetaste. Der Fokuswechsel beim
+         * Klick auf „Setzen" tut das inzwischen ebenfalls (siehe
+         * {@code JavaFxUiFactory}), aber es hängt daran, dass der Klick
+         * wirklich den Fokus verschiebt — und davon soll ein Rechnungsbetrag
+         * nicht abhängen. Ein unlesbarer Text setzt den Zähler auf seinen
+         * letzten gültigen Wert zurück, wirft also nichts.</p>
+         */
         private int wert(Spinner<Integer> zaehler) {
+            zaehler.commitValue();
             Integer anzahl = zaehler.getValue();
             return anzahl == null ? 0 : anzahl;
         }

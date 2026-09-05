@@ -95,7 +95,7 @@ class PersonenMaskeTest {
                 ServiceProvider angelegt = datenbank.getAllServiceProviders().get(0);
                 assertEquals("Anna", angelegt.getFirstname());
                 assertTrue(datenbank.getAllPatients().isEmpty(), "Es darf kein Teilnehmer entstanden sein");
-                assertEquals(texte.get("msg.selfCreated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.selfCreated"), "Anna Muster"), meldungen.einzige().text());
             });
         }
 
@@ -107,7 +107,7 @@ class PersonenMaskeTest {
                 fuelleAus(formular);
                 speichern(formular).fire();
 
-                assertEquals(texte.get("msg.patientCreated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.patientCreated"), "Anna Muster"), meldungen.einzige().text());
             });
         }
 
@@ -305,7 +305,7 @@ class PersonenMaskeTest {
                 loeschenKnopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1).fire();
 
                 assertTrue(datenbank.getAllPatients().isEmpty());
-                assertEquals(texte.get("msg.patientDeleted"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.patientDeleted"), "Anna Muster (ID: 1)"), meldungen.einzige().text());
             });
         }
 
@@ -320,7 +320,7 @@ class PersonenMaskeTest {
 
                 assertTrue(datenbank.getAllServiceProviders().isEmpty());
                 assertEquals(1, datenbank.getAllPatients().size(), "Der Teilnehmer bleibt unberuehrt");
-                assertEquals(texte.get("msg.selfDeleted"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.selfDeleted"), "Max Muster (ID: 9)"), meldungen.einzige().text());
             });
         }
 
@@ -418,7 +418,7 @@ class PersonenMaskeTest {
                 aktualisieren(rahmen.inhalt()).fire();
 
                 assertEquals(List.of(anna), datenbank.gespeichertePatienten());
-                assertEquals(texte.get("msg.patientUpdated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.patientUpdated"), "Anna Muster (ID: 1)"), meldungen.einzige().text());
             });
         }
     }

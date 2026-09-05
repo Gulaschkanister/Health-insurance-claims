@@ -197,7 +197,8 @@ public class PersonenMaske {
     private <T> void frageUndLoesche(T eintrag, String anzeigename, Consumer<T> loeschen,
             String wennGeloescht) {
         meldungen.frageNach(String.format(texte.get("msg.deleteConfirmBody"), anzeigename),
-                texte.get("button.delete"), () -> loesche(eintrag, loeschen, wennGeloescht));
+                texte.get("button.delete"),
+                () -> loesche(eintrag, loeschen, String.format(wennGeloescht, anzeigename)));
     }
 
     private <T> void loesche(T eintrag, Consumer<T> loeschen, String wennGeloescht) {
@@ -301,7 +302,12 @@ public class PersonenMaske {
             return;
         }
 
-        meldungen.erfolg(texte.get(alsDienstleister ? "msg.selfCreated" : "msg.patientCreated"));
+        // Mit Namen. "Teilnehmer erfolgreich erstellt!" liess offen, wer -
+        // und wer zehn Frauen hintereinander eintraegt, hat nach der fuenften
+        // keine Gewissheit mehr, ob die vierte wirklich durchging.
+        meldungen.erfolg(String.format(
+                texte.get(alsDienstleister ? "msg.selfCreated" : "msg.patientCreated"),
+                (vorname + " " + nachname).strip()));
         rahmen.leeren();
     }
 

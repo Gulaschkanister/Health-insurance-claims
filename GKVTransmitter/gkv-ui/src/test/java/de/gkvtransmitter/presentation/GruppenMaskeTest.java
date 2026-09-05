@@ -134,7 +134,7 @@ class GruppenMaskeTest {
                 speichern(formular).fire();
 
                 assertEquals(1, rahmen.wieOftGeleert());
-                assertEquals(texte.get("msg.groupCreated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.groupCreated"), "Montagsgruppe"), meldungen.einzige().text());
             });
         }
 
@@ -309,7 +309,7 @@ class GruppenMaskeTest {
                 assertEquals(List.of(vorhanden), datenbank.gespeicherteGruppen());
                 assertEquals("Neu", vorhanden.getName());
                 assertEquals(1, datenbank.getAllPersonGroups().size());
-                assertEquals(texte.get("msg.groupUpdated"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.groupUpdated"), "Neu"), meldungen.einzige().text());
             });
         }
     }
@@ -499,7 +499,7 @@ class GruppenMaskeTest {
                 loeschenKnopf(maske().liste(), 7).fire();
 
                 assertTrue(datenbank.getAllPersonGroups().isEmpty());
-                assertEquals(texte.get("msg.groupDeleted"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.groupDeleted"), "Montagsgruppe"), meldungen.einzige().text());
             });
         }
 

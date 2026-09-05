@@ -215,9 +215,7 @@ public class Hauptfenster implements Maskenrahmen {
      * Voraussetzung: was nicht adressierbar ist, laesst sich nicht steuern.</p>
      */
     static String kennung(String beschriftung) {
-        return ID_NAVIGATION + beschriftung.toLowerCase(java.util.Locale.GERMAN)
-                .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "-")
-                .replaceAll("(^-|-$)", "");
+        return Kennungen.aus(ID_NAVIGATION, beschriftung);
     }
 
     /** Oeffnet den ersten aufgenommenen Bereich. Fuer den Programmstart. */

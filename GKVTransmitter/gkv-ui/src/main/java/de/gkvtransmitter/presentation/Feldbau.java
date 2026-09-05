@@ -316,7 +316,12 @@ public class Feldbau {
     public String textVon(Node feld) {
         return switch (bedienelement(feld)) {
             case TextInputControl eingabe -> eingabe.getText() == null ? "" : eingabe.getText();
-            case Spinner<?> zaehler -> zeichenkette(zaehler.getValue());
+            // commitValue zuerst, sonst liefert ein beschreibbarer Zaehler den
+            // Wert vor der letzten Eingabe - siehe JavaFxUiFactory.
+            case Spinner<?> zaehler -> {
+                zaehler.commitValue();
+                yield zeichenkette(zaehler.getValue());
+            }
             case ComboBox<?> auswahl -> zeichenkette(auswahl.getValue());
             case DatePicker kalender -> zeichenkette(kalender.getValue());
             default -> "";

@@ -143,6 +143,18 @@ public class BlaupausenMaske {
 
     /** Kennung der Schaltflaeche, die ein leeres Formular oeffnet. */
     public static final String ID_NEU = "blaupause-neu";
+    /** Vorsatz der Kennung eines Eingabefeldes, gefolgt vom Feldnamen. */
+    public static final String ID_FELD = "blaupause-feld-";
+
+    /**
+     * Die Kennung eines Eingabefeldes.
+     *
+     * <p>Aus "Durchschnittlicher Einzelbetrag" wird
+     * {@code blaupause-feld-durchschnittlicher-einzelbetrag}.</p>
+     */
+    static String kennung(String feldname) {
+        return Kennungen.aus(ID_FELD, feldname);
+    }
 
     /**
      * Oeffnet ein leeres Formular fuer die erste bekannte Vorlage.
@@ -222,6 +234,12 @@ public class BlaupausenMaske {
                 }
                 Node feld = feldbau.erzeugeFeld(name, beschreibungAus(eintrag),
                         eintrag.getBeschreibung(), vorlagen.auswahlFuer(name));
+                // Die Felder trugen bis zum 05.09.2026 keine Kennung. Ihre
+                // Namen stammen aus den Segmentdefinitionen und enthalten
+                // Leerzeichen ("Durchschnittlicher Einzelbetrag"); wer sie
+                // unveraendert als Kennung setzt, macht sie unauffindbar -
+                // siehe Kennungen.
+                feld.setId(kennung(name));
                 vorbelegen(feld, gespeichert.get(name));
                 felder.put(name, feld);
 
@@ -288,7 +306,7 @@ public class BlaupausenMaske {
             return;
         }
 
-        meldungen.erfolg(texte.get("msg.blueprintSaved"));
+        meldungen.erfolg(String.format(texte.get("msg.blueprintSaved"), name));
         rahmen.zeige(liste());
     }
 
@@ -304,7 +322,7 @@ public class BlaupausenMaske {
             meldungen.fehler(e.getMessage());
             return;
         }
-        meldungen.erfolg(texte.get("msg.blueprintDeleted"));
+        meldungen.erfolg(String.format(texte.get("msg.blueprintDeleted"), text(blaupause.getName())));
         rahmen.leeren();
     }
 
