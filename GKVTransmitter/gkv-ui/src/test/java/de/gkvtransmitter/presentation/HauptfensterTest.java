@@ -1,6 +1,7 @@
 package de.gkvtransmitter.presentation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.Region;
@@ -143,8 +145,106 @@ class HauptfensterTest {
         });
     }
 
+    /**
+     * Die Statuszeile und ihr Info-Zeichen.
+     *
+     * <p>Dort stand bis zum 05.09.2026 die Aufzaehlung aller geladenen
+     * JSON-Dateien samt Nachrichtentypen. Sie war der laengste Text im Programm
+     * und wurde entsprechend mit Auslassungspunkten abgeschnitten; ihr eigener
+     * Kommentar nannte sie "sichtbare Debug-Hilfe im UI".</p>
+     */
+    @Test
+    @DisplayName("Ohne Info bleibt das Zeichen neben der Statuszeile verborgen")
+    void ohneInfoKeinZeichen() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            fenster.setzeStatus("2 Vorlagen geladen");
+
+            assertEquals("2 Vorlagen geladen", statuszeile(fenster).getText());
+            assertFalse(infozeichen(fenster).isVisible(),
+                    "Ein Zeichen, hinter dem nichts liegt, ist eine Falle");
+            assertFalse(infozeichen(fenster).isManaged(),
+                    "Sonst bliebe daneben ein leerer Platz stehen");
+        });
+    }
+
+    @Test
+    @DisplayName("Mit Info erscheint das Zeichen und ruft beim Klick auf")
+    void infoWirdGezeigtUndGerufen() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            int[] wieOft = {0};
+            fenster.setzeStatusInfo(() -> wieOft[0]++);
+
+            assertTrue(infozeichen(fenster).isVisible());
+            infozeichen(fenster).fire();
+
+            assertEquals(1, wieOft[0]);
+        });
+    }
+
+    @Test
+    @DisplayName("Ein zurueckgenommenes Info laesst das Zeichen wieder verschwinden")
+    void infoLaesstSichZuruecknehmen() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            fenster.setzeStatusInfo(() -> { });
+            fenster.setzeStatusInfo(null);
+
+            assertFalse(infozeichen(fenster).isVisible());
+        });
+    }
+
+    /**
+     * Ein Bereich mit einem Leerzeichen im Namen.
+     *
+     * <p>Bis zum 05.09.2026 stand die Beschriftung unveraendert in der Kennung:
+     * "Testdaten anlegen" ergab {@code nav-testdaten anlegen}. Ein
+     * {@code lookup} darauf findet nichts - das Leerzeichen trennt im
+     * Suchausdruck zwei Bedingungen. Aufgefallen ist es nicht durch einen Test,
+     * sondern weil die Vorschau den Punkt anklicken wollte: alle bis dahin
+     * geprueften Bereiche heissen einwortig.</p>
+     */
+    @Test
+    @DisplayName("Ein mehrwortiger Bereich bleibt auffindbar")
+    void mehrwortigerBereich() {
+        List<String> geoeffnet = new ArrayList<>();
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            fenster.ergaenzeBereich("Testdaten anlegen", () -> geoeffnet.add("ja"));
+
+            ToggleButton eintrag = navigationseintrag(fenster, "Testdaten anlegen");
+            assertFalse(eintrag.getId().contains(" "),
+                    "Eine Kennung mit Leerzeichen laesst sich nicht nachschlagen: " + eintrag.getId());
+
+            eintrag.fire();
+            assertEquals(1, geoeffnet.size());
+        });
+    }
+
+    @Test
+    @DisplayName("Umlaute und Satzzeichen werden zu Bindestrichen")
+    void kennungOhneSonderzeichen() {
+        assertEquals("nav-rückbildungskurs-nach-geburten",
+                Hauptfenster.kennung("Rückbildungskurs nach Geburten, Einzelabrechnung"
+                        .replace(", Einzelabrechnung", "")));
+        assertEquals("nav-abrechnung", Hauptfenster.kennung("Abrechnung"));
+    }
+
     private static Hauptfenster neuesFenster() {
         return new Hauptfenster(new Benachrichtigungen().bereich());
+    }
+
+    private static Label statuszeile(Hauptfenster fenster) {
+        Label zeile = (Label) fenster.wurzel().lookup("#" + Hauptfenster.ID_STATUS);
+        assertNotNull(zeile, "Keine Statuszeile im Rahmen");
+        return zeile;
+    }
+
+    private static Button infozeichen(Hauptfenster fenster) {
+        Button zeichen = (Button) fenster.wurzel().lookup("#" + Hauptfenster.ID_STATUS_INFO);
+        assertNotNull(zeichen, "Kein Info-Zeichen neben der Statuszeile");
+        return zeichen;
     }
 
     private static Label ueberschrift(Hauptfenster fenster) {
@@ -156,7 +256,7 @@ class HauptfensterTest {
     private static ToggleButton navigationseintrag(Hauptfenster fenster, String beschriftung) {
         Region wurzel = (Region) fenster.wurzel();
         ToggleButton eintrag = (ToggleButton) wurzel.lookup(
-                "#" + Hauptfenster.ID_NAVIGATION + beschriftung.toLowerCase(java.util.Locale.GERMAN));
+                "#" + Hauptfenster.kennung(beschriftung));
         assertNotNull(eintrag, "Kein Navigationseintrag " + beschriftung);
         return eintrag;
     }

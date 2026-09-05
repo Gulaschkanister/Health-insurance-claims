@@ -18,7 +18,7 @@ import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
 /**
@@ -151,36 +151,66 @@ class FeldbauTest {
             });
         }
 
+        /**
+         * Beanstandet wird beim <em>Verlassen</em> des Feldes.
+         *
+         * <p>Nicht beim Tippen: wer eine neunstellige Zahl eingibt, haette
+         * sonst nach jeder Ziffer eine rote Zeile unter sich, weil acht von
+         * neun Zwischenstaenden falsch sind. Erst wenn etwas beanstandet
+         * <em>wurde</em>, laeuft die Pruefung beim Tippen mit - damit die
+         * Meldung verschwindet, sobald es stimmt.</p>
+         *
+         * <p>Bis zum 05.09.2026 war das IK-Feld ein Zaehler, und dessen
+         * {@code valueProperty} loeste sofort aus. Seit die Zahlenfelder
+         * Textfelder sind (Simons Einwand gegen die Pfeilchen), gilt hier
+         * dieselbe Regel wie fuer jedes andere Textfeld.</p>
+         */
         @Test
-        @DisplayName("Eine falsche Zahl wird sofort beanstandet und das Feld gekennzeichnet")
-        void beanstandungErscheint() {
+        @DisplayName("Waehrend des Tippens wird noch nicht beanstandet")
+        void stillWaehrendDesTippens() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
-                @SuppressWarnings("unchecked")
-                Spinner<Integer> zaehler = (Spinner<Integer>) feldbau.bedienelement(feld);
 
-                zaehler.getValueFactory().setValue(108310401);
+                ((TextField) feldbau.bedienelement(feld)).setText("10831040");
 
-                Label zeile = beanstandungszeile(feld);
-                assertTrue(zeile.isVisible(), "Die Beanstandung muss zu sehen sein");
-                assertEquals(texte.get("msg.invalidIk"), zeile.getText());
-                assertTrue(zaehler.getStyleClass().contains(Feldbau.STIL_FEHLERHAFT));
+                assertFalse(beanstandungszeile(feld).isVisible(),
+                        "Acht von neun Zwischenstaenden einer IK-Eingabe sind falsch");
             });
         }
 
         @Test
-        @DisplayName("Wird die Zahl berichtigt, verschwindet die Beanstandung wieder")
+        @DisplayName("Auf Abruf erscheint die Beanstandung und das Feld wird gekennzeichnet")
+        void beanstandungErscheint() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
+                TextField eingabe = (TextField) feldbau.bedienelement(feld);
+                eingabe.setText("108310401");
+
+                Optional<String> befund = feldbau.beanstandung(feld);
+
+                assertEquals(Optional.of(texte.get("msg.invalidIk")), befund);
+                Label zeile = beanstandungszeile(feld);
+                assertTrue(zeile.isVisible(), "Die Beanstandung muss auch zu sehen sein");
+                assertEquals(texte.get("msg.invalidIk"), zeile.getText());
+                assertTrue(eingabe.getStyleClass().contains(Feldbau.STIL_FEHLERHAFT));
+            });
+        }
+
+        @Test
+        @DisplayName("Wird das IK berichtigt, verschwindet die Beanstandung noch beim Tippen")
         void beanstandungVerschwindet() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Node feld = feldbau.erzeugeFeld("kassenIk", beschreibung("kassenIk"));
-                @SuppressWarnings("unchecked")
-                Spinner<Integer> zaehler = (Spinner<Integer>) feldbau.bedienelement(feld);
-                zaehler.getValueFactory().setValue(108310401);
+                TextField eingabe = (TextField) feldbau.bedienelement(feld);
+                eingabe.setText("108310401");
+                feldbau.beanstandung(feld);
+                assertTrue(beanstandungszeile(feld).isVisible());
 
-                zaehler.getValueFactory().setValue(Integer.parseInt(GUELTIGES_IK));
+                eingabe.setText(GUELTIGES_IK);
 
-                assertFalse(beanstandungszeile(feld).isVisible());
-                assertFalse(zaehler.getStyleClass().contains(Feldbau.STIL_FEHLERHAFT));
+                assertFalse(beanstandungszeile(feld).isVisible(),
+                        "Was einmal beanstandet wurde, wird beim Tippen nachgeprueft");
+                assertFalse(eingabe.getStyleClass().contains(Feldbau.STIL_FEHLERHAFT));
             });
         }
     }

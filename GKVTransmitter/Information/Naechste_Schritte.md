@@ -20,7 +20,7 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **296 Tests**, davon 144 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **307 Tests**, davon 155 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
 **Der lokale Stand ist 21 Commits vor `origin`.** Vor dem nächsten Umbau einmal
@@ -520,12 +520,21 @@ das Beste, was geht.
 Simons Sammlung vom 05.09.2026. Einzeln klein, zusammen der Unterschied zwischen
 „läuft" und „fertig".
 
-1. **Die Bildlaufleisten sehen aus wie von woanders.** `gkv.css` regelt
-   `.scroll-pane` mit zwei Zeilen (durchsichtiger Hintergrund und Rahmen) und
-   die Leiste selbst **gar nicht** — `.scroll-bar`, `.thumb`, `.track` und die
-   Pfeilknöpfe stehen unberührt auf dem JavaFX-Standard und passen zu nichts.
-   Zu tun: mit den Farbnamen aus dem Stylesheet gestalten, schmaler, ohne
-   Pfeilknöpfe.
+**Stand:** 1, 3, 4 und 6 sind erledigt (05.09.2026); 2 und 5 stehen noch offen.
+Wie es aussieht, steht unter „Die Vorschau" weiter unten — **jeder dieser Punkte
+wurde am gezeichneten Bild geprüft, nicht am Quelltext.**
+
+1. ~~Die Bildlaufleisten sehen aus wie von woanders.~~ **Erledigt.** `gkv.css`
+   regelte `.scroll-pane` mit zwei Zeilen und die Leiste selbst gar nicht; jetzt
+   sind `.scroll-bar`, `.thumb` und `.track` gestaltet, die Pfeilknöpfe sind auf
+   Null gesetzt (nicht nur unsichtbar — sonst blieben zwölf leere Pixel je
+   Ende), und der Griff färbt sich erst beim Überfahren.
+
+   **Nicht am Bild bestätigt.** Die Vorschau bekommt die Leiste nicht zu
+   Gesicht: ein Schnappschuss nimmt die Größe der Szene, und die ändert sich
+   nicht, wenn man dem Fenster nachträglich eine andere Höhe gibt, ohne es zu
+   zeigen. Der Vermerk steht in `Vorschau.java`. **Bei der Retrospektive einmal
+   das Fenster klein ziehen und hinsehen.**
 
 2. **Die Kopfzeile des Fensters gestalten.** Die Titelleiste ist heute die von
    Windows. Wer sie selbst zeichnen will, braucht `StageStyle.UNDECORATED` und
@@ -535,20 +544,40 @@ Simons Sammlung vom 05.09.2026. Einzeln klein, zusammen der Unterschied zwischen
    Alternative ist, die Kopfzeile *innerhalb* der Anwendung (`Hauptfenster`)
    aufzuwerten und die Titelleiste zu lassen.
 
-3. **Ein Programmsymbol fehlt vollständig.** Nachgesehen: kein
-   `stage.getIcons()`, keine Bilddatei unter `resources/`, kein `--icon` in der
-   `jpackage`-Konfiguration. In der Taskleiste steht deshalb das
-   Java-Standardsymbol. Zu tun: ein `.png` für `stage.getIcons()` (mehrere
-   Größen, 16/32/48/256) **und** ein `.ico` für `jpackage` — beides wird
-   gebraucht, das eine im laufenden Fenster, das andere am Paket.
+3. ~~Ein Programmsymbol fehlt vollständig.~~ **Erledigt.** Sieben PNG von 16
+   bis 256 Pixel unter `resources/symbol/`, dazu eine `symbol.ico` für
+   `jpackage` (`--icon` steht in `gkv-ui/pom.xml`). `Programmsymbol.alle()`
+   hängt sie ans Fenster; `ProgrammsymbolTest` hält fest, dass sie mitkommen
+   und die versprochene Kantenlänge haben.
 
-4. **Lange Texte werden zu `xxxxx…` gekürzt.** JavaFX kürzt Beschriftungen
-   voreingestellt mit Auslassungspunkten. Der auffälligste Fall ist die
-   Statuszeile (Punkt 6) — dort steht der längste Text im Programm. Zu tun:
-   dort, wo Text vollständig lesbar sein muss, `setWrapText(true)` oder ein
-   Tooltip mit dem ganzen Text; wo gekürzt wird, `OverrunStyle.LEADING_ELLIPSIS`
-   erwägen, wenn das Ende aussagekräftiger ist als der Anfang. **Nicht überall
-   umbrechen** — in Listenzeilen zerstörte das die Ausrichtung.
+   **Sie sind gezeichnet, nicht gefunden**: `SymbolErzeugen` unter
+   `src/test/java` erzeugt sie mit denselben Farben wie `gkv.css`. Wer das
+   Symbol ändern will, ändert dort und lässt es neu laufen.
+
+   Der erste Entwurf — Haken auf einem Blatt mit Zeilen — sah bei 128 Pixel gut
+   aus und war bei 16 ein grauer Fleck. Ein Symbol muss in der Taskleiste
+   lesbar sein, nicht in der Vergrößerung: **ein** Zeichen und sonst nichts. Die
+   Andeutung eines Belegs erscheint erst ab 48 Pixel, hinter dem Haken.
+
+4. ~~Lange Texte werden zu `xxxxx…` gekürzt.~~ **Erledigt**, und es war mehr,
+   als von außen zu sehen war. Gefunden hat es die Vorschau, nicht ein Test:
+
+   | Wo | Was dastand | Was jetzt geschieht |
+   |---|---|---|
+   | Blaupausenliste | `Bearbei…` und `Lösc…` | Schaltflächen schrumpfen nicht mehr |
+   | Blaupausenliste | `Preis je Ter…`, `05.09.2…` | jede Spalte hält ihre Breite |
+   | Blaupausenliste | `Rückbildungskurs nach Geburten, Einzelabrechn…` | nur noch der Kursname |
+   | Seitenleiste | `Geburtsvorbereitungsk…` | Kursname, voller Name als Kurzhinweis, Umbruch statt Kürzung |
+   | Statuszeile | die ganze Dateiliste | siehe Punkt 6 |
+
+   **Eine abgeschnittene Schaltfläche ist kein Schönheitsfehler.** „Lösc…"
+   neben „Bearbei…" ist ein Bedienfehler in Wartestellung: die beiden sind auf
+   einen Blick nicht mehr zu unterscheiden, und eine davon löscht.
+
+   Die Ursache lag in `Listenbau`: nur die erste Spalte hatte eine Vorgabe.
+   Wurde die Summe aller Spalten breiter als die Liste, schrumpften **alle
+   zugleich** — bis hin zu den Schaltflächen. Jetzt bekommt die erste Spalte den
+   freien Platz, alle anderen behalten ihre bevorzugte Breite.
 
 5. **Erklärungen hinter ein Info-Zeichen statt unter jedes Feld.** Simons
    Vorschlag. Dafür spricht viel: die Formulare sind lang, und die Erklärung
@@ -560,21 +589,68 @@ Simons Sammlung vom 05.09.2026. Einzeln klein, zusammen der Unterschied zwischen
    Beanstandung unter dem Feld bleibt in jedem Fall sichtbar; sie ist keine
    Erklärung, sondern eine Antwort.
 
-6. **Die Statuszeile zeigt Dateinamen.** Sie liest heute:
+6. ~~Die Statuszeile zeigt Dateinamen.~~ **Erledigt.** Dort stand:
 
    ```
    GKVTransmitter geladen - Profile: 2 (SLGA, SLLA) | Invoices: 2
    (antenatal_class_single.json [SLGA, SLLA], postnatal_class_single.json [SLGA, SLLA])
    ```
 
-   Der Kommentar an der Stelle in `App` nennt sie selbst „sichtbare Debug-Hilfe
-   im UI" — sie wurde nie ersetzt. Mit der zweiten Vorlage ist sie noch länger
-   geworden und wird jetzt gekürzt (Punkt 4). Dazu steht „Invoices" und
-   „Profile" englisch in einer sonst deutschen Oberfläche.
+   Jetzt steht dort „**2 Vorlagen geladen**" und daneben ein Info-Zeichen, das
+   die **Anzeigenamen** in der Meldungsecke zeigt. Ohne Vorlagen verschwindet
+   das Zeichen — ein Zeichen, hinter dem nichts liegt, ist eine Falle.
 
-   Zu tun: „**2 Vorlagen geladen**", und die Namen — die **Anzeigenamen**, nicht
-   die Dateinamen — hinter ein Info-Zeichen. Der Dateiname interessiert
-   niemanden, der abrechnet.
+   Gebaut wird der Text jetzt in `View`, nicht mehr in `App`: er gehört dorthin,
+   wo auch die übrigen Texte liegen. Drei Tests in `HauptfensterTest`.
+
+   Beim Nachsehen am Bild fiel auf, dass das Zeichen ein **grauer Fleck ohne
+   erkennbares i** war. Die Ursache ist lehrreich: `.info-zeichen` stand im
+   Stylesheet **vor** `.button`, und JavaFX entscheidet bei gleicher Spezifität
+   nach der Reihenfolge — die spätere Regel gewinnt. Aus dem Kreis wurde ein
+   abgerundetes Viereck, und das Innenmaß `8px 16px` quetschte das i in einem
+   17 Pixel breiten Knopf auf null. Der Block steht jetzt nach `.button`, mit
+   einem Vermerk, dass er dort bleiben muss.
+
+#### Die Vorschau — und was sie am ersten Tag gefunden hat
+
+`Vorschau` unter `gkv-ui/src/test/java/.../presentation/` zeichnet die
+Oberfläche in PNG-Dateien, ohne ein Fenster zu öffnen. **Kein Test:** Tests
+sagen, ob etwas *funktioniert*; ob es *aussieht* wie gedacht, sagt kein Test.
+
+```bash
+mvn -q -pl gkv-ui exec:java -Dexec.classpathScope=test \
+    -Dexec.mainClass=de.gkvtransmitter.presentation.Vorschau \
+    -Dexec.args="target/vorschau"
+```
+
+Am ersten Tag fand sie vier Dinge, von denen keines in einem Test stand:
+
+1. Die abgeschnittenen Schaltflächen (Punkt 4).
+2. Das unsichtbare Info-Zeichen (Punkt 6).
+3. **Die Felder im Personenformular standen in willkürlicher Reihenfolge**:
+   „Land, IK, Straße, Geburtsdatum, PLZ" neben „Vorname, Hausnummer,
+   Kassen-IK, Nachname" — Vor- und Nachname durch zwei fremde Felder getrennt.
+   `person-tags.json` war immer richtig sortiert; `TagConfigLoader` las sie in
+   eine **`HashMap`**. Jetzt `LinkedHashMap`.
+4. **PLZ und IK waren immer noch Zähler mit Pfeilchen** und einer
+   vorbelegten `0`. Simons Einwand dagegen war im September behoben worden — aber
+   nur für das Blaupausenformular. Dort steht die Höchstlänge in den
+   Segmentdefinitionen, und `Feldbau` macht aus allem über zwei Stellen ein
+   Textfeld. `person-tags.json` führte für `plz`, `ik` und `kassenIk`
+   **gar keine** Höchstlänge, also blieb `grenze = 0`, und daraus wurde ein
+   Zähler. Jetzt stehen dort 5 beziehungsweise 9 — das nimmt die Pfeilchen weg
+   *und* begrenzt die Eingabe.
+
+**Merksatz daraus:** eine Regel, die von einer Angabe in einer Datei abhängt,
+gilt nur dort, wo die Angabe auch gepflegt ist. Wer `Feldbau` ändert, muss
+**beide** Quellen ansehen — `segments/*.json` und `tags/person-tags.json`.
+
+Beim Nachziehen der Tests kam noch ein echter Fehler heraus: `Feldbau` hatte die
+Anzeige der Beanstandung **zweimal** — einmal für den Fokuswechsel, einmal für
+den Abruf beim Speichern. Nur die erste merkte sich, dass beanstandet wurde. Wer
+also auf Speichern drückte, eine Beanstandung bekam und das Feld berichtigte,
+**sah die rote Zeile stehenbleiben**, bis er das Feld verließ. Jetzt gibt es die
+Logik einmal.
 
 ### H. Ein Bedienwerkzeug für die Entwicklung
 
@@ -712,8 +788,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 296 Tests
-mvn clean test -pl gkv-ui            # nur die 144 Oberflächentests
+mvn clean test                       # alle 307 Tests
+mvn clean test -pl gkv-ui            # nur die 155 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

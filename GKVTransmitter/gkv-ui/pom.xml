@@ -137,6 +137,18 @@
                                         <argument>GKVTransmitter</argument>
                                         <argument>--description</argument>
                                         <argument>Abrechnung mit gesetzlichen Krankenkassen</argument>
+                                        <!--
+                                            Windows verlangt .ico; die PNG aus
+                                            demselben Verzeichnis nimmt zur
+                                            Laufzeit Programmsymbol fuer das
+                                            Fenster. Beides wird gebraucht:
+                                            ohne diese Angabe traegt das
+                                            ausgelieferte Programm das
+                                            Java-Standardsymbol, auch wenn das
+                                            Fenster selbst ein eigenes hat.
+                                        -->
+                                        <argument>--icon</argument>
+                                        <argument>${project.basedir}/src/main/resources/symbol/symbol.ico</argument>
                                         <argument>--input</argument>
                                         <argument>${paket.verzeichnis}/lib</argument>
                                         <argument>--main-jar</argument>

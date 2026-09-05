@@ -61,15 +61,30 @@
   },
   "plz": {
     "inputOption": "NUMBER",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "5"
+      }
+    ]
   },
   "ik": {
     "inputOption": "NUMBER",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "9"
+      }
+    ]
   },
   "kassenIk": {
     "inputOption": "NUMBER",
-    "modifiers": []
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "9"
+      }
+    ]
   },
   "birthDate": {
     "inputOption": "DATE",

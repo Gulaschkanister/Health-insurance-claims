@@ -30,7 +30,13 @@ public final class TagConfigLoader {
      * @return Map<String, TagList> with loaded configurations
      */
     public static Map<String, TagList> loadTagConfig(String resourcePath) {
-        Map<String, TagList> tagMap = new java.util.HashMap<>();
+        // LinkedHashMap, nicht HashMap: die Reihenfolge in der Datei ist die
+        // Reihenfolge im Formular. Mit einer HashMap stand im Personenformular
+        // "Land, IK, Strasse, Geburtsdatum, PLZ" neben "Vorname, Hausnummer,
+        // Kassen-IK, Nachname" - Vor- und Nachname durch zwei fremde Felder
+        // getrennt. Die Datei war immer richtig sortiert; nur las sie niemand
+        // in der Reihenfolge.
+        Map<String, TagList> tagMap = new java.util.LinkedHashMap<>();
         try (InputStream inputStream = TagConfigLoader.class.getResourceAsStream(resourcePath)) {
             if (inputStream == null) {
                 throw new IllegalArgumentException("Resource not found: " + resourcePath);

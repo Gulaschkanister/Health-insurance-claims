@@ -1,9 +1,7 @@
 package de.gkvtransmitter;
 
-import java.util.stream.Collectors;
 
 import de.gkvtransmitter.application.AbrechnungService;
-import de.gkvtransmitter.model.segment.SegmentInfo;
 import de.gkvtransmitter.presentation.Controller;
 import de.gkvtransmitter.presentation.View;
 import javafx.application.Application;
@@ -16,9 +14,9 @@ import javafx.stage.Stage;
 /**
  * Einstiegspunkt der JavaFX-Anwendung.
  *
- * Initialisiert den fachlichen Controller, berechnet einen sichtbaren
- * Lade-Status aus den geladenen Profilen/Rechnungen und zeigt diesen in der
- * Hauptszene an.
+ * Initialisiert den fachlichen Controller und zeigt die Hauptszene. Der
+ * Ladestatus entsteht seit dem 05.09.2026 in der View, nicht mehr hier -
+ * er gehoert dorthin, wo auch die Texte liegen.
  */
 public class App extends Application {
     // Ueber diese Referenz bleibt der initialisierte Fachkontext waehrend der
@@ -37,38 +35,14 @@ public class App extends Application {
             controller = new Controller();
             view = new View(controller, new AbrechnungService());
 
-            int loadedProfiles = controller.getGlobalDefinitions().getProfileCollection().size();
-            String loadedTypes = controller.getGlobalDefinitions().getProfileCollection().keySet().stream()
-                    .map(Enum::name)
-                    .sorted()
-                    .collect(Collectors.joining(", "));
-
-            int loadedInvoices = controller.getGlobalDefinitions().getInvoiceTemplateCollection().size();
-            String loadedInvoiceFiles = controller.getGlobalDefinitions().getInvoiceTemplateCollection().values()
-                    .stream()
-                    .map(invoice -> invoice.getSourceName() + " ["
-                            + String.join(", ",
-                                    invoice.getSegments().stream()
-                                            .map(SegmentInfo::getMessageType)
-                                            .filter(java.util.Objects::nonNull)
-                                            .map(Enum::name)
-                                            .distinct()
-                                            .toList())
-                            + "]")
-                    .sorted()
-                    .collect(Collectors.joining(", "));
-
-            // Sichtbare Debug-Hilfe im UI: Profile und echte Rechnungsdateien getrennt.
-            String profileStatus = loadedProfiles > 0
-                    ? "Profile: " + loadedProfiles + " (" + loadedTypes + ")"
-                    : "Profile: 0";
-            String invoiceStatus = loadedInvoices > 0
-                    ? "Invoices: " + loadedInvoices + " (" + loadedInvoiceFiles + ")"
-                    : "Invoices: 0";
-            String statusText = "GKVTransmitter geladen - " + profileStatus + " | " + invoiceStatus;
-
-            Scene scene = view.createMainScene(statusText, 900, 600);
-            stage.setTitle("GKVTransmitter");
+            // Der Ladestatus wird nicht mehr hier zusammengebaut. Bis zum
+            // 05.09.2026 entstand an dieser Stelle eine Aufzaehlung aller
+            // JSON-Dateinamen samt Nachrichtentypen - der laengste Text im
+            // Programm, der in der Statuszeile abgeschnitten wurde. Er gehoert
+            // ohnehin dorthin, wo auch die Texte liegen: in die View.
+            Scene scene = view.createMainScene(900, 600);
+            stage.setTitle(View.PROGRAMMNAME);
+            stage.getIcons().addAll(Programmsymbol.alle());
             stage.setScene(scene);
             stage.show();
         } catch (RuntimeException e) {

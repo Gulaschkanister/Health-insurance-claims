@@ -74,6 +74,9 @@ public class View {
     /** Das Stylesheet der Anwendung. Ohne es sieht alles nach JavaFX-Vorgabe aus. */
     static final String STYLESHEET = "/style/gkv.css";
 
+    /** Der Name, unter dem die Anwendung auftritt: Fenstertitel und Seitenleiste. */
+    public static final String PROGRAMMNAME = "GKVTransmitter";
+
     /**
      * Erstellt die Hauptszene.
      *
@@ -81,20 +84,44 @@ public class View {
      * Statuszeile, darueber die Meldungsecke. Sie liegt bewusst <em>ueber</em>
      * der Maske statt darin - so kann eine Meldung erscheinen, ohne dass sich
      * die Maske darunter verschiebt.</p>
-     *
-     * @param statusText was in der Statuszeile steht. Er wurde bisher
-     *        uebergeben und dann nicht verwendet; die Zeile gab es gar nicht.
      */
-    public Scene createMainScene(String statusText, double width, double height) {
+    public Scene createMainScene(double width, double height) {
         baueNavigation();
-        hauptfenster.setzeMarke("GKVTransmitter", messages.get("app.subtitle"));
-        hauptfenster.setzeStatus(statusText);
+        hauptfenster.setzeMarke(PROGRAMMNAME, messages.get("app.subtitle"));
+        setzeLadestatus();
         hauptfenster.oeffneErstenBereich();
 
         Scene scene = componentFactory.createScene(hauptfenster.wurzel(), width, height);
         scene.getStylesheets().add(getClass().getResource(STYLESHEET).toExternalForm());
         Platform.runLater(this::seedIfEmpty);
         return scene;
+    }
+
+    /**
+     * Schreibt in die Statuszeile, wie viele Vorlagen geladen sind.
+     *
+     * <p>Dort stand bis zum 05.09.2026 eine Aufzaehlung der JSON-Dateinamen
+     * samt Nachrichtentypen, gebaut in {@code App}, deren eigener Kommentar sie
+     * "sichtbare Debug-Hilfe im UI" nannte. Sie war der laengste Text im
+     * Programm und wurde entsprechend abgeschnitten. Wer abrechnet, hat mit
+     * Dateinamen nichts zu schaffen.</p>
+     *
+     * <p>Die Namen sind weiterhin zu erfahren - ueber das Info-Zeichen daneben,
+     * und zwar die <b>Anzeigenamen</b> der Vorlagen, nicht die der Dateien.</p>
+     */
+    private void setzeLadestatus() {
+        List<String> vorlagennamen = List.copyOf(
+                controller.getGlobalDefinitions().getInvoiceTemplateCollection().keySet());
+
+        hauptfenster.setzeStatus(vorlagennamen.isEmpty()
+                ? messages.get("status.noTemplates")
+                : String.format(messages.get("status.templatesLoaded"), vorlagennamen.size()));
+
+        // Ohne Vorlagen gibt es nichts aufzuzaehlen; dann verschwindet das
+        // Zeichen, statt eine leere Liste anzubieten.
+        hauptfenster.setzeStatusInfo(vorlagennamen.isEmpty() ? null
+                : () -> meldungen.hinweis(messages.get("status.templateList")
+                        + "\n· " + String.join("\n· ", vorlagennamen)));
     }
 
     /**
@@ -128,12 +155,28 @@ public class View {
         if (!vorlagen.isEmpty()) {
             hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.templates"));
             for (String name : vorlagen) {
-                hauptfenster.ergaenzeBereich(name, () -> blaupausenMaske().neu(name));
+                hauptfenster.ergaenzeBereich(kursname(name), name, () -> blaupausenMaske().neu(name));
             }
         }
 
         hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.dev"));
         hauptfenster.ergaenzeBereich(messages.get("nav.testdata"), this::seedTestData);
+    }
+
+    /**
+     * Der Kursname einer Vorlage, ohne den Zusatz zur Abrechnungsart.
+     *
+     * <p>Aus "Geburtsvorbereitungskurs, Einzelabrechnung" wird
+     * "Geburtsvorbereitungskurs". In der schmalen Seitenleiste kuerzte JavaFX
+     * den vollen Namen sonst zu "Geburtsvorbereitungsk..." - und bei zwei
+     * Vorlagen ist eine abgeschnittene Beschriftung nicht nur unschoen,
+     * sondern moeglicherweise mehrdeutig. Der volle Name bleibt als
+     * Kurzhinweis daran haengen und bleibt auch der Schluessel, unter dem eine
+     * Blaupause ihre Vorlage findet.</p>
+     */
+    static String kursname(String vorlagenname) {
+        int komma = vorlagenname.indexOf(',');
+        return komma < 0 ? vorlagenname : vorlagenname.substring(0, komma).trim();
     }
 
     /** Systemeigenschaft, mit der sich das Anlegen von Testdaten einschalten laesst. */

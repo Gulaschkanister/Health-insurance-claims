@@ -43,8 +43,8 @@
 
 .seitenleiste {
     -fx-background-color: -farbe-leiste;
-    -fx-min-width: 200px;
-    -fx-pref-width: 200px;
+    -fx-min-width: 224px;
+    -fx-pref-width: 224px;
     -fx-padding: 18px 12px 18px 12px;
     -fx-spacing: 4px;
 }
@@ -120,7 +120,10 @@
     -fx-background-color: -farbe-flaeche;
     -fx-border-color: -farbe-linie transparent transparent transparent;
     -fx-border-width: 1px 0 0 0;
-    -fx-padding: 7px 24px 7px 24px;
+    -fx-padding: 5px 24px 5px 24px;
+}
+
+.statuszeile-text {
     -fx-text-fill: -farbe-text-still;
     -fx-font-size: 11.5px;
 }
@@ -231,6 +234,49 @@
     -fx-background-color: #FBEDEC;
 }
 
+/*
+ * Das Info-Zeichen.
+ *
+ * Ein Kreis mit einem i, so gross wie die Schrift daneben. Es traegt die
+ * Stilklasse .button, muss also alles zuruecknehmen, was eine Schaltflaeche
+ * sonst ausmacht - sonst saesse in der Statuszeile ein Kasten mit Rahmen.
+ *
+ * DIESER BLOCK MUSS NACH .button STEHEN. Er stand zuerst weiter oben, bei der
+ * Statuszeile, und war wirkungslos: JavaFX entscheidet bei gleicher
+ * Spezifitaet nach der Reihenfolge im Stylesheet, und die spaetere Regel
+ * gewinnt. Aus dem Kreis wurde so ein abgerundetes Viereck (Radius 6px aus
+ * .button), und das i verschwand ganz - das Innenmass 8px 16px quetschte es
+ * in einem 17 Pixel breiten Knopf auf null. Zu sehen war ein grauer Fleck
+ * ohne erkennbaren Zweck.
+ */
+.info-zeichen {
+    -fx-background-color: -farbe-text-still;
+    -fx-background-radius: 999px;
+    -fx-text-fill: -farbe-text-hell;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-min-width: 17px;
+    -fx-min-height: 17px;
+    -fx-pref-width: 17px;
+    -fx-pref-height: 17px;
+    /*
+     * Ohne diese beiden Zeilen sass das i nicht in der Mitte: eine
+     * Schaltflaeche bringt eine Grundlinienausrichtung mit, und die schob das
+     * Zeichen nach unten aus dem Kreis heraus. Im ersten Entwurf war es
+     * ausserdem grau auf hellgrau und damit gar nicht zu sehen.
+     */
+    -fx-alignment: center;
+    -fx-content-display: center;
+    -fx-padding: 0 0 1px 0;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+}
+
+.info-zeichen:hover {
+    -fx-background-color: -farbe-akzent;
+    -fx-text-fill: -farbe-text-hell;
+}
+
 /* --------------------------------------------------- Benachrichtigungen */
 
 /*
@@ -311,6 +357,76 @@
 .scroll-pane {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
+}
+
+/*
+ * Bildlaufleisten.
+ *
+ * Sie standen bis zum 05.09.2026 unberuehrt auf der JavaFX-Vorgabe und waren
+ * damit das einzige Bedienelement, das sichtbar von woanders stammte: breit,
+ * grau, mit zwei Pfeilknoepfen an den Enden. Die Pfeile sind hier weg - sie
+ * verschieben um drei Pixel, niemand benutzt sie, und sie machen die Leiste
+ * doppelt so auffaellig wie noetig.
+ *
+ * Der Griff bekommt seine Farbe erst beim Ueberfahren. Eine Bildlaufleiste
+ * soll zeigen, wo man ist, nicht um Aufmerksamkeit werben.
+ */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 2px;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 11px;
+}
+
+.scroll-bar:horizontal {
+    -fx-pref-height: 11px;
+}
+
+.scroll-bar .track,
+.scroll-bar .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: -farbe-linie;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4px;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: derive(-farbe-text-still, 40%);
+}
+
+.scroll-bar .thumb:pressed {
+    -fx-background-color: -farbe-text-still;
+}
+
+/*
+ * Die Pfeilknoepfe werden nicht nur unsichtbar gemacht, sondern auf null
+ * Groesse gesetzt: sonst blieben an beiden Enden zwoelf leere Pixel stehen,
+ * und die Leiste waere kuerzer als der Bereich, den sie bedient.
+ */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-shape: " ";
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
+/* Die Ecke zwischen waagerechter und senkrechter Leiste. */
+.scroll-pane > .corner {
+    -fx-background-color: transparent;
 }
 
 .check-box {

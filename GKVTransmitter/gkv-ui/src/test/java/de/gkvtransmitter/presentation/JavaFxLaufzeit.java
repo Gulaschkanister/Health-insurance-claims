@@ -23,7 +23,7 @@ import javafx.application.Platform;
  * Laufzeit dennoch eine Anzeige. Unter Linux leistet das {@code xvfb-run};
  * siehe {@code .github/workflows/build.yml}.</p>
  */
-final class JavaFxLaufzeit {
+public final class JavaFxLaufzeit {
 
     /** Wartezeit fuer einen Durchgang. Reichlich bemessen, damit ein langsamer Rechner nicht scheitert. */
     private static final long ZEITGRENZE_SEKUNDEN = 30;
@@ -34,7 +34,7 @@ final class JavaFxLaufzeit {
     }
 
     /** Faehrt die Laufzeit hoch, einmal je Testlauf. */
-    static synchronized void starten() {
+    public static synchronized void starten() {
         if (gestartet) {
             return;
         }
@@ -60,7 +60,7 @@ final class JavaFxLaufzeit {
      * verschwaende eine fehlgeschlagene Zusicherung im Nichts und der Test
      * gaelte als bestanden.</p>
      */
-    static void aufFxFaden(Runnable arbeit) {
+    public static void aufFxFaden(Runnable arbeit) {
         starten();
         AtomicReference<Throwable> fehler = new AtomicReference<>();
         CountDownLatch fertig = new CountDownLatch(1);

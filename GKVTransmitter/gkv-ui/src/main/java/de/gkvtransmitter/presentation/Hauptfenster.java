@@ -7,11 +7,14 @@ import java.util.Objects;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -37,6 +40,10 @@ public class Hauptfenster implements Maskenrahmen {
     public static final String ID_TITEL = "kopf-titel";
     /** Vorsatz der Kennung eines Navigationseintrags, gefolgt von seinem Namen. */
     public static final String ID_NAVIGATION = "nav-";
+    /** Kennung der Statuszeile. */
+    public static final String ID_STATUS = "statuszeile";
+    /** Kennung des Info-Zeichens neben der Statuszeile. */
+    public static final String ID_STATUS_INFO = "statuszeile-info";
 
     private final BorderPane geruest = new BorderPane();
     private final VBox seitenleiste = new VBox();
@@ -44,6 +51,9 @@ public class Hauptfenster implements Maskenrahmen {
     private final ScrollPane inhaltsbereich = new ScrollPane();
     private final Label ueberschrift = new Label();
     private final Label statuszeile = new Label();
+    /** Das Info-Zeichen rechts neben der Statuszeile, siehe {@link #setzeStatusInfo}. */
+    private final Button statusinfo = new Button("i");
+    private final HBox statusbereich = new HBox(8);
     private final StackPane wurzel;
 
     /** Die Bereiche in der Reihenfolge ihrer Aufnahme. */
@@ -67,8 +77,18 @@ public class Hauptfenster implements Maskenrahmen {
         inhaltsbereich.getStyleClass().add("inhalt");
         inhaltsbereich.setFitToWidth(true);
 
-        statuszeile.getStyleClass().add("statuszeile");
-        statuszeile.setMaxWidth(Double.MAX_VALUE);
+        statuszeile.setId(ID_STATUS);
+        statuszeile.getStyleClass().add("statuszeile-text");
+
+        statusinfo.setId(ID_STATUS_INFO);
+        statusinfo.getStyleClass().add("info-zeichen");
+        statusinfo.setVisible(false);
+        statusinfo.setManaged(false);
+
+        statusbereich.getStyleClass().add("statuszeile");
+        statusbereich.setMaxWidth(Double.MAX_VALUE);
+        statusbereich.setAlignment(Pos.CENTER_LEFT);
+        statusbereich.getChildren().addAll(statuszeile, statusinfo);
 
         // Die Seitenleiste reicht ueber die volle Hoehe; Kopfzeile und
         // Statuszeile gehoeren nur zur Maske daneben. Laege die Kopfzeile im
@@ -77,7 +97,7 @@ public class Hauptfenster implements Maskenrahmen {
         BorderPane inhaltsspalte = new BorderPane();
         inhaltsspalte.setTop(kopfzeile);
         inhaltsspalte.setCenter(inhaltsbereich);
-        inhaltsspalte.setBottom(statuszeile);
+        inhaltsspalte.setBottom(statusbereich);
 
         geruest.setLeft(seitenleiste);
         geruest.setCenter(inhaltsspalte);
@@ -109,12 +129,39 @@ public class Hauptfenster implements Maskenrahmen {
      * @param oeffnen was geschieht, wenn er gewaehlt wird
      */
     public void ergaenzeBereich(String beschriftung, Runnable oeffnen) {
+        ergaenzeBereich(beschriftung, null, oeffnen);
+    }
+
+    /**
+     * Ergaenzt einen Bereich mit einem ausfuehrlicheren Namen dahinter.
+     *
+     * <p>Die Seitenleiste ist schmal, und JavaFX kuerzt zu lange
+     * Beschriftungen mit Auslassungspunkten: aus der Vorlage
+     * "Geburtsvorbereitungskurs, Einzelabrechnung" wurde
+     * "Geburtsvorbereitungsk...". Bei <em>zwei</em> Vorlagen, die beide mit
+     * demselben Wortstamm beginnen koennten, ist das nicht nur haesslich,
+     * sondern mehrdeutig.</p>
+     *
+     * <p>Die Zeile traegt deshalb den kurzen Namen und den vollen als
+     * Kurzhinweis. Ein Kurzhinweis ist kein Fenster - er haelt keinen Faden an
+     * und verlangt keinen Klick.</p>
+     *
+     * @param vollerName was beim Verweilen erscheint, oder {@code null}
+     */
+    public void ergaenzeBereich(String beschriftung, String vollerName, Runnable oeffnen) {
         bereiche.put(beschriftung, oeffnen);
 
         ToggleButton eintrag = new ToggleButton(beschriftung);
-        eintrag.setId(ID_NAVIGATION + beschriftung.toLowerCase(java.util.Locale.GERMAN));
+        if (vollerName != null && !vollerName.equals(beschriftung)) {
+            eintrag.setTooltip(new Tooltip(vollerName));
+        }
+        eintrag.setId(kennung(beschriftung));
         eintrag.getStyleClass().add("nav-eintrag");
         eintrag.setMaxWidth(Double.MAX_VALUE);
+        // Umbrechen statt kuerzen. Ein Vorlagenname wie "Rueckbildungskurs nach
+        // Geburten" passt in keine vertretbar schmale Leiste; abgeschnitten
+        // ("Rueckbildungskurs nach Geb...") sagt er weniger als zweizeilig.
+        eintrag.setWrapText(true);
         eintrag.setToggleGroup(navigationsgruppe);
         // Ein erneuter Klick auf den offenen Bereich soll ihn neu laden und
         // nicht die Auswahl aufheben - sonst stuende man ohne Bereich da.
@@ -123,6 +170,27 @@ public class Hauptfenster implements Maskenrahmen {
             oeffne(beschriftung);
         });
         seitenleiste.getChildren().add(eintrag);
+    }
+
+    /**
+     * Die Kennung eines Navigationseintrags.
+     *
+     * <p>Alles, was kein Buchstabe und keine Ziffer ist, wird zum Bindestrich.
+     * Zuvor stand die Beschriftung unveraendert in der Kennung, und
+     * "Testdaten anlegen" ergab die Kennung {@code nav-testdaten anlegen} -
+     * <b>mit Leerzeichen</b>. Ein {@code lookup("#nav-testdaten anlegen")}
+     * findet die nie: der Doppelpunkt-Ausdruck liest das Leerzeichen als
+     * Trennung zwischen zwei Bedingungen und sucht nach einem Nachfahren.
+     * Aufgefallen ist es erst, als die Vorschau den Punkt anklicken wollte -
+     * die vorhandenen Tests treffen nur einwortige Bereiche.</p>
+     *
+     * <p>Fuer das Bedienwerkzeug aus Abschnitt H der Uebergabe ist das die
+     * Voraussetzung: was nicht adressierbar ist, laesst sich nicht steuern.</p>
+     */
+    static String kennung(String beschriftung) {
+        return ID_NAVIGATION + beschriftung.toLowerCase(java.util.Locale.GERMAN)
+                .replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "-")
+                .replaceAll("(^-|-$)", "");
     }
 
     /** Oeffnet den ersten aufgenommenen Bereich. Fuer den Programmstart. */
@@ -150,6 +218,28 @@ public class Hauptfenster implements Maskenrahmen {
 
     public void setzeStatus(String text) {
         statuszeile.setText(text == null ? "" : text);
+    }
+
+    /**
+     * Haengt ein Info-Zeichen an die Statuszeile.
+     *
+     * <p>Dort stand bis zum 05.09.2026 die Aufzaehlung aller geladenen
+     * JSON-Dateien samt Nachrichtentypen - der laengste Text im ganzen
+     * Programm, entsprechend abgeschnitten, und ihr eigener Kommentar nannte
+     * sie "sichtbare Debug-Hilfe im UI". Der Dateiname interessiert niemanden,
+     * der abrechnet. Die Zeile sagt jetzt, <em>wie viele</em> Vorlagen geladen
+     * sind; wer wissen will, welche, klickt hier.</p>
+     *
+     * <p>Die Einzelheiten erscheinen ueber {@code Meldungen} in der Ecke oben
+     * rechts, nicht in einem Fenster - die Anwendung oeffnet keine.</p>
+     *
+     * @param beiKlick was gezeigt wird, oder {@code null}, um das Zeichen zu
+     *        verbergen
+     */
+    public void setzeStatusInfo(Runnable beiKlick) {
+        statusinfo.setOnAction(beiKlick == null ? null : ereignis -> beiKlick.run());
+        statusinfo.setVisible(beiKlick != null);
+        statusinfo.setManaged(beiKlick != null);
     }
 
     /** Der Knoten, der in die Szene gehaengt wird. */

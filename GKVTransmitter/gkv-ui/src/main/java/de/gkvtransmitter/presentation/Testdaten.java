@@ -109,15 +109,9 @@ public final class Testdaten {
                 blaupause("Kurs Vormittag", vorlagen.get(0), "12,50"),
                 blaupause("Kurs Abend", vorlagen.get(0), "14,00")));
         for (int i = 1; i < vorlagen.size(); i++) {
-            alle.add(blaupause(kursname(vorlagen.get(i)), vorlagen.get(i), "13,25"));
+            alle.add(blaupause(View.kursname(vorlagen.get(i)), vorlagen.get(i), "13,25"));
         }
         return List.copyOf(alle);
-    }
-
-    /** Der Kursname ohne den Zusatz zur Abrechnungsart. */
-    private static String kursname(String vorlage) {
-        int komma = vorlage.indexOf(',');
-        return komma < 0 ? vorlage : vorlage.substring(0, komma);
     }
 
     private static Patient teilnehmerin(String vorname, String nachname, String strasse, String hausnummer,

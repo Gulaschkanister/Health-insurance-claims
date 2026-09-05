@@ -123,7 +123,11 @@ public class BlaupausenMaske {
                                 texte.get("label.pricePerAppointment"), texte.get("label.created"))
                         .zellen(blaupause -> List.of(
                                 text(blaupause.getName()),
-                                text(blaupause.getTemplateName()),
+                                // Der Kursname statt des vollen Vorlagennamens:
+                                // "Geburtsvorbereitungskurs, Einzelabrechnung"
+                                // sprengte die Spalte, und der Zusatz zur
+                                // Abrechnungsart ist bei allen Vorlagen gleich.
+                                View.kursname(text(blaupause.getTemplateName())),
                                 preis(blaupause),
                                 angelegt(blaupause.getCreatedAt())))
                         .kennnummer(blaupause -> String.valueOf(blaupause.getId()))

@@ -165,6 +165,15 @@ public class Listenbau<T> {
         }
     }
 
+    /**
+     * Die Schaltflaechen einer Zeile.
+     *
+     * <p>Sie duerfen <b>nicht schrumpfen</b>. Reichte der Platz nicht, kuerzte
+     * JavaFX ihre Beschriftung mit Auslassungspunkten, und in der
+     * Blaupausenliste stand tatsaechlich "Bearbei..." neben "Lösc...". Ein
+     * gekuerzter Name ist unschoen; eine gekuerzte Schaltflaeche, die
+     * unwiderruflich loescht, ist ein Bedienfehler in Wartestellung.</p>
+     */
     private HBox schaltflaechen(T eintrag) {
         HBox reihe = new HBox(6);
         reihe.setAlignment(Pos.CENTER_LEFT);
@@ -172,22 +181,42 @@ public class Listenbau<T> {
             Button schaltflaeche = bausteine.createButton(aktion.beschriftung());
             schaltflaeche.setId(kennungsvorsatz + ZEILE + kennnummer.apply(eintrag) + "-" + aktion.kennung());
             schaltflaeche.getStyleClass().add(aktion.stilklasse());
+            schaltflaeche.setMinWidth(Region.USE_PREF_SIZE);
             schaltflaeche.setOnAction(ereignis -> aktion.tun().accept(eintrag));
             reihe.getChildren().add(schaltflaeche);
         }
+        reihe.setMinWidth(Region.USE_PREF_SIZE);
         return reihe;
     }
 
+    /**
+     * Das Gitter der Liste.
+     *
+     * <p>Der freie Platz geht an die erste Spalte - dort stehen die Namen, und
+     * die sollen lesbar bleiben. Die uebrigen Spalten behalten ihre
+     * bevorzugte Breite; bis zum 05.09.2026 hatten sie <b>gar keine</b>
+     * Vorgabe, und wenn die Summe aller Spalten breiter wurde als die Liste,
+     * schrumpften sie alle zugleich - bis hin zu den Schaltflaechen.</p>
+     */
     private GridPane neuesGitter() {
         GridPane gitter = new GridPane();
         gitter.setHgap(16);
         gitter.setVgap(8);
-        // Die letzte Spalte traegt die Schaltflaechen und soll nicht mitwachsen;
-        // den freien Platz bekommt die erste, damit die Namen lesbar bleiben.
+
         ColumnConstraints erste = new ColumnConstraints();
-        erste.setHgrow(Priority.SOMETIMES);
+        erste.setHgrow(Priority.ALWAYS);
         erste.setMinWidth(160);
         gitter.getColumnConstraints().add(erste);
+
+        // Fuer jede weitere Spalte eine Vorgabe, die das Schrumpfen verbietet.
+        // Ohne sie nimmt GridPane den Platz dort weg, wo gerade etwas steht.
+        int weitere = Math.max(ueberschriften.size(), 1) + (aktionen.isEmpty() ? 0 : 1);
+        for (int spalte = 1; spalte < weitere; spalte++) {
+            ColumnConstraints vorgabe = new ColumnConstraints();
+            vorgabe.setHgrow(Priority.NEVER);
+            vorgabe.setMinWidth(Region.USE_PREF_SIZE);
+            gitter.getColumnConstraints().add(vorgabe);
+        }
         return gitter;
     }
 }

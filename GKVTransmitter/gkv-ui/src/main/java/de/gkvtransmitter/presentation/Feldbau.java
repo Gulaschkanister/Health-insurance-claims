@@ -112,9 +112,11 @@ public class Feldbau {
         });
         feld.getChildren().add(beanstandung);
 
-        ueberwache(feldname, beschreibung, bedienelement, beanstandung);
+        // Dieselbe Pruefung fuer beides: den Fokuswechsel und den Abruf beim
+        // Speichern. Es waren einmal zwei, und nur eine merkte sich, dass
+        // beanstandet wurde - siehe ueberwache.
         feld.getProperties().put(PRUEFUNG,
-                (Supplier<Optional<String>>) () -> zeigeBefund(feldname, beschreibung, bedienelement, beanstandung));
+                ueberwache(feldname, beschreibung, bedienelement, beanstandung));
         return feld;
     }
 
@@ -157,23 +159,6 @@ public class Feldbau {
             beanstandung(feld).ifPresent(befunde::add);
         }
         return befunde;
-    }
-
-    private Optional<String> zeigeBefund(String feldname, TagList beschreibung, Node bedienelement,
-            Label beanstandung) {
-        Optional<String> befund = pruefe(feldname, beschreibung, textVon(bedienelement));
-        if (befund.isEmpty()) {
-            beanstandung.setText("");
-            verbergen(beanstandung);
-            bedienelement.getStyleClass().remove(STIL_FEHLERHAFT);
-        } else {
-            beanstandung.setText(befund.get());
-            zeigen(beanstandung);
-            if (!bedienelement.getStyleClass().contains(STIL_FEHLERHAFT)) {
-                bedienelement.getStyleClass().add(STIL_FEHLERHAFT);
-            }
-        }
-        return befund;
     }
 
     /** Das Bedienelement eines Feldes, ohne Erklaerung und Beanstandung. */
@@ -281,15 +266,22 @@ public class Feldbau {
      * bei jedem Tastendruck nach, damit man beim Berichtigen sieht, wann es
      * stimmt.</p>
      */
-    private void ueberwache(String feldname, TagList beschreibung, Node bedienelement, Label beanstandung) {
+    private Supplier<Optional<String>> ueberwache(String feldname, TagList beschreibung,
+            Node bedienelement, Label beanstandung) {
         boolean[] schonBeanstandet = {false};
-        Runnable pruefen = () -> {
+        // Eine einzige Stelle, die prueft und anzeigt - und die sich merkt,
+        // dass beanstandet wurde. Zuvor gab es diese Logik zweimal: hier fuer
+        // den Fokuswechsel und noch einmal in zeigeBefund fuer den Abruf beim
+        // Speichern. Nur die erste setzte schonBeanstandet. Wer also auf
+        // Speichern drueckte, eine Beanstandung bekam und das Feld berichtigte,
+        // sah die rote Zeile stehenbleiben, bis er das Feld verliess.
+        Supplier<Optional<String>> pruefen = () -> {
             Optional<String> befund = pruefe(feldname, beschreibung, textVon(bedienelement));
             if (befund.isEmpty()) {
                 beanstandung.setText("");
                 verbergen(beanstandung);
                 bedienelement.getStyleClass().remove(STIL_FEHLERHAFT);
-                return;
+                return befund;
             }
             schonBeanstandet[0] = true;
             beanstandung.setText(befund.get());
@@ -297,11 +289,12 @@ public class Feldbau {
             if (!bedienelement.getStyleClass().contains(STIL_FEHLERHAFT)) {
                 bedienelement.getStyleClass().add(STIL_FEHLERHAFT);
             }
+            return befund;
         };
 
         bedienelement.focusedProperty().addListener((wert, hatteFokus, hatFokus) -> {
             if (!hatFokus) {
-                pruefen.run();
+                pruefen.get();
             }
         });
 
@@ -309,22 +302,23 @@ public class Feldbau {
             case TextInputControl eingabe -> eingabe.textProperty()
                     .addListener((wert, alt, neu) -> nachbessern(schonBeanstandet, pruefen));
             case Spinner<?> zaehler -> {
-                zaehler.valueProperty().addListener((wert, alt, neu) -> pruefen.run());
+                zaehler.valueProperty().addListener((wert, alt, neu) -> pruefen.get());
                 if (zaehler.getEditor() != null) {
                     zaehler.getEditor().textProperty()
                             .addListener((wert, alt, neu) -> nachbessern(schonBeanstandet, pruefen));
                 }
             }
-            case ComboBox<?> auswahl -> auswahl.valueProperty().addListener((wert, alt, neu) -> pruefen.run());
-            case DatePicker kalender -> kalender.valueProperty().addListener((wert, alt, neu) -> pruefen.run());
+            case ComboBox<?> auswahl -> auswahl.valueProperty().addListener((wert, alt, neu) -> pruefen.get());
+            case DatePicker kalender -> kalender.valueProperty().addListener((wert, alt, neu) -> pruefen.get());
             default -> { }
         }
+        return pruefen;
     }
 
     /** Waehrend des Tippens nur nachbessern, was schon beanstandet wurde. */
-    private void nachbessern(boolean[] schonBeanstandet, Runnable pruefen) {
+    private void nachbessern(boolean[] schonBeanstandet, Supplier<Optional<String>> pruefen) {
         if (schonBeanstandet[0]) {
-            pruefen.run();
+            pruefen.get();
         }
     }
 

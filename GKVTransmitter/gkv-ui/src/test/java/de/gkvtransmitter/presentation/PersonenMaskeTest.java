@@ -167,16 +167,19 @@ class PersonenMaskeTest {
         }
 
         @Test
-        @DisplayName("Ein Kassen-IK mit falscher Pruefziffer wird schon im Formular beanstandet")
+        @DisplayName("Ein Kassen-IK mit falscher Pruefziffer wird nicht gespeichert")
         void ungueltigesKassenIk() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Region formular = formular(false);
                 fuelleAus(formular);
 
                 zahl(formular, "kassenIk", 108310401);
+                speichern(formular).fire();
 
-                assertEquals(texte.get("msg.invalidIk"), beanstandung(formular, "kassenIk"),
-                        "Sonst faellt es erst beim Versand auf");
+                assertTrue(datenbank.getAllPatients().isEmpty(),
+                        "Sonst faellt es erst beim Versand auf - als Ablehnung der ganzen Lieferung");
+                assertTrue(meldungen.einzige().text().contains(texte.get("msg.invalidIk")),
+                        meldungen.einzige().text());
             });
         }
 
