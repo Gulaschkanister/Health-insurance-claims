@@ -20,7 +20,7 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **293 Tests**, davon 141 in `gkv-ui`, `BUILD SUCCESS`
+- **294 Tests**, davon 142 in `gkv-ui`, `BUILD SUCCESS`
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
 Der Branch liegt auf `origin`; die jeweils letzten Commits können noch fehlen
@@ -111,6 +111,10 @@ Auf `origin` liegen sieben `copilot/*`-Branches aus abgeschlossenen PRs sowie
 
 ## Priorisierte nächste Schritte
 
+**Das Ziel steht in Abschnitt J**: ein Stand, den Simon sich ansieht und
+ausprobiert — „fast ein fertiges Produkt". Alles Übrige läuft darauf zu. Dort
+steht auch, was dafür erledigt sein muss und was offen bleiben darf.
+
 ### A. Automatische Abrechnung — zurückgestellt, nicht vergessen
 
 Der Wunsch bleibt sinnvoll, sobald das Übrige steht. Was dafür nötig wäre:
@@ -130,7 +134,76 @@ Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
 
 ### B. Von Simon gewünscht, noch offen
 
-1. **Woher kommt das Tarifkennzeichen — und wovon hängt es ab?**
+#### Fachliche Felder: was fehlt, was überflüssig ist
+
+1. **Die Meldung zum IK ist irreführend.** Simon: „IK der Krankenkasse sagt
+   9 Ziffern, jedoch geht `123456789` nicht."
+
+   **Das Programm hat recht, die Meldung hat unrecht.** Nachgerechnet: für
+   `12345678…` lautet die richtige Prüfziffer `0`, also ist `123456780` gültig
+   und `123456789` nicht. Die Regel ist in Ordnung.
+
+   Der Fehler liegt in dem, was dasteht. Hilfetext („Neunstelliges
+   Institutionskennzeichen. Die letzte Ziffer ist die Prüfziffer.") und Meldung
+   („Die Prüfziffer stimmt nicht. Ein IK hat neun Ziffern.") sagen beide **nicht,
+   dass man sich kein IK ausdenken kann**. Wer eine plausible Zahl eintippt,
+   steht vor einer Ablehnung ohne Ausweg — es gibt keinen Weg, von neun frei
+   gewählten Ziffern zu einem gültigen IK zu kommen, außer die Prüfziffer
+   auszurechnen.
+
+   Zu tun: Meldung umschreiben („Ein IK wird von der Datenannahmestelle
+   vergeben und lässt sich nicht frei wählen; die letzte Ziffer muss zu den
+   übrigen passen"). **Zusätzlich anbieten, die richtige Prüfziffer zu nennen** —
+   `Institutionskennzeichen.berechnePruefziffer` kann das längst, es wird nur
+   nirgends angezeigt: „Zu 12345678 gehört die Prüfziffer 0." Damit wird aus
+   einer Sackgasse ein Hinweis. Gilt für beide IK-Felder.
+
+2. **Der Umsatzsteuersatz soll Vorschläge machen** (19 %, 7 %, 0), so wie es
+   `NUMBER_SUGGESTION` einmal vorsah.
+
+   Der Befund dazu ist bemerkenswert: **die Vorschlagsmechanik ist genau
+   verkehrt herum eingesetzt.** `Feldbau` macht aus `NUMBER_SUGGESTION` und
+   `CODE` ein Auswahlfeld, sobald `Vorlagen.auswahlFuer(feldname)` etwas
+   liefert — aber `View` liefert nur für `Abrechnungscode` etwas, und dort gibt
+   es genau einen Wert (siehe Punkt 3). Für den Umsatzsteuersatz, wo drei
+   Vorschläge hilfreich wären, liefert sie nichts, und `ust.json` steht ohnehin
+   auf `PERCENT` mit `maxLength: 3`, wird also zum Textfeld.
+
+   Zu tun: `auswahlFuer("Umsatzsteuersatz")` gibt `19`, `7`, `0` zurück, und das
+   Auswahlfeld wird **beschreibbar** (`ComboBox.setEditable(true)`) — ein
+   Vorschlag darf nichts ausschließen, falls ein anderer Satz gilt.
+
+3. **Der Abrechnungscode braucht kein Auswahlfeld.** Simon hat den Verdacht
+   geäußert, und er stimmt: `codes/abrechnungscodes.json` enthält **einen
+   einzigen Eintrag**, `61`. Ein Aufklappmenü mit einer Zeile ist Bedienlast
+   ohne Nutzen.
+
+   Die eigentliche Frage ist die dahinter, und die ist offen: **ist der
+   Abrechnungscode je Vorlage fest?** Wenn ja — und dafür spricht alles, was
+   hier belegt ist, denn `61` gehört zum Leistungsbereich SGS H, den beide Kurse
+   teilen — dann gehört er **gar nicht ins Formular**, sondern als
+   `internal`-Feld in die Segmentdefinition, so wie es mit Anzahl und
+   Leistungsdatum schon geschehen ist. Das wäre ein Feld weniger, das jemand
+   ausfüllen muss und falsch ausfüllen kann. Vor dem Umbau ist zu klären, ob ein
+   künftiger Leistungsbereich einen anderen Code brächte; dann bliebe er im
+   Formular, aber mit einer Liste, die diesen Namen verdient.
+
+4. **Für die Abrechnungspositionsnummer gibt es keine Liste** — Simons Frage,
+   nachgesehen: nein, im Projekt existiert keine. `codes/` enthält
+   Abrechnungscodes, Statuscodes, Nachrichtentypen, Rechnungsarten und
+   Verarbeitungskennzeichen; `Information/codes/03_leistungscodes_sgs_h.json`
+   führt die Positionsnummer nur als **Beispiel** `306050601` mit dem Vermerk
+   „Muss vertraglich/fachlich gültig sein".
+
+   Die echte Liste steht in **Anlage 3, Abschnitt 8.2**. Sie dort zu entnehmen
+   und als JSON abzulegen wäre lohnend: daraus würde ein Auswahlfeld *mit*
+   Inhalt, und aus der bloßen Formprüfung eine echte
+   `PositionsnummerRegel` — heute wird nur geprüft, dass etwas dasteht, nicht,
+   ob es zulässig ist. Ohne die Anlage ist das nicht zu machen und **nicht zu
+   raten**: eine erfundene Positionsnummer führt zur Zurückweisung der ganzen
+   Lieferung.
+
+5. **Woher kommt das Tarifkennzeichen — und wovon hängt es ab?**
    Offene Frage von Simon, die vor dem ersten echten Versand beantwortet sein
    muss.
 
@@ -160,6 +233,36 @@ Bis dahin helfen die Werkzeuge in der Abrechnungsmaske: „Alle auswählen“,
    Kasse → Tarifkennzeichen, und die Blaupause dürfte es nicht mehr fest
    führen. Solange die Frage offen ist, sollte niemand mehrere Blaupausen nur
    deshalb anlegen.
+
+   **Nachtrag, Simons Rückfrage: hängt es am Dienstleister?** Das ist die
+   richtige Frage, und sie ist plausibler als die nach der Kasse. Das
+   Kompositfeld heißt `Leistungserbringergruppe` — es beschreibt, *wer* die
+   Leistung erbracht hat, und der Vertrag wird von der Leistungserbringerin
+   geschlossen. Zwei Hebammen mit verschiedenen Verträgen hätten dann
+   verschiedene Kennzeichen.
+
+   **Belegen lässt sich das hier nicht**, und geraten wird es nicht. Aber die
+   Konsequenz, die Simon zieht, ist richtig: **hängt es am Dienstleister, gehört
+   es aus dem Blaupausenformular heraus und an den Dienstleister.** Dann wäre es
+   eine Eigenschaft der Person — neues Feld an `ServiceProvider`, Schema wächst
+   über `hbm2ddl=update` mit —, und `DtaFactory` nähme es von dort statt aus der
+   Blaupause. Das hätte den Nebennutzen, ein Feld aus dem Formular zu nehmen,
+   das heute jeder bei jeder Blaupause neu eintragen muss und dabei verschieden
+   eintragen kann.
+
+   **Die drei Möglichkeiten und wo das Kennzeichen jeweils hingehört:**
+
+   | Wovon es abhängt | Wohin es gehört | Aufwand |
+   |---|---|---|
+   | von nichts, immer gleich | `internal` in `enf.json`, wie der Abrechnungscode | klein |
+   | vom Dienstleister | Feld an `ServiceProvider` | mittel |
+   | von der Kasse | eigene Zuordnungstabelle Kasse → Kennzeichen | groß |
+
+   **Erst die Antwort, dann der Umbau.** Alle drei sind machbar; zwei davon
+   wären falsch. Die Frage ist bei der Datenannahmestelle, im Vertrag oder in
+   Anlage 3, Abschnitt 8.1.5.2 zu klären — und sie blockiert nichts anderes,
+   weil die heutige Lösung (in der Blaupause) für **einen** Dienstleister mit
+   **einem** Vertrag richtige Ergebnisse liefert.
 
 **Erledigt am 05.09.2026:** die Blaupausenmaske. Sie liegt jetzt als
 `BlaupausenMaske` neben den anderen (Übersicht mit Suche, Bearbeiten und
@@ -371,6 +474,152 @@ das Beste, was geht.
 - **`.docx` wird nicht automatisch erzeugt.** Nach Änderungen an
   `GKVTransmitter_Dokumentation.md` neu erzeugen, siehe README.
 
+### G. Aussehen und Bedienung
+
+Simons Sammlung vom 05.09.2026. Einzeln klein, zusammen der Unterschied zwischen
+„läuft" und „fertig".
+
+1. **Die Bildlaufleisten sehen aus wie von woanders.** `gkv.css` regelt
+   `.scroll-pane` mit zwei Zeilen (durchsichtiger Hintergrund und Rahmen) und
+   die Leiste selbst **gar nicht** — `.scroll-bar`, `.thumb`, `.track` und die
+   Pfeilknöpfe stehen unberührt auf dem JavaFX-Standard und passen zu nichts.
+   Zu tun: mit den Farbnamen aus dem Stylesheet gestalten, schmaler, ohne
+   Pfeilknöpfe.
+
+2. **Die Kopfzeile des Fensters gestalten.** Die Titelleiste ist heute die von
+   Windows. Wer sie selbst zeichnen will, braucht `StageStyle.UNDECORATED` und
+   muss Verschieben, Größenänderung, Maximieren und Schließen selbst bauen —
+   das ist mehr Arbeit, als es aussieht, und man verliert das
+   Fenster-Andocken. Erst entscheiden, ob es das wert ist; die schmalere
+   Alternative ist, die Kopfzeile *innerhalb* der Anwendung (`Hauptfenster`)
+   aufzuwerten und die Titelleiste zu lassen.
+
+3. **Ein Programmsymbol fehlt vollständig.** Nachgesehen: kein
+   `stage.getIcons()`, keine Bilddatei unter `resources/`, kein `--icon` in der
+   `jpackage`-Konfiguration. In der Taskleiste steht deshalb das
+   Java-Standardsymbol. Zu tun: ein `.png` für `stage.getIcons()` (mehrere
+   Größen, 16/32/48/256) **und** ein `.ico` für `jpackage` — beides wird
+   gebraucht, das eine im laufenden Fenster, das andere am Paket.
+
+4. **Lange Texte werden zu `xxxxx…` gekürzt.** JavaFX kürzt Beschriftungen
+   voreingestellt mit Auslassungspunkten. Der auffälligste Fall ist die
+   Statuszeile (Punkt 6) — dort steht der längste Text im Programm. Zu tun:
+   dort, wo Text vollständig lesbar sein muss, `setWrapText(true)` oder ein
+   Tooltip mit dem ganzen Text; wo gekürzt wird, `OverrunStyle.LEADING_ELLIPSIS`
+   erwägen, wenn das Ende aussagekräftiger ist als der Anfang. **Nicht überall
+   umbrechen** — in Listenzeilen zerstörte das die Ausrichtung.
+
+5. **Erklärungen hinter ein Info-Zeichen statt unter jedes Feld.** Simons
+   Vorschlag. Dafür spricht viel: die Formulare sind lang, und die Erklärung
+   wird nur beim ersten Mal gebraucht. Dagegen spricht eines: **was hinter einem
+   Zeichen liegt, liest niemand.** Ein Mittelweg wäre, die Erklärung
+   einzuklappen und beim ersten Öffnen eines Formulars ausgeklappt zu zeigen —
+   oder sie nur an den Feldern stehen zu lassen, wo sie vor einem Fehler
+   bewahrt (IK, Beträge), und den Rest hinter das Zeichen zu legen. Die
+   Beanstandung unter dem Feld bleibt in jedem Fall sichtbar; sie ist keine
+   Erklärung, sondern eine Antwort.
+
+6. **Die Statuszeile zeigt Dateinamen.** Sie liest heute:
+
+   ```
+   GKVTransmitter geladen - Profile: 2 (SLGA, SLLA) | Invoices: 2
+   (antenatal_class_single.json [SLGA, SLLA], postnatal_class_single.json [SLGA, SLLA])
+   ```
+
+   Der Kommentar an der Stelle in `App` nennt sie selbst „sichtbare Debug-Hilfe
+   im UI" — sie wurde nie ersetzt. Mit der zweiten Vorlage ist sie noch länger
+   geworden und wird jetzt gekürzt (Punkt 4). Dazu steht „Invoices" und
+   „Profile" englisch in einer sonst deutschen Oberfläche.
+
+   Zu tun: „**2 Vorlagen geladen**", und die Namen — die **Anzeigenamen**, nicht
+   die Dateinamen — hinter ein Info-Zeichen. Der Dateiname interessiert
+   niemanden, der abrechnet.
+
+### H. Ein Bedienwerkzeug für die Entwicklung
+
+Simons Idee, und sie ist gut: eine Möglichkeit, die Anwendung **von außen zu
+bedienen** — über eine Folge von Befehlen mit Kennungen und Werten —, damit sich
+Abläufe durchspielen lassen, ohne dass jemand klickt.
+
+Was das brächte:
+
+- Ein Ablauf ließe sich **als Ganzes** prüfen: Person anlegen, Gruppe bilden,
+  Blaupause wählen, abrechnen. Heute prüft jeder Test eine Maske für sich; dass
+  die vier zusammenpassen, prüft nichts.
+- Ich könnte die Anwendung selbst bedienen und **sehen, was Simon sieht**,
+  statt es aus dem Quelltext zu erschließen.
+- Die Bedienelemente tragen bereits feste Kennungen (`PersonenMaske.ID_SPEICHERN`
+  und so fort) — genau das, was ein solches Werkzeug ansteuern müsste. Die
+  Vorarbeit ist also getan.
+
+Entwurfsgedanken, ehe damit angefangen wird:
+
+- Es tritt **nicht an die Stelle** der Maskentests. Die sind schnell und sagen
+  genau, was kaputt ist; ein Ablaufskript sagt nur, dass irgendwo etwas klemmt.
+  Es tritt an die Stelle der Tests, die es *nicht* gibt — der über mehrere
+  Masken hinweg.
+- Es gehört hinter einen Schalter wie `-Dgkv.testdaten=true` und **darf im
+  ausgelieferten Paket nichts tun**. Eine Anwendung, die echte Forderungen an
+  Krankenkassen stellt, sollte nicht fernsteuerbar sein.
+- Die einfachste tragfähige Form: eine Textdatei mit Zeilen wie
+  `klick person-speichern` / `setze person-feld-firstname Anna` /
+  `erwarte meldung msg.patientCreated`, ausgeführt auf dem JavaFX-Faden.
+  Kein Netzwerk, keine Fremdbibliothek.
+
+### I. Heißt das Projekt richtig?
+
+Simons Frage. Sie ist berechtigt: **„Transmitter" beschreibt den einen Schritt,
+den das Programm noch gar nicht wirklich kann.** Der Versand ist dateibasiert,
+ein echter Übermittlungsweg fehlt (Abschnitt E). Was es tatsächlich tut, ist
+Stammdaten verwalten, Kurse und Preise festhalten, daraus DTA erzeugen und
+**prüfen** — und die Prüfung ist der Teil, der den Nutzen stiftet.
+
+Zu bedenken, ehe umbenannt wird:
+
+- Der Name steckt an vielen Stellen: Paketname `de.gkvtransmitter`,
+  Verzeichnis `GKVTransmitter/`, `%LOCALAPPDATA%\GKVTransmitter`, Fenstertitel,
+  `jpackage`-Ausgabe, Dokumentation, Skills. Ein Umbenennen ist ein
+  mechanischer, aber breiter Eingriff.
+- **Der Datenpfad ist der heikle Teil**: eine Umbenennung ließe eine bestehende
+  Datenbank unter dem alten Pfad zurück. Wer umbenennt, muss den alten Ort
+  weiter lesen oder umziehen.
+- „GKV" ist gut und sollte bleiben — es sagt, worum es geht.
+
+Ein Vorschlag zur Entscheidung, kein Beschluss: der **Anzeigename** (Fenster,
+Symbol, Paket) lässt sich sofort ändern, ohne dass Paketnamen oder Datenpfad
+folgen müssen. Damit wäre der sichtbare Teil richtig benannt und der teure Teil
+aufgeschoben.
+
+### J. Der Zwischenstand, den Simon sich ansieht
+
+**Das ist das Ziel, auf das alles Übrige zuläuft.** Simon: ein Stand, der
+„komplett läuft ohne mögliche Fehler", danach eine Retrospektive, bei der er
+selbst herumprobiert und seine Meinung sagt.
+
+Der Maßstab dabei ist ausdrücklich: **fast ein fertiges Produkt.** Nicht
+„die Tests sind grün", sondern: jemand setzt sich davor, arbeitet einen Monat
+durch und stößt an keine Stelle, an der es klemmt, unverständlich wird oder
+etwas Falsches zulässt.
+
+Zu erledigen, ehe der Stand vorgelegt wird:
+
+1. Abschnitt **G** vollständig — das Aussehen ist bei einer Retrospektive das
+   Erste, was auffällt.
+2. Die Feldfragen aus **B 1–4**, soweit sie ohne Anlage 3 zu beantworten sind:
+   die IK-Meldung, die Vorschläge zum Umsatzsteuersatz, das überflüssige
+   Auswahlfeld beim Abrechnungscode.
+3. **Ein Durchlauf von Hand, aufgeschrieben**: Teilnehmerin anlegen, Gruppe
+   bilden, Blaupause anlegen, abrechnen, Rückmeldung ansehen — jeder Schritt
+   mit dem, was dabei auf dem Bildschirm steht. Was daran hakt, kommt vor der
+   Retrospektive weg, nicht danach.
+4. Die Populatoren aus **C** prüfen — sie sind der letzte ungeprüfte Weg, auf
+   dem ein Wert unbemerkt im falschen Feld landen kann.
+
+**Was bewusst offen bleiben darf:** alles, wofür Anlage 3, der Vertrag oder die
+Datenannahmestelle nötig sind (Tarifkennzeichen, Positionsnummern, echter
+Versand). Das ist keine Lücke im Programm, sondern eine in den Unterlagen — und
+es gehört bei der Retrospektive gesagt statt kaschiert.
+
 ## Fallstricke, die schon Zeit gekostet haben
 
 **Nach jeder Änderung an `gkv-core` muss `mvn install -DskipTests` laufen**,
@@ -422,8 +671,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 293 Tests
-mvn clean test -pl gkv-ui            # nur die 141 Oberflächentests
+mvn clean test                       # alle 294 Tests
+mvn clean test -pl gkv-ui            # nur die 142 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005
