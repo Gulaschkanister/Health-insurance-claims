@@ -77,7 +77,7 @@ public class Benachrichtigungen {
     public Benachrichtigungen(Duration anzeigedauer) {
         this.anzeigedauer = Objects.requireNonNull(anzeigedauer, "anzeigedauer must not be null");
         ecke.getStyleClass().add("meldungsecke");
-        ecke.setAlignment(Pos.TOP_RIGHT);
+        ecke.setAlignment(Pos.BOTTOM_RIGHT);
         // Die Ecke liegt ueber der Maske. Ohne das hier fienge sie auch dort
         // Klicks ab, wo gar keine Meldung steht, und die Maske waere in ihrem
         // oberen rechten Viertel nicht mehr bedienbar.

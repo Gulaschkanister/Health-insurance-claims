@@ -292,6 +292,16 @@ public final class Bedienung {
         notiere("erwarte-meldung " + text + "  ✓");
     }
 
+    /**
+     * Ein Schnappschuss der Szene.
+     *
+     * <p><b>Eine gerade erst gezeigte Meldung fehlt darauf.</b> Die
+     * Meldungsecke blendet ihre Karten ein, und die Ueberblendung braucht
+     * einen Zeichentakt - den es innerhalb eines Befehlsblocks nicht gibt. Die
+     * Karte haengt in der Szene, hat aber noch die Deckkraft null. Wer wissen
+     * will, was steht, nimmt {@code zeige} oder {@code erwarte-meldung}; das
+     * Bild ist fuer das Aussehen da, nicht fuer den Nachweis.</p>
+     */
     private void bild(String name) {
         try {
             javafx.scene.image.WritableImage bild = szene.snapshot(null);

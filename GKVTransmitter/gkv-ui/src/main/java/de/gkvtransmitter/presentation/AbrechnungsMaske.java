@@ -203,7 +203,13 @@ public class AbrechnungsMaske {
     /** Listet die erzeugten Dateien je Krankenkasse auf. */
     private String fasseZusammen(List<DispatchBatch> lieferungen) {
         StringBuilder text = new StringBuilder();
-        text.append(String.format(texte.get("msg.batchesCreated"), lieferungen.size()))
+        // Einzahl und Mehrzahl getrennt. Dort stand "1 DTA-Batches erzeugt:" -
+        // ein englisches Wort in einer deutschen Oberflaeche, und daneben eine
+        // Eins vor einer Mehrzahl. Das ist die Schlussmeldung des ganzen
+        // Ablaufs; sie ist das Letzte, was jemand von einem Monat Arbeit liest.
+        text.append(lieferungen.size() == 1
+                        ? texte.get("msg.batchCreated")
+                        : String.format(texte.get("msg.batchesCreated"), lieferungen.size()))
                 .append(System.lineSeparator());
         for (DispatchBatch lieferung : lieferungen) {
             text.append(texte.get("field.kassenIk")).append(": ").append(lieferung.getKassenIk())

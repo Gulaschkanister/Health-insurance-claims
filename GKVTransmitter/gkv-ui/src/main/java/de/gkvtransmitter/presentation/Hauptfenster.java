@@ -83,6 +83,20 @@ public class Hauptfenster implements Maskenrahmen {
 
     private String offenerBereich;
 
+    /** Was beim Wechsel in einen anderen Bereich geschieht, siehe {@link #oeffne}. */
+    private Runnable beimBereichswechsel = () -> { };
+
+    /**
+     * Legt fest, was beim Wechsel in einen anderen Bereich geschieht.
+     *
+     * <p>Gedacht fuer das Raeumen der Meldungsecke. Als Haken und nicht als
+     * Konstruktorparameter, weil der Rahmen die Meldungen sonst kennen muesste
+     * und die Meldungsecke bereits als fertiger Knoten hereinkommt.</p>
+     */
+    public void beiBereichswechsel(Runnable was) {
+        this.beimBereichswechsel = was == null ? () -> { } : was;
+    }
+
     /**
      * @param meldungsecke der Knoten, der ueber die Maske gelegt wird
      */
@@ -130,7 +144,13 @@ public class Hauptfenster implements Maskenrahmen {
         geruest.setCenter(inhaltsspalte);
 
         wurzel = new StackPane(geruest, meldungsecke);
-        StackPane.setAlignment(meldungsecke, Pos.TOP_RIGHT);
+        // Unten rechts, nicht oben rechts. Oben rechts liegt bei einem
+        // zweispaltigen Formular genau ueber der rechten Spalte: eine stehende
+        // Fehlermeldung verdeckte dort "Nachname" und "Land" - also die
+        // Felder, zu deren Berichtigung sie auffordert. Unten rechts ist in
+        // allen Masken die leerste Ecke; im schlimmsten Fall verdeckt eine
+        // Meldung dort eine Listenzeile, und die kann man wegscrollen.
+        StackPane.setAlignment(meldungsecke, Pos.BOTTOM_RIGHT);
     }
 
     /** Setzt Name und Untertitel oben in der Seitenleiste. */
@@ -235,6 +255,19 @@ public class Hauptfenster implements Maskenrahmen {
         Runnable oeffnen = bereiche.get(beschriftung);
         if (oeffnen == null) {
             return;
+        }
+        // Beim Wechsel in einen anderen Bereich die Meldungen raeumen. Ein
+        // Fehler bleibt stehen, bis jemand ihn zur Kenntnis nimmt - aber
+        // woandershin zu gehen ist Kenntnisnahme. Ohne das stand nach dem
+        // Durchlauf vom 05.09.2026 in der Abrechnungsmaske noch die
+        // Beanstandung aus dem Teilnehmerformular: "Nicht gespeichert", waehrend
+        // seither dreimal erfolgreich gespeichert worden war.
+        //
+        // Nur beim echten Wechsel: rahmen.leeren() oeffnet denselben Bereich
+        // erneut, und das geschieht unmittelbar nach einer Erfolgsmeldung -
+        // die wuerde sonst geloescht, ehe sie jemand liest.
+        if (!beschriftung.equals(offenerBereich)) {
+            beimBereichswechsel.run();
         }
         offenerBereich = beschriftung;
         ueberschrift.setText(beschriftung);

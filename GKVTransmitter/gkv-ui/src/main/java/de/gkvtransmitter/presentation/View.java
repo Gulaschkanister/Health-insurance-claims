@@ -86,6 +86,7 @@ public class View {
      * die Maske darunter verschiebt.</p>
      */
     public Scene createMainScene(double width, double height) {
+        hauptfenster.beiBereichswechsel(benachrichtigungen::leeren);
         baueNavigation();
         hauptfenster.setzeMarke(PROGRAMMNAME, messages.get("app.subtitle"));
         setzeLadestatus();
