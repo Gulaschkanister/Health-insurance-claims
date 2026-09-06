@@ -47,7 +47,7 @@ class AblaufTest {
      * Deshalb ein Verzeichnis unter {@code target}, das {@code mvn clean}
      * wegraeumt.</p>
      */
-    private static final Path VERZEICHNIS = Path.of("target", "ablauf");
+    private static final Path VERZEICHNIS = Path.of("target", "ablauf").toAbsolutePath();
 
     @Test
     @DisplayName("Teilnehmerin anlegen, Gruppe bilden, Blaupause anlegen, abrechnen")

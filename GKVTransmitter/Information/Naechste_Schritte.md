@@ -20,7 +20,7 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **367 Tests**, davon 207 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **368 Tests**, davon 208 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - **Abschnitte B (soweit ohne Anlage 3), C, G, H, I und J sind abgearbeitet**
 - **Das Paket ist gebaut und gestartet**, das Programm heißt „GKV-Abrechnung"
 - **Ein Review über den ganzen Branch ist gelaufen; alle neun Funde sind behoben**
@@ -396,13 +396,43 @@ dass sie von der Seitenleiste aus erreichbar ist, war es nicht. Ein Vertipper
 in einer Kennung, eine vergessene Verdrahtung oder eine Ausnahme beim Aufbau
 wäre nur beim Klicken aufgefallen.
 
-**Nachgewiesen wirksam:** wird die Verdrahtung eines Bereichs absichtlich
-kaputtgemacht, wird der Test rot. Zweimal geprüft — einmal beim ersten Bereich
-(er fällt schon im Aufbau auf, weil er beim Start geöffnet wird) und einmal bei
-einem späteren, damit auch die Schleife selbst belegt ist.
-
 Dazu prüft er die Reihenfolge des Arbeitsablaufs, die Kursnamen in der Leiste,
 den Satz unter jeder Überschrift und die Statuszeile.
+
+##### Die Gegenprobe, die nichts bewies
+
+Hier stand zuerst „**nachgewiesen wirksam:** wird die Verdrahtung eines Bereichs
+absichtlich kaputtgemacht, wird der Test rot." **Das war falsch**, und das
+Review hat es am selben Tag widerlegt.
+
+Die erste Fassung sah nur auf die Überschrift im Rahmen — und die setzt
+`Hauptfenster.oeffne` **vor** dem Aufruf des Bereichs. Ein Bereich, der still
+nichts tut, wäre also durchgekommen; aufgefallen wäre nur einer, der *wirft*.
+Und genau das hatte meine Gegenprobe eingebaut: eine Ausnahme. Sie belegte den
+Fall, den der Test ohnehin fand, und nicht den, den er verfehlte.
+
+> **Merksatz:** eine Gegenprobe, die den falschen Fehler einbaut, beweist
+> nichts. Sie muss den Fehler nachstellen, den der Test *nicht* offensichtlich
+> findet — den stillen, nicht den lauten.
+
+Geprüft wird jetzt der **gezeigte Inhalt**: nach jedem Klick muss einer im
+Rahmen stehen, und zwar ein anderer als zuvor. Die neue Gegenprobe ersetzt die
+Verdrahtung eines Bereichs durch `() -> { }`, und der Test wird rot:
+*„Gruppen hat den Bereich nicht neu aufgebaut — die Überschrift wechselt auch
+dann, wenn nichts geschieht."*
+
+##### Testdatenbanken im Benutzerprofil
+
+Dasselbe Review fand, dass ein relativer `gkv.db.path` von
+`Anwendungsverzeichnis` gegen den **Datenordner der Anwendung** aufgelöst wird —
+nicht gegen das Arbeitsverzeichnis. Das steht seit dem 05.09.2026 als
+Fallstrick in dieser Datei, und die Javadoc daneben behauptete trotzdem, `mvn
+clean` räume auf.
+
+Es tat es nie: `ControllerTest`, `ViewTest`, `AblaufTest`, `Bedienung` und
+`Vorschau` hatten sechs Testdatenbanken in `%LOCALAPPDATA%\GKV-Abrechnung\target`
+abgelegt — im selben Ordner wie die echte `database.db`. Alle fünf nehmen den
+Pfad jetzt **absolut**; die Altlasten sind entfernt.
 
 #### Beim Schreiben von `MaskenkopfTest` aufgefallen
 
@@ -413,6 +443,17 @@ rechts. Der Platz bleibt links, aber aus einem anderen Grund.
 
 Das ist derselbe Befund wie unten, nur harmlos: **eine Begründung veraltet
 still, wenn sich das ändert, worauf sie sich beruft.**
+
+Und sie veraltet zweimal. Das Review fand danach, dass der **Klassenkommentar**
+eine Zeile darüber weiterhin „Neu" rechts sagte — die Kurzfassung derselben
+Angabe, die ich gerade berichtigt hatte.
+
+> **Merksatz:** wer eine Begründung nachzieht, muss die Zusammenfassung darüber
+> mitnehmen. Eine veraltete Kurzfassung ist genauso irreführend wie eine
+> veraltete Begründung — und sie wird öfter gelesen.
+
+`MaskenkopfTest` hält die Seite jetzt fest, damit es nicht ein drittes Mal
+auseinanderläuft.
 
 #### Was der erste Test von `JavaFxUiFactory` gefunden hat
 
@@ -1288,9 +1329,16 @@ weil die JavaFX-Laufzeit für alle Tests *einmal* hochgefahren wird. Windows
 lässt die offene Datei nicht löschen, und JUnit macht daraus einen roten Test
 bei grünem Ablauf. Ein Verzeichnis unter `target` nehmen.
 
-**Ein relativer Datenbankpfad landet unter `%LOCALAPPDATA%`**, nicht neben den
-Bildern — `Anwendungsverzeichnis` löst ihn auf. Ein `rm -rf target/vorschau`
-trifft ihn deshalb nicht, und die Testdaten häufen sich von Lauf zu Lauf.
+**Ein relativer `gkv.db.path` landet unter `%LOCALAPPDATA%`**, nicht unter
+`target` — `Anwendungsverzeichnis.aufloesen` löst ihn gegen den Datenordner der
+Anwendung auf. Ein `rm -rf target/…` trifft ihn deshalb nicht, `mvn clean` auch
+nicht, und die Testdaten häufen sich von Lauf zu Lauf.
+
+**Das gilt auch für Tests, und dort fällt es länger nicht auf.** Bis zum
+06.09.2026 lagen sechs Testdatenbanken neben der echten `database.db` im
+Benutzerprofil. **Jeder Test und jedes Werkzeug, das `gkv.db.path` setzt, gibt
+den Pfad absolut an** — `Path.of("target", …).toAbsolutePath()`. So machen es
+`ControllerTest`, `ViewTest`, `AblaufTest`, `Bedienung` und `Vorschau`.
 
 **Eine `StackPane` zentriert ihre Kinder.** Wird ein Kind größer als die
 Fläche — weil seine Mindestgröße das erzwingt —, ragt es auf *beiden* Seiten
@@ -1357,8 +1405,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 367 Tests
-mvn clean test -pl gkv-ui            # nur die 207 Oberflächentests
+mvn clean test                       # alle 368 Tests
+mvn clean test -pl gkv-ui            # nur die 208 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

@@ -42,7 +42,7 @@ public final class Vorschau {
     }
 
     public static void main(String[] args) throws Exception {
-        Path ziel = Path.of(args.length > 0 ? args[0] : "target/vorschau");
+        Path ziel = Path.of(args.length > 0 ? args[0] : "target/vorschau").toAbsolutePath();
         java.nio.file.Files.createDirectories(ziel);
 
         // Der Pfad wird von Anwendungsverzeichnis aufgeloest und landet

@@ -12,7 +12,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
@@ -89,6 +91,30 @@ class MaskenkopfTest {
             assertEquals(2, wurzel.getChildren().size(), "Kopfzeile und Liste, sonst nichts");
             assertSame(liste, wurzel.getChildren().get(1),
                     "Die Liste darf nicht eingehuellt werden");
+        });
+    }
+
+    /**
+     * Die Schaltflaeche steht links.
+     *
+     * <p>Klingt nach Geschmack, ist aber der Punkt, an dem die Beschreibung
+     * dieser Klasse zweimal von der Wirklichkeit abgewichen ist: erst die
+     * Begruendung im Rumpf ("rechts oben erscheinen die Meldungen" — sie
+     * liegen seit dem 06.09.2026 unten rechts), dann die Kurzfassung im
+     * Klassenkommentar ("Neu" rechts). <b>Was ein Test festhaelt, veraltet
+     * nicht still.</b></p>
+     */
+    @Test
+    @DisplayName("Die Schaltflaeche steht links, der freie Platz rechts daneben")
+    void schaltflaecheStehtLinks() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            VBox wurzel = (VBox) Maskenkopf.mitListe(BAUSTEINE, "Neu", "kennung",
+                    () -> { }, new VBox());
+
+            HBox kopf = (HBox) wurzel.getChildren().get(0);
+            assertSame(kopf.lookup("#kennung"), kopf.getChildren().get(0),
+                    "Links beginnt die Leserichtung, und darunter beginnt die Liste");
+            assertEquals(Pos.CENTER_LEFT, kopf.getAlignment());
         });
     }
 

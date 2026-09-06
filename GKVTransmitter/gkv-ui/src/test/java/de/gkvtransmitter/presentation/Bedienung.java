@@ -91,7 +91,11 @@ public final class Bedienung {
      * dem Zielverzeichnis und wird zuvor geloescht - ein Ablauf, der auf
      * Bestaenden des letzten Laufs aufsetzt, prueft nichts Verlaessliches.</p>
      */
-    public static Bedienung aufbauen(Path ziel, boolean mitTestdaten) throws Exception {
+    public static Bedienung aufbauen(Path uebergebenesZiel, boolean mitTestdaten) throws Exception {
+        // Absolut, sonst loest Anwendungsverzeichnis den Pfad gegen den
+        // Datenordner der Anwendung auf - und die Testdatenbank laege im
+        // Benutzerprofil statt neben den Bildern. Siehe Fallstricke.
+        Path ziel = uebergebenesZiel.toAbsolutePath();
         Files.createDirectories(ziel);
         Path datenbank = de.gkvtransmitter.util.Anwendungsverzeichnis
                 .aufloesen(ziel.resolve("bedienung.db"));
@@ -467,7 +471,7 @@ public final class Bedienung {
         }
         int schluss = 0;
         try {
-            Path ziel = Path.of(args.length > 1 ? args[1] : "target/bedienung");
+            Path ziel = Path.of(args.length > 1 ? args[1] : "target/bedienung").toAbsolutePath();
             Bedienung bedienung = aufbauen(ziel, true);
             try {
                 bedienung.ausDatei(Path.of(args[0]));

@@ -2,6 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
@@ -35,10 +36,15 @@ import javafx.scene.control.ToggleButton;
  * etwas zeigt. Das ist wenig — aber es ist genau das, was zwischen „die Maske
  * funktioniert" und „man kommt hin" liegt.</p>
  *
- * <p>Hier laeuft ein echter {@code Controller} mit einer eigenen Datenbank
- * unter {@code target}, kein {@code @TempDir}: die Verbindung bleibt offen,
- * solange die Anwendung laeuft, und Windows laesst eine offene Datei nicht
- * loeschen.</p>
+ * <p>Hier laeuft ein echter {@code Controller} mit einer eigenen Datenbank,
+ * kein {@code @TempDir}: die Verbindung bleibt offen, solange die Anwendung
+ * laeuft, und Windows laesst eine offene Datei nicht loeschen.</p>
+ *
+ * <p>Der Pfad dorthin ist <b>absolut</b>. Ein relativer wuerde von
+ * {@code Anwendungsverzeichnis} gegen den Datenordner der Anwendung aufgeloest
+ * — die Testdatenbank laege dann im Benutzerprofil statt unter {@code target},
+ * und {@code mvn clean} raeumte sie nie weg. Bis zum 06.09.2026 lagen dort
+ * sechs davon.</p>
  */
 @DisplayName("View")
 class ViewTest {
@@ -49,7 +55,8 @@ class ViewTest {
 
     @BeforeAll
     static void anwendungAufbauen() {
-        System.setProperty("gkv.db.path", Path.of("target", "view", "view.db").toString());
+        System.setProperty("gkv.db.path",
+                Path.of("target", "view", "view.db").toAbsolutePath().toString());
         // Ohne Testdaten: geprueft wird die Verdrahtung, nicht der Inhalt. Eine
         // leere Liste ist dafuer sogar der haertere Fall - dann muss der
         // Hinweis auf die leere Liste stehen, und nicht nichts.
@@ -70,18 +77,32 @@ class ViewTest {
     class Bereiche {
 
         /**
-         * Der Test, der bisher fehlte.
+         * Der Test, der bisher fehlte — und geprueft wird der <b>gezeigte
+         * Inhalt</b>, nicht die Ueberschrift.
          *
-         * <p>Er klickt jeden Eintrag der Seitenleiste an und verlangt, dass
-         * danach etwas im Inhaltsbereich steht. „Testdaten anlegen" bleibt
-         * aussen vor — der Punkt schreibt in die Datenbank und zeigt nichts;
-         * dass er da ist, prueft {@link #entwicklungspunktIstDa}.</p>
+         * <p>Er klickt jeden Eintrag der Seitenleiste an. „Testdaten anlegen"
+         * bleibt aussen vor: der Punkt schreibt in die Datenbank und zeigt
+         * nichts; dass er da ist, prueft {@link #entwicklungspunktIstDa}.</p>
+         *
+         * <p>Die erste Fassung dieses Tests sah nur auf die Ueberschrift im
+         * Rahmen — und die setzt {@code Hauptfenster.oeffne} <em>vor</em> dem
+         * Aufruf des Bereichs. Ein Bereich, der still nichts tut, waere damit
+         * durchgekommen; aufgefallen waere nur einer, der <em>wirft</em>. Die
+         * Gegenprobe von damals machte die Verdrahtung kaputt, indem sie eine
+         * Ausnahme warf — sie belegte also genau den Fall, den der Test ohnehin
+         * fand, und nicht den, den er verfehlte. <b>Eine Gegenprobe, die den
+         * falschen Fehler einbaut, beweist nichts.</b></p>
+         *
+         * <p>Jetzt muss nach jedem Klick ein Inhalt im Rahmen stehen, und zwar
+         * ein <em>anderer</em> als zuvor. Damit faellt auch der stille Nichtstuer
+         * auf.</p>
          */
         @Test
-        @DisplayName("Jeder Bereich laesst sich oeffnen und zeigt etwas")
+        @DisplayName("Jeder Bereich laesst sich oeffnen und zeigt eine eigene Maske")
         void jederBereichOeffnet() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 List<String> geprueft = new ArrayList<>();
+                Node vorher = gezeigterInhalt();
                 for (ToggleButton eintrag : navigationseintraege()) {
                     if (texte.get("nav.testdata").equals(eintrag.getText())) {
                         continue;
@@ -91,11 +112,15 @@ class ViewTest {
                     szene.getRoot().applyCss();
                     szene.getRoot().layout();
 
-                    assertNotNull(szene.getRoot().lookup("#" + Hauptfenster.ID_TITEL),
-                            "Kein Rahmen mehr nach dem Oeffnen von " + eintrag.getText());
+                    Node inhalt = gezeigterInhalt();
+                    assertNotNull(inhalt, "\"" + eintrag.getText() + "\" zeigt nichts");
+                    assertNotSame(vorher, inhalt,
+                            "\"" + eintrag.getText() + "\" hat den Bereich nicht neu aufgebaut - "
+                                    + "die Ueberschrift wechselt auch dann, wenn nichts geschieht");
                     assertEquals(eintrag.getText(),
                             ((Label) szene.getRoot().lookup("#" + Hauptfenster.ID_TITEL)).getText(),
                             "Die Ueberschrift muss dem gewaehlten Bereich folgen");
+                    vorher = inhalt;
                     geprueft.add(eintrag.getText());
                 }
                 assertTrue(geprueft.size() >= 5,
@@ -113,9 +138,15 @@ class ViewTest {
 
                 assertEquals(texte.get("menu.settlement"), namen.get(0),
                         "Zuerst das, wozu das Programm da ist");
-                assertTrue(namen.indexOf(texte.get("menu.patient"))
-                                < namen.indexOf(texte.get("menu.blueprints")),
-                        "Stammdaten vor Blaupausen: " + namen);
+                int teilnehmer = namen.indexOf(texte.get("menu.patient"));
+                int blaupausen = namen.indexOf(texte.get("menu.blueprints"));
+                // Beide Male auf Vorhandensein pruefen: ein fehlender Eintrag
+                // ergibt -1, und -1 ist kleiner als jeder Index - der Vergleich
+                // allein waere also auch dann gruen, wenn es "Teilnehmer" gar
+                // nicht mehr gaebe.
+                assertTrue(teilnehmer >= 0, "Kein Bereich \"Teilnehmer\": " + namen);
+                assertTrue(blaupausen >= 0, "Kein Bereich \"Blaupausen\": " + namen);
+                assertTrue(teilnehmer < blaupausen, "Stammdaten vor Blaupausen: " + namen);
                 assertEquals(texte.get("nav.testdata"), namen.get(namen.size() - 1),
                         "Der Entwicklungspunkt gehoert ans Ende");
             });
@@ -214,6 +245,21 @@ class ViewTest {
     }
 
     // --- Hilfsmittel ------------------------------------------------------
+
+    /**
+     * Was im Rahmen steht.
+     *
+     * <p>Ueber die Stilklasse des Inhaltsbereichs, weil der Test die
+     * {@code Hauptfenster}-Instanz nicht hat — nur die Szene. Der Inhalt eines
+     * {@code ScrollPane} haengt erst nach dem Aufbau der Darstellung im
+     * Knotenbaum; deshalb der {@code applyCss()}/{@code layout()}-Aufruf vor
+     * jedem Zugriff.</p>
+     */
+    private static Node gezeigterInhalt() {
+        Node bereich = szene.getRoot().lookup(".inhalt");
+        assertNotNull(bereich, "Kein Inhaltsbereich im Rahmen");
+        return ((javafx.scene.control.ScrollPane) bereich).getContent();
+    }
 
     private static void oeffne(String bereich) {
         ToggleButton eintrag = (ToggleButton) szene.getRoot()

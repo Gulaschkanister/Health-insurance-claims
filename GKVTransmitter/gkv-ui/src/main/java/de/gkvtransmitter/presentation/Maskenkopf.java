@@ -8,11 +8,17 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /**
- * Der immer gleiche Kopf einer Uebersicht: "Neu" rechts, darunter die Liste.
+ * Der immer gleiche Kopf einer Uebersicht: "Neu" links, darunter die Liste.
  *
  * <p>Steht hier und nicht in jeder Maske, damit die Bereiche nicht auseinander
  * driften - eine Uebersicht soll in allen Bereichen gleich aussehen und gleich
  * zu bedienen sein.</p>
+ *
+ * <p>Hier stand bis zum 06.09.2026 "rechts", und zwar eine Zeile ueber dem
+ * Kommentar, der genau diese Angabe schon berichtigt hatte. Wer eine
+ * Begruendung nachzieht, muss die Kurzfassung darueber mitnehmen -
+ * <b>eine veraltete Zusammenfassung ist genauso irrefuehrend wie eine
+ * veraltete Begruendung, und sie wird oefter gelesen.</b></p>
  */
 final class Maskenkopf {
 

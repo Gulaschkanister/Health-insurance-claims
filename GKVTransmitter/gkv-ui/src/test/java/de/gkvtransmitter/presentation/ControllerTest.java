@@ -36,10 +36,15 @@ class ControllerTest {
      * Anwendung laeuft, und Windows laesst eine offene Datei nicht loeschen -
      * JUnit machte daraus einen roten Test. Unter {@code target} raeumt
      * {@code mvn clean} auf.</p>
+     *
+     * <p><b>Absolut</b>, denn einen relativen Pfad loest
+     * {@code Anwendungsverzeichnis} gegen den Datenordner der Anwendung auf.
+     * Bis zum 06.09.2026 lag diese Datenbank deshalb im Benutzerprofil und
+     * wurde von {@code mvn clean} nie erfasst.</p>
      */
     private static void eigeneDatenbank() {
         System.setProperty("gkv.db.path",
-                Path.of("target", "controller", "controller.db").toString());
+                Path.of("target", "controller", "controller.db").toAbsolutePath().toString());
     }
 
     @Test
