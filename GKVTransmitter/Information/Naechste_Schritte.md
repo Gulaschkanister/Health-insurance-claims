@@ -20,9 +20,10 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **349 Tests**, davon 192 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **354 Tests**, davon 194 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - **Abschnitte B (soweit ohne Anlage 3), C, G, H, I und J sind abgearbeitet**
 - **Das Paket ist gebaut und gestartet**, das Programm heißt „GKV-Abrechnung"
+- **Ein Review über den ganzen Branch ist gelaufen; alle neun Funde sind behoben**
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
 **`feature/kern-architektur` ist am 06.09.2026 gepusht** — die Arbeit liegt
@@ -31,22 +32,141 @@ sich den Stand angesehen hat; siehe „Sofort zu entscheiden".
 
 ## Was zuletzt geschah (06.09.2026)
 
-Fünf Commits: `3f05830` (das Fenster bei wenig Platz), `e05c050` (zwei
-Kleinigkeiten aus F), `2d889c8` (Abschnitt I: die Umbenennung), dazu die
-Nacharbeit an Dokumentation und Übergabe.
+Sieben Commits: `3f05830` (das Fenster bei wenig Platz), `e05c050` (zwei
+Kleinigkeiten aus F), `2d889c8` (Abschnitt I: die Umbenennung), `ad1279e`
+(Branches aufgeräumt, `JavaFxUiFactory` geprüft), `b1c3ad8` und `cfd21ad` (die
+neun Funde des Reviews), dazu die Nacharbeit an Dokumentation und Übergabe.
 
 **Damit ist Abschnitt J vollständig** — der Stand, den Simon sich ansehen
-sollte, steht.
+sollte, steht, und er ist geprüft.
 
-Der aufschlussreichste Punkt war der scheinbar kleinste: „einmal das Fenster
-klein ziehen und hinsehen". Er brachte **drei echte Fehler**, darunter zwei,
-die bei der *Startgröße* der Anwendung auftraten — also bei jedem Start. Die
-Einzelheiten stehen in J.
+Zwei Punkte waren aufschlussreicher, als sie aussahen.
 
-**Merksatz daraus:** eine Startgröße veraltet still. Sie stand auf 900×600 aus
-einer Zeit, in der die Oberfläche aus einer Menüleiste bestand; inzwischen hat
-sie eine Seitenleiste von 224 Punkten und Listen mit vier Spalten und zwei
-Schaltflächen je Zeile.
+**„Einmal das Fenster klein ziehen und hinsehen"** brachte drei echte Fehler,
+darunter zwei, die bei der *Startgröße* der Anwendung auftraten — also bei
+jedem Start. Einzelheiten in J.
+
+> **Merksatz:** eine Startgröße veraltet still. Sie stand auf 900×600 aus einer
+> Zeit, in der die Oberfläche aus einer Menüleiste bestand; inzwischen hat sie
+> eine Seitenleiste von 224 Punkten und Listen mit vier Spalten und zwei
+> Schaltflächen je Zeile.
+
+**Das Review** brachte neun weitere, sechs davon in `gkv-core` und `dispatch` —
+dem Teil mit 160 Tests. Der Abschnitt darunter führt sie einzeln auf.
+
+> **Merksatz:** eine Begründung im Quelltext, die niemand nachgerechnet hat,
+> ist eine Vermutung mit Anspruch auf Autorität. An zwei Tagen hintereinander
+> hat sich je eine als falsch erwiesen — beide von mir geschrieben, beide
+> selbstsicher formuliert, beide erst durch einen Test widerlegt. Das ist der
+> Grund, warum ein Review nicht der Autor macht.
+
+## Das Review vom 06.09.2026
+
+Vor dem Merge nach `main` stand ein Review über den ganzen Branch an: 49
+Commits, 231 Dateien, +21.238/−4.561 Zeilen. **Neun Funde, alle behoben.**
+
+Der eigentliche Grund für den Zeitpunkt war nicht die Größe. Es waren zwei
+Tage, an denen jeweils eine Begründung, die im Quelltext stand, sich als falsch
+erwies — und beide Male hatte erst ein Test sie widerlegt, nicht das Lesen.
+**Ein Leser, der den Text nicht selbst verfasst hat, findet anderes.** Sechs
+der neun Funde liegen in `gkv-core` und `dispatch`, dem Teil mit 160 Tests.
+
+### Die Lieferung war betroffen
+
+| Fund | Wirkung |
+|---|---|
+| Datenaustauschreferenz begann bei jedem Lauf wieder bei 1 | doppelte Referenzen — dokumentierter Abweisungsgrund |
+| BES rechnete mit dem ungerundeten Einzelbetrag, ENF trug den gerundeten | die eigene Prüfung blockiert den ganzen Lauf |
+| `BetragskonsistenzRegel` verglich alle ENF mit dem **ersten** BES | falscher Alarm oder verdeckte Abweichung |
+| Fehlte ein Geburtsdatum, setzte `DtaFactory` `19900101` ein | ein erfundenes Datum an die Kasse |
+
+**Der erste ist der lehrreichste.** `DataRepository.nextDtaInterchangeReference()`
+gab es seit dem ersten Tag dieses Branches: gesperrt, transaktional, mit einem
+eigenen Test und einem langen Kommentar über SQLite-Verklemmungen. **Nur rief
+sie niemand auf.** `DtaDispatchService` zählte daneben mit einer lokalen
+Variablen hoch. Die Sorgfalt war da; die Verbindung fehlte.
+
+Der Zähler ist jetzt eine Schnittstelle (`Datenaustauschreferenzen`), die
+Anwendung gibt die Datenbank mit, und ein Test prüft am erzeugten UNB, dass
+über zwei Läufe hinweg keine Referenz zweimal vorkommt.
+
+Beim Ersatz-Geburtsdatum kam die Entscheidung dazu, **gar nicht abzurechnen**
+statt ein Datum zu erfinden. Damit schlägt die Regel `VERSICHERTER_GEBURTSDATUM`
+endlich an — sie war für selbst erzeugte Nachrichten toter Code — und die
+Meldung nennt den Namen der Person, weil sie jetzt wirklich einen Lauf aufhält.
+
+### Aus der Bedienung
+
+**Ohne gewählte Blaupause flog eine `NullPointerException`**, angezeigt als
+„Versand fehlgeschlagen: blueprint must not be null". Geprüft wurde nur, ob es
+Blaupausen *gibt*. Da die Auswahlfelder bewusst keine Vorauswahl haben, war das
+beim ersten Klick der Normalfall.
+
+**Die Tests verdeckten es**, und zwar auf die unangenehmste Art: `gruppeWaehlen`
+wählte nur die Gruppe, also rechneten sämtliche Tests mit `blaupause == null`
+erfolgreich ab. Beim Beheben wurden sie sofort rot — sechs auf einen Schlag.
+Der Helfer wählt jetzt beides.
+
+> **Merksatz:** ein Testhelfer, der eine Vorbedingung auslässt, prüft nicht die
+> Maske, sondern eine Maske, die es nicht gibt.
+
+**„Zuzahlung pro Position" ließ sich nicht speichern.** `inputType: NUMBER` →
+gegen `Integer` geprüft → `0,00` abgewiesen. Das Feld wies genau die
+Schreibweise zurück, zu der seine eigene, dauerhaft eingeblendete Erklärung
+auffordert, und die Testdaten schreiben genau das. **Beim Einzelbetrag war
+derselbe Fehler in diesem Branch schon behoben** — beim Nachbarfeld nicht
+gesehen.
+
+**Ein geleertes Feld wurde beim Bearbeiten still übergangen.** Man bekam eine
+falsch eingetragene Straße nicht wieder heraus. Schlimmer: wer ein IK löschte,
+umging damit `PersonenMaske.gepruefteSpeicherung` — sie sah den alten Wert und
+ließ durch, was auf dem Bildschirm längst leer war. Der Leerwert muss ankommen,
+damit das Tor greift.
+
+### Begrenzt, aber echt
+
+**`\b` arbeitet in Java nach ASCII.** Ein Begriff, der mit einem Umlaut
+*beginnt*, wird nie gefunden: „Uebertragungsfehler" traf, „Übertragungsfehler"
+nicht — und die Kasse schreibt mit Umlaut. Die Rückmeldung wurde `UNKNOWN`
+statt `TECHNICAL_ERROR`, also „ein Mensch muss draufschauen" statt „einfach
+noch einmal senden". Behoben mit `UNICODE_CHARACTER_CLASS`.
+
+*Immerhin* griff dabei die Auslegung von damals: eine nicht einzuordnende
+Antwort gilt nie als Annahme. Der Fehler degradierte sicher. Die Tests führten
+durchweg die ASCII-Umschriften auf und bestätigten damit nur die halbe Liste.
+
+**Die simulierte Gegenstelle warf ihr eigenes Urteil weg** und las es aus dem
+Protokolltext zurück. `SYNTAX_ERROR` war über den Transportweg unerreichbar,
+weil die Kopfzeile in beiden Fehlerfällen „zurückgewiesen" lautet — und genau
+diese Unterscheidung entscheidet, ob neu erzeugt oder fachlich korrigiert
+werden muss. Der Parser bleibt richtig; er ist für *fremde* Protokolle da.
+
+### Was das Review nicht gefunden hat, sondern das Beheben
+
+`AbrechnungService` öffnete zunächst eine **zweite** Verbindung auf dieselbe
+SQLite-Datei. SQLite lässt nur einen Schreiber zu, und die Vergabe der Referenz
+liest erst und schreibt dann — genau der Fall, in dem `busy_timeout`
+absichtlich nicht greift. Sie bekommt jetzt die vorhandene Datenbank mit.
+
+Und das Bedienwerkzeug aus Abschnitt H **blieb zwanzig Minuten stumm stehen**.
+Ursache war ein veraltetes `gkv-core`-Jar, also ein `NoSuchMethodError` — der
+Fallstrick, der in dieser Datei seit jeher notiert ist. Zu sehen war er nicht:
+die Ausnahme flog vor `Platform.exit()`, der JavaFX-Faden lief weiter, und
+`exec:java` wartet auf alle Nicht-Daemon-Fäden, ehe es die Ausnahme meldet — es
+wartete also ewig auf einen Faden, den nur die nie erreichte Zeile hätte
+beenden können.
+
+> **Merksatz:** ein Werkzeug, das einen Fehler verschweigt und stattdessen
+> hängt, ist schlimmer als keines. `main` gehört in ein `try/finally`, und der
+> Ausstieg ins `finally`.
+
+### Was der Reviewer geprüft und für richtig befunden hat
+
+UNT-/UNZ-Zähler, das IK-Prüfziffernverfahren, `TransactionRunner` samt
+Rollback, die `persist`/`merge`-Unterscheidung, `Anwendungsverzeichnis.umgezogen`
+mit seinem Rückfall auf den alten Ort, die Indexsynchronität in `Listenbau` und
+`Benachrichtigungen`, die Komposit-Behandlung in `JsonParserFactory` und die
+CI-JDK-Fassung.
 
 ## Was davor geschah (05.09.2026, Abend)
 
@@ -1165,6 +1285,34 @@ Get-Process | Where-Object { $_.MainWindowTitle -like "*Abrechnung*" }
 schreibt auf stderr; die Umleitung erzeugt einen `NativeCommandError`, obwohl
 der Aufruf erfolgreich war.
 
+**`\b` arbeitet in Java nach ASCII.** Ein Suchmuster, dessen Begriff mit einem
+Umlaut *beginnt*, findet nie etwas — „Übertragungsfehler" traf nicht, während
+„Uebertragungsfehler" traf. Wer mit Wortgrenzen sucht und deutsche Texte
+erwartet, setzt `Pattern.UNICODE_CHARACTER_CLASS` dazu. **Und prüft den
+Begriff mit Umlaut**, nicht nur seine Umschrift.
+
+**`Spinner.commitValue()` wirft bei unlesbarem Text.** Es fällt *nicht* auf den
+letzten gültigen Wert zurück. In `gkv-ui` geht deshalb jeder Aufruf über
+`JavaFxUiFactory.uebernimm(…)`.
+
+**`exec:java` verschweigt eine Ausnahme, solange ein Nicht-Daemon-Faden lebt.**
+Der JavaFX-Faden ist einer. Fliegt in einem Werkzeug wie `Bedienung` oder
+`Vorschau` eine Ausnahme vor dem `Platform.exit()`, hängt der Aufruf still —
+statt den Fehler zu melden, wartet Maven auf einen Faden, den nur die nie
+erreichte Zeile beenden könnte. **`main` gehört dort in ein `try/finally`, und
+das `Platform.exit()` ins `finally`.**
+
+Das kostete am 06.09.2026 zwanzig Minuten, und die Ursache war der bekannteste
+Fallstrick dieser Datei: ein veraltetes `gkv-core`-Jar, also ein
+`NoSuchMethodError`. Wer einen solchen Hänger sieht, ruft das Werkzeug einmal
+ohne Maven auf — dann steht die Ursache sofort da:
+
+```bash
+mvn -q -pl gkv-ui dependency:build-classpath -Dmdep.outputFile=/tmp/cp.txt -Dmdep.includeScope=test
+java -cp "gkv-ui/target/classes;gkv-ui/target/test-classes;$(cat /tmp/cp.txt)" \
+    de.gkvtransmitter.presentation.Bedienung <ablauf> <ziel>
+```
+
 **`jpackage` baut nur für das System, auf dem es läuft.**
 
 **SQLite legt keine Verzeichnisse an.** Siehe
@@ -1180,8 +1328,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 349 Tests
-mvn clean test -pl gkv-ui            # nur die 192 Oberflächentests
+mvn clean test                       # alle 354 Tests
+mvn clean test -pl gkv-ui            # nur die 194 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005
