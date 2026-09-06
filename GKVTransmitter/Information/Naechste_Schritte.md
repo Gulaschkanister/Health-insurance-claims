@@ -1,6 +1,6 @@
 # Nächste Schritte
 
-Stand: 5. September 2026, Branch `feature/kern-architektur`.
+Stand: 6. September 2026, Branch `feature/kern-architektur`.
 
 Dieses Dokument ist die Übergabe. Es hält fest, wo das Projekt steht, was als
 Nächstes ansteht und welche Fallstricke bereits bekannt sind — damit die Arbeit
@@ -20,14 +20,36 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **338 Tests**, davon 185 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
-- **Abschnitte B (soweit ohne Anlage 3), C, G, H und J-3 sind abgearbeitet**
+- **344 Tests**, davon 187 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **Abschnitte B (soweit ohne Anlage 3), C, G, H, I und J sind abgearbeitet**
+- **Das Paket ist gebaut und gestartet**, das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
-**Der lokale Stand ist 28 Commits vor `origin`.** Vor dem nächsten Umbau einmal
-`git push` — sonst hängt viel unveröffentlichte Arbeit an einem Rechner.
+**Der lokale Stand ist 33 Commits vor `origin`.** Das ist der letzte offene
+Punkt vor der Retrospektive: einmal `git push`, dann Pull Request oder Merge —
+siehe „Sofort zu entscheiden". Sonst hängt viel unveröffentlichte Arbeit an
+einem Rechner.
 
-## Was zuletzt geschah (05.09.2026, Abend)
+## Was zuletzt geschah (06.09.2026)
+
+Fünf Commits: `3f05830` (das Fenster bei wenig Platz), `e05c050` (zwei
+Kleinigkeiten aus F), `2d889c8` (Abschnitt I: die Umbenennung), dazu die
+Nacharbeit an Dokumentation und Übergabe.
+
+**Damit ist Abschnitt J vollständig** — der Stand, den Simon sich ansehen
+sollte, steht.
+
+Der aufschlussreichste Punkt war der scheinbar kleinste: „einmal das Fenster
+klein ziehen und hinsehen". Er brachte **drei echte Fehler**, darunter zwei,
+die bei der *Startgröße* der Anwendung auftraten — also bei jedem Start. Die
+Einzelheiten stehen in J.
+
+**Merksatz daraus:** eine Startgröße veraltet still. Sie stand auf 900×600 aus
+einer Zeit, in der die Oberfläche aus einer Menüleiste bestand; inzwischen hat
+sie eine Seitenleiste von 224 Punkten und Listen mit vier Spalten und zwei
+Schaltflächen je Zeile.
+
+## Was davor geschah (05.09.2026, Abend)
 
 Sechs Commits, in dieser Reihenfolge: `7307125` (Abschnitt B), `f72b656` (G5),
 `d61f382` (G2), `38db315` (H), `51d01c2` (Abschnitt C), `7ff85dc` (J-3).
@@ -541,15 +563,17 @@ das Beste, was geht.
   und es war keine Kleinigkeit: sie lag oben rechts und damit bei einem
   zweispaltigen Formular über „Nachname" und „Land", also über den Feldern, zu
   deren Berichtigung die Fehlermeldung auffordert. Jetzt unten rechts. Siehe J.
-- **„1 von 1 ausgewählt · 1 Termine insgesamt".** `msg.selectionSummary` kennt
-  keine Einzahl. Eine Einzahlfassung je Zahl multipliziert die Kombinationen;
-  bei einer Zusammenfassungszeile ist das den Aufwand vermutlich nicht wert.
-  Notiert, damit es nicht zweimal auffällt.
-- **Der Anzeigename einer Person trägt ihre laufende Nummer** („Anna Berger
-  (ID: 1)"). In der Gruppenmaske ist das nötig — zwei Frauen können gleich
-  heißen. In der Erfolgsmeldung nach dem Bearbeiten ist es eine
-  Datenbank-Einzelheit, die niemanden angeht. Trennen ließe sich das über zwei
-  Methoden am Populator.
+- ~~**„1 von 1 ausgewählt · 1 Termine insgesamt".**~~ **Erledigt am
+  06.09.2026.** Einzahl und Mehrzahl getrennt. Der Einwand („eine
+  Einzahlfassung je Zahl multipliziert die Kombinationen") galt nur, solange
+  man *alle* drei Zahlen beugen will; es ist aber nur eine — und das ist die
+  Zeile, an der man vor dem Versand abliest, ob die Zahlen stimmen. Sie sollte
+  selbst stimmen.
+- ~~**Der Anzeigename einer Person trägt ihre laufende Nummer.**~~ **Erledigt
+  am 06.09.2026** über `getPlainName` neben `getDisplayName`. Die Nummer steht
+  weiterhin in der Auswahlliste und in der Rückfrage vor dem Löschen — zwei
+  Frauen können gleich heißen, und gelöscht wird nur eine. In der Meldung
+  danach steht jetzt der Name allein.
 - **Checkstyle: 10 Warnungen** (`mvn checkstyle:check`). Die
   Warnungen waren am 05.09.2026 rund vierzig; übrig sind nur noch die, die eine
   Entwurfsentscheidung verlangen und sich nicht mechanisch beheben lassen:
@@ -846,34 +870,48 @@ prüfen.**
 
 ### I. Heißt das Projekt richtig?
 
-**Simons Entscheidung vom 05.09.2026:** *„Da es ja den Namen des Ziels hat,
-sollte es entsprechend so heißen, wie das Programm gedacht ist."*
+**Erledigt am 06.09.2026. Das Programm heißt jetzt „GKV-Abrechnung".**
 
-Also: **umbenennen, und zwar nach dem Zweck** — nicht nach dem einen Schritt,
-den das Programm noch gar nicht wirklich kann. Der Versand ist dateibasiert,
-ein echter Übermittlungsweg fehlt (Abschnitt E). Was es tatsächlich tut, ist
+Simons Einwand traf zu: „Transmitter" beschrieb den einen Schritt, den das
+Programm noch gar nicht wirklich kann — der Versand ist dateibasiert, ein
+echter Übermittlungsweg fehlt (Abschnitt E). Was es tatsächlich tut, ist
 Stammdaten verwalten, Kurse und Preise festhalten, daraus DTA erzeugen und
-**prüfen** — und die Prüfung ist der Teil, der den Nutzen stiftet.
+**prüfen**.
 
-**Der Name selbst ist noch nicht gewählt.** Er ist bei der nächsten Sitzung mit
-Simon festzulegen; „GKV" sollte bleiben, es sagt, worum es geht.
+**Geändert:**
 
-**Was dann zu tun ist**, nach steigenden Kosten geordnet:
+| Was | Wo |
+|---|---|
+| Anzeigename | `View.PROGRAMMNAME` — Fenstertitel und Seitenleiste hängen daran |
+| Paketname der Auslieferung | `gkv-ui/pom.xml`, `--name` und `--vendor`; das Ergebnis heißt `GKV-Abrechnung.exe` |
+| Projektnamen | die drei `<name>` in den POM |
+| Datenpfad | `Anwendungsverzeichnis` — **mit Umzug**, siehe unten |
+| Dokumentation | README, `Vision.md`, `GKVTransmitter_Dokumentation.md` (+ `.docx` neu erzeugt), Architektur-Skill |
 
-| Was | Wo | Aufwand |
-|---|---|---|
-| Anzeigename | `View.PROGRAMMNAME` — eine Zeile; Fenstertitel und Seitenleiste hängen daran | Minuten |
-| Paketname der Auslieferung | `gkv-ui/pom.xml`, zweimal `<argument>GKVTransmitter</argument>`, dazu die drei `<name>` in den POM | Minuten |
-| Java-Paketname `de.gkvtransmitter` | mechanisch, aber breit; die IDE kann es | Stunde |
-| **Datenpfad** | `Anwendungsverzeichnis.ORDNERNAME_WINDOWS` / `_MAC` | **heikel** |
+**Bewusst nicht geändert**, weil nach außen unsichtbar und ein breiter Eingriff
+ohne Gewinn für den, der damit arbeitet: der Java-Paketname
+`de.gkvtransmitter`, der Projektordner `GKVTransmitter/` und die Dateinamen der
+Dokumentation und der Diagramme. Wer das später doch will, hat einen rein
+mechanischen Umbau vor sich — die IDE kann ihn.
 
-**Der Datenpfad ist der einzige Teil mit Risiko.** Eine Umbenennung ließe eine
-bestehende Datenbank unter `%LOCALAPPDATA%\GKVTransmitter` zurück. Wer
-umbenennt, muss den alten Ort weiter lesen oder beim ersten Start umziehen —
-sonst steht die Hebamme vor leeren Listen und hält das für Datenverlust.
+#### Der Umzug des Datenordners
 
-Vorschlag für die Reihenfolge: **erst der Anzeigename** (sofort sichtbar, kein
-Risiko), dann die Paketnamen, und der Datenpfad **zuletzt und mit Umzug**.
+Das war der einzige Teil mit Risiko, und er ist der Grund, warum diese
+Umbenennung nicht nur Suchen und Ersetzen war. Eine Umbenennung **ohne** Umzug
+hätte die bestehende Datenbank unter `%LOCALAPPDATA%\GKVTransmitter` liegen
+lassen, und die Anwendung wäre mit leeren Listen aufgegangen. Für jemanden mit
+einem Jahr Stammdaten ist das von Datenverlust nicht zu unterscheiden — und die
+erste Reaktion wäre, alles noch einmal einzugeben.
+
+`Anwendungsverzeichnis.umgezogen(neu, alt)` benennt den alten Ordner beim
+ersten Start um. Nur dann, wenn es den neuen noch nicht gibt und den alten
+schon; sonst würde ein zweiter Stand einen bestehenden überschreiben.
+
+**Scheitert der Umzug, wird weiter am alten Ort gearbeitet.** Das ist die
+entscheidende Eigenschaft: die Datei kann gesperrt sein, weil noch eine zweite
+Programmfassung läuft, oder die Berechtigungen können fehlen. Mit einem leeren
+neuen Ordner aufzugehen wäre in beiden Fällen das Schlimmste. Vier Tests halten
+das fest, darunter der Fall des gescheiterten Umzugs.
 
 ### J. Der Zwischenstand, den Simon sich ansieht
 
@@ -886,43 +924,68 @@ Der Maßstab dabei ist ausdrücklich: **fast ein fertiges Produkt.** Nicht
 durch und stößt an keine Stelle, an der es klemmt, unverständlich wird oder
 etwas Falsches zulässt.
 
-**Stand am 05.09.2026 (Abend):**
+**Stand am 06.09.2026: vollständig.**
 
 | Punkt | Stand |
 |---|---|
-| 1. Abschnitt **G** vollständig | ✔ erledigt |
-| 2. Die Feldfragen aus **B 1–4**, soweit ohne Anlage 3 | ✔ erledigt (B 1, 2, 3) |
+| 1. Abschnitt **G** vollständig | ✔ |
+| 2. Die Feldfragen aus **B 1–4**, soweit ohne Anlage 3 | ✔ (B 1, 2, 3) |
 | 3. **Ein Durchlauf von Hand, aufgeschrieben** | ✔ `Information/Durchlauf.md` |
-| 4. Die Populatoren aus **C** prüfen | ✔ erledigt, und ein Fehler gefunden |
+| 4. Die Populatoren aus **C** prüfen | ✔ und ein Fehler gefunden |
+| 5. Das Paket bauen **und starten** | ✔ 06.09.2026 |
+| 6. Die Umbenennung aus **I** | ✔ 06.09.2026 |
+| 7. Das Fenster klein ziehen | ✔ als zweite, kleinere Szene |
 
-**Punkt 3 ist nicht beschrieben, sondern gefahren.** `Durchlauf.md` hält fest,
-was bei einem ganzen Monat auf dem Bildschirm steht — Teilnehmerin anlegen mit
-einem ausgedachten IK, berichtigen, Gruppe bilden, Blaupause anlegen,
-abrechnen, Datei ansehen. Die Befehlsfolge liegt daneben und lässt sich
-wiederholen. Drei Funde stehen dort:
+#### Was der 06.09.2026 noch gefunden hat
 
-- Die Meldungsecke lag **oben rechts** und damit bei einem zweispaltigen
-  Formular über „Nachname" und „Land" — also über genau den Feldern, zu deren
-  Berichtigung die Fehlermeldung auffordert. Sie steht jetzt unten rechts, der
-  leersten Ecke jeder Maske. (Das stand als „Kleinigkeit" in Abschnitt F und
-  war keine.)
-- Eine Beanstandung stand noch **drei Bereiche später** da: „Nicht
-  gespeichert", während seither dreimal erfolgreich gespeichert worden war. Ein
-  Fehler bleibt weiterhin stehen, bis jemand ihn zur Kenntnis nimmt — aber
-  woandershin zu gehen *ist* Kenntnisnahme. Geräumt wird nur beim **echten**
-  Wechsel: `rahmen.leeren()` öffnet denselben Bereich erneut, und das geschieht
-  unmittelbar nach einer Erfolgsmeldung.
-- „1 DTA-Batches erzeugt:" — ein englisches Wort in einer deutschen Oberfläche
-  und eine Eins vor einer Mehrzahl, als Schlussmeldung des ganzen Ablaufs.
+Punkt 7 war als „einmal hinsehen" gedacht und brachte **drei echte Fehler**.
+Nachstellen ließ er sich nicht von Hand — ein Schnappschuss nimmt die Größe der
+Szene, und die ändert sich nicht, wenn man dem ungezeigten Fenster nachträglich
+eine andere Höhe gibt. Eine **zweite, kleinere Szene** tut es aber; sie braucht
+eine eigene `View`, weil ein Knoten in genau einer Szene hängt.
 
-**Was noch fehlt, ehe der Stand vorgelegt wird:**
+1. **Eine `StackPane` zentriert ihre Kinder.** Wurde der Rahmen größer als das
+   Fenster, verlor man oben **und** unten gleichzeitig: bei 760×500 fehlte der
+   Programmname in der Ecke, während unten „Testdaten anlegen" abgeschnitten
+   war. Jetzt oben links verankert — der Überhang läuft nach rechts unten, wo
+   ihn die Bildlaufleisten auffangen.
+2. **Die Seitenleiste wächst mit jedem Kurs** und passte bei 600 Punkten Höhe
+   schon nicht mehr — der damaligen *Startgröße* der Anwendung. Die
+   umbrechenden Beschriftungen wurden auf eine Zeile gequetscht und gekürzt
+   („Rückbildungskurs nach …"). Sie rollt jetzt, wenn sie muss.
+3. **Bei 900×600 lag „Löschen" außerhalb des Fensters.** Erreichbar war es, die
+   Ansicht rollt quer — aber wer eine Anwendung startet, soll nicht erst rollen
+   müssen, um zu sehen, was sie kann.
 
-1. **`mvn -Ppaket clean package` einmal durchlaufen lassen** und das Ergebnis
-   starten. Alle Tests sind grün, aber das Paket ist seit den Änderungen an
-   `App` (gebundener Fenstertitel) und am Symbol nicht gebaut worden.
-2. **Die Umbenennung aus Abschnitt I**, mindestens der Anzeigename.
-3. Einmal **das Fenster von Hand klein ziehen** — die Bildlaufleiste ist am
-   Bild bestätigt, das Verhalten beim Verkleinern nicht.
+Das Fenster geht deshalb jetzt mit **1180×760** auf und lässt sich nicht
+kleiner als **900×600** ziehen. Die Grenze nennt die Anwendung, durchsetzen tut
+sie das Betriebssystem — eine Zeile in `App`.
+
+**Merksatz:** eine Startgröße veraltet still. Sie stand seit einer Zeit auf
+900×600, in der die Oberfläche aus einer Menüleiste bestand; inzwischen hat sie
+eine Seitenleiste von 224 Punkten und Listen mit vier Spalten und zwei
+Schaltflächen je Zeile.
+
+#### Das Paket
+
+`mvn -Ppaket clean package` läuft durch, das Ergebnis startet, und die
+Titelleiste sagt „Teilnehmer – GKV-Abrechnung". Geprüft wurde das durch
+Aufzählen der Fenster, nicht über `MainWindowTitle` des gestarteten Prozesses —
+der ist der jpackage-Starter und hat selbst kein Fenster. **Eine leere Anzeige
+dort heißt nicht, dass der Titel leer ist.**
+
+Der Fenstertitel hat außerdem einen eigenen Test bekommen. Die Bindung in `App`
+war richtig, aber ungeprüft: ginge sie ins Leere, bliebe die Titelleiste
+schlicht leer, und das sähe man erst im gebauten Paket.
+
+#### Was für die Retrospektive offen bleibt
+
+1. **Die Info-Zeichen.** Die Grenze zwischen „steht offen da" und „liegt hinter
+   dem Zeichen" ist gesetzt, nicht bewiesen.
+2. **Die eigene Titelleiste** (G 2). Entschieden ist dagegen, mit Begründung —
+   die Entscheidung lässt sich umdrehen, sie kostet etwa einen Tag.
+3. **Der Branch liegt noch lokal.** Siehe „Sofort zu entscheiden": `git push`,
+   dann Pull Request oder Merge nach `main`.
 
 **Was bewusst offen bleiben darf:** alles, wofür Anlage 3, der Vertrag oder die
 Datenannahmestelle nötig sind (Tarifkennzeichen, Positionsnummern, echter
@@ -981,6 +1044,24 @@ bei grünem Ablauf. Ein Verzeichnis unter `target` nehmen.
 Bildern — `Anwendungsverzeichnis` löst ihn auf. Ein `rm -rf target/vorschau`
 trifft ihn deshalb nicht, und die Testdaten häufen sich von Lauf zu Lauf.
 
+**Eine `StackPane` zentriert ihre Kinder.** Wird ein Kind größer als die
+Fläche — weil seine Mindestgröße das erzwingt —, ragt es auf *beiden* Seiten
+hinaus, und man verliert oben und unten gleichzeitig. Wer eine Überlagerung
+baut, verankert den Untergrund mit `StackPane.setAlignment(…, Pos.TOP_LEFT)`.
+
+**`mvn clean` scheitert, solange das gebaute Paket noch läuft.** Windows gibt
+die `.exe` nicht frei; die Fehlermeldung nennt „Failed to delete", nicht „ist
+in Benutzung". Erst den Prozess beenden, im Zweifel
+`rm -rf gkv-ui/target/paket`.
+
+**`MainWindowTitle` des gestarteten Prozesses ist leer** — das heißt *nicht*,
+dass die Titelleiste leer ist. Der `jpackage`-Starter hat selbst kein Fenster.
+Wer den Titel prüfen will, zählt die Fenster auf:
+
+```powershell
+Get-Process | Where-Object { $_.MainWindowTitle -like "*Abrechnung*" }
+```
+
 **In PowerShell 5.1 kein `2>&1` auf native Programme.** `java -version`
 schreibt auf stderr; die Umleitung erzeugt einen `NativeCommandError`, obwohl
 der Aufruf erfolgreich war.
@@ -1000,8 +1081,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 338 Tests
-mvn clean test -pl gkv-ui            # nur die 185 Oberflächentests
+mvn clean test                       # alle 344 Tests
+mvn clean test -pl gkv-ui            # nur die 187 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

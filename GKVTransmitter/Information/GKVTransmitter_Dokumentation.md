@@ -2,7 +2,7 @@
 | `Dialoge` | JavaFX-Dialoge | eine andere Art zu melden, etwa ein Protokoll |
 | `Maskenrahmen` | die Mitte des Hauptfensters | eine andere Anordnung der Masken |
 ---
-title: "GKVTransmitter"
+title: "GKV-Abrechnung"
 subtitle: "Abrechnung mit gesetzlichen Krankenkassen — Dokumentation"
 lang: de-DE
 toc: true
@@ -11,7 +11,7 @@ toc-depth: 2
 
 # Worum es geht
 
-Der GKVTransmitter unterstützt die Abrechnung erbrachter Leistungen mit gesetzlichen Krankenkassen. Leistungen für gesetzlich Versicherte werden nicht mit den Versicherten abgerechnet, sondern mit deren Krankenkasse — und zwar als strukturierte Datenlieferung im DTA-Format, nicht als Rechnung auf Papier.
+Die GKV-Abrechnung unterstützt die Abrechnung erbrachter Leistungen mit gesetzlichen Krankenkassen. Leistungen für gesetzlich Versicherte werden nicht mit den Versicherten abgerechnet, sondern mit deren Krankenkasse — und zwar als strukturierte Datenlieferung im DTA-Format, nicht als Rechnung auf Papier.
 
 Das Programm erfasst die dafür nötigen Angaben, erzeugt daraus die Lieferung, prüft sie gegen ein Regelwerk und übergibt sie an die zuständige Kasse.
 
@@ -23,7 +23,7 @@ Der fachliche Zuschnitt entspricht der Tätigkeit einer Hebamme: die Belegnummer
 
 Ein Windows-Rechner. **Mehr nicht** — insbesondere kein installiertes Java, kein Datenbankdienst, kein Server und keine Administratorrechte.
 
-Die ausgelieferte Fassung bringt ihre eigene Java-Laufzeit mit. Der Ordner wird kopiert, `GKVTransmitter.exe` per Doppelklick gestartet.
+Die ausgelieferte Fassung bringt ihre eigene Java-Laufzeit mit. Der Ordner wird kopiert, `GKV-Abrechnung.exe` per Doppelklick gestartet.
 
 Eine Internetverbindung wird ausschließlich für den Versand an die Krankenkassen benötigt. Stammdatenpflege, Abrechnungserstellung, DTA-Erzeugung und Prüfung funktionieren ohne Netz.
 
@@ -33,8 +33,8 @@ Alle Daten liegen im Profil des angemeldeten Benutzers:
 
 | Betriebssystem | Ort |
 |---|---|
-| Windows | `%LOCALAPPDATA%\GKVTransmitter` |
-| macOS | `~/Library/Application Support/GKVTransmitter` |
+| Windows | `%LOCALAPPDATA%GKV-Abrechnung` |
+| macOS | `~/Library/Application Support/GKV-Abrechnung` |
 | Linux | `$XDG_DATA_HOME/gkvtransmitter`, ersatzweise `~/.local/share/gkvtransmitter` |
 
 Darunter befinden sich:
@@ -57,7 +57,7 @@ Das Programm sollte dabei geschlossen sein, damit die Datenbank in einem stimmig
 
 ```
 set GKV_HOME=D:\GKV-Uebung
-GKVTransmitter.exe
+GKV-Abrechnung.exe
 ```
 
 # Ablauf einer Abrechnung
@@ -234,7 +234,7 @@ mvn -pl gkv-ui javafx:run          # Anwendung starten
 mvn -Ppaket clean package
 ```
 
-Ergebnis ist `gkv-ui/target/paket/GKVTransmitter/` — ein Ordner mit Startprogramm und mitgelieferter Java-Laufzeit, rund 166 MB.
+Ergebnis ist `gkv-ui/target/paket/GKV-Abrechnung/` — ein Ordner mit Startprogramm und mitgelieferter Java-Laufzeit, rund 166 MB.
 
 `jpackage` erzeugt immer für das System, auf dem es läuft. Ein Windows-Paket entsteht also nur unter Windows.
 
