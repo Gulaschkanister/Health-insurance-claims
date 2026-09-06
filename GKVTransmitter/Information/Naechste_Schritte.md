@@ -25,10 +25,9 @@ Erledigt und geprüft:
 - **Das Paket ist gebaut und gestartet**, das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
-**Der lokale Stand ist 33 Commits vor `origin`.** Das ist der letzte offene
-Punkt vor der Retrospektive: einmal `git push`, dann Pull Request oder Merge —
-siehe „Sofort zu entscheiden". Sonst hängt viel unveröffentlichte Arbeit an
-einem Rechner.
+**`feature/kern-architektur` ist am 06.09.2026 gepusht** — die Arbeit liegt
+nicht mehr nur auf einem Rechner. Der Weg nach `main` bleibt offen, bis Simon
+sich den Stand angesehen hat; siehe „Sofort zu entscheiden".
 
 ## Was zuletzt geschah (06.09.2026)
 
@@ -180,10 +179,48 @@ Der Sicherungs-Branch `backup/vor-identitaetswechsel` kann nach dem Merge weg:
 git branch -D backup/vor-identitaetswechsel
 ```
 
-### 2. Verwaiste Remote-Branches aufräumen
+### 2. Verwaiste Remote-Branches aufräumen — **nicht ohne Prüfung**
 
-Auf `origin` liegen sieben `copilot/*`-Branches aus abgeschlossenen PRs sowie
-`dev` (vollständig in `main` enthalten) und `restart`.
+**Nachgesehen am 06.09.2026, und die bisherige Annahme stimmt nicht.** Hier
+stand, es seien „sieben `copilot/*`-Branches aus abgeschlossenen PRs". Es sind
+**acht**, und jeder einzelne trägt Commits, die **nicht** in `main` liegen:
+
+| Branch | Commits nicht in `main` | als PR-Ref erhalten? |
+|---|---|---|
+| `copilot/add-plantuml-and-invoice-storage` | 18 | **nein** |
+| `copilot/ai-branch-optimierung` | 3 | ja, `refs/pull/16/head` |
+| `copilot/ai-work-on-open-issues` | 1 | ja, `refs/pull/15/head` |
+| `copilot/complete-ai-project` | 6 | **nein** |
+| `copilot/create-dta-file-structure` | 18 | **nein** |
+| `copilot/create-invoice-template-blueprint` | 5 | **nein** |
+| `copilot/set-environment-variables` | 8 | **nein** |
+| `copilot/write-tests-and-documentation` | 8 | **nein** |
+
+GitHub behält `refs/pull/N/head` auch nach dem Löschen eines Branches. Für die
+beiden oberen wäre ein Löschen also folgenlos — **für die sechs anderen wären
+die Commits weg.**
+
+Dass ihre Commits nicht in `main` liegen, ist für sich kein Alarm: ein
+Squash-Merge hinterlässt genau dieses Bild, und GitHub squasht Copilot-PRs
+standardmäßig. Ob die PRs zusammengeführt oder abgebrochen wurden, ließ sich
+hier nicht feststellen — **`gh` ist auf diesem Rechner nicht installiert.**
+
+Alle acht stammen aus dem **Mai 2026**, also von vor dem Architekturumbau; ihr
+Inhalt ist mit hoher Wahrscheinlichkeit überholt. Das zu *wissen* ist aber
+etwas anderes, als es zu vermuten.
+
+**Vor dem Löschen zu tun:** `gh` installieren und
+`gh pr list --state all --json number,state,headRefName` aufrufen. Was zu einem
+zusammengeführten PR gehört, kann weg; alles andere bleibt, bis jemand
+hineingesehen hat.
+
+Ausserdem liegen auf `origin` noch `dev` und `restart`. Beides nachgerechnet
+am 06.09.2026:
+
+- **`dev` ist wirklich vollständig in `main`** (null eigene Commits) und kann
+  ohne Bedenken weg.
+- **`restart` trägt einen Commit, den `main` nicht hat** (30.05.2026). Erst
+  hineinsehen.
 
 ## Priorisierte nächste Schritte
 
