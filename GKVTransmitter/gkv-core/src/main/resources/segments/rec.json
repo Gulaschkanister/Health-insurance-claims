@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "REC",
+  "description": "Rechnungsnummer, Rechnungsdatum, Rechnungsart",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Rechnungsnummer",
+      "description": "Rechnungsnummer mit Nummernkreis",
+      "type": "COMPOSITE",
+      "mandatory": true,
+      "components": [
+        {
+          "position": 1,
+          "name": "Rechnungsnummer",
+          "type": "INTEGER",
+          "maxLength": 8,
+          "mandatory": true,
+          "example": "00000000",
+          "description": "8-stellige Rechnungsnummer",
+          "inputType": "NUMBER",
+          "internal": true
+        },
+        {
+          "position": 2,
+          "name": "Nummernkreis",
+          "type": "INTEGER",
+          "maxLength": 1,
+          "mandatory": true,
+          "example": "0",
+          "description": "Nummernkreis-Kennzeichen",
+          "inputType": "NUMBER",
+          "internal": true
+        }
+      ],
+      "inputType": "STRING",
+      "internal": true
+    },
+    {
+      "position": 2,
+      "name": "Rechnungsdatum",
+      "type": "INTEGER",
+      "maxLength": 8,
+      "mandatory": true,
+      "example": "20260307",
+      "format": "YYYYMMDD",
+      "description": "Datum der Rechnungsstellung",
+      "inputType": "DATE",
+      "internal": true
+    },
+    {
+      "position": 3,
+      "name": "Rechnungsart",
+      "type": "INTEGER",
+      "maxLength": 1,
+      "mandatory": true,
+      "example": "1",
+      "validation": {
+        "pattern": "[0-9]",
+        "description": "Art der Rechnung"
+      },
+      "inputType": "CODE",
+      "internal": true
+    }
+  ]
+}

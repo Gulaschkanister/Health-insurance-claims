@@ -1,0 +1,509 @@
+package de.gkvtransmitter.parser.json;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.gkvtransmitter.definition.InvoiceType;
+import de.gkvtransmitter.enums.InputOption;
+import de.gkvtransmitter.factory.Factory;
+import de.gkvtransmitter.model.DtaMessage;
+import de.gkvtransmitter.model.Invoice;
+import de.gkvtransmitter.model.segment.SegmentDefinition;
+import de.gkvtransmitter.model.segment.SegmentInfo;
+import de.gkvtransmitter.model.segment.ValueFieldEntry;
+import de.gkvtransmitter.model.segment.field.FieldDefinition;
+import de.gkvtransmitter.model.segment.field.FieldType;
+import de.gkvtransmitter.model.segment.field.PersonRole;
+import de.gkvtransmitter.parser.ParserFactory;
+
+public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
+
+    private static final List<String> PROFILE_FILES = List.of(
+            "profiles/slla-profile.json",
+            "profiles/slga-profile.json");
+
+    /**
+     * Die Nachrichtenvorlagen, die die Blaupausenmaske zur Auswahl stellt.
+     *
+     * <p>Eine Vorlage legt <b>nur die Segmentfolge und den Anzeigenamen</b>
+     * fest. Der Name ist zugleich der Schluessel, unter dem eine Blaupause ihre
+     * Vorlage wiederfindet ({@code Blueprint.templateName}) - er darf deshalb
+     * nicht mehr geaendert werden, sobald Blaupausen darauf zeigen.</p>
+     *
+     * <p>Der Block {@code codes} in den Dateien wird zwar eingelesen und haengt
+     * als {@code headerCodes} an der {@link DtaMessage}, aber <b>niemand liest
+     * ihn aus</b>. Die abrechnungsrelevanten Werte - Abrechnungscode,
+     * Tarifkennzeichen, Positionsnummer, Einzelbetrag - stehen in der Blaupause,
+     * nicht in der Vorlage. Wer hier einen Code aendert, aendert nichts.</p>
+     */
+    private static final List<String> INVOICE_FILES = List.of(
+            "invoices/antenatal_class_single.json",
+            "invoices/postnatal_class_single.json");
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private Map<InvoiceType, Invoice> profileByTypeCache;
+    private final Map<String, SegmentDefinition> segmentDefinitionCache = new LinkedHashMap<>();
+
+    @Override
+    public Invoice parse() {
+        return parseInvoice();
+    }
+
+    @Override
+    public Object create() {
+        return parseInvoice();
+    }
+
+    public Invoice parseInvoice() {
+        return parseProfiles().stream().findFirst().orElse(new Invoice(Map.of(), InvoiceType.SLLA));
+    }
+
+    public List<Invoice> parseProfiles() {
+        return PROFILE_FILES.stream().map(this::parseProfile).toList();
+    }
+
+    public List<DtaMessage> parseInvoices() {
+        ensureProfileCache();
+        return INVOICE_FILES.stream().map(this::parseInvoiceResource).toList();
+    }
+
+    public List<SegmentDefinition> parseSegments() {
+        List<SegmentDefinition> definitions = new ArrayList<>();
+        for (Invoice invoice : parseProfiles()) {
+            definitions.addAll(invoice.getSegments().values());
+        }
+        return definitions;
+    }
+
+    private Invoice parseProfile(String profileResourcePath) throws IllegalArgumentException {
+        JsonNode profileRoot = readResourceTree(profileResourcePath);
+        JsonNode segmentsNode = profileRoot.path("segments");
+
+        Map<String, SegmentDefinition> segments = new LinkedHashMap<>();
+        if (segmentsNode.isArray()) {
+            for (JsonNode segmentNode : segmentsNode) {
+                String segmentName = segmentNode.path("name").asText();
+                boolean repeatable = segmentNode.path("repeatable").asBoolean(false);
+                segments.put(segmentName, parseSegmentFromResource(segmentName, repeatable));
+            }
+        }
+
+        String invoiceTypeRaw = profileRoot.path("nachrichtentyp").asText();
+        if (invoiceTypeRaw.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Profile " + profileResourcePath + " hat keinen gültigen Nachrichtentyp");
+        }
+
+        try {
+            InvoiceType invoiceType = InvoiceType.valueOf(invoiceTypeRaw.toUpperCase(Locale.ROOT));
+            return new Invoice(segments, invoiceType);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Unbekannter Nachrichtentyp '" + invoiceTypeRaw + "' in " + profileResourcePath, e);
+        }
+    }
+
+    private DtaMessage parseInvoiceResource(String invoiceResourcePath) throws IllegalArgumentException {
+        JsonNode invoiceRoot = readResourceTree(invoiceResourcePath);
+        JsonNode segmentsNode = invoiceRoot.path("segments");
+
+        List<SegmentInfo> segments = new ArrayList<>();
+        boolean hasMessageType = false;
+
+        if (segmentsNode.isArray()) {
+            for (JsonNode segmentNode : segmentsNode) {
+                int position = segmentNode.path("position").asInt(-1);
+                String segmentType = segmentNode.path("segmentType").asText();
+
+                if (!segmentType.isBlank()) {
+                    InvoiceType messageType = null;
+                    String groupTag = segmentNode.path("groupTag").asText("").trim();
+                    Map<String, String> valueFields = readValueFields(segmentNode.path("values"));
+
+                    // Sammle Nachrichtentypen (ignoriere Header/Footer wie UNB/UNZ)
+                    // UNB/UNZ haben nachrichtentyp=null, da sie technische Hülle sind
+                    if (!segmentNode.path("nachrichtentyp").isNull()) {
+                        String messageTypeRaw = segmentNode.path("nachrichtentyp").asText();
+                        if (!messageTypeRaw.isBlank()) {
+                            try {
+                                messageType = InvoiceType.valueOf(messageTypeRaw.toUpperCase(Locale.ROOT));
+                                hasMessageType = true;
+                            } catch (IllegalArgumentException e) {
+                                throw new IllegalArgumentException("Unbekannter Nachrichtentyp '" + messageTypeRaw
+                                        + "' bei Segment " + segmentType + " in " + invoiceResourcePath, e);
+                            }
+                        }
+                    }
+
+                    valueFields = ensureTemplateValueFields(messageType, segmentType, valueFields);
+                    Map<String, FieldDefinition> felder = felderNachSchluessel(messageType, segmentType);
+                    Map<String, ValueFieldEntry> typedValueFields = buildTypedValueFields(valueFields, felder);
+
+                    // Erstelle SegmentInfo mit Position, Typ und MessageType
+                    segments.add(new SegmentInfo(position, segmentType, messageType, groupTag, typedValueFields));
+                }
+            }
+        }
+
+        if (!hasMessageType) {
+            throw new IllegalArgumentException("Invoice " + invoiceResourcePath
+                    + " hat keine gültigen Nachrichtentypen in den Segmenten");
+        }
+
+        String sourceName = extractFileName(invoiceResourcePath);
+        String invoicerName = resolveInvoicerName(invoiceRoot, sourceName);
+        String schemaVersion = invoiceRoot.path("schemaVersion").asText();
+        String version = invoiceRoot.path("version").asText();
+
+        Map<String, String> headerCodes = readValueFields(invoiceRoot.path("codes"));
+
+        return new DtaMessage(sourceName, invoicerName, schemaVersion, version, segments, headerCodes);
+    }
+
+    /**
+     * Liest eine Segmentdefinition aus {@code segments/<name>.json}.
+     *
+     * <p>Jedes Feld traegt dort ein {@code internal}-Kennzeichen. Es entscheidet,
+     * ob das Feld im Blaupausenformular erscheint: {@code false} heisst, der
+     * Anwender fuellt es, {@code true} heisst, die Anwendung setzt es selbst.
+     * Fehlt der Eintrag, gilt {@code false} - das Feld landet also im Formular.
+     * Am 05.09.2026 wurden alle dreizehn Segmentdateien daraufhin durchgesehen:
+     * jedes Feld traegt das Kennzeichen, keines faellt auf die Vorgabe zurueck.
+     * Ohne Kennzeichen sind nur die Segmentverweise in den beiden Profildateien,
+     * die keine Felder sind und es deshalb auch nicht brauchen.</p>
+     *
+     * <p>Wichtig fuer das Verstaendnis: diese Definitionen steuern das
+     * Blaupausenformular und die Pruefung, <em>nicht</em> die Erzeugung der
+     * Nachricht. {@code DtaFactory} setzt die Segmentzeilen selbst zusammen und
+     * rechnet die Summen in GES und BES aus Einzelbetrag und Menge. Was im
+     * Formular unter "Summe Gesamtbetrag" eingetippt wird, erreicht die
+     * Nachricht also nie. Dass diese Felder auf {@code "internal": false}
+     * stehen, ist deshalb irrefuehrend - siehe {@code Naechste_Schritte.md}.</p>
+     */
+    private SegmentDefinition parseSegmentFromResource(String segmentName, boolean repeatable) {
+        String resourcePath = "segments/" + segmentName.toLowerCase(Locale.ROOT) + ".json";
+        JsonNode segmentRoot = readResourceTree(resourcePath);
+
+        Map<Integer, FieldDefinition> fieldDefinitions = new LinkedHashMap<>();
+        JsonNode fieldsNode = segmentRoot.path("fields");
+        if (fieldsNode.isArray()) {
+            for (JsonNode fieldNode : fieldsNode) {
+                FieldDefinition fieldDefinition = toFieldDefinition(fieldNode);
+                int platz = fieldDefinition.getPosition() * KOMPOSITFAKTOR;
+                fieldDefinitions.put(platz, fieldDefinition);
+
+                JsonNode komponenten = fieldNode.path("components");
+                if (komponenten.isArray()) {
+                    for (JsonNode komponente : komponenten) {
+                        FieldDefinition teil = toFieldDefinition(komponente);
+                        fieldDefinitions.put(platz + teil.getPosition(), teil);
+                    }
+                }
+            }
+        }
+        return new SegmentDefinition(fieldDefinitions, segmentName, repeatable);
+    }
+
+    /**
+     * Abstand zwischen zwei Feldern eines Segments, damit die Komponenten eines
+     * Kompositfelds dazwischen Platz haben.
+     *
+     * <p>Bis zum 05.09.2026 wurden {@code components} gar nicht gelesen. Damit
+     * waren Abrechnungscode und Tarifkennzeichen - beide Teil des Kompositfelds
+     * "Leistungserbringergruppe" im ENF - in keinem Formular erreichbar,
+     * obwohl {@link de.gkvtransmitter.dta.Leistungsparameter} genau nach diesen
+     * Namen sucht. Sie fielen deshalb immer auf die Vorbelegung zurueck.</p>
+     *
+     * <p>Die Position dient nur als Schluessel und zur Unterscheidung
+     * gleichlautender Namen; sie hat keine Bedeutung fuer die erzeugte
+     * Nachricht, die {@code DtaFactory} selbst zusammensetzt. Die Streckung
+     * haelt die Reihenfolge: Feld 2 liegt auf 200, seine Komponenten auf 201
+     * und 202, Feld 3 auf 300.</p>
+     */
+    private static final int KOMPOSITFAKTOR = 100;
+
+    private void ensureProfileCache() {
+        if (profileByTypeCache != null) {
+            return;
+        }
+
+        profileByTypeCache = new LinkedHashMap<>();
+        for (Invoice profile : parseProfiles()) {
+            profileByTypeCache.put(profile.getMessageType(), profile);
+        }
+    }
+
+    private Map<String, String> ensureTemplateValueFields(InvoiceType messageType, String segmentType,
+            Map<String, String> existingValues) {
+        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
+        if (definition == null) {
+            return existingValues;
+        }
+
+        Map<String, String> normalizedExistingValues = new LinkedHashMap<>();
+        existingValues.forEach((key, value) -> normalizedExistingValues.put(toFormFieldKey(key), value));
+
+        Map<String, String> filledValues = new LinkedHashMap<>();
+        List<FieldDefinition> orderedFields = definition.getFieldDefinitions().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        for (FieldDefinition field : orderedFields) {
+            String key = toFormFieldKey(field.getName());
+            if (filledValues.containsKey(key)) {
+                key = key + "_" + field.getPosition();
+            }
+
+            if (existingValues.containsKey(field.getName())) {
+                filledValues.put(key, existingValues.get(field.getName()));
+            } else if (existingValues.containsKey(key)) {
+                filledValues.put(key, existingValues.get(key));
+            } else if (normalizedExistingValues.containsKey(toFormFieldKey(field.getName()))) {
+                filledValues.put(key, normalizedExistingValues.get(toFormFieldKey(field.getName())));
+            } else {
+                filledValues.put(key, "");
+            }
+        }
+
+        normalizedExistingValues.forEach(filledValues::putIfAbsent);
+        return filledValues;
+    }
+
+    private String toFormFieldKey(String rawKey) {
+        if (rawKey == null) {
+            return "";
+        }
+
+        String trimmed = rawKey.trim();
+        int separatorIndex = trimmed.indexOf(" - ");
+        if (separatorIndex > 0 && separatorIndex + 3 < trimmed.length()) {
+            return trimmed.substring(separatorIndex + 3).trim();
+        }
+
+        return trimmed;
+    }
+
+    private SegmentDefinition resolveSegmentDefinition(InvoiceType messageType, String segmentType) {
+        if (segmentDefinitionCache.containsKey(segmentType)) {
+            return segmentDefinitionCache.get(segmentType);
+        }
+
+        ensureProfileCache();
+        if (messageType != null) {
+            Invoice profile = profileByTypeCache.get(messageType);
+            if (profile != null) {
+                SegmentDefinition definition = profile.getSegments().get(segmentType);
+                if (definition != null) {
+                    segmentDefinitionCache.put(segmentType, definition);
+                    return definition;
+                }
+            }
+        }
+
+        SegmentDefinition resourceDefinition = parseSegmentFromResource(segmentType, false);
+        segmentDefinitionCache.put(segmentType, resourceDefinition);
+        return resourceDefinition;
+    }
+
+    private Map<String, String> readValueFields(JsonNode valuesNode) {
+        if (valuesNode == null || !valuesNode.isObject()) {
+            return new LinkedHashMap<>();
+        }
+
+        Map<String, String> valueFields = new LinkedHashMap<>();
+        valuesNode.fields().forEachRemaining(entry -> {
+            JsonNode valueNode = entry.getValue();
+            valueFields.put(entry.getKey(), valueNode == null || valueNode.isNull() ? "" : valueNode.asText());
+        });
+        return valueFields;
+    }
+
+    /**
+     * Ordnet jedem Formularschluessel seine Felddefinition zu.
+     *
+     * <p>Hier lagen bis zum 05.09.2026 vier fast gleiche Methoden
+     * nebeneinander - je eine fuer Java-Typ, Eingabeart, {@code internal} und
+     * Personenrolle. Jede baute dieselbe Zuordnung erneut auf, jede mit
+     * derselben Schluesselbildung. Wer eine Eigenschaft ergaenzen wollte,
+     * musste eine fuenfte danebenstellen; wer eine der vier aenderte, konnte
+     * die anderen unbemerkt auseinanderlaufen lassen. Genau diese Art von
+     * Auseinanderlaufen hat den Einzelbetrag unerreichbar gemacht.</p>
+     *
+     * <p>Jetzt entsteht die Zuordnung einmal, und die Eigenschaften werden
+     * daraus gelesen.</p>
+     */
+    private Map<String, FieldDefinition> felderNachSchluessel(InvoiceType messageType, String segmentType) {
+        Map<String, FieldDefinition> nachSchluessel = new LinkedHashMap<>();
+        SegmentDefinition definition = resolveSegmentDefinition(messageType, segmentType);
+        if (definition == null) {
+            return nachSchluessel;
+        }
+
+        List<FieldDefinition> geordnet = definition.getFieldDefinitions().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.naturalOrder()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        for (FieldDefinition feld : geordnet) {
+            String schluessel = toFormFieldKey(feld.getName());
+            if (nachSchluessel.containsKey(schluessel)) {
+                schluessel = schluessel + "_" + feld.getPosition();
+            }
+            nachSchluessel.put(schluessel, feld);
+        }
+        return nachSchluessel;
+    }
+
+    private Map<String, ValueFieldEntry> buildTypedValueFields(Map<String, String> rawValueFields,
+            Map<String, FieldDefinition> felder) {
+        Map<String, ValueFieldEntry> typedValueFields = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : rawValueFields.entrySet()) {
+            String key = entry.getKey();
+            FieldDefinition feld = felder.get(key);
+            String javaType = feld == null ? "String" : mapFieldTypeToJavaType(feld.getType());
+            typedValueFields.put(key, new ValueFieldEntry(
+                    parseValueByJavaType(entry.getValue(), javaType),
+                    javaType,
+                    feld == null ? null : feld.getInputType(),
+                    feld != null && feld.isInternal(),
+                    feld == null ? null : feld.getPersonRole(),
+                    feld == null ? 0 : feld.getMaxLength(),
+                    feld == null ? "" : feld.getBeschreibung()));
+        }
+        return typedValueFields;
+    }
+
+    private InputOption parseValueByEnum(String rawValue) throws RuntimeException {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+
+        try {
+            return InputOption.valueOf(rawValue);
+        } catch (Exception e) {
+
+            return null;
+        }
+
+    }
+
+    private Object parseValueByJavaType(String rawValue, String javaType) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return null;
+        }
+
+        try {
+            return switch (javaType) {
+                case "Integer" ->
+                    Integer.valueOf(rawValue);
+                case "LocalDate" ->
+                    parseLocalDate(rawValue);
+                default ->
+                    rawValue;
+            };
+        } catch (RuntimeException ex) {
+            // Keep original user/resource value if typed conversion fails.
+            return rawValue;
+        }
+    }
+
+    private LocalDate parseLocalDate(String rawValue) {
+        try {
+            return LocalDate.parse(rawValue, DateTimeFormatter.BASIC_ISO_DATE);
+        } catch (DateTimeParseException ignored) {
+            return LocalDate.parse(rawValue);
+        }
+    }
+
+    private String mapFieldTypeToJavaType(FieldType fieldType) {
+        if (fieldType == null) {
+            return "String";
+        }
+
+        return switch (fieldType) {
+            case NUMBER ->
+                "Integer";
+            case DATE ->
+                "LocalDate";
+            case STRING ->
+                "String";
+        };
+    }
+
+    private FieldDefinition toFieldDefinition(JsonNode fieldNode) {
+        int position = fieldNode.path("position").asInt(-1);
+        FieldType fieldType = mapFieldType(fieldNode.path("type").asText());
+        boolean mandatory = fieldNode.path("mandatory").asBoolean(false);
+        int maxLength = fieldNode.path("maxLength").asInt(0);
+        String name = fieldNode.path("name").asText();
+        InputOption inputType = parseValueByEnum(fieldNode.path("inputType").asText());
+        boolean internal = fieldNode.path("internal").asBoolean(false);
+        PersonRole personRole = parsePersonRole(fieldNode.path("person").asText(""));
+        String beschreibung = fieldNode.path("description").asText("");
+        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType, internal,
+                personRole, beschreibung);
+    }
+
+    private PersonRole parsePersonRole(String rawPersonRole) {
+        if (rawPersonRole == null || rawPersonRole.isBlank()) {
+            return null;
+        }
+
+        return PersonRole.valueOf(rawPersonRole.trim().toUpperCase(Locale.ROOT));
+    }
+
+    private FieldType mapFieldType(String rawType) {
+        String normalized = rawType.toUpperCase(Locale.ROOT);
+        if (normalized.startsWith("D")) {
+            return FieldType.DATE;
+        }
+        if (normalized.startsWith("N")) {
+            return FieldType.NUMBER;
+        }
+        return FieldType.STRING;
+    }
+
+    private String extractFileName(String resourcePath) {
+        int lastSlash = resourcePath.lastIndexOf('/');
+        if (lastSlash < 0) {
+            return resourcePath;
+        }
+        return resourcePath.substring(lastSlash + 1);
+    }
+
+    private String resolveInvoicerName(JsonNode invoiceRoot, String sourceName) {
+        String invoicerName = invoiceRoot.path("invoicerName").asText("").trim();
+        if (!invoicerName.isBlank()) {
+            return invoicerName;
+        }
+
+        // Fallback to a stable, searchable value when the JSON does not yet
+        // expose a dedicated invoicerName field.
+        return sourceName;
+    }
+
+    private JsonNode readResourceTree(String resourcePath) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            if (inputStream == null) {
+                throw new IllegalStateException("Resource not found: " + resourcePath);
+            }
+            return objectMapper.readTree(inputStream);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not parse resource: " + resourcePath, e);
+        }
+    }
+}

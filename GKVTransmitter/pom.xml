@@ -5,82 +5,196 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.gkv</groupId>
-    <artifactId>gkv-transmitter</artifactId>
+    <artifactId>gkv-transmitter-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>GKVTransmitter</name>
+    <packaging>pom</packaging>
+    <name>GKV-Abrechnung (Parent)</name>
+
+    <description>
+        Aufteilung in zwei Module:
+        gkv-core traegt die Fachlichkeit (Domaene, DTA-Erzeugung, Validierung, Versand,
+        Persistenz) und ist bewusst frei von JavaFX, damit der Kern ohne Oberflaeche
+        testbar bleibt. gkv-ui enthaelt ausschliesslich die JavaFX-Praesentation.
+    </description>
+
+    <modules>
+        <module>gkv-core</module>
+        <module>gkv-ui</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
+
         <javafx.version>21.0.2</javafx.version>
         <lombok.version>1.18.44</lombok.version>
+        <jackson.version>2.18.2</jackson.version>
+        <hibernate.version>6.6.4.Final</hibernate.version>
+        <sqlite.jdbc.version>3.47.1.0</sqlite.jdbc.version>
+        <junit.version>5.11.4</junit.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>de.gkv</groupId>
+                <artifactId>gkv-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-controls</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
+            <!-- Liefert den offiziell gepflegten SQLiteDialect. -->
+            <dependency>
+                <groupId>org.hibernate.orm</groupId>
+                <artifactId>hibernate-community-dialects</artifactId>
+                <version>${hibernate.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>${sqlite.jdbc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.18.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-    <groupId>org.hibernate</groupId>
-    <artifactId>hibernate-core</artifactId>
-    <version>5.6.0.Final</version>
-</dependency>
-<dependency>
-    <groupId>org.xerial</groupId>
-    <artifactId>sqlite-jdbc</artifactId>
-    <version>3.40.1.0</version>
-</dependency>
-<dependency>
-    <groupId>com.zsoltfabok</groupId>
-    <artifactId>sqlite-dialect</artifactId>
-     <version>1.0</version>
- </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.11.4</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
-
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <!--
+                            Ohne -Xlint schweigt javac zu fast allem: veraltete
+                            Aufrufe, rohe Typen, verwaiste Dokumentationsbloecke.
+                            Am 05.09.2026 fielen so ein veraltetes
+                            Hibernate-Setting und ein haengender Javadoc-Block
+                            erst auf, als sie von Hand gesucht wurden - im Bau
+                            waren beide unsichtbar.
+
+                            Bewusst ohne -Werror: eine Bibliothek, die morgen
+                            etwas als veraltet markiert, soll den Bau nicht
+                            anhalten. Die Warnung soll sichtbar sein, nicht
+                            toedlich.
+                        -->
+                        <!--
+                            "processing" ist ausgenommen: Lombok ist der einzige
+                            angemeldete Prozessor, und javac meldet sonst bei
+                            jedem Bau, dass niemand die JPA- und
+                            JUnit-Annotationen "beansprucht" hat. Das ist der
+                            Normalfall und keine Beanstandung - eine Meldung,
+                            die immer erscheint, liest bald niemand mehr.
+                        -->
+                        <compilerArgs>
+                            <arg>-Xlint:all,-processing</arg>
+                        </compilerArgs>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-maven-plugin</artifactId>
+                    <version>0.0.8</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.4.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
                 <configuration>
-                    <release>${maven.compiler.release}</release>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
+                    <systemPropertyVariables>
+                        <!--
+                            Ohne diese Datei meldet Hibernate je Testfall den
+                            Verbindungsaufbau mit JDBC-URL und Poolgroesse. Das
+                            sind ueber hundert Zeilen, in denen das
+                            Testergebnis untergeht.
+                        -->
+                        <java.util.logging.config.file>${project.basedir}/src/test/resources/logging.properties</java.util.logging.config.file>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.3.1</version>
+                <dependencies>
+                    <!--
+                        Das Plugin bringt eine Checkstyle-Fassung mit, deren Guava
+                        nicht zu der von Maven geladenen passt (NoSuchMethodError in
+                        ImmutableList.copyOf). Eine neuere Fassung loest das auf.
+                    -->
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>10.20.1</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
-                    <mainClass>de.gkvtransmitter.Main</mainClass>
+                    <configLocation>${maven.multiModuleProjectDirectory}/build/checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
+                    <!--
+                        Die Regeln in checkstyle.xml stehen durchgaengig auf
+                        "warning". Ohne diese Zeile zaehlt das Plugin nur
+                        Verstoesse der Stufe "error" und meldet immer null.
+                    -->
+                    <violationSeverity>warning</violationSeverity>
+                    <!-- Meldet, blockiert aber nicht: der Bestand ist noch nicht regelkonform. -->
+                    <failOnViolation>false</failOnViolation>
+                    <failsOnError>false</failsOnError>
                 </configuration>
+                <!-- Ausfuehren mit: mvn checkstyle:check -->
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -94,31 +208,7 @@
                         <ruleset>category/java/design.xml</ruleset>
                     </rulesets>
                 </configuration>
-                <!-- Run with: mvn pmd:check -->
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.3.2</version>
-                <configuration>
-                    <excludeDefaultDirectories>false</excludeDefaultDirectories>
-                    <filesets>
-                        <fileset>
-                            <directory>${project.basedir}</directory>
-                            <includes>
-                                <include>target/**</include>
-                            </includes>
-                            <excludes>
-                                <exclude>database.db</exclude>
-                            </excludes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <!-- Ausfuehren mit: mvn pmd:check -->
             </plugin>
         </plugins>
     </build>

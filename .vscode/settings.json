@@ -1,3 +1,40 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic"
+  // Uebernimmt Aenderungen an den POM-Dateien ohne Nachfrage.
+  "java.configuration.updateBuildConfiguration": "automatic",
+
+  // Die Laufzeit, gegen die uebersetzt wird. Das Projekt setzt
+  // maven.compiler.release=21; gebaut wird mit dem installierten JDK 25.
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-25",
+      "path": "C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.4.101-hotspot",
+      "default": true
+    }
+  ],
+
+  // Maven liegt nicht unter einem Standardpfad, deshalb ausdruecklich benannt.
+  "java.configuration.maven.userSettings": null,
+  "maven.executable.path": "C:\\Tools\\apache-maven-3.9.16\\bin\\mvn.cmd",
+
+  // Der Kern laesst sich ohne Oberflaeche testen - deshalb sind Testlaeufe
+  // aus der Seitenleiste heraus sinnvoll.
+  "java.test.defaultConfig": "kern",
+  "java.test.config": [
+    {
+      "name": "kern",
+      "workingDirectory": "${workspaceFolder}/GKVTransmitter/gkv-core",
+      "vmArgs": [
+        "-Djava.util.logging.config.file=${workspaceFolder}/GKVTransmitter/gkv-core/src/test/resources/logging.properties"
+      ]
+    }
+  ],
+
+  // Erzeugte und heruntergeladene Verzeichnisse aus der Suche heraushalten.
+  "files.exclude": {
+    "**/target": true
+  },
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/target/**"
+  ]
 }

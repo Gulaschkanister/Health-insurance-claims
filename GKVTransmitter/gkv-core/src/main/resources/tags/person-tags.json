@@ -1,0 +1,93 @@
+{
+  "firstname": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
+    ]
+  },
+  "lastname": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
+    ]
+  },
+  "street": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
+    ]
+  },
+  "country": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "50"
+      }
+    ]
+  },
+  "housenumber": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "10"
+      }
+    ]
+  },
+  "plz": {
+    "inputOption": "NUMBER",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "5"
+      }
+    ]
+  },
+  "ik": {
+    "inputOption": "NUMBER",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "9"
+      }
+    ]
+  },
+  "kassenIk": {
+    "inputOption": "NUMBER",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "9"
+      }
+    ]
+  },
+  "birthDate": {
+    "inputOption": "DATE",
+    "modifiers": []
+  }
+}

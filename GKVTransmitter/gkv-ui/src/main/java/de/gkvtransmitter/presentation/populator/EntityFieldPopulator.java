@@ -1,0 +1,256 @@
+package de.gkvtransmitter.presentation.populator;
+
+import javafx.scene.Node;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.TextInputControl;
+
+/**
+ * Abstrakte Basis für die Populierung von Formularfeldern mit Entity-Daten.
+ *
+ * Diese Klasse definiert die Schnittstelle und gemeinsame Logik zum Laden von
+ * Entity-Feldern in JavaFX-UI-Elemente und zum Speichern von Werten zurück.
+ *
+ * @param <T> Der Entity-Typ (z.B. Patient, ServiceProvider)
+ */
+public abstract class EntityFieldPopulator<T> {
+
+    /**
+     * Populiert ein Formularfeld mit Daten aus einer Entity.
+     *
+     * @param field Das UI-Feld (TextField, DatePicker, Spinner, etc.)
+     * @param fieldName Der Name des Feldes
+     * @param entity Die Entity mit den Daten
+     */
+    public void populateField(Node field, String fieldName, T entity) {
+        Node target = unwrapField(field);
+
+        // Spezialbehandlung für Geburtsdatum
+        if (isDateField(fieldName)) {
+            populateDateField(target, fieldName, entity);
+            return;
+        }
+
+        String value = getFieldValue(fieldName, entity);
+        if (value == null || value.isBlank()) {
+            return;
+        }
+
+        switch (target) {
+            case TextInputControl textInput -> textInput.setText(value);
+            case Spinner<?> spinner -> populateSpinner(spinner, value);
+            default -> {
+            }
+        }
+    }
+
+    /**
+     * Extrahiert den Wert aus einem Formularfeld zurück in die Entity.
+     *
+     * @param field Das UI-Feld
+     * @param fieldName Der Feldname
+     * @param entity Die Ziel-Entity
+     */
+    public void extractToEntity(Node field, String fieldName, T entity) {
+        Node target = unwrapField(field);
+        String value = extractFieldValue(target);
+        setEntityFieldValue(fieldName, entity, value);
+    }
+
+    /**
+     * Gibt den Wert eines Entity-Feldes als String zurück.
+     *
+     * @param fieldName Der Feldname
+     * @param entity Die Entity
+     * @return Der Feldwert als String
+     */
+    protected abstract String getFieldValue(String fieldName, T entity);
+
+    /**
+     * Setzt einen Feldwert auf eine Entity.
+     *
+     * @param fieldName Der Feldname
+     * @param entity Die Entity
+     * @param value Der zu setzende Wert
+     */
+    protected abstract void setEntityFieldValue(String fieldName, T entity, String value);
+
+    /**
+     * Gibt die Anzeigename der Entity zurück (für Dropdowns, etc.).
+     *
+     * @param entity Die Entity
+     * @return Anzeigename (z.B. "Max Mustermann (ID: 42)")
+     */
+    public abstract String getDisplayName(T entity);
+
+    /**
+     * Der Name ohne die laufende Nummer.
+     *
+     * <p>{@link #getDisplayName} trägt sie mit — in einer Auswahlliste ist das
+     * nötig, weil zwei Frauen gleich heißen können. In einer Meldung ist sie
+     * eine Datenbank-Einzelheit, die niemanden angeht: „Anna Muster (ID: 1)
+     * aktualisiert." erzählt von einer Tabellenspalte statt von einem
+     * Menschen.</p>
+     *
+     * <p>Die Vorgabe fällt auf den vollen Namen zurück, damit eine neue Art
+     * von Entität nicht stillschweigend ohne Namen dasteht.</p>
+     */
+    public String getPlainName(T entity) {
+        return getDisplayName(entity);
+    }
+
+    /**
+     * Gibt die eindeutige ID der Entity zurück.
+     *
+     * @param entity Die Entity
+     * @return Die ID
+     */
+    public abstract Object getId(T entity);
+
+    /**
+     * Ein geleertes Zahlenfeld wird 0, ein unlesbares behält seinen Wert.
+     *
+     * <p>Die Unterscheidung ist gewollt: <b>leer</b> heißt „nicht angegeben"
+     * und gehört durchgereicht, damit die Prüfung vor dem Speichern es sieht —
+     * ein IK von 0 ist seit dem 05.09.2026 ungültig, und genau darauf soll die
+     * Maske dann anspringen. <b>„abc"</b> dagegen ist ein Vertipper; den auf 0
+     * zu setzen hieße, eine Angabe zu verlieren, die noch da war. Das Feld hat
+     * ihn ohnehin schon beanstandet.</p>
+     *
+     * @param text   was im Feld steht, bereits ohne Leerraum am Rand
+     * @param bisher der Wert der Entität, falls der Text unlesbar ist
+     */
+    protected static int zahl(String text, int bisher) {
+        if (text.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException unlesbar) {
+            return bisher;
+        }
+    }
+
+    /** Ein geleertes oder unlesbares Datumsfeld ergibt {@code null}. */
+    protected static java.time.LocalDate datum(String text) {
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return java.time.LocalDate.parse(text);
+        } catch (RuntimeException unlesbar) {
+            return null;
+        }
+    }
+
+    /**
+     * Prüft, ob ein Feldname einem Datumfeld entspricht.
+     *
+     * @param fieldName Der Feldname
+     * @return true wenn es ein Datumfeld ist
+     */
+    protected boolean isDateField(String fieldName) {
+        return "birthDate".equalsIgnoreCase(fieldName) || "birthdate".equalsIgnoreCase(fieldName);
+    }
+
+    /**
+     * Packt ein Feld aus, das in einer Hülle stecken könnte.
+     *
+     * <p>Über {@link de.gkvtransmitter.presentation.Feldbau#bedienelement} und
+     * <b>nicht</b> über das erste Kind. Genau das stand hier bis zum
+     * 05.09.2026, und es war seit demselben Tag falsch: seit neben dem
+     * Bedienelement ein Info-Zeichen stehen kann, ist das erste Kind eine
+     * Zeile aus beidem. {@code extractFieldValue} bekam damit eine
+     * {@code HBox}, lieferte {@code ""}, und {@code setEntityFieldValue}
+     * überging den Leerwert — <b>das Bearbeiten schrieb nichts mehr und
+     * meldete Erfolg.</b></p>
+     *
+     * <p>Kein Test schlug fehl. Die Maskentests benutzen einen eigenen,
+     * einfachen Populator, und die Personenmaskentests prüften, <em>dass</em>
+     * gespeichert wird, nicht <em>was</em>. Der Weg zum Bedienelement gehört
+     * deshalb an eine Stelle und nicht an drei.</p>
+     *
+     * @param field Das möglicherweise verpackte Feld
+     * @return Das eigentliche UI-Element
+     */
+    private Node unwrapField(Node field) {
+        return de.gkvtransmitter.presentation.Feldbau.bedienelement(field);
+    }
+
+    /**
+     * Extrahiert einen Wert aus einem UI-Feld.
+     *
+     * @param target Das UI-Feld
+     * @return Der Feldwert
+     */
+    private String extractFieldValue(Node target) {
+        switch (target) {
+            case TextInputControl textInput -> {
+                return textInput.getText();
+            }
+            case Spinner<?> spinner -> {
+                Object value = spinner.getValue();
+                return value != null ? value.toString() : "";
+            }
+            case DatePicker dp -> {
+                var value = dp.getValue();
+                return value != null ? value.toString() : "";
+            }
+            default -> {
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Populiert ein Datumfeld mit Entity-Daten.
+     *
+     * @param target Das Ziel-UI-Element
+     * @param fieldName Der Feldname
+     * @param entity Die Entity
+     */
+    protected void populateDateField(Node target, String fieldName, T entity) {
+        var dateValue = getDateFieldValue(fieldName, entity);
+
+        if (dateValue == null) {
+            return;
+        }
+
+        switch (target) {
+            case DatePicker dp -> dp.setValue(dateValue);
+            case TextInputControl tic -> tic.setText(dateValue.toString());
+            default -> {
+            }
+        }
+    }
+
+    /**
+     * Gibt einen LocalDate-Wert aus der Entity zurück.
+     * Muss von Subklassen überschrieben werden, die Datumfelder unterstützen.
+     *
+     * @param fieldName Der Feldname
+     * @param entity Die Entity
+     * @return Das Datum oder null
+     */
+    protected java.time.LocalDate getDateFieldValue(String fieldName, T entity) {
+        return null;
+    }
+
+    /**
+     * Populiert einen Spinner mit einem String-Wert.
+     *
+     * @param spinner Der Spinner
+     * @param value Der zu setzende Wert
+     */
+    private void populateSpinner(Spinner<?> spinner, String value) {
+        try {
+            if (spinner.getValueFactory()
+                    instanceof javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory intVf) {
+                int intValue = Integer.parseInt(value);
+                intVf.setValue(intValue);
+            }
+        } catch (NumberFormatException ignored) {
+            // Ignoriere Konvertierungsfehler
+        }
+    }
+}

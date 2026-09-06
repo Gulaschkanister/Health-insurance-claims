@@ -1,0 +1,208 @@
+@startuml GKVTransmitter_Praesentation_und_Persistenz
+!pragma layout smetana
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+title Oberflaeche und Datenzugriff
+
+package "gkv-ui" #F2F6FA {
+  package "de.gkvtransmitter" {
+    class Main {
+      +main(String[])
+    }
+    class App {
+      +start(Stage)
+    }
+  }
+  package "presentation" {
+    class Controller {
+      +getGlobalDefinitions()
+      +getFactoryManager()
+      +getDatabase() : DataRepository
+    }
+    class View {
+      +createMainScene()
+      -baueNavigation()
+      -createFormular()
+    }
+    class Hauptfenster {
+      +ergaenzeBereich(name, Runnable)
+      +zeige(Region) / +leeren()
+    }
+    class AbrechnungsMaske {
+      +erzeuge() : Region
+    }
+    class GruppenMaske {
+      +liste() : Region
+      +neu()
+    }
+    class PersonenMaske {
+      +teilnehmerliste() : Region
+      +dienstleisterliste() : Region
+    }
+    class Feldbau {
+      +erzeugeFeld(name, TagList) : Node
+      +textVon(Node) / +datumVon(Node)
+    }
+    class Listenbau<T> {
+      +baue(List<T>) : Region
+    }
+    class Benachrichtigungen {
+      +zeige(Art, Text)
+      +zeigeBleibend(...)
+    }
+    interface Maskenrahmen
+    interface Abrechnungslauf
+    interface UiFactory
+    class JavaFxUiFactory
+  }
+  package "presentation.meldung" {
+    interface Meldungen {
+      +erfolg() +hinweis() +fehler()
+      +pruefbericht() +frageNach()
+    }
+    class Bildschirmmeldungen
+    class Pruefbefunde
+  }
+  package "presentation.builder" {
+    class FormBuilder
+  }
+  package "presentation.controller" {
+    class EditFormController<T>
+  }
+  package "presentation.populator" {
+    abstract class EntityFieldPopulator<T>
+    class PatientFieldPopulator
+    class ServiceProviderFieldPopulator
+  }
+  package "ui-util" as uiutil {
+    class AppMessages
+  }
+}
+
+package "gkv-core" #F7F7F2 {
+  package "application" {
+    class AbrechnungService
+  }
+  package "factory" {
+    class FactoryManager
+  }
+  package "repository" {
+    interface DataRepository {
+      +savePatient()
+      +getAllPatients()
+      +savePersonGroup()
+      +saveBlueprint()
+      +nextDtaInterchangeReference()
+    }
+  }
+  package "hibernate.sqllite" {
+    class HibernateSqllite {
+      +open(DatabaseSettings)
+      +close()
+    }
+    class DatabaseSettings {
+      +fromEnvironment()
+      +forFile(Path)
+      +getJdbcUrl()
+      +getSchemaMode()
+    }
+    class SessionFactoryProvider {
+      +create(DatabaseSettings)
+    }
+    class TransactionRunner {
+      +read(String, Function)
+      +write(String, Function)
+    }
+    class PersistenceOperationException
+  }
+  package "util" {
+    class Anwendungsverzeichnis {
+      +basis()
+      +datenbank()
+      +versandordner()
+      +aufloesen(Path)
+    }
+    class FieldValidator
+    class TagConfigLoader
+    class TagList
+    abstract class ModifierInstance
+  }
+}
+
+class "SQLite-Datei im Benutzerprofil" as db <<Datei>>
+
+Main --> App
+App --> Controller
+App --> View
+App --> AbrechnungService
+View --> Controller
+View --> UiFactory
+View --> FormBuilder
+View --> Hauptfenster
+View --> AppMessages
+View --> Feldbau
+View --> AbrechnungService
+View --> Anwendungsverzeichnis
+Hauptfenster ..|> Maskenrahmen
+View --> AbrechnungsMaske
+View --> GruppenMaske
+View --> PersonenMaske
+
+AbrechnungsMaske --> Meldungen
+AbrechnungsMaske --> Maskenrahmen
+AbrechnungsMaske --> Abrechnungslauf
+Abrechnungslauf ..> AbrechnungService : Methodenreferenz
+GruppenMaske --> Meldungen
+GruppenMaske --> Maskenrahmen
+GruppenMaske --> DataRepository
+PersonenMaske --> Meldungen
+PersonenMaske --> Maskenrahmen
+PersonenMaske --> Feldbau
+PersonenMaske --> EditFormController
+PersonenMaske --> PatientFieldPopulator
+PersonenMaske --> ServiceProviderFieldPopulator
+PersonenMaske --> Listenbau
+GruppenMaske --> Listenbau
+Bildschirmmeldungen --> Benachrichtigungen
+Hauptfenster --> Benachrichtigungen
+EditFormController --> Meldungen
+Bildschirmmeldungen ..|> Meldungen
+Bildschirmmeldungen ..> Pruefbefunde
+Controller --> FactoryManager
+Controller --> DataRepository
+Controller ..> HibernateSqllite
+JavaFxUiFactory ..|> UiFactory
+FormBuilder --> UiFactory
+EditFormController --> EntityFieldPopulator
+PatientFieldPopulator --|> EntityFieldPopulator
+ServiceProviderFieldPopulator --|> EntityFieldPopulator
+EntityFieldPopulator --> FieldValidator
+
+HibernateSqllite ..|> DataRepository
+HibernateSqllite --> SessionFactoryProvider
+HibernateSqllite --> TransactionRunner
+SessionFactoryProvider --> DatabaseSettings
+DatabaseSettings --> Anwendungsverzeichnis
+TransactionRunner ..> PersistenceOperationException
+HibernateSqllite --> db
+
+TagConfigLoader --> TagList
+TagList o-- "0..*" ModifierInstance
+
+legend right
+  DataRepository ist der Vertrag, HibernateSqllite die Umsetzung.
+  Der Controller kennt nur den Vertrag - die Datenbank waere
+  austauschbar, ohne die Oberflaeche zu beruehren.
+
+  Anwendungsverzeichnis bestimmt den Ablageort. Datenbank und
+  Versandordner haengen am Benutzerprofil und nicht am
+  Arbeitsverzeichnis, damit die ausgelieferte Anwendung ihre
+  Daten unabhaengig vom Startort wiederfindet.
+
+  TransactionRunner buendelt Sitzung und Transaktion an einer
+  Stelle; zuvor stand derselbe Block in zwoelf Methoden.
+endlegend
+@enduml

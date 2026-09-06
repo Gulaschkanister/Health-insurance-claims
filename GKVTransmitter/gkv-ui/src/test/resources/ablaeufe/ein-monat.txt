@@ -1,0 +1,71 @@
+# Ein Monat von Hand, als Befehlsfolge.
+#
+# Das ist der Ablauf, den jemand wirklich geht: eine Teilnehmerin anlegen,
+# sie in eine Gruppe nehmen, eine Blaupause fuer den Kurs anlegen und die
+# Gruppe abrechnen. Jeder Schritt fuer sich ist geprueft; dass die vier
+# zusammenpassen, prueft nur dieser Ablauf.
+#
+# Die IK tragen gueltige Pruefziffern - anders laesst die Maske nicht
+# speichern, und das ist so gewollt.
+
+# --- 1. Eine Teilnehmerin ------------------------------------------------
+oeffne Teilnehmer
+erwarte Neuer Teilnehmer
+klick person-neu
+setze person-feld-firstname Anna
+setze person-feld-lastname Berger
+setze person-feld-birthDate 1992-04-17
+setze person-feld-street Hauptstrasse
+setze person-feld-housenumber 12
+setze person-feld-plz 28195
+setze person-feld-country DE
+setze person-feld-ik 102137985
+setze person-feld-kassenIk 102137985
+klick person-speichern
+erwarte-meldung Anna Berger als Teilnehmerin angelegt
+erwarte Anna Berger
+
+# --- 2. Ein Dienstleister ------------------------------------------------
+oeffne Dienstleister
+klick person-neu
+setze person-feld-firstname Maria
+setze person-feld-lastname Hebamme
+setze person-feld-birthDate 1980-01-09
+setze person-feld-street Kurweg
+setze person-feld-housenumber 3
+setze person-feld-plz 28203
+setze person-feld-country DE
+setze person-feld-ik 108310400
+setze person-feld-kassenIk 108310400
+klick person-speichern
+erwarte Maria Hebamme
+
+# --- 3. Eine Gruppe ------------------------------------------------------
+oeffne Gruppen
+klick gruppe-neu
+setze gruppe-name Kurs Maerz
+klick gruppe-teilnehmer-1
+klick gruppe-dienstleister-1
+klick gruppe-speichern
+erwarte Kurs Maerz
+
+# --- 4. Eine Blaupause ---------------------------------------------------
+oeffne Geburtsvorbereitungskurs
+setze blaupause-feld-tarifkennzeichen 00000
+setze blaupause-feld-abrechnungspositionsnummer 306050601
+setze blaupause-feld-durchschnittlicher-einzelbetrag 13,25
+klick blaupause-speichern
+oeffne Blaupausen
+erwarte Geburtsvorbereitungskurs
+
+# --- 5. Abrechnen --------------------------------------------------------
+oeffne Abrechnung
+setze abrechnung-blaupause Geburtsvorbereitungskurs
+setze abrechnung-gruppe Kurs Maerz
+erwarte Anna Berger
+klick abrechnung-alle
+setze abrechnung-termine-alle 8
+klick abrechnung-termine-setzen
+bild vor-der-abrechnung
+klick abrechnung-start
+erwarte-nicht Prüfung nicht bestanden

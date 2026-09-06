@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>de.gkv</groupId>
+        <artifactId>gkv-transmitter-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gkv-ui</artifactId>
+    <name>GKV-Abrechnung UI</name>
+    <description>JavaFX-Oberflaeche. Greift ausschliesslich ueber gkv-core auf die Fachlichkeit zu.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>de.gkv</groupId>
+            <artifactId>gkv-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>de.gkvtransmitter.Main</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+            Baut eine eigenstaendige Anwendung: einen Ordner mit Startprogramm
+            und mitgelieferter Java-Laufzeit. Auf dem Zielrechner muss weder
+            Java noch sonst etwas installiert sein.
+
+                mvn -Ppaket clean package
+
+            Ergebnis: gkv-ui/target/paket/GKV-Abrechnung/
+
+            jpackage erzeugt immer fuer das System, auf dem es laeuft. Ein
+            Windows-Paket entsteht also nur unter Windows.
+        -->
+        <profile>
+            <id>paket</id>
+            <properties>
+                <!--
+                    jpackage verlangt eine reine Zahlenversion. Das
+                    "-SNAPSHOT" aus der Projektversion wuerde es abweisen.
+                -->
+                <paket.version>1.0.0</paket.version>
+                <paket.verzeichnis>${project.build.directory}/paket</paket.verzeichnis>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- 1. Alle benoetigten Bibliotheken einsammeln. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <executions>
+                            <execution>
+                                <id>bibliotheken-sammeln</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${paket.verzeichnis}/lib</outputDirectory>
+                                    <includeScope>runtime</includeScope>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 2. Das eigene Jar dazulegen. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>eigenes-jar-dazulegen</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                              todir="${paket.verzeichnis}/lib"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 3. Anwendung samt Laufzeit schnueren. -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.1</version>
+                        <executions>
+                            <execution>
+                                <id>jpackage</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${java.home}/bin/jpackage</executable>
+                                    <arguments>
+                                        <argument>--type</argument>
+                                        <argument>app-image</argument>
+                                        <argument>--name</argument>
+                                        <argument>GKV-Abrechnung</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>${paket.version}</argument>
+                                        <argument>--vendor</argument>
+                                        <argument>GKV-Abrechnung</argument>
+                                        <argument>--description</argument>
+                                        <argument>Abrechnung mit gesetzlichen Krankenkassen</argument>
+                                        <!--
+                                            Windows verlangt .ico; die PNG aus
+                                            demselben Verzeichnis nimmt zur
+                                            Laufzeit Programmsymbol fuer das
+                                            Fenster. Beides wird gebraucht:
+                                            ohne diese Angabe traegt das
+                                            ausgelieferte Programm das
+                                            Java-Standardsymbol, auch wenn das
+                                            Fenster selbst ein eigenes hat.
+                                        -->
+                                        <argument>--icon</argument>
+                                        <argument>${project.basedir}/src/main/resources/symbol/symbol.ico</argument>
+                                        <argument>--input</argument>
+                                        <argument>${paket.verzeichnis}/lib</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.build.finalName}.jar</argument>
+                                        <!--
+                                            Main erweitert bewusst nicht Application.
+                                            Nur dadurch laesst sich JavaFX ueber den
+                                            Klassenpfad starten, ohne dass die Laufzeit
+                                            "JavaFX runtime components are missing" meldet.
+                                        -->
+                                        <argument>--main-class</argument>
+                                        <argument>de.gkvtransmitter.Main</argument>
+                                        <argument>--dest</argument>
+                                        <argument>${paket.verzeichnis}</argument>
+                                        <argument>--java-options</argument>
+                                        <argument>--enable-native-access=ALL-UNNAMED</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Startet die Anwendung mit Debug-Anschluss auf Port 5005 und wartet,
+            bis sich ein Debugger verbunden hat (suspend=y). Ohne das Warten
+            waere die Initialisierung - Bootstrap, JSON-Profile, Datenbank -
+            durchgelaufen, bevor man einen Haltepunkt setzen kann.
+
+                mvn -Pdebug -pl gkv-ui javafx:run
+
+            Danach in der Entwicklungsumgebung an Port 5005 anhaengen.
+            Das Plugin startet einen eigenen Prozess; die Optionen muessen
+            deshalb hier stehen und nicht am mvn-Aufruf.
+        -->
+        <profile>
+            <id>debug</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>de.gkvtransmitter.Main</mainClass>
+                            <options>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005</option>
+                            </options>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+            Wie "debug", laeuft aber sofort los, statt auf den Debugger zu
+            warten. Fuer den Fall, dass ein Fehler erst nach dem Start auftritt
+            und man sich zwischendurch anhaengen will.
+        -->
+        <profile>
+            <id>debug-nowait</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openjfx</groupId>
+                        <artifactId>javafx-maven-plugin</artifactId>
+                        <configuration>
+                            <mainClass>de.gkvtransmitter.Main</mainClass>
+                            <options>
+                                <option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</option>
+                            </options>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

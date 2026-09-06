@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0",
+  "version": "V21",
+  "segmentType": "ENF",
+  "description": "Leistungszeile - benutzerdefiniertes Segment SGS H (nur für SLLA)",
+  "note": "Folgt auf NAD. Mindestens 1 ENF pro Abrechnungsfall. Vor BES. Keine Feldverschiebung, Doppelpunkt nur im Kompositfeld",
+  "fields": [
+    {
+      "position": 1,
+      "name": "Zeilen-Identifikationsnummer",
+      "type": "INTEGER",
+      "maxLength": 4,
+      "mandatory": true,
+      "example": "01",
+      "description": "Fortlaufende Nummer der Leistungszeile innerhalb einer INV",
+      "fieldArt": "M",
+      "inputType": "NUMBER",
+      "person": "SERVICE_PROVIDER",
+      "internal": true
+    },
+    {
+      "position": 2,
+      "name": "Leistungserbringergruppe",
+      "description": "Abrechnungscode mit Tarifkennzeichen (Composite mit Doppelpunkt)",
+      "type": "COMPOSITE",
+      "mandatory": true,
+      "fieldArt": "M",
+      "person": "SERVICE_PROVIDER",
+      "internal": true,
+      "components": [
+        {
+          "position": 1,
+          "name": "Abrechnungscode",
+          "type": "STRING",
+          "maxLength": 2,
+          "mandatory": true,
+          "example": "61",
+          "description": "Kennzeichnet die Leistungsart. Für Kurse im Bereich SGS H ist das die 61 (Anlage 3, Schlüssel 8.1.5.1).",
+          "inputType": "CODE",
+          "internal": false
+        },
+        {
+          "position": 2,
+          "name": "Tarifkennzeichen",
+          "type": "STRING",
+          "maxLength": 5,
+          "mandatory": true,
+          "example": "00000",
+          "description": "Fünfstelliges Tarifkennzeichen aus dem Vertrag mit der Kasse. Es gibt dafür keine allgemeine Liste — der Wert steht in Ihrer Vereinbarung.",
+          "inputType": "CODE",
+          "internal": false
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "name": "Abrechnungspositionsnummer",
+      "type": "STRING",
+      "maxLength": 9,
+      "mandatory": true,
+      "example": "306050601",
+      "description": "Neunstellige Abrechnungspositionsnummer, die für diesen Leistungsbereich vertraglich zulässig ist (Anlage 3, Abschnitt 8.2).",
+      "fieldArt": "M",
+      "inputType": "NUMBER",
+      "internal": false
+    },
+    {
+      "position": 4,
+      "name": "Anzahl/Menge",
+      "type": "DECIMAL",
+      "maxLength": 13,
+      "mandatory": true,
+      "example": "08,00",
+      "format": "X,XX",
+      "description": "Leistungsmenge mit 2 Nachkommastellen. Setzt die Anwendung aus der Terminanzahl der Abrechnung, nicht aus der Blaupause",
+      "fieldArt": "M",
+      "inputType": "NUMBER",
+      "internal": true
+    },
+    {
+      "position": 5,
+      "name": "Durchschnittlicher Einzelbetrag",
+      "type": "DECIMAL",
+      "maxLength": 13,
+      "mandatory": true,
+      "example": "15000,00",
+      "format": "X,XX",
+      "description": "Preis je Termin, mit Komma und zwei Nachkommastellen, etwa 12,50. Gilt für alle Teilnehmenden gleich.",
+      "fieldArt": "M",
+      "inputType": "COST",
+      "internal": false
+    },
+    {
+      "position": 6,
+      "name": "Leistungsdatum",
+      "type": "INTEGER",
+      "maxLength": 8,
+      "mandatory": true,
+      "example": "20240301",
+      "format": "YYYYMMDD",
+      "description": "Datum der Leistungserbringung. Setzt die Anwendung aus der Abrechnung, nicht aus der Blaupause",
+      "fieldArt": "M",
+      "inputType": "DATE",
+      "internal": true
+    },
+    {
+      "position": 7,
+      "name": "Zuzahlung pro Position",
+      "type": "DECIMAL",
+      "maxLength": 13,
+      "mandatory": false,
+      "example": "0,00",
+      "format": "X,XX",
+      "description": "Anteil, den die versicherte Person selbst trägt, mit Komma und zwei Nachkommastellen. 0,00 oder leer, wenn keine Zuzahlung anfällt.",
+      "fieldArt": "K",
+      "_hinweis_inputType": "COST und nicht NUMBER: NUMBER wird zu Integer geprüft, und dann weist das Feld genau die Schreibweise zurück, zu der seine eigene Erklärung auffordert. Bis zum 06.09.2026 stand hier NUMBER — eine Blaupause mit 0,00 ließ sich nicht speichern, und die Testdaten schreiben genau das. Beim Einzelbetrag (Position 5) war derselbe Fehler schon behoben.",
+      "inputType": "COST",
+      "internal": false
+    }
+  ],
+  "validationRule": "Keine Feldverschiebung! Doppelpunkt nur im Kompositfeld Feld 2 zwischen Abrechnungscode und Tarifkennzeichen"
+}

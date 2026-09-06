@@ -2,12 +2,43 @@
   "version": "0.2.0",
   "configurations": [
     {
+      // Zum Anschauen des aktuellen Stands: startet mit einer eigenen
+      // Datenbank unter %TEMP% und legt Testdaten an - eine Gruppe mit drei
+      // Teilnehmerinnen, ein Leistungserbringer, eine Blaupause. Damit ist
+      // sofort etwas zu sehen, ohne von Hand Stammdaten einzugeben, und die
+      // echten Daten im Benutzerprofil bleiben unberuehrt.
       "type": "java",
-      "name": "Debug GKVTransmitter",
+      "name": "Starten mit Testdaten (eigene Datenbank)",
       "request": "launch",
       "mainClass": "de.gkvtransmitter.Main",
-      "projectName": "gkv-transmitter",
-      "cwd": "${workspaceFolder}/GKVTransmitter"
+      "projectName": "gkv-ui",
+      "cwd": "${workspaceFolder}/GKVTransmitter/gkv-ui",
+      "vmArgs": [
+        "-Dgkv.home=${env:TEMP}/gkv-probe",
+        "-Dgkv.testdaten=true"
+      ]
+    },
+    {
+      // Startet gegen die echten Daten im Benutzerprofil
+      // (%LOCALAPPDATA%\\GKVTransmitter).
+      "type": "java",
+      "name": "Starten (echte Daten)",
+      "request": "launch",
+      "mainClass": "de.gkvtransmitter.Main",
+      "projectName": "gkv-ui",
+      "cwd": "${workspaceFolder}/GKVTransmitter/gkv-ui"
+    },
+    {
+      // Haengt sich an eine bereits laufende Anwendung an, die mit
+      //   mvn -Pdebug -pl gkv-ui javafx:run
+      // gestartet wurde. Noetig, wenn die Anwendung ausserhalb von VS Code
+      // laeuft - etwa in WSL oder als geschnuertes Paket.
+      "type": "java",
+      "name": "An laufende Anwendung anhaengen (Port 5005)",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "projectName": "gkv-ui"
     }
   ]
 }
