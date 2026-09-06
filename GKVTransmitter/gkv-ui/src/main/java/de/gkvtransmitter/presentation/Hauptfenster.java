@@ -313,7 +313,7 @@ public class Hauptfenster implements Maskenrahmen {
         offenerBereich = beschriftung;
         ueberschrift.setText(beschriftung);
         setzeUntertitel(untertitel.getProperties().get(beschriftung));
-        fenstertitel.set(beschriftung + " – " + View.PROGRAMMNAME);
+        fenstertitel.set(fenstertitel(beschriftung));
         oeffnen.run();
     }
 
@@ -342,6 +342,23 @@ public class Hauptfenster implements Maskenrahmen {
     /** Der Fenstertitel; folgt dem offenen Bereich. */
     public javafx.beans.property.ReadOnlyStringProperty fenstertitel() {
         return fenstertitel.getReadOnlyProperty();
+    }
+
+    /**
+     * Bereich und Programmname, aber nicht zweimal dasselbe Wort.
+     *
+     * <p>Seit die Anwendung „GKV-Abrechnung" heisst, ergab der Bereich
+     * „Abrechnung" die Titelleiste „Abrechnung – GKV-Abrechnung". Das ist
+     * nicht falsch, liest sich aber wie ein Versehen. Steht der Bereichsname
+     * schon im Programmnamen, genuegt dieser.</p>
+     */
+    static String fenstertitel(String bereich) {
+        if (bereich == null || bereich.isBlank()
+                || View.PROGRAMMNAME.toLowerCase(java.util.Locale.GERMAN)
+                        .contains(bereich.toLowerCase(java.util.Locale.GERMAN))) {
+            return View.PROGRAMMNAME;
+        }
+        return bereich + " – " + View.PROGRAMMNAME;
     }
 
     public void setzeStatus(String text) {

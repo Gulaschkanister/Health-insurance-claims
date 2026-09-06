@@ -1,9 +1,9 @@
 ---
 name: gkvtransmitter-architektur
-description: Aufbau des GKVTransmitter, Schichtenregeln und wo welche Änderung hingehört. Verwenden vor jeder Änderung am Code — beim Anlegen neuer Klassen, beim Ändern von Persistenz, Versand, Validierung oder Oberfläche, beim Bauen, Testen und Paketieren, sowie bei Fragen zu Modulen, Paketen, Hibernate, SQLite, JavaFX oder zur Auslieferung dieses Projekts.
+description: Aufbau der GKV-Abrechnung (Projektordner GKVTransmitter), Schichtenregeln und wo welche Änderung hingehört. Verwenden vor jeder Änderung am Code — beim Anlegen neuer Klassen, beim Ändern von Persistenz, Versand, Validierung oder Oberfläche, beim Bauen, Testen und Paketieren, sowie bei Fragen zu Modulen, Paketen, Hibernate, SQLite, JavaFX oder zur Auslieferung dieses Projekts.
 ---
 
-# Aufbau des GKVTransmitter
+# Aufbau der GKV-Abrechnung
 
 ## Bauen und Testen
 
@@ -34,12 +34,12 @@ missdeuten — die Umleitung einfach weglassen.
 mvn -Ppaket clean package
 ```
 
-Ergebnis: `gkv-ui/target/paket/GKVTransmitter/` — Startprogramm plus
+Ergebnis: `gkv-ui/target/paket/GKV-Abrechnung/` — Startprogramm plus
 mitgelieferte Java-Laufzeit, rund 166 MB. Auf dem Zielrechner muss nichts
 installiert sein, auch kein Java.
 
 **Datenablage:** `Anwendungsverzeichnis` legt sie am Benutzerprofil fest
-(`%LOCALAPPDATA%\GKVTransmitter`), nicht am Arbeitsverzeichnis. Wer einen neuen
+(`%LOCALAPPDATA%GKV-Abrechnung`), nicht am Arbeitsverzeichnis. Wer einen neuen
 Pfad einführt, nutzt `Anwendungsverzeichnis.aufloesen(...)` — ein relativer Pfad
 läge sonst je nach Startart woanders, bei einer ausgelieferten Anwendung etwa in
 `C:\Program Files`, wo sich gar nicht schreiben lässt.

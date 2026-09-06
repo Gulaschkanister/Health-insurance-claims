@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>gkv-ui</artifactId>
-    <name>GKVTransmitter UI</name>
+    <name>GKV-Abrechnung UI</name>
     <description>JavaFX-Oberflaeche. Greift ausschliesslich ueber gkv-core auf die Fachlichkeit zu.</description>
 
     <dependencies>
@@ -53,7 +53,7 @@
 
                 mvn -Ppaket clean package
 
-            Ergebnis: gkv-ui/target/paket/GKVTransmitter/
+            Ergebnis: gkv-ui/target/paket/GKV-Abrechnung/
 
             jpackage erzeugt immer fuer das System, auf dem es laeuft. Ein
             Windows-Paket entsteht also nur unter Windows.
@@ -130,11 +130,11 @@
                                         <argument>--type</argument>
                                         <argument>app-image</argument>
                                         <argument>--name</argument>
-                                        <argument>GKVTransmitter</argument>
+                                        <argument>GKV-Abrechnung</argument>
                                         <argument>--app-version</argument>
                                         <argument>${paket.version}</argument>
                                         <argument>--vendor</argument>
-                                        <argument>GKVTransmitter</argument>
+                                        <argument>GKV-Abrechnung</argument>
                                         <argument>--description</argument>
                                         <argument>Abrechnung mit gesetzlichen Krankenkassen</argument>
                                         <!--

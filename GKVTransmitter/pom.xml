@@ -8,7 +8,7 @@
     <artifactId>gkv-transmitter-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>GKVTransmitter (Parent)</name>
+    <name>GKV-Abrechnung (Parent)</name>
 
     <description>
         Aufteilung in zwei Module:

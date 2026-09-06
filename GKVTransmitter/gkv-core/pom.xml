@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>gkv-core</artifactId>
-    <name>GKVTransmitter Core</name>
+    <name>GKV-Abrechnung Core</name>
     <description>
         Fachlicher Kern: Domaenenmodell, JSON-Definitionen, DTA-Erzeugung, Validierung,
         Versand und Persistenz. Enthaelt bewusst keine Oberflaechen-Abhaengigkeit.

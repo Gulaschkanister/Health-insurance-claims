@@ -1,8 +1,8 @@
-# Vision des GKVTransmitters
+# Vision der GKV-Abrechnung
 
 ## Was soll das Programm können?
 
-Der GKVTransmitter soll den digitalen Abrechnungsprozess medizinischer Leistungen mit gesetzlichen Krankenkassen unterstützen. Er soll Daten strukturiert erfassen, prüfen, in das vorgeschriebene DTA-Format umwandeln und an die passende Krankenkasse übergeben.
+Die GKV-Abrechnung soll den digitalen Abrechnungsprozess medizinischer Leistungen mit gesetzlichen Krankenkassen unterstützen. Er soll Daten strukturiert erfassen, prüfen, in das vorgeschriebene DTA-Format umwandeln und an die passende Krankenkasse übergeben.
 
 Die wichtigsten Funktionen sind:
 
@@ -29,7 +29,7 @@ Als eigenständige Anwendung auf einem einzelnen Rechner. Es gibt **keinen Serve
 
 Eine Internetverbindung wird ausschließlich für den Versand an die Krankenkassen benötigt. Alles Übrige — Stammdatenpflege, Abrechnungserstellung, DTA-Erzeugung und Prüfung — funktioniert ohne Netz.
 
-Die Daten liegen im Benutzerprofil (unter Windows `%LOCALAPPDATA%\GKVTransmitter`) und damit unabhängig davon, von wo die Anwendung gestartet wurde. Eine Sicherung des Ordners genügt, um Datenbank, Blaupausen und erzeugte DTA-Dateien zu sichern.
+Die Daten liegen im Benutzerprofil (unter Windows `%LOCALAPPDATA%GKV-Abrechnung`) und damit unabhängig davon, von wo die Anwendung gestartet wurde. Eine Sicherung des Ordners genügt, um Datenbank, Blaupausen und erzeugte DTA-Dateien zu sichern.
 
 ## Welcher Architektur folgt das Programm?
 
@@ -142,11 +142,11 @@ Das Diagramm ist damit inhaltlich passend zum aktuellen Programmstand. Es ist be
 
 ### Paketübersicht
 
-![Paketübersicht des GKVTransmitters](GKVTransmitter_Uebersicht.png)
+![Paketübersicht der GKV-Abrechnung](GKVTransmitter_Uebersicht.png)
 
 ### Domänenmodell
 
-![Domänenmodell des GKVTransmitters](GKVTransmitter_Domaene.png)
+![Domänenmodell der GKV-Abrechnung](GKVTransmitter_Domaene.png)
 
 ### DTA und Versand
 

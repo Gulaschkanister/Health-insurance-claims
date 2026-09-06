@@ -53,16 +53,25 @@ class HauptfensterTest {
             fenster.ergaenzeBereich("Teilnehmer", () -> { });
             fenster.oeffneErstenBereich();
 
-            assertTrue(fenster.fenstertitel().get().startsWith("Abrechnung"),
-                    fenster.fenstertitel().get());
-            assertTrue(fenster.fenstertitel().get().contains(View.PROGRAMMNAME),
-                    fenster.fenstertitel().get());
-
             navigationseintrag(fenster, "Teilnehmer").fire();
 
-            assertTrue(fenster.fenstertitel().get().startsWith("Teilnehmer"),
-                    fenster.fenstertitel().get());
+            assertEquals("Teilnehmer – " + View.PROGRAMMNAME, fenster.fenstertitel().get());
         });
+    }
+
+    /**
+     * Nicht zweimal dasselbe Wort.
+     *
+     * <p>Seit die Anwendung „GKV-Abrechnung" heisst, ergab der Bereich
+     * „Abrechnung" die Titelleiste „Abrechnung – GKV-Abrechnung". Nicht falsch,
+     * aber es liest sich wie ein Versehen.</p>
+     */
+    @Test
+    @DisplayName("Steht der Bereich schon im Programmnamen, genuegt der Programmname")
+    void keinDoppelterName() {
+        assertEquals(View.PROGRAMMNAME, Hauptfenster.fenstertitel("Abrechnung"));
+        assertEquals(View.PROGRAMMNAME, Hauptfenster.fenstertitel(null));
+        assertEquals("Gruppen – " + View.PROGRAMMNAME, Hauptfenster.fenstertitel("Gruppen"));
     }
 
     @Test

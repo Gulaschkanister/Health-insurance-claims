@@ -74,8 +74,22 @@ public class View {
     /** Das Stylesheet der Anwendung. Ohne es sieht alles nach JavaFX-Vorgabe aus. */
     static final String STYLESHEET = "/style/gkv.css";
 
-    /** Der Name, unter dem die Anwendung auftritt: Fenstertitel und Seitenleiste. */
-    public static final String PROGRAMMNAME = "GKVTransmitter";
+    /**
+     * Der Name, unter dem die Anwendung auftritt: Fenstertitel und Seitenleiste.
+     *
+     * <p>Hiess bis zum 06.09.2026 „GKVTransmitter". Simons Einwand traf zu:
+     * <b>„Transmitter" beschrieb den einen Schritt, den das Programm noch gar
+     * nicht wirklich kann.</b> Der Versand ist dateibasiert, ein echter
+     * Uebermittlungsweg fehlt. Was es tatsaechlich tut, ist Stammdaten
+     * verwalten, Kurse und Preise festhalten, daraus DTA erzeugen und pruefen.
+     * Ein Name soll halten, was er verspricht.</p>
+     *
+     * <p>Der Java-Paketname {@code de.gkvtransmitter} bleibt vorerst - er ist
+     * nach aussen unsichtbar, und ein Umbenennen waere ein breiter Eingriff
+     * ohne Gewinn fuer denjenigen, der das Programm benutzt. Zum Datenpfad
+     * siehe {@link de.gkvtransmitter.util.Anwendungsverzeichnis}.</p>
+     */
+    public static final String PROGRAMMNAME = "GKV-Abrechnung";
 
     /**
      * Erstellt die Hauptszene.

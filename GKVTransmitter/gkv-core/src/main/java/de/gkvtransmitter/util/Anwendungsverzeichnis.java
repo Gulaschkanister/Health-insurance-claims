@@ -20,15 +20,24 @@ import java.util.Locale;
  * davon, von wo die Anwendung startet:</p>
  *
  * <ul>
- *   <li>Windows: {@code %LOCALAPPDATA%\GKVTransmitter}</li>
- *   <li>macOS: {@code ~/Library/Application Support/GKVTransmitter}</li>
- *   <li>sonst: {@code $XDG_DATA_HOME/gkvtransmitter}, ersatzweise
- *       {@code ~/.local/share/gkvtransmitter}</li>
+ *   <li>Windows: {@code %LOCALAPPDATA%\GKV-Abrechnung}</li>
+ *   <li>macOS: {@code ~/Library/Application Support/GKV-Abrechnung}</li>
+ *   <li>sonst: {@code $XDG_DATA_HOME/gkv-abrechnung}, ersatzweise
+ *       {@code ~/.local/share/gkv-abrechnung}</li>
  * </ul>
  *
  * <p>Ueberschreibbar ueber die Systemeigenschaft {@code gkv.home} oder die
  * Umgebungsvariable {@code GKV_HOME} - etwa um mehrere Staende nebeneinander
  * zu betreiben oder die Daten auf ein anderes Laufwerk zu legen.</p>
+ *
+ * <h2>Der Umzug vom alten Namen</h2>
+ *
+ * <p>Bis zum 06.09.2026 hiess der Ordner {@code GKVTransmitter}. Eine
+ * Umbenennung ohne Umzug haette die bestehende Datenbank am alten Ort liegen
+ * lassen, und die Anwendung waere mit leeren Listen aufgegangen - fuer jemanden,
+ * der ein Jahr Stammdaten darin hat, ist das nicht von Datenverlust zu
+ * unterscheiden. Der alte Ordner wird deshalb beim ersten Start umbenannt,
+ * siehe {@link #umgezogen}.</p>
  */
 public final class Anwendungsverzeichnis {
 
@@ -37,8 +46,12 @@ public final class Anwendungsverzeichnis {
     /** Umgebungsvariable fuer das Datenverzeichnis. */
     public static final String BASIS_ENV = "GKV_HOME";
 
-    private static final String ORDNERNAME_WINDOWS = "GKVTransmitter";
-    private static final String ORDNERNAME_UNIX = "gkvtransmitter";
+    private static final String ORDNERNAME_WINDOWS = "GKV-Abrechnung";
+    private static final String ORDNERNAME_UNIX = "gkv-abrechnung";
+
+    /** Wie der Ordner bis zum 06.09.2026 hiess, siehe {@link #umgezogen}. */
+    private static final String ALTNAME_WINDOWS = "GKVTransmitter";
+    private static final String ALTNAME_UNIX = "gkvtransmitter";
 
     private static final String DATENBANK_DATEI = "database.db";
     private static final String VERSAND_ORDNER = "dta_output";
@@ -71,18 +84,56 @@ public final class Anwendungsverzeichnis {
             Path wurzel = (lokal != null && !lokal.isBlank())
                     ? Paths.get(lokal)
                     : Paths.get(heim, "AppData", "Local");
-            return wurzel.resolve(ORDNERNAME_WINDOWS).toAbsolutePath();
+            return umgezogen(wurzel.resolve(ORDNERNAME_WINDOWS).toAbsolutePath(),
+                    wurzel.resolve(ALTNAME_WINDOWS).toAbsolutePath());
         }
 
         if (betriebssystem.contains("mac")) {
-            return Paths.get(heim, "Library", "Application Support", ORDNERNAME_WINDOWS).toAbsolutePath();
+            Path wurzel = Paths.get(heim, "Library", "Application Support");
+            return umgezogen(wurzel.resolve(ORDNERNAME_WINDOWS).toAbsolutePath(),
+                    wurzel.resolve(ALTNAME_WINDOWS).toAbsolutePath());
         }
 
         String xdg = System.getenv("XDG_DATA_HOME");
         Path wurzel = (xdg != null && !xdg.isBlank())
                 ? Paths.get(xdg)
                 : Paths.get(heim, ".local", "share");
-        return wurzel.resolve(ORDNERNAME_UNIX).toAbsolutePath();
+        return umgezogen(wurzel.resolve(ORDNERNAME_UNIX).toAbsolutePath(),
+                wurzel.resolve(ALTNAME_UNIX).toAbsolutePath());
+    }
+
+    /**
+     * Benennt den Ordner aus der Zeit vor der Umbenennung um.
+     *
+     * <p>Nur dann, wenn es den neuen noch nicht gibt und den alten schon: sonst
+     * wuerde ein zweiter Stand einen bestehenden ueberschreiben.</p>
+     *
+     * <p><b>Scheitert der Umzug, wird weiter am alten Ort gearbeitet.</b> Das
+     * ist die entscheidende Eigenschaft dieser Methode. Die Datei kann gesperrt
+     * sein, weil noch eine zweite Programmfassung laeuft, oder die
+     * Berechtigungen koennen fehlen - in beiden Faellen waere es das Schlimmste,
+     * mit einem leeren neuen Ordner aufzugehen: fuer jemanden mit einem Jahr
+     * Stammdaten ist das von Datenverlust nicht zu unterscheiden, und er wuerde
+     * anfangen, alles noch einmal einzugeben.</p>
+     *
+     * <p>Paketsichtbar, damit sich genau das pruefen laesst.</p>
+     *
+     * @param neu wohin die Daten gehoeren
+     * @param alt wo sie bis zum 06.09.2026 lagen
+     * @return der Ordner, mit dem die Anwendung arbeiten soll
+     */
+    static Path umgezogen(Path neu, Path alt) {
+        if (java.nio.file.Files.exists(neu) || !java.nio.file.Files.isDirectory(alt)) {
+            return neu;
+        }
+        try {
+            java.nio.file.Files.move(alt, neu);
+            return neu;
+        } catch (java.io.IOException | RuntimeException e) {
+            System.err.println("Der Datenordner liess sich nicht umbenennen (" + e.getMessage()
+                    + "). Es wird weiter mit " + alt + " gearbeitet.");
+            return alt;
+        }
     }
 
     /** Ablageort der SQLite-Datenbank. */

@@ -1,4 +1,4 @@
-# GKVTransmitter
+# GKV-Abrechnung
 
 Abrechnung medizinischer Leistungen mit gesetzlichen Krankenkassen: Daten
 erfassen, prüfen, in das DTA-Format umwandeln und an die zuständige Kasse
@@ -62,7 +62,7 @@ Anschließend in VS Code die Konfiguration **„An laufende Anwendung anhaengen
 
 > Zum Debuggen in VS Code wird die Erweiterung *Extension Pack for Java*
 > benötigt. Sie ist auf diesem Rechner nicht installiert, ebenso wenig ein JDK
-> unter Windows. Die Konfiguration *„GKVTransmitter starten"* setzt beides
+> unter Windows. Die Konfiguration *„GKV-Abrechnung starten"* setzt beides
 > voraus; die Anhäng-Variante kommt damit aus, dass die Anwendung in WSL läuft.
 
 Einzelnen Test debuggen:
@@ -86,7 +86,7 @@ mvn pmd:check
 mvn -Ppaket clean package
 ```
 
-Ergebnis: `gkv-ui/target/paket/GKVTransmitter/` — ein Ordner mit `GKVTransmitter.exe`
+Ergebnis: `gkv-ui/target/paket/GKV-Abrechnung/` — ein Ordner mit `GKV-Abrechnung.exe`
 und mitgelieferter Java-Laufzeit, rund 166 MB. Auf dem Zielrechner muss **nichts**
 installiert sein, auch kein Java. Kopieren, Doppelklick, fertig.
 
@@ -100,8 +100,8 @@ Arbeitsverzeichnis:
 
 | Betriebssystem | Ort |
 |---|---|
-| Windows | `%LOCALAPPDATA%\GKVTransmitter` |
-| macOS | `~/Library/Application Support/GKVTransmitter` |
+| Windows | `%LOCALAPPDATA%GKV-Abrechnung` |
+| macOS | `~/Library/Application Support/GKV-Abrechnung` |
 | Linux | `$XDG_DATA_HOME/gkvtransmitter`, sonst `~/.local/share/gkvtransmitter` |
 
 Darunter `database.db` sowie `dta_output/` mit den erzeugten und zugestellten
