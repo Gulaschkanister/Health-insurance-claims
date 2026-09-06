@@ -20,8 +20,9 @@ import de.gkvtransmitter.entity.Blueprint;
  * ging in die erzeugte Nachricht ueberhaupt nicht ein.</p>
  *
  * <p>Jetzt werden die Werte aus der Blaupause gelesen. Fehlt eine Angabe, greift
- * der bisherige Wert als Vorbelegung, damit bestehende Blaupausen weiter
- * funktionieren. Die Feldnamen entsprechen denen aus
+ * die {@link #VORBELEGUNG}, damit bestehende Blaupausen weiter funktionieren -
+ * <b>ausser beim Einzelbetrag</b>, der dabei auf null faellt und vom Tor vor
+ * dem Versand abgefangen wird. Die Feldnamen entsprechen denen aus
  * {@code resources/segments/enf.json}, weil die Oberflaeche die Formularwerte
  * unter genau diesen Namen ablegt.</p>
  *
@@ -72,14 +73,26 @@ public record Leistungsparameter(
     /**
      * Vorbelegung, falls die Blaupause nichts angibt.
      *
-     * <p>Die Werte entsprechen denen, die bisher fest im Quelltext standen, und
-     * dem Beispiel in {@code Information/Valide.DTA}. Sie sind bewusst als
-     * Rueckfallebene benannt und nicht als fachlich richtige Vorgabe - der
-     * Einzelbetrag von 15.000,00 stammt aus einer Beispieldatei und ist fuer
-     * einen Kurs um Groessenordnungen zu hoch.</p>
+     * <p>Die Schluesselwerte entsprechen denen, die bisher fest im Quelltext
+     * standen, und dem Beispiel in {@code Information/Valide.DTA}. Sie sind
+     * bewusst als Rueckfallebene benannt und nicht als fachlich richtige
+     * Vorgabe.</p>
+     *
+     * <p><b>Der Einzelbetrag ist seit dem 06.09.2026 null.</b> Er stand auf
+     * 15.000,00 - dem Betrag aus der Beispieldatei, fuer einen Kurs um
+     * Groessenordnungen zu hoch. Eine Blaupause ohne Preis rechnete damit jeden
+     * Termin mit 15.000,00 ab, und weil die Nachricht in sich stimmig war
+     * (BES und GES rechnen mit demselben Wert), hielt keine Regel sie auf.</p>
+     *
+     * <p>Null ist hier kein besserer Betrag, sondern ein Betrag, der nicht
+     * durchkommt: {@code LeistungspositionRegel} weist ihn als Fehler zurueck,
+     * und die Pruefung vor dem Versand haelt den ganzen Lauf an. <b>Ein
+     * erfundener Wert, der plausibel aussieht, ist schlimmer als einer, den das
+     * Tor abfaengt</b> - dieselbe Entscheidung wie beim fehlenden Geburtsdatum
+     * in {@code DtaFactory.buildNadSegment}.</p>
      */
     public static final Leistungsparameter VORBELEGUNG = new Leistungsparameter(
-            new BigDecimal("15000.00"), "61", "00000", "306050601", BigDecimal.ZERO, "19");
+            BigDecimal.ZERO, "61", "00000", "306050601", BigDecimal.ZERO, "19");
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 

@@ -171,6 +171,7 @@ Zurückweisung.
 | `NachrichtenAbschlussRegel` | UNH/UNT, Segmentanzahl je Nachricht |
 | `InstitutionskennzeichenRegel` | Länge und Prüfziffer der IK |
 | `VersichertenangabenRegel` | Name, Geburtsdatum, Versichertennummer |
+| `LeistungspositionRegel` | Einzelbetrag und Menge im ENF stehen nicht auf null |
 | `BetragskonsistenzRegel` | ENF gegen BES, BES gegen GES |
 
 Nur Fehler halten den Versand auf, Warnungen nicht. Neue Regeln setzen

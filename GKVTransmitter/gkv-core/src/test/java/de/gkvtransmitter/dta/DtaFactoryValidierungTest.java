@@ -3,7 +3,6 @@ package de.gkvtransmitter.dta;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ class DtaFactoryValidierungTest {
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2",
                 54321, LEISTUNGSERBRINGER_IK, KASSEN_IK, LocalDate.of(1985, 2, 2));
         provider.setId(2);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         return new Abrechnung(patient, provider, blueprint, termine);
     }
 
@@ -91,16 +90,31 @@ class DtaFactoryValidierungTest {
         assertTrue(dokument.anzahlMitTag("UNZ") == 1);
     }
 
+    /**
+     * Null Termine: stimmige Summen, und trotzdem kein Versand.
+     *
+     * <p>Die beiden Aussagen gehoeren getrennt geprueft, weil sie
+     * verschiedenen Zwecken dienen. <b>Die Summen</b> muessen auch hier
+     * zusammenpassen - eine Nachricht, die sich selbst widerspricht, weist die
+     * Kasse als Syntaxfehler zurueck, und das waere ein Fehler der Erzeugung.
+     * <b>Hinausgehen</b> darf sie trotzdem nicht: null Termine mal irgendein
+     * Preis ist keine Forderung.</p>
+     *
+     * <p>Bis zum 06.09.2026 verlangte dieser Test {@code istVersandfaehig()}
+     * und war damit zufrieden, dass eine leere Rechnung an die Kasse geht.
+     * {@code AbrechnungService} laesst 0 Termine zu - geprueft wird dort nur
+     * auf negative Werte -, und aufgehalten hat es niemand.</p>
+     */
     @Test
-    @DisplayName("Eine Abrechnung ohne Termine erzeugt keine widerspruechliche Summe")
-    void abrechnungOhneTermineIstStimmig() {
-        // AbrechnungService laesst 0 Termine zu - es wird nur auf negative
-        // Werte geprueft. Die erzeugte Nachricht muss deshalb auch dann in sich
-        // stimmig sein, sonst weist die Kasse die Rechnung zurueck.
+    @DisplayName("Eine Abrechnung ohne Termine ist stimmig, geht aber nicht hinaus")
+    void abrechnungOhneTermineWirdAufgehalten() {
         ValidationReport bericht = validierung.pruefe(erzeuge(0));
 
-        assertTrue(bericht.istVersandfaehig(),
+        assertTrue(bericht.getErrors().stream().noneMatch(m -> m.code().startsWith("BETRAG_")),
                 "Bei 0 Terminen entsteht eine Nachricht, deren Summen nicht zusammenpassen:\n"
+                        + bericht.alsText());
+        assertTrue(bericht.getErrors().stream().anyMatch(m -> "ENF_MENGE_NULL".equals(m.code())),
+                "Eine Abrechnung ueber null Termine darf nicht versandfaehig sein:\n"
                         + bericht.alsText());
     }
 }

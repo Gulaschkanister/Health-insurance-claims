@@ -1,6 +1,3 @@
-| `ValidationRule` | sechs mitgelieferte Regeln | weitere fachliche Prüfungen |
-| `Dialoge` | JavaFX-Dialoge | eine andere Art zu melden, etwa ein Protokoll |
-| `Maskenrahmen` | die Mitte des Hauptfensters | eine andere Anordnung der Masken |
 ---
 title: "GKV-Abrechnung"
 subtitle: "Abrechnung mit gesetzlichen Krankenkassen — Dokumentation"
@@ -102,6 +99,7 @@ Eine fehlerhafte Lieferung wird von der Kasse abgewiesen — häufig erst Tage s
 | Nachrichtenabschluss | UNH und UNT, Segmentanzahl je Nachricht |
 | Institutionskennzeichen | Länge und Prüfziffer der IK |
 | Versichertenangaben | Name, Geburtsdatum, Versichertennummer |
+| Leistungsposition | Einzelbetrag und Menge einer Leistungszeile stehen nicht auf null |
 | Betragskonsistenz | Leistungspositionen gegen Fallsumme, Fallsumme gegen Gesamtsumme |
 
 ## Fehler und Hinweise
@@ -199,8 +197,8 @@ An fünf Stellen ist ein Vertrag bewusst von seiner Umsetzung getrennt, damit si
 |---|---|---|
 | `DataRepository` | `HibernateSqllite` | eine andere Datenhaltung |
 | `BillingOfficeTransport` | Datei-Zustellung, simulierte Kasse | einen echten Übermittlungsweg |
-| `ValidationRule` | sechs mitgelieferte Regeln | weitere fachliche Prüfungen |
-| `Dialoge` | JavaFX-Dialoge | eine andere Art zu melden, etwa ein Protokoll |
+| `ValidationRule` | sieben mitgelieferte Regeln | weitere fachliche Prüfungen |
+| `Meldungen` | die Meldungsecke im Fenster | eine andere Art zu melden, etwa ein Protokoll |
 | `Maskenrahmen` | die Mitte des Hauptfensters | eine andere Anordnung der Masken |
 
 # Konfiguration
@@ -298,7 +296,7 @@ Im Ordner `Information` liegen:
 
 - `Anlage_1_TP5_V21_20260115.pdf` und `Anlage_3_TP5_V22_20260218.pdf` — die verbindlichen Vorgaben
 - `Abrechnung_Checkliste_kurz.md` — Prüfliste vor dem Export
-- `Abrechnung_Datenerklaerung_test.md` — Felderklärung anhand einer Beispieldatei
+- `Abrechnung_Datenerklaerung.md` — Felderklärung anhand der Referenznachricht
 - `codes/` — die Codelisten des Verfahrens
 - `Valide.DTA` — eine gültige Referenznachricht, die im Projekt als Messlatte dient
 

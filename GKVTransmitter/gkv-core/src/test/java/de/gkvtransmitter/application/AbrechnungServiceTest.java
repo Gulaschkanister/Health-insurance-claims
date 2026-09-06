@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,7 @@ import de.gkvtransmitter.dispatch.BillingOfficeEndpointRegistry;
 import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.dispatch.FileBillingOfficeTransport;
+import de.gkvtransmitter.dta.Testblaupause;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -37,7 +37,7 @@ class AbrechnungServiceTest {
         PersonGroup group = new PersonGroup("Kurs");
         group.getPatients().add(patient);
         group.getServiceProviders().add(provider);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         BillingOfficeEndpoint endpoint = BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse",
                 tempDirectory.resolve("endpoint"));
         BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(
@@ -57,7 +57,7 @@ class AbrechnungServiceTest {
         Patient patient = patient(1, 108310400);
         PersonGroup group = new PersonGroup("Kurs");
         group.getServiceProviders().add(provider(2));
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         AbrechnungService service = new AbrechnungService(new DtaDispatchService(
                 new BillingOfficeEndpointRegistry(new LinkedHashMap<>(), tempDirectory.resolve("fallback")),
                 new FileBillingOfficeTransport()));

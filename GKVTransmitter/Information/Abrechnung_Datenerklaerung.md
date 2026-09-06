@@ -1,6 +1,9 @@
 # Datenbeschreibung fuer diese konkrete Abrechnung
 
-Diese Erklaerung bezieht sich nur auf die Datei test.DTA in ihrem aktuellen Stand.
+Diese Erklaerung bezieht sich auf die Referenznachricht `Information/Valide.DTA`
+in ihrem aktuellen Stand. Bis zum 06.09.2026 lag dieselbe Datei ein zweites Mal
+als `test.DTA` daneben - Byte fuer Byte gleich, aber unter einem Namen, unter dem
+sie niemand pflegte.
 
 ## 1) Kopf und Nachrichtenstruktur
 

@@ -20,7 +20,7 @@ class DtaFactoryTest {
         patient.setId(1);
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(2);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         Abrechnung abrechnung = new Abrechnung(patient, provider, blueprint, 3);
 
         String dta = DtaFactory.buildDtaFor(abrechnung, 1L, String.valueOf(provider.getIk()), String.valueOf(patient.getKassenIk()));

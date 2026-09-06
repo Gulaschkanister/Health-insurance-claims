@@ -217,6 +217,63 @@ class DtaValidationServiceTest {
         }
     }
 
+    /**
+     * Eine Leistungszeile, die nichts abrechnet.
+     *
+     * <p>Der Fall, den keine andere Regel sieht: setzt man Einzelbetrag und
+     * Fallsummen gemeinsam auf null, ist die Nachricht <em>in sich stimmig</em>
+     * — die Betragskonsistenz stimmt, der Rahmen stimmt, und hinausgehen wuerde
+     * eine Lieferung ohne Forderung. Genau so sah eine Blaupause ohne Preis
+     * aus, bis {@code Leistungsparameter.VORBELEGUNG} sie mit 15.000,00
+     * fuellte.</p>
+     */
+    @Nested
+    @DisplayName("Leistungsposition")
+    class Leistungsposition {
+
+        @Test
+        @DisplayName("Ein Einzelbetrag von 0,00 haelt den Versand auf")
+        void erkenntBetragNull() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+08,00+15000,00+20240301+0,00'",
+                            "ENF+01+61:00000+306050601+08,00+0,00+20240301+0,00'")
+                            .replace("BES+120000,00'", "BES+0,00'")
+                            .replace("GES+00+120000,00+120000,00'", "GES+00+0,00+0,00'")
+                            .replace("GES+99+120000,00+120000,00'", "GES+99+0,00+0,00'"));
+
+            assertTrue(enthaeltCode(bericht, "ENF_BETRAG_NULL"), bericht.alsText());
+            assertFalse(bericht.istVersandfaehig(),
+                    "Die Summen passen zusammen - aufhalten muss es trotzdem etwas");
+            assertFalse(enthaeltCode(bericht, "BETRAG_ENF_BES"),
+                    "Die Nachricht widerspricht sich nicht; nur ihr Inhalt ist leer:\n"
+                            + bericht.alsText());
+        }
+
+        @Test
+        @DisplayName("Eine Menge von 0,00 haelt den Versand auf")
+        void erkenntMengeNull() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+08,00+15000,00+20240301+0,00'",
+                            "ENF+01+61:00000+306050601+0,00+15000,00+20240301+0,00'")
+                            .replace("BES+120000,00'", "BES+0,00'")
+                            .replace("GES+00+120000,00+120000,00'", "GES+00+0,00+0,00'")
+                            .replace("GES+99+120000,00+120000,00'", "GES+99+0,00+0,00'"));
+
+            assertTrue(enthaeltCode(bericht, "ENF_MENGE_NULL"), bericht.alsText());
+        }
+
+        @Test
+        @DisplayName("Eine Zuzahlung von 0,00 ist erlaubt und bleibt unbeanstandet")
+        void zuzahlungNullBleibtErlaubt() {
+            // Die Zuzahlung ist ein Kannfeld; 0,00 ist dort der Normalfall und
+            // steht so auch in der Referenznachricht.
+            ValidationReport bericht = service.pruefe(REFERENZ);
+
+            assertFalse(enthaeltCode(bericht, "ENF_BETRAG_NULL"), bericht.alsText());
+            assertFalse(enthaeltCode(bericht, "ENF_MENGE_NULL"), bericht.alsText());
+        }
+    }
+
     @Nested
     @DisplayName("Versichertenangaben")
     class Versicherte {

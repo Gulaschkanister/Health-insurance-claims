@@ -145,9 +145,10 @@ public class View {
 
         // Ohne Vorlagen gibt es nichts aufzuzaehlen; dann verschwindet das
         // Zeichen, statt eine leere Liste anzubieten.
-        hauptfenster.setzeStatusInfo(vorlagennamen.isEmpty() ? null
-                : () -> meldungen.hinweis(messages.get("status.templateList")
-                        + "\n· " + String.join("\n· ", vorlagennamen)));
+        hauptfenster.setzeStatusInfo(messages.get("status.info"),
+                vorlagennamen.isEmpty() ? null
+                        : () -> meldungen.hinweis(messages.get("status.templateList")
+                                + "\n· " + String.join("\n· ", vorlagennamen)));
     }
 
     /**

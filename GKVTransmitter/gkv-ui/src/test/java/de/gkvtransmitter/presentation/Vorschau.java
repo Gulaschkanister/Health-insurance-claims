@@ -45,6 +45,12 @@ public final class Vorschau {
         Path ziel = Path.of(args.length > 0 ? args[0] : "target/vorschau").toAbsolutePath();
         java.nio.file.Files.createDirectories(ziel);
 
+        // Der ganze Datenordner wird umgelenkt, nicht nur die Datenbank: sonst
+        // schriebe ein Werkzeug seine Ausgaben in den Versandordner des
+        // Benutzers. Siehe Bedienung.aufbauen.
+        System.setProperty(de.gkvtransmitter.util.Anwendungsverzeichnis.BASIS_PROPERTY,
+                ziel.toString());
+
         // Der Pfad wird von Anwendungsverzeichnis aufgeloest und landet
         // deshalb unter %LOCALAPPDATA%, nicht neben den Bildern. Ein
         // "rm -rf target/vorschau" trifft ihn also nicht, und die Testdaten

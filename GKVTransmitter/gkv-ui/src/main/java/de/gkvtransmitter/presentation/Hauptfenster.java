@@ -375,14 +375,23 @@ public class Hauptfenster implements Maskenrahmen {
      * der abrechnet. Die Zeile sagt jetzt, <em>wie viele</em> Vorlagen geladen
      * sind; wer wissen will, welche, klickt hier.</p>
      *
-     * <p>Die Einzelheiten erscheinen ueber {@code Meldungen} in der Ecke oben
-     * rechts, nicht in einem Fenster - die Anwendung oeffnet keine.</p>
+     * <p>Die Einzelheiten erscheinen ueber {@code Meldungen} in der
+     * Meldungsecke, nicht in einem Fenster - die Anwendung oeffnet keine.</p>
      *
+     * <p>Der Kurzhinweis ist kein Beiwerk: ein "i" allein sagt nicht, was
+     * dahinter liegt, und wer es nicht anklickt, erfaehrt es nie. Der Text
+     * stand seit dem 05.09.2026 als {@code status.info} in
+     * {@code ui-messages.json} und wurde nirgends verwendet - dieselbe Falle
+     * wie ein Zeichen ohne Inhalt, nur andersherum.</p>
+     *
+     * @param kurzhinweis was beim Ueberfahren erscheint
      * @param beiKlick was gezeigt wird, oder {@code null}, um das Zeichen zu
      *        verbergen
      */
-    public void setzeStatusInfo(Runnable beiKlick) {
+    public void setzeStatusInfo(String kurzhinweis, Runnable beiKlick) {
         statusinfo.setOnAction(beiKlick == null ? null : ereignis -> beiKlick.run());
+        statusinfo.setTooltip(kurzhinweis == null || kurzhinweis.isBlank()
+                ? null : new Tooltip(kurzhinweis));
         statusinfo.setVisible(beiKlick != null);
         statusinfo.setManaged(beiKlick != null);
     }

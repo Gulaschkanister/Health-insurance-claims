@@ -90,6 +90,15 @@ public final class Bedienung {
      * sie ungezeichnet, aber gezeigt wird es nicht. Die Datenbank liegt unter
      * dem Zielverzeichnis und wird zuvor geloescht - ein Ablauf, der auf
      * Bestaenden des letzten Laufs aufsetzt, prueft nichts Verlaessliches.</p>
+     *
+     * <p><b>Der ganze Datenordner wird umgelenkt</b>, nicht nur die Datenbank.
+     * Ein Ablauf, der eine Abrechnung startet, erzeugt eine echte DTA-Datei -
+     * und die landete bis zum 06.09.2026 im Versandordner des Benutzers, weil
+     * {@code billing-office-endpoints.json} ihre Ziele relativ angibt und
+     * {@code Anwendungsverzeichnis} sie gegen den Datenordner aufloest. Dort
+     * lagen 98 Dateien aus Testlaeufen, von einer echten Lieferung nicht zu
+     * unterscheiden. Ueber {@code gkv.home} liegt jetzt alles unter
+     * {@code target}: Datenbank, Zwischenablage und Ausgangsordner.</p>
      */
     public static Bedienung aufbauen(Path uebergebenesZiel, boolean mitTestdaten) throws Exception {
         // Absolut, sonst loest Anwendungsverzeichnis den Pfad gegen den
@@ -97,6 +106,8 @@ public final class Bedienung {
         // Benutzerprofil statt neben den Bildern. Siehe Fallstricke.
         Path ziel = uebergebenesZiel.toAbsolutePath();
         Files.createDirectories(ziel);
+        System.setProperty(de.gkvtransmitter.util.Anwendungsverzeichnis.BASIS_PROPERTY,
+                ziel.toString());
         Path datenbank = de.gkvtransmitter.util.Anwendungsverzeichnis
                 .aufloesen(ziel.resolve("bedienung.db"));
         Files.deleteIfExists(datenbank);

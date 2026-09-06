@@ -7,7 +7,7 @@ description: Fachdomäne der Abrechnung mit gesetzlichen Krankenkassen — Betei
 
 Dieser Text hält fest, was im Projekt belegt ist. Quellen sind
 `Information/Abrechnung_Checkliste_kurz.md`,
-`Information/Abrechnung_Datenerklaerung_test.md`, die Codelisten unter
+`Information/Abrechnung_Datenerklaerung.md`, die Codelisten unter
 `Information/codes/` und die Segmentdefinitionen unter
 `gkv-core/src/main/resources/segments/`.
 

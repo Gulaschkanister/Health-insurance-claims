@@ -3,7 +3,6 @@ package de.gkvtransmitter.dispatch;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.gkvtransmitter.dta.Testblaupause;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -77,7 +77,7 @@ class DtaDispatchServiceTest {
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2",
                 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(10);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         Patient anna = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
                 108310400, 108310400, LocalDate.of(1990, 1, 1));
         anna.setId(1);
@@ -92,7 +92,7 @@ class DtaDispatchServiceTest {
     void generatesFilesGroupedByKassenIk() throws Exception {
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(10);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         Patient patient1 = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 108310400, 108310400, LocalDate.of(1990, 1, 1));
         patient1.setId(1);
         Patient patient2 = new Patient("Ben", "Beispiel", "Musterstrasse", "DE", "3", 12345, 102137985, 104940005, LocalDate.of(1991, 2, 2));
@@ -123,7 +123,7 @@ class DtaDispatchServiceTest {
     void testDtaArrivesAtConfiguredEndpoint() throws Exception {
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(10);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, 108310400, 108310400, LocalDate.of(1990, 1, 1));
         patient.setId(1);
 

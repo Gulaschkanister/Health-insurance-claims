@@ -158,12 +158,28 @@ class LeistungsparameterTest {
         }
 
         @Test
-        @DisplayName("Die Vorbelegung entspricht den zuvor fest verdrahteten Werten")
+        @DisplayName("Die Schluesselwerte der Vorbelegung entsprechen dem Beispiel")
         void vorbelegungEntsprichtAltemVerhalten() {
-            assertEquals(new BigDecimal("15000.00"), Leistungsparameter.VORBELEGUNG.einzelbetrag());
             assertEquals("61", Leistungsparameter.VORBELEGUNG.abrechnungscode());
             assertEquals("00000", Leistungsparameter.VORBELEGUNG.tarifkennzeichen());
             assertEquals("306050601", Leistungsparameter.VORBELEGUNG.positionsnummer());
+        }
+
+        /**
+         * Der Preis faellt auf null, nicht auf einen plausiblen Betrag.
+         *
+         * <p>Hier standen bis zum 06.09.2026 15.000,00 - der Betrag aus der
+         * Beispieldatei. Eine Blaupause ohne Preis rechnete damit jeden Termin
+         * mit 15.000,00 ab, und weil die Nachricht in sich stimmig war, hielt
+         * sie keine Regel auf. Null kommt dagegen nicht durch: dafuer sorgt
+         * {@code LeistungspositionRegel}.</p>
+         */
+        @Test
+        @DisplayName("Ohne Preis in der Blaupause steht dort null, nicht der Beispielbetrag")
+        void ohnePreisNull() {
+            assertEquals(0, BigDecimal.ZERO.compareTo(
+                    Leistungsparameter.ausBlueprint(blueprint("{\"fields\":{}}")).einzelbetrag()),
+                    "Ein erfundener Preis, der plausibel aussieht, kommt durch jede Pruefung");
         }
     }
 }

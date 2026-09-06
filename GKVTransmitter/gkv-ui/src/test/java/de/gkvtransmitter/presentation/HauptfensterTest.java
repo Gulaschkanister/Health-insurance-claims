@@ -217,9 +217,13 @@ class HauptfensterTest {
         JavaFxLaufzeit.aufFxFaden(() -> {
             Hauptfenster fenster = neuesFenster();
             int[] wieOft = {0};
-            fenster.setzeStatusInfo(() -> wieOft[0]++);
+            fenster.setzeStatusInfo("Welche Vorlagen geladen sind", () -> wieOft[0]++);
 
             assertTrue(infozeichen(fenster).isVisible());
+            assertNotNull(infozeichen(fenster).getTooltip(),
+                    "Ein \"i\" ohne Kurzhinweis sagt nicht, was dahinter liegt");
+            assertEquals("Welche Vorlagen geladen sind",
+                    infozeichen(fenster).getTooltip().getText());
             infozeichen(fenster).fire();
 
             assertEquals(1, wieOft[0]);
@@ -231,8 +235,8 @@ class HauptfensterTest {
     void infoLaesstSichZuruecknehmen() {
         JavaFxLaufzeit.aufFxFaden(() -> {
             Hauptfenster fenster = neuesFenster();
-            fenster.setzeStatusInfo(() -> { });
-            fenster.setzeStatusInfo(null);
+            fenster.setzeStatusInfo("Welche Vorlagen geladen sind", () -> { });
+            fenster.setzeStatusInfo(null, null);
 
             assertFalse(infozeichen(fenster).isVisible());
         });

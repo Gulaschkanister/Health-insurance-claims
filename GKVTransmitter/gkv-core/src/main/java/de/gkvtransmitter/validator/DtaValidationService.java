@@ -7,6 +7,7 @@ import java.util.Objects;
 import de.gkvtransmitter.dta.DtaDocument;
 import de.gkvtransmitter.validator.rules.BetragskonsistenzRegel;
 import de.gkvtransmitter.validator.rules.InstitutionskennzeichenRegel;
+import de.gkvtransmitter.validator.rules.LeistungspositionRegel;
 import de.gkvtransmitter.validator.rules.NachrichtenAbschlussRegel;
 import de.gkvtransmitter.validator.rules.NachrichtenRahmenRegel;
 import de.gkvtransmitter.validator.rules.SegmentSyntaxRegel;
@@ -47,6 +48,7 @@ public final class DtaValidationService {
                 new NachrichtenAbschlussRegel(),
                 new InstitutionskennzeichenRegel(),
                 new VersichertenangabenRegel(),
+                new LeistungspositionRegel(),
                 new BetragskonsistenzRegel()));
     }
 

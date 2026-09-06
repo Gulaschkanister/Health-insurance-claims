@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.gkvtransmitter.dta.Testblaupause;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -50,7 +50,7 @@ class KassenKommunikationTest {
         ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2",
                 54321, ERBRINGER_IK, kassenIk, LocalDate.of(1985, 2, 2));
         provider.setId(99);
-        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Blueprint blueprint = Testblaupause.mitPreis();
         return new Abrechnung(patient, provider, blueprint, termine);
     }
 
