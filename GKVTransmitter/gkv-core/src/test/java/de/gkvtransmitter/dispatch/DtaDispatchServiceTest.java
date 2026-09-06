@@ -7,10 +7,12 @@ import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -18,11 +20,73 @@ import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.model.Abrechnung;
+import de.gkvtransmitter.validator.DtaValidationService;
 
 class DtaDispatchServiceTest {
 
     @TempDir
     Path tempDir;
+
+    /**
+     * Keine Datenaustauschreferenz zweimal — auch nicht ueber Laeufe hinweg.
+     *
+     * <p>Bis zum 06.09.2026 zaehlte {@code erzeuge} mit einer lokalen
+     * Variablen, die bei jedem Lauf wieder bei 1 begann. Die zweite Abrechnung
+     * eines Monats trug damit dieselben Referenzen wie die erste, und
+     * <b>„Datenaustauschreferenz doppelt vergeben" ist ein dokumentierter
+     * Abweisungsgrund</b>. Die gesperrte, gepruefte Methode dafuer
+     * ({@code DataRepository.nextDtaInterchangeReference}) gab es die ganze
+     * Zeit — sie hatte nur keinen Aufrufer.</p>
+     *
+     * <p>Geprueft wird am erzeugten UNB, nicht an einem Zaehlerstand: die
+     * Referenz steht dort als fuenfstellige Zahl, und darauf sieht die
+     * Kasse.</p>
+     */
+    @Test
+    @DisplayName("Keine Datenaustauschreferenz wird zweimal vergeben")
+    void referenzenSindEindeutig() throws Exception {
+        BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(
+                new LinkedHashMap<>(), tempDir.resolve("fallback"));
+        // Eine dauerhafte Quelle, wie sie die Anwendung mitgibt.
+        java.util.concurrent.atomic.AtomicLong dauerhaft = new java.util.concurrent.atomic.AtomicLong(1);
+
+        Set<String> gesehen = new java.util.HashSet<>();
+        for (int lauf = 0; lauf < 2; lauf++) {
+            DtaDispatchService dienst = new DtaDispatchService(registry,
+                    new FileBillingOfficeTransport(), DtaValidationService.standard(),
+                    dauerhaft::getAndIncrement);
+            for (DispatchBatch lieferung : dienst.generateAndRoute(zweiAbrechnungen(), tempDir)) {
+                for (Path datei : lieferung.getFiles()) {
+                    assertTrue(gesehen.add(referenzAus(Files.readString(datei))),
+                            "Diese Referenz wurde schon einmal vergeben");
+                }
+            }
+        }
+
+        assertEquals(4, gesehen.size(), "Zwei Laeufe mit je zwei Abrechnungen");
+    }
+
+    /** Die Datenaustauschreferenz aus dem UNB: das fuenfte Element. */
+    private static String referenzAus(String dta) {
+        String unb = dta.lines().filter(zeile -> zeile.startsWith("UNB+")).findFirst()
+                .orElseThrow(() -> new AssertionError("Kein UNB in der Nachricht"));
+        return unb.split("\\+")[5];
+    }
+
+    private static List<Abrechnung> zweiAbrechnungen() {
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2",
+                54321, 104940005, 101560000, LocalDate.of(1985, 2, 2));
+        provider.setId(10);
+        Blueprint blueprint = new Blueprint("Test", "test-template", "{}", OffsetDateTime.now());
+        Patient anna = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
+                108310400, 108310400, LocalDate.of(1990, 1, 1));
+        anna.setId(1);
+        Patient ben = new Patient("Ben", "Beispiel", "Musterstrasse", "DE", "3", 12345,
+                102137985, 104940005, LocalDate.of(1991, 2, 2));
+        ben.setId(2);
+        return List.of(new Abrechnung(anna, provider, blueprint, 1),
+                new Abrechnung(ben, provider, blueprint, 2));
+    }
 
     @Test
     void generatesFilesGroupedByKassenIk() throws Exception {

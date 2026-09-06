@@ -6,21 +6,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import de.gkvtransmitter.dispatch.BillingOfficeEndpointRegistry;
 import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaDispatchService;
+import de.gkvtransmitter.dispatch.FileBillingOfficeTransport;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
 import de.gkvtransmitter.model.Abrechnung;
+import de.gkvtransmitter.repository.DataRepository;
+import de.gkvtransmitter.validator.DtaValidationService;
 
 /** Coordinates creation and dispatch of patient-specific settlements. */
 public final class AbrechnungService {
 
     private final DtaDispatchService dispatchService;
 
+    /**
+     * Der Dienst, wie ihn die Anwendung benutzt.
+     *
+     * <p>Die Datenaustauschreferenzen kommen aus der Datenbank und nicht aus
+     * einem Zaehler im Arbeitsspeicher. <b>Bis zum 06.09.2026 war es
+     * umgekehrt</b>, und damit trug die zweite Abrechnung eines Monats
+     * dieselben Referenzen wie die erste — „Datenaustauschreferenz doppelt
+     * vergeben" ist ein dokumentierter Abweisungsgrund. Die gesperrte,
+     * gepruefte Methode dafuer gab es die ganze Zeit; sie hatte nur keinen
+     * Aufrufer.</p>
+     *
+     * <p>Die Datenbank wird hier geoeffnet und <b>nicht wieder geschlossen</b>
+     * — sie lebt so lange wie die Anwendung. Wer den Dienst kurzlebig braucht,
+     * nimmt den anderen Konstruktor.</p>
+     */
     public AbrechnungService() {
-        this(new DtaDispatchService());
+        this(dienstMitDauerhaftenReferenzen());
+    }
+
+    private static DtaDispatchService dienstMitDauerhaftenReferenzen() {
+        DataRepository datenbank = HibernateSqllite.open();
+        return new DtaDispatchService(BillingOfficeEndpointRegistry.loadDefault(),
+                new FileBillingOfficeTransport(), DtaValidationService.standard(),
+                datenbank::nextDtaInterchangeReference);
     }
 
     public AbrechnungService(DtaDispatchService dispatchService) {

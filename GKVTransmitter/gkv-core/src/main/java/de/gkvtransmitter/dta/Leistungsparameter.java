@@ -149,7 +149,25 @@ public record Leistungsparameter(
 
     /** Der Betrag in DTA-Schreibweise, also mit Komma als Trennzeichen. */
     public String einzelbetragFormatiert() {
-        return String.format(Locale.GERMAN, "%.2f", einzelbetrag);
+        return String.format(Locale.GERMAN, "%.2f", einzelbetragGerundet());
+    }
+
+    /**
+     * Der Einzelbetrag so, wie er in der Nachricht steht: auf zwei Stellen.
+     *
+     * <p><b>Damit ist zu rechnen, nicht mit dem ungerundeten Wert.</b> Das
+     * {@code ENF} traegt den gerundeten Betrag, und die Kasse multipliziert
+     * genau den mit der Menge. Rechnet die Fallsumme dagegen mit dem
+     * ungerundeten, gehen die beiden auseinander: bei 12,505 und zwei Terminen
+     * stuende im ENF 12,51, im BES aber 25,01 statt 25,02. Die eigene
+     * Betragskonsistenzregel schlaegt dann an und blockiert den ganzen Lauf -
+     * mit einer Meldung, die den Grund nicht nennt.</p>
+     *
+     * <p>Kaufmaennisch gerundet, wie in der Anzeige und wie
+     * {@code String.format} es ohnehin tut.</p>
+     */
+    public BigDecimal einzelbetragGerundet() {
+        return einzelbetrag.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     /** Die Zuzahlung in DTA-Schreibweise. */

@@ -69,30 +69,58 @@ public final class BetragskonsistenzRegel implements ValidationRule {
         pruefeGesGegenBes(document, bericht);
     }
 
-    /** Menge mal Einzelbetrag der Leistungspositionen muss die Fallsumme ergeben. */
+    /**
+     * Menge mal Einzelbetrag der Leistungspositionen muss die Fallsumme ergeben
+     * — <b>je Abrechnungsfall</b>.
+     *
+     * <p>Bis zum 06.09.2026 summierte diese Methode <em>alle</em> ENF des
+     * Dokuments und verglich sie mit dem <em>ersten</em> BES. Bei einer Datei
+     * mit mehreren Abrechnungsfaellen war das Ergebnis in beide Richtungen
+     * falsch: entweder wurde ein Fehler gemeldet, den es nicht gibt (die Summe
+     * aller Posten gegen die Summe eines Falles), oder eine echte Abweichung
+     * blieb verdeckt. Die Schwestermethode {@code pruefeGesGegenBes} iterierte
+     * daneben ueber alle BES — die beiden waren sich uneins.</p>
+     *
+     * <p>Ein BES schliesst seinen Fall ab; die ENF davor gehoeren dazu. Die
+     * Reihenfolge der Segmente traegt diese Zuordnung, und {@code getSegments}
+     * gibt sie unveraendert heraus. Deshalb wird hier durchgelaufen statt nach
+     * Tags gesucht.</p>
+     */
     private void pruefeEnfGegenBes(DtaDocument document, ValidationReport.Builder bericht) {
-        List<DtaSegment> enfSegmente = document.mitTag(ENF);
-        Optional<DtaSegment> bes = document.erstesMitTag(BES);
-        if (enfSegmente.isEmpty() || bes.isEmpty()) {
-            return;
-        }
-
         BigDecimal summeDerPosten = BigDecimal.ZERO;
-        for (DtaSegment enf : enfSegmente) {
-            Optional<BigDecimal> betrag = betrag(enf, ENF_BETRAG, bericht, "ENF_BETRAG_UNGUELTIG");
-            Optional<BigDecimal> menge = betrag(enf, ENF_MENGE, bericht, "ENF_MENGE_UNGUELTIG");
-            if (betrag.isEmpty() || menge.isEmpty()) {
-                return;
-            }
-            summeDerPosten = summeDerPosten.add(betrag.get().multiply(menge.get()));
-        }
+        boolean postenGesehen = false;
 
-        Optional<BigDecimal> fallsumme = betrag(bes.get(), BES_BETRAG, bericht, "BES_BETRAG_UNGUELTIG");
+        for (DtaSegment segment : document.getSegments()) {
+            if (ENF.equals(segment.tag())) {
+                Optional<BigDecimal> betrag = betrag(segment, ENF_BETRAG, bericht, "ENF_BETRAG_UNGUELTIG");
+                Optional<BigDecimal> menge = betrag(segment, ENF_MENGE, bericht, "ENF_MENGE_UNGUELTIG");
+                if (betrag.isEmpty() || menge.isEmpty()) {
+                    return;
+                }
+                summeDerPosten = summeDerPosten.add(betrag.get().multiply(menge.get()));
+                postenGesehen = true;
+                continue;
+            }
+            if (!BES.equals(segment.tag())) {
+                continue;
+            }
+            // Ein BES ohne vorangehende Leistungszeilen ist nicht Sache dieser
+            // Regel - dass ueberhaupt ein ENF da sein muss, prueft der Rahmen.
+            if (postenGesehen) {
+                vergleiche(segment, summeDerPosten, bericht);
+            }
+            summeDerPosten = BigDecimal.ZERO;
+            postenGesehen = false;
+        }
+    }
+
+    private void vergleiche(DtaSegment bes, BigDecimal summeDerPosten, ValidationReport.Builder bericht) {
+        Optional<BigDecimal> fallsumme = betrag(bes, BES_BETRAG, bericht, "BES_BETRAG_UNGUELTIG");
         if (fallsumme.isEmpty()) {
             return;
         }
         if (fallsumme.get().compareTo(summeDerPosten) != 0) {
-            bericht.error("BETRAG_ENF_BES", bes.get().ort(),
+            bericht.error("BETRAG_ENF_BES", bes.ort(),
                     "Die Rechnungssumme im BES (%s) entspricht nicht der Summe der Leistungspositionen (%s)."
                             .formatted(formatiere(fallsumme.get()), formatiere(summeDerPosten)));
         }

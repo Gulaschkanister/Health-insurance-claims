@@ -63,11 +63,21 @@ public final class VersichertenangabenRegel implements ValidationRule {
         }
     }
 
+    /** " von ANNA BERGER", oder leer, wenn im NAD kein Name steht. */
+    private static String wessen(DtaSegment nad) {
+        String name = (nad.element(NAD_VORNAME).trim() + " " + nad.element(NAD_NACHNAME).trim()).trim();
+        return name.isEmpty() ? "" : " von " + name;
+    }
+
     private void pruefeGeburtsdatum(DtaSegment nad, ValidationReport.Builder bericht) {
         String roh = nad.element(NAD_GEBURTSDATUM).trim();
         if (roh.isEmpty()) {
+            // Mit Namen: seit der Ersatzwert in DtaFactory weg ist, haelt diese
+            // Meldung wirklich einen Lauf auf - dann muss sie auch sagen, bei
+            // wem nachzutragen ist. Eine Zeilennummer allein hilft niemandem,
+            // der zwanzig Teilnehmerinnen abrechnet.
             bericht.error("VERSICHERTER_GEBURTSDATUM", nad.ort(),
-                    "Im NAD-Segment fehlt das Geburtsdatum.");
+                    "Im NAD-Segment fehlt das Geburtsdatum%s.".formatted(wessen(nad)));
             return;
         }
         try {

@@ -66,7 +66,12 @@ public final class DtaFactory {
         // der tatsaechlichen Anzahl - bei null Terminen entstand dadurch eine
         // Rechnung ueber 15.000,00 mit einer Leistungsmenge von 0,00.
         int menge = Math.max(0, a.getAppointments());
-        BigDecimal fallSum = leistung.einzelbetrag().multiply(BigDecimal.valueOf(menge));
+        // Mit dem GERUNDETEN Einzelbetrag rechnen, denn genau der steht im ENF
+        // und genau den multipliziert die Kasse. Zuvor stand hier der
+        // ungerundete: bei 12,505 und zwei Terminen ergab das im BES 25,01,
+        // waehrend die Kasse aus 12,51 mal 2,00 auf 25,02 kam - die eigene
+        // Betragskonsistenzregel schlug an und blockierte den ganzen Lauf.
+        BigDecimal fallSum = leistung.einzelbetragGerundet().multiply(BigDecimal.valueOf(menge));
         String sum = formatAmount(fallSum);
 
         List<String> lines = new ArrayList<>();
@@ -131,10 +136,24 @@ public final class DtaFactory {
         return String.format("INV+%s++1+%s'", versichertennummer, belegnummer);
     }
 
+    /**
+     * Die Angaben zur versicherten Person.
+     *
+     * <p><b>Fehlt das Geburtsdatum, bleibt das Feld leer.</b> Hier stand bis
+     * zum 06.09.2026 ein Ersatzwert {@code 19900101} — ein erfundenes Datum,
+     * das an die Kasse gegangen waere, und nebenbei machte es die Regel
+     * {@code VERSICHERTER_GEBURTSDATUM} fuer selbst erzeugte Nachrichten zu
+     * totem Code: sie konnte nie anschlagen, weil nie etwas fehlte.</p>
+     *
+     * <p>Jetzt schlaegt sie an, und die Pruefung haelt den Lauf auf, ehe etwas
+     * hinausgeht. Das ist der Sinn der vorgeschalteten Pruefung: lieber eine
+     * Abrechnung, die nicht losgeht und sagt warum, als eine, die mit einer
+     * erfundenen Angabe losgeht.</p>
+     */
     private static String buildNadSegment(Patient patient) {
         String last = safe(patient.getLastname()).toUpperCase(Locale.ROOT);
         String first = safe(patient.getFirstname()).toUpperCase(Locale.ROOT);
-        String birth = patient.getBirthDate() != null ? patient.getBirthDate().format(BASIC_DATE) : "19900101";
+        String birth = patient.getBirthDate() != null ? patient.getBirthDate().format(BASIC_DATE) : "";
         String street = safe(patient.getStreet()).toUpperCase(Locale.ROOT) + " "
                 + safe(patient.getHousenumber()).toUpperCase(Locale.ROOT);
         String plz = String.valueOf(patient.getPlz());

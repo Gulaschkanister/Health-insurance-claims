@@ -33,7 +33,22 @@ public class DtaDispatchService {
     private final BillingOfficeEndpointRegistry endpointRegistry;
     private final BillingOfficeTransport transport;
     private final DtaValidationService validierung;
+    private final Datenaustauschreferenzen referenzen;
     private final BillingOfficeResponseParser antwortAuswertung = new BillingOfficeResponseParser();
+
+    /**
+     * Woher die Datenaustauschreferenzen kommen.
+     *
+     * <p>Als Schnittstelle und nicht als {@code DataRepository}: dieser Dienst
+     * braucht von der Datenbank genau eine Zahl, und mit dem ganzen Repository
+     * liesse er sich im Test nicht mehr ohne Weiteres aufsetzen. Dieselbe
+     * Ueberlegung wie bei {@code Abrechnungslauf} in der Oberflaeche.</p>
+     */
+    @FunctionalInterface
+    public interface Datenaustauschreferenzen {
+        /** Die naechste Referenz; jede darf nur einmal vergeben werden. */
+        long naechste();
+    }
 
     public DtaDispatchService() {
         this(BillingOfficeEndpointRegistry.loadDefault(), new FileBillingOfficeTransport());
@@ -45,9 +60,45 @@ public class DtaDispatchService {
 
     public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
             DtaValidationService validierung) {
+        this(endpointRegistry, transport, validierung, new LaufenderZaehler());
+    }
+
+    public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
+            DtaValidationService validierung, Datenaustauschreferenzen referenzen) {
         this.endpointRegistry = Objects.requireNonNull(endpointRegistry, "endpointRegistry must not be null");
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
         this.validierung = Objects.requireNonNull(validierung, "validierung must not be null");
+        this.referenzen = Objects.requireNonNull(referenzen, "referenzen must not be null");
+    }
+
+    /**
+     * Die Rueckfallebene: zaehlt je Dienst hoch, beginnend bei 1.
+     *
+     * <p><b>Fuer einen echten Versand ist das zu wenig</b>, und bis zum
+     * 06.09.2026 war es der einzige Weg: {@code erzeuge} zaehlte mit einer
+     * lokalen Variablen, die bei jedem Lauf wieder bei 1 anfing. Die zweite
+     * Abrechnung eines Monats trug damit dieselben Referenzen wie die erste,
+     * und "Datenaustauschreferenz doppelt vergeben" ist ein dokumentierter
+     * Abweisungsgrund.</p>
+     *
+     * <p>Ueber die Datenbank vergeben wurde sie nie - {@code DataRepository}
+     * hatte die gesperrte, gepruefte Methode
+     * {@code nextDtaInterchangeReference()} von Anfang an, und
+     * <b>niemand rief sie auf</b>. Ein Test darauf gab es; einen Aufrufer
+     * nicht.</p>
+     *
+     * <p>Diese Ebene bleibt fuer Tests und fuer den Fall, dass jemand den
+     * Dienst ohne Datenbank benutzt. Wer echt versendet, gibt eine dauerhafte
+     * Quelle mit - siehe {@code AbrechnungService}.</p>
+     */
+    static final class LaufenderZaehler implements Datenaustauschreferenzen {
+        private final java.util.concurrent.atomic.AtomicLong stand =
+                new java.util.concurrent.atomic.AtomicLong(1);
+
+        @Override
+        public long naechste() {
+            return stand.getAndIncrement();
+        }
     }
 
     /**
@@ -112,12 +163,15 @@ public class DtaDispatchService {
 
     private List<ErzeugteNachricht> erzeuge(List<Abrechnung> abrechnungen) {
         List<ErzeugteNachricht> erzeugt = new ArrayList<>();
-        int sequence = 1;
 
         for (Abrechnung abrechnung : abrechnungen) {
             Patient patient = abrechnung.getPatient();
             String senderIk = String.valueOf(abrechnung.getProvider().getIk());
             String receiverIk = String.valueOf(patient.getKassenIk());
+            // Jede Nachricht bekommt ihre eigene Referenz, und die kommt von
+            // aussen - hier stand eine lokale Variable, die bei jedem Lauf
+            // wieder bei 1 begann. Siehe LaufenderZaehler.
+            long sequence = referenzen.naechste();
             String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk);
             String filename = String.format("patient_%d_%s.dta",
                     patient.getId(), LocalDateTime.now().format(FILE_TIME));
