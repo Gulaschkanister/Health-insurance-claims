@@ -319,7 +319,7 @@ public class Feldbau {
             // commitValue zuerst, sonst liefert ein beschreibbarer Zaehler den
             // Wert vor der letzten Eingabe - siehe JavaFxUiFactory.
             case Spinner<?> zaehler -> {
-                zaehler.commitValue();
+                JavaFxUiFactory.uebernimm(zaehler);
                 yield zeichenkette(zaehler.getValue());
             }
             case ComboBox<?> auswahl -> zeichenkette(auswahl.getValue());

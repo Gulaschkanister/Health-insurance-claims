@@ -439,16 +439,21 @@ public class AbrechnungsMaske {
         /**
          * Die Zahl in einem Zähler — auch die gerade erst getippte.
          *
-         * <p>{@code commitValue()} zuerst: ein beschreibbarer Zähler übernimmt
-         * getippten Text sonst nur bei der Eingabetaste. Der Fokuswechsel beim
-         * Klick auf „Setzen" tut das inzwischen ebenfalls (siehe
-         * {@code JavaFxUiFactory}), aber es hängt daran, dass der Klick
-         * wirklich den Fokus verschiebt — und davon soll ein Rechnungsbetrag
-         * nicht abhängen. Ein unlesbarer Text setzt den Zähler auf seinen
-         * letzten gültigen Wert zurück, wirft also nichts.</p>
+         * <p>Erst übernehmen: ein beschreibbarer Zähler übernimmt getippten
+         * Text sonst nur bei der Eingabetaste. Der Fokuswechsel beim Klick auf
+         * „Setzen" tut das inzwischen ebenfalls, aber es hängt daran, dass der
+         * Klick wirklich den Fokus verschiebt — und davon soll ein
+         * Rechnungsbetrag nicht abhängen.</p>
+         *
+         * <p>Über {@link JavaFxUiFactory#uebernimm} und nicht über
+         * {@code commitValue()} direkt: <b>das wirft bei unlesbarem Text.</b>
+         * Hier stand bis zum 06.09.2026 das Gegenteil — „setzt den Zähler auf
+         * seinen letzten gültigen Wert zurück, wirft also nichts". Das war
+         * geglaubt, nicht geprüft; der erste Test von {@code JavaFxUiFactory}
+         * hat es widerlegt.</p>
          */
         private int wert(Spinner<Integer> zaehler) {
-            zaehler.commitValue();
+            JavaFxUiFactory.uebernimm(zaehler);
             Integer anzahl = zaehler.getValue();
             return anzahl == null ? 0 : anzahl;
         }

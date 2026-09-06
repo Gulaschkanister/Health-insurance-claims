@@ -20,7 +20,7 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **344 Tests**, davon 187 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **349 Tests**, davon 192 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - **Abschnitte B (soweit ohne Anlage 3), C, G, H, I und J sind abgearbeitet**
 - **Das Paket ist gebaut und gestartet**, das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
@@ -179,54 +179,116 @@ Der Sicherungs-Branch `backup/vor-identitaetswechsel` kann nach dem Merge weg:
 git branch -D backup/vor-identitaetswechsel
 ```
 
-### 2. Verwaiste Remote-Branches aufräumen — **nicht ohne Prüfung**
+### 2. Verwaiste Remote-Branches aufräumen
 
-**Nachgesehen am 06.09.2026, und die bisherige Annahme stimmt nicht.** Hier
-stand, es seien „sieben `copilot/*`-Branches aus abgeschlossenen PRs". Es sind
-**acht**, und jeder einzelne trägt Commits, die **nicht** in `main` liegen:
+**Erledigt am 06.09.2026: die acht `copilot/*`-Branches sind gelöscht.**
+Simon: *„alle copilot branches dürfen entfernt werden, das war nur ein Test und
+somit die Commits irrelevant."*
 
-| Branch | Commits nicht in `main` | als PR-Ref erhalten? |
-|---|---|---|
-| `copilot/add-plantuml-and-invoice-storage` | 18 | **nein** |
-| `copilot/ai-branch-optimierung` | 3 | ja, `refs/pull/16/head` |
-| `copilot/ai-work-on-open-issues` | 1 | ja, `refs/pull/15/head` |
-| `copilot/complete-ai-project` | 6 | **nein** |
-| `copilot/create-dta-file-structure` | 18 | **nein** |
-| `copilot/create-invoice-template-blueprint` | 5 | **nein** |
-| `copilot/set-environment-variables` | 8 | **nein** |
-| `copilot/write-tests-and-documentation` | 8 | **nein** |
+Zuvor war ich nicht darüber hinweggegangen, und das gehört festgehalten, weil
+die Zahlen hier vorher falsch standen. Notiert war „sieben `copilot/*`-Branches
+aus abgeschlossenen PRs". Es waren **acht**, und jeder einzelne trug Commits,
+die **nicht** in `main` lagen — nur zwei davon als `refs/pull/N/head` erhalten,
+die sechs anderen wären mit dem Branch verschwunden.
 
-GitHub behält `refs/pull/N/head` auch nach dem Löschen eines Branches. Für die
-beiden oberen wäre ein Löschen also folgenlos — **für die sechs anderen wären
-die Commits weg.**
+Das war kein Alarm für sich: ein Squash-Merge hinterlässt genau dieses Bild.
+Feststellen ließ es sich nicht, weil **`gh` auf diesem Rechner nicht
+installiert** ist. Aufgelöst hat es Simons Auskunft, dass es Versuche waren.
 
-Dass ihre Commits nicht in `main` liegen, ist für sich kein Alarm: ein
-Squash-Merge hinterlässt genau dieses Bild, und GitHub squasht Copilot-PRs
-standardmäßig. Ob die PRs zusammengeführt oder abgebrochen wurden, ließ sich
-hier nicht feststellen — **`gh` ist auf diesem Rechner nicht installiert.**
+Die Spitzen, falls doch je etwas davon gebraucht wird — GitHub hält
+unreferenzierte Objekte noch eine Weile vor, und der Support kann sie in den
+ersten Wochen zurückholen:
 
-Alle acht stammen aus dem **Mai 2026**, also von vor dem Architekturumbau; ihr
-Inhalt ist mit hoher Wahrscheinlichkeit überholt. Das zu *wissen* ist aber
-etwas anderes, als es zu vermuten.
+```
+e0c4bb4  copilot/add-plantuml-and-invoice-storage  (= create-dta-file-structure)
+d1504ac  copilot/ai-branch-optimierung             (auch refs/pull/16/head)
+48c5924  copilot/ai-work-on-open-issues            (auch refs/pull/15/head)
+6403554  copilot/complete-ai-project
+fbe2efa  copilot/create-invoice-template-blueprint
+fbe9b34  copilot/set-environment-variables         (= write-tests-and-documentation)
+```
 
-**Vor dem Löschen zu tun:** `gh` installieren und
-`gh pr list --state all --json number,state,headRefName` aufrufen. Was zu einem
-zusammengeführten PR gehört, kann weg; alles andere bleibt, bis jemand
-hineingesehen hat.
+**Nebenbei gelernt:** dieses Repository lässt höchstens **fünf** Branches je
+Push zu („Pushes can not update more than 5 branches or tags"). Ein
+`git push --delete` mit acht Namen wird als Ganzes abgewiesen — in zwei
+Durchgängen geht es.
 
-Ausserdem liegen auf `origin` noch `dev` und `restart`. Beides nachgerechnet
-am 06.09.2026:
+#### Was noch auf `origin` liegt
 
-- **`dev` ist wirklich vollständig in `main`** (null eigene Commits) und kann
-  ohne Bedenken weg.
-- **`restart` trägt einen Commit, den `main` nicht hat** (30.05.2026). Erst
-  hineinsehen.
+| Branch | Stand am 06.09.2026 |
+|---|---|
+| `main` | die Zielspur |
+| `feature/kern-architektur` | der aktuelle Stand, gepusht |
+| `dev` | **null eigene Commits**, vollständig in `main` — kann ohne Bedenken weg |
+| `restart` | **ein eigener Commit** (30.05.2026), erst hineinsehen |
+| `refactor` | Herkunft der drei Commits `632e906`, `475321d`, `6460b78` |
+| `ai` | in der Übergabe bisher nirgends erwähnt; ungeprüft |
 
 ## Priorisierte nächste Schritte
 
 **Das Ziel steht in Abschnitt J**: ein Stand, den Simon sich ansieht und
 ausprobiert — „fast ein fertiges Produkt". Alles Übrige läuft darauf zu. Dort
 steht auch, was dafür erledigt sein muss und was offen bleiben darf.
+
+### Der Stand aller Abschnitte am 06.09.2026
+
+Damit sich beim nächsten Öffnen nicht die ganze Datei lesen muss:
+
+| | Abschnitt | Stand |
+|---|---|---|
+| **A** | Automatische Abrechnung | **zurückgestellt** — Simons eigene Entscheidung („zu kompliziert"), nicht vergessen |
+| **B** | Fachliche Felder | 1–3 ✔ erledigt · **4 und 5 blockiert**: dafür braucht es Anlage 3 beziehungsweise den Vertrag |
+| **C** | Oberflächentests | ✔ die riskanten Stellen sind gedeckt · Rest siehe unten |
+| **D** | Fachliche Lücken | **blockiert oder groß**: Storno, weitere Leistungsbereiche, echte Rechnungsnummern |
+| **E** | Echter Übermittlungsweg | **blockiert**: Zertifikate, Zugangsdaten, Betriebsstätten-IK sind nicht zu programmieren |
+| **F** | Kleinigkeiten | ✔ bis auf die Checkstyle-Befunde — die verlangen einen Eingriff in die Entitäten |
+| **G** | Aussehen und Bedienung | ✔ vollständig |
+| **H** | Bedienwerkzeug | ✔ vollständig |
+| **I** | Der Name | ✔ „GKV-Abrechnung", samt Umzug des Datenordners |
+| **J** | Der Zwischenstand | ✔ vollständig — **der Stand steht** |
+
+**Alles, was ohne Anlage 3, ohne den Vertrag und ohne Zertifikate zu machen
+war, ist gemacht.** Was offen bleibt, ist entweder eine Entscheidung (der Merge
+nach `main`, die Retrospektive), eine Lücke in den Unterlagen oder ein
+Vorhaben eigener Größe.
+
+**Drei Dinge, die sich jederzeit nachholen lassen und niemanden aufhalten:**
+
+1. **Drei Klassen in `gkv-ui` haben keinen eigenen Test**: `View`,
+   `Maskenkopf` und `Abrechnungslauf`. Alle drei laufen in `AblaufTest` mit,
+   das ist aber kein Ersatz; `Abrechnungslauf` ist allerdings nur eine
+   Schnittstelle und `Maskenkopf` steht in jeder Übersicht.
+   `JavaFxUiFactory` ist seit dem 06.09.2026 geprüft — und der erste Test
+   fand sofort einen Fehler, siehe unten.
+2. **Die Checkstyle-Befunde** (Abschnitt F): vier Konstruktoren mit neun
+   Parametern. Ein Builder oder ein `record` für die Adresse wäre die Antwort.
+3. **`dev` und `restart` auf `origin`** — `dev` ist nachweislich leer und kann
+   weg, `restart` trägt einen eigenen Commit.
+
+#### Was der erste Test von `JavaFxUiFactory` gefunden hat
+
+Die Klasse stand hier lange als „reine Fabrik ohne eigene Entscheidungen, am
+ehesten verzichtbar". Seit dem Zähler-Fund vom 05.09.2026 steckt in ihr die
+Übernahme beim Fokusverlust — und die hatte einen zweiten Fehler:
+
+**`Spinner.commitValue()` wirft bei unlesbarem Text.** Die
+`IntegerSpinnerValueFactory` liest mit `Integer.parseInt`, und bei „acht" fliegt
+eine `NumberFormatException`. Sie fällt **nicht** auf den letzten gültigen Wert
+zurück, wie man vermuten würde — und genau diese Vermutung stand als Begründung
+im Quelltext von `AbrechnungsMaske.wert`: *„Ein unlesbarer Text setzt den Zähler
+auf seinen letzten gültigen Wert zurück, wirft also nichts."*
+
+Auf dem JavaFX-Faden geworfen, hätte das den Klick auf „Abrechnung starten"
+wirkungslos verpuffen lassen: keine Meldung, kein Ergebnis, nur ein Eintrag im
+Protokoll, das niemand liest.
+
+Alle drei Aufrufe gehen jetzt über `JavaFxUiFactory.uebernimm(…)`. Der Editor
+zeigt danach den Wert, der wirklich gilt — ein Feld, in dem „acht" stehen
+bleibt, während mit 3 gerechnet wird, wäre dieselbe Falle wie zuvor.
+
+**Der Merksatz ist der eigentliche Ertrag:** eine Begründung im Quelltext, die
+niemand nachgerechnet hat, ist eine Vermutung mit Anspruch auf Autorität. Der
+Test, der sie prüfen sollte, hat sie widerlegt.
 
 ### A. Automatische Abrechnung — zurückgestellt, nicht vergessen
 
@@ -1118,8 +1180,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 344 Tests
-mvn clean test -pl gkv-ui            # nur die 187 Oberflächentests
+mvn clean test                       # alle 349 Tests
+mvn clean test -pl gkv-ui            # nur die 192 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

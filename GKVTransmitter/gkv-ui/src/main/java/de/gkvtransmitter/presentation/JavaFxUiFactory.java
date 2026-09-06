@@ -220,9 +220,41 @@ public class JavaFxUiFactory implements UiFactory {
     private static void uebernimmBeimVerlassen(Spinner<?> zaehler) {
         zaehler.focusedProperty().addListener((wert, hatteFokus, hatFokus) -> {
             if (!hatFokus) {
-                zaehler.commitValue();
+                uebernimm(zaehler);
             }
         });
+    }
+
+    /**
+     * Übernimmt die Eingabe eines Zählers, ohne bei Unsinn zu scheitern.
+     *
+     * <p><b>{@code commitValue()} allein wirft.</b> Die
+     * {@code IntegerSpinnerValueFactory} liest den Text mit
+     * {@code Integer.parseInt}, und bei „acht" fliegt eine
+     * {@code NumberFormatException} — sie fällt <em>nicht</em> auf den letzten
+     * gültigen Wert zurück, wie man vermuten würde. Auf dem JavaFX-Faden
+     * geworfen, ließe das den Klick auf „Abrechnung starten" wirkungslos
+     * verpuffen: keine Meldung, kein Ergebnis, nur ein Eintrag im Protokoll,
+     * das niemand liest.</p>
+     *
+     * <p>Gefunden am 06.09.2026 beim ersten Test dieser Klasse — und zwar von
+     * dem Test, der die bequeme Annahme nachprüfen sollte, statt sie zu
+     * wiederholen.</p>
+     *
+     * <p>Der Editor bekommt danach den Wert zu sehen, der wirklich gilt. Ein
+     * Feld, in dem „acht" stehen bleibt, während mit 3 gerechnet wird, wäre
+     * dieselbe Art Falle wie der nicht übernommene Wert zuvor.</p>
+     *
+     * <p>Steht hier und nicht in {@code Feldbau}, weil diese Klasse die Zähler
+     * baut und damit ihre Eigenheiten zu verantworten hat.</p>
+     */
+    static void uebernimm(Spinner<?> zaehler) {
+        try {
+            zaehler.commitValue();
+        } catch (RuntimeException e) {
+            zaehler.getEditor().setText(
+                    zaehler.getValue() == null ? "" : String.valueOf(zaehler.getValue()));
+        }
     }
 
     /**
