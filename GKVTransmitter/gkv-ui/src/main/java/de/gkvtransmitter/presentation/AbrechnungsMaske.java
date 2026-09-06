@@ -162,14 +162,27 @@ public class AbrechnungsMaske {
     /**
      * Prueft die Voraussetzungen und stoesst den Lauf an.
      *
-     * <p>Die Reihenfolge ist die des bisherigen Verhaltens: erst ob ueberhaupt
-     * Blaupausen vorliegen, dann ob eine Gruppe gewaehlt ist, dann ob
-     * mindestens ein Teilnehmer angehakt wurde.</p>
+     * <p>Die Reihenfolge folgt dem Aufbau der Maske von oben nach unten: erst
+     * ob ueberhaupt Blaupausen vorliegen, dann ob eine gewaehlt ist, dann die
+     * Gruppe, dann die Teilnehmer.</p>
+     *
+     * <p><b>Die zweite Pruefung fehlte bis zum 06.09.2026.</b> Es wurde nur
+     * gefragt, ob es Blaupausen <em>gibt</em> - nicht, ob eine gewaehlt ist.
+     * Das Auswahlfeld hat bewusst keine Vorauswahl, also war der haeufigste
+     * Fall beim ersten Klick genau der ungeprueft gelassene: es flog eine
+     * {@code NullPointerException} aus {@code AbrechnungService}, angezeigt als
+     * "Versand fehlgeschlagen: blueprint must not be null". Die Tests
+     * verdeckten es, weil sie durchweg mit {@code null} erfolgreich
+     * abrechneten.</p>
      */
     private void starteAbrechnung(List<Blueprint> blaupausen, ComboBox<Blueprint> blaupauseAuswahl,
             ComboBox<PersonGroup> gruppeAuswahl, Teilnehmerliste liste) {
         if (blaupausen == null || blaupausen.isEmpty()) {
             meldungen.hinweis(texte.get("msg.noBlueprints"));
+            return;
+        }
+        if (blaupauseAuswahl.getValue() == null) {
+            meldungen.hinweis(texte.get("msg.selectBlueprintRequired"));
             return;
         }
         if (gruppeAuswahl.getValue() == null) {

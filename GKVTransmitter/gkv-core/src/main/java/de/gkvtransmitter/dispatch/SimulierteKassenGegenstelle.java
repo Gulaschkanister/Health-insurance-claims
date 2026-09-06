@@ -93,17 +93,30 @@ public final class SimulierteKassenGegenstelle {
     /**
      * Nimmt eine Datei entgegen und legt das Antwortprotokoll daneben ab.
      *
+     * <p><b>Gibt die Antwort selbst zurueck, nicht den Pfad.</b> Zuvor lieferte
+     * sie den Pfad, und {@code SimulierterKassenTransport} las das Protokoll
+     * wieder ein, um es durch den {@code BillingOfficeResponseParser} zu
+     * schicken — es warf also das hier bereits gefaellte Urteil weg und
+     * erriet es aus dem Text neu. Das ging in zwei Faellen schief:
+     * {@code SYNTAX_ERROR} war ueber den Transportweg unerreichbar, weil die
+     * Kopfzeile in beiden Fehlerfaellen "zurueckgewiesen" lautet, und eine
+     * leere Lieferung wurde {@code UNKNOWN}.</p>
+     *
+     * <p>Der Parser bleibt richtig — er ist fuer <em>fremde</em> Protokolle da,
+     * deren Form man nicht kennt. Auf die eigene Antwort angewandt ist er ein
+     * Umweg mit Verlust.</p>
+     *
      * @param dtaDatei die eingegangene Lieferung
-     * @return Pfad des geschriebenen Antwortprotokolls
+     * @return die Rueckmeldung; das Protokoll liegt neben der Lieferung
      */
-    public Path empfangeDatei(Path dtaDatei) throws IOException {
+    public BillingOfficeResponse empfangeDatei(Path dtaDatei) throws IOException {
         Objects.requireNonNull(dtaDatei, "dtaDatei must not be null");
         String inhalt = Files.readString(dtaDatei, StandardCharsets.UTF_8);
         BillingOfficeResponse antwort = empfange(inhalt);
 
         Path protokollDatei = dtaDatei.resolveSibling(dtaDatei.getFileName() + PROTOKOLL_ENDUNG);
         Files.writeString(protokollDatei, antwort.getRawContent(), StandardCharsets.UTF_8);
-        return protokollDatei;
+        return antwort;
     }
 
     private String protokoll(String kopfzeile, List<ValidationMessage> befunde) {

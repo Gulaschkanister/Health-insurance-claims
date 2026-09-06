@@ -100,12 +100,37 @@ class AbrechnungsMaskeTest {
             });
         }
 
+        /**
+         * Der haeufigste Fall beim ersten Klick — und bis zum 06.09.2026 der
+         * einzige ungeprueft gelassene.
+         *
+         * <p>Die Auswahlfelder haben bewusst keine Vorauswahl. Wer die Maske
+         * oeffnet und sofort auf „Abrechnung starten" drueckt, hat weder
+         * Blaupause noch Gruppe gewaehlt. Geprueft wurde nur, ob es Blaupausen
+         * <em>gibt</em>; ob eine gewaehlt ist, nicht. Das Ergebnis war eine
+         * {@code NullPointerException} aus dem Fachdienst, angezeigt als
+         * „Versand fehlgeschlagen: blueprint must not be null".</p>
+         */
+        @Test
+        @DisplayName("Ohne gewaehlte Blaupause fordert die Maske zur Auswahl auf")
+        void ohneGewaehlteBlaupause() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Gruppe", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                start(maske).fire();
+
+                assertEquals(texte.get("msg.selectBlueprintRequired"), meldungen.einzige().text());
+                assertTrue(laeufe.isEmpty(), "Es darf nichts abgerechnet worden sein");
+            });
+        }
+
         @Test
         @DisplayName("Ohne gewaehlte Gruppe fordert die Maske zur Auswahl auf")
         void ohneGruppe() {
             datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Gruppe", patient(1, "Anna")));
             JavaFxLaufzeit.aufFxFaden(() -> {
                 Region maske = maskeAufbauen();
+                blaupauseWaehlen(maske);
                 start(maske).fire();
 
                 assertEquals(texte.get("msg.selectGroupRequired"), meldungen.einzige().text());
@@ -469,10 +494,34 @@ class AbrechnungsMaskeTest {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * Waehlt Gruppe <em>und</em> Blaupause.
+     *
+     * <p>Die Blaupause fehlte hier bis zum 06.09.2026, und dadurch rechneten
+     * saemtliche Tests mit {@code blaupause == null} erfolgreich ab — sie
+     * verdeckten damit genau den Fall, der in der Anwendung der haeufigste
+     * war: das Auswahlfeld hat bewusst keine Vorauswahl, also ist beim ersten
+     * Klick nichts gewaehlt. In der Maske flog eine
+     * {@code NullPointerException}, angezeigt als „Versand fehlgeschlagen:
+     * blueprint must not be null".</p>
+     *
+     * <p>Wer hier eine Vorbedingung auslaesst, prueft nicht die Maske, sondern
+     * eine Maske, die es nicht gibt.</p>
+     */
     private void gruppeWaehlen(Region maske, int stelle) {
         ComboBox<PersonGroup> auswahl =
                 (ComboBox<PersonGroup>) maske.lookup("#" + AbrechnungsMaske.ID_GRUPPE);
         auswahl.setValue(auswahl.getItems().get(stelle));
+        blaupauseWaehlen(maske);
+    }
+
+    /** Waehlt die erste Blaupause, sofern es ueberhaupt eine gibt. */
+    private void blaupauseWaehlen(Region maske) {
+        ComboBox<Blueprint> auswahl =
+                (ComboBox<Blueprint>) maske.lookup("#" + AbrechnungsMaske.ID_BLAUPAUSE);
+        if (auswahl != null && !auswahl.getItems().isEmpty()) {
+            auswahl.setValue(auswahl.getItems().get(0));
+        }
     }
 
     private void teilnehmerAnhaken(Region maske, int personId) {

@@ -48,6 +48,33 @@ class BillingOfficeResponseParserTest {
                     "Eine Antwort mit dem Wort Protokoll darf nicht als Annahme gelten");
         }
 
+        /**
+         * Begriffe mit Umlaut am Wortanfang.
+         *
+         * <p>{@code \b} arbeitet in Java nach ASCII, solange
+         * {@code UNICODE_CHARACTER_CLASS} nicht gesetzt ist: "Ü" gilt dann als
+         * Trennzeichen, und ein Begriff, der mit einem Umlaut <b>beginnt</b>,
+         * wird nie gefunden. "Uebertragungsfehler" traf, "Übertragungsfehler"
+         * nicht — und die Kasse schreibt in der Regel mit Umlaut.</p>
+         *
+         * <p>Die Tests hier fuehrten bis zum 06.09.2026 durchweg die
+         * ASCII-Umschriften auf und bestaetigten damit nur die halbe Liste.
+         * Wer einen Begriff mit Umlaut ergaenzt, prueft ihn bitte <em>mit</em>
+         * Umlaut.</p>
+         */
+        @Test
+        @DisplayName("Ein Begriff mit Umlaut am Wortanfang wird gefunden")
+        void umlautAmWortanfang() {
+            assertEquals(BillingOfficeResponseType.TECHNICAL_ERROR,
+                    parser.parse("Übertragungsfehler beim Empfang").getType(),
+                    "Sonst wird daraus UNKNOWN - ein Mensch muss draufschauen, "
+                            + "statt einfach noch einmal zu senden");
+            assertEquals(BillingOfficeResponseType.TECHNICAL_ERROR,
+                    parser.parse("Zeitüberschreitung bei der Annahme").getType());
+            assertEquals(BillingOfficeResponseType.REJECTED,
+                    parser.parse("Die Lieferung wurde zurückgewiesen").getType());
+        }
+
         @Test
         @DisplayName("Ein Protokoll ohne Fehlerbegriff gilt nicht als Annahme")
         void reinesProtokollIstUnbekannt() {

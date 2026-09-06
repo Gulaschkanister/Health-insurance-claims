@@ -113,7 +113,8 @@
       "format": "X,XX",
       "description": "Anteil, den die versicherte Person selbst trägt, mit Komma und zwei Nachkommastellen. 0,00 oder leer, wenn keine Zuzahlung anfällt.",
       "fieldArt": "K",
-      "inputType": "NUMBER",
+      "_hinweis_inputType": "COST und nicht NUMBER: NUMBER wird zu Integer geprüft, und dann weist das Feld genau die Schreibweise zurück, zu der seine eigene Erklärung auffordert. Bis zum 06.09.2026 stand hier NUMBER — eine Blaupause mit 0,00 ließ sich nicht speichern, und die Testdaten schreiben genau das. Beim Einzelbetrag (Position 5) war derselbe Fehler schon behoben.",
+      "inputType": "COST",
       "internal": false
     }
   ],

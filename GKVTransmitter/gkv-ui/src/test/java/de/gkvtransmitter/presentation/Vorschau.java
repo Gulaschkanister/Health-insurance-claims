@@ -60,7 +60,7 @@ public final class Vorschau {
         JavaFxLaufzeit.starten();
 
         Controller controller = new Controller();
-        View sicht = new View(controller, new AbrechnungService());
+        View sicht = new View(controller, new AbrechnungService(controller.getDatabase()));
 
         JavaFxLaufzeit.aufFxFaden(() -> {
             Scene szene = sicht.createMainScene(BREITE, HOEHE);
@@ -140,7 +140,7 @@ public final class Vorschau {
      * „Bearbei…".</p>
      */
     private static void zeigeSchmalesFenster(Controller controller, Path ziel) {
-        View schmal = new View(controller, new AbrechnungService());
+        View schmal = new View(controller, new AbrechnungService(controller.getDatabase()));
         JavaFxLaufzeit.aufFxFaden(() -> {
             Scene szene = schmal.createMainScene(SCHMALE_BREITE, SCHMALE_HOEHE);
             javafx.stage.Stage buehne = new javafx.stage.Stage();

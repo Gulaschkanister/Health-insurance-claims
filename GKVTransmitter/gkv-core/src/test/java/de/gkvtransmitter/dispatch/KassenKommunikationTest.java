@@ -239,6 +239,32 @@ class KassenKommunikationTest {
             }
         }
 
+        /**
+         * Das Urteil der Gegenstelle kommt unveraendert an.
+         *
+         * <p>Der Transport las bis zum 06.09.2026 das geschriebene Protokoll
+         * wieder ein und schickte es durch den
+         * {@code BillingOfficeResponseParser} — er warf also das bereits
+         * gefaellte Urteil weg und erriet es aus dem Text neu. Dabei ging
+         * {@code SYNTAX_ERROR} verloren: die Kopfzeile lautet in beiden
+         * Fehlerfaellen "zurueckgewiesen", und der Parser konnte sie nicht
+         * unterscheiden. Genau diese Unterscheidung entscheidet aber darueber,
+         * ob die Datei technisch neu erzeugt oder fachlich korrigiert werden
+         * muss.</p>
+         */
+        @Test
+        @DisplayName("Ein Syntaxfehler kommt als Syntaxfehler an, nicht als Zurueckweisung")
+        void syntaxfehlerBleibtSyntaxfehler(@TempDir Path eigenes) throws Exception {
+            SimulierteKassenGegenstelle gegenstelle = new SimulierteKassenGegenstelle("Test-Kasse");
+            Path leer = eigenes.resolve("leer.dta");
+            Files.writeString(leer, "");
+
+            BillingOfficeResponse antwort = gegenstelle.empfangeDatei(leer);
+
+            assertEquals(BillingOfficeResponseType.SYNTAX_ERROR, antwort.getType(),
+                    "Eine leere Lieferung ist ein Formfehler, keine fachliche Ablehnung");
+        }
+
         @Test
         @DisplayName("Die Rueckmeldung der Kasse ist danach abrufbar")
         void haeltRueckmeldungBereit() {

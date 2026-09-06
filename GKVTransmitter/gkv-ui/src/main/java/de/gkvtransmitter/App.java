@@ -61,7 +61,7 @@ public class App extends Application {
             // Controller -> ApplicationBootstrap -> JsonParserFactory -> GlobalDefinitions.
             // Breakpoint hier setzen, dann mit Step Into bis zur Registrierung laufen.
             controller = new Controller();
-            view = new View(controller, new AbrechnungService());
+            view = new View(controller, new AbrechnungService(controller.getDatabase()));
 
             // Der Ladestatus wird nicht mehr hier zusammengebaut. Bis zum
             // 05.09.2026 entstand an dieser Stelle eine Aufzaehlung aller

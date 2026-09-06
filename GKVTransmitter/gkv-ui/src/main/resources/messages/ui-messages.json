@@ -113,6 +113,7 @@
   "label.selectPatients": "Teilnehmende",
   "label.selectGroupForSettlement": "Gruppe auswählen",
   "label.appointments": "Wahrgenommene Termine",
+  "msg.selectBlueprintRequired": "Bitte zuerst eine Blaupause wählen — sie trägt den Preis je Termin.",
   "msg.selectGroupRequired": "Bitte zuerst eine Gruppe auswählen.",
   "button.startSettlement": "Abrechnung starten",
   "msg.noGroups": "Keine Gruppen vorhanden.",

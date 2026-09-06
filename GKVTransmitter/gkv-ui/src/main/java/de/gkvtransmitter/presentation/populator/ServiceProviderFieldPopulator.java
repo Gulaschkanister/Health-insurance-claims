@@ -26,43 +26,28 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
         };
     }
 
+    /**
+     * Übernimmt einen Feldwert — <b>auch einen geleerten</b>.
+     *
+     * <p>Siehe {@link PatientFieldPopulator#setEntityFieldValue}: der
+     * vorangestellte {@code isBlank}-Ausstieg übersprang ein geleertes Feld
+     * still und umging damit die Prüfung vor dem Speichern.</p>
+     */
     @Override
     protected void setEntityFieldValue(String fieldName, ServiceProvider serviceProvider, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
+        String text = value == null ? "" : value.trim();
 
         switch (fieldName) {
-            case "firstname" -> serviceProvider.setFirstname(value);
-            case "lastname" -> serviceProvider.setLastname(value);
-            case "street" -> serviceProvider.setStreet(value);
-            case "country" -> serviceProvider.setCountry(value);
-            case "housenumber" -> serviceProvider.setHousenumber(value);
-            case "plz" -> {
-                try {
-                    serviceProvider.setPlz(Integer.parseInt(value));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-            case "ik" -> {
-                try {
-                    serviceProvider.setIk(Integer.parseInt(value));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-            case "kassenIk" -> {
-                try {
-                    serviceProvider.setKassenIk(Integer.parseInt(value));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-            case "birthDate" -> {
-                try {
-                    LocalDate ld = LocalDate.parse(value);
-                    serviceProvider.setBirthDate(ld);
-                } catch (Exception ignored) {
-                }
-            }
+            case "firstname" -> serviceProvider.setFirstname(text);
+            case "lastname" -> serviceProvider.setLastname(text);
+            case "street" -> serviceProvider.setStreet(text);
+            case "country" -> serviceProvider.setCountry(text);
+            case "housenumber" -> serviceProvider.setHousenumber(text);
+            case "plz" -> serviceProvider.setPlz(zahl(text, serviceProvider.getPlz()));
+            case "ik" -> serviceProvider.setIk(zahl(text, serviceProvider.getIk()));
+            case "kassenIk" -> serviceProvider.setKassenIk(zahl(text, serviceProvider.getKassenIk()));
+            case "birthDate" -> serviceProvider.setBirthDate(datum(text));
+            default -> { }
         }
     }
 

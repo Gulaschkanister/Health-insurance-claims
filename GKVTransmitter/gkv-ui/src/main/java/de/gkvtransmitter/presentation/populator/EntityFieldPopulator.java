@@ -108,6 +108,42 @@ public abstract class EntityFieldPopulator<T> {
     public abstract Object getId(T entity);
 
     /**
+     * Ein geleertes Zahlenfeld wird 0, ein unlesbares behält seinen Wert.
+     *
+     * <p>Die Unterscheidung ist gewollt: <b>leer</b> heißt „nicht angegeben"
+     * und gehört durchgereicht, damit die Prüfung vor dem Speichern es sieht —
+     * ein IK von 0 ist seit dem 05.09.2026 ungültig, und genau darauf soll die
+     * Maske dann anspringen. <b>„abc"</b> dagegen ist ein Vertipper; den auf 0
+     * zu setzen hieße, eine Angabe zu verlieren, die noch da war. Das Feld hat
+     * ihn ohnehin schon beanstandet.</p>
+     *
+     * @param text   was im Feld steht, bereits ohne Leerraum am Rand
+     * @param bisher der Wert der Entität, falls der Text unlesbar ist
+     */
+    protected static int zahl(String text, int bisher) {
+        if (text.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException unlesbar) {
+            return bisher;
+        }
+    }
+
+    /** Ein geleertes oder unlesbares Datumsfeld ergibt {@code null}. */
+    protected static java.time.LocalDate datum(String text) {
+        if (text.isEmpty()) {
+            return null;
+        }
+        try {
+            return java.time.LocalDate.parse(text);
+        } catch (RuntimeException unlesbar) {
+            return null;
+        }
+    }
+
+    /**
      * Prüft, ob ein Feldname einem Datumfeld entspricht.
      *
      * @param fieldName Der Feldname

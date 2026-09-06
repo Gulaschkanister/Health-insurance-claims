@@ -188,15 +188,18 @@ class PopulatorTest {
     class Randfaelle {
 
         /**
-         * Was heute geschieht, wenn jemand Unsinn eintippt - festgehalten,
-         * nicht gutgeheissen.
+         * Ein Vertipper darf keine Angabe vernichten.
          *
-         * <p>Der Populator laesst die Person unveraendert und sagt nichts. Das
-         * faellt nicht weiter auf, weil {@code PersonenMaske} vor dem
-         * Speichern ohnehin prueft und eine unbrauchbare Person abweist. Es
-         * <em>bliebe</em> aber unbemerkt, wenn jemand den Populator einmal
-         * ohne diese Pruefung benutzte - und deshalb steht es hier
-         * geschrieben.</p>
+         * <p>Der Populator laesst die Person unveraendert. Die Maske hat den
+         * Vertipper ohnehin schon unter dem Feld beanstandet und speichert
+         * nicht; ihn zusaetzlich auf 0 zu setzen hiesse, eine Angabe zu
+         * verlieren, die noch da war.</p>
+         *
+         * <p><b>Der Wert ist bewusst dreistellig.</b> Hier stand am 05.09.2026
+         * „keine Zahl" — zehn Zeichen, und das Feld laesst hoechstens fuenf zu.
+         * Der Text kam nie im Feld an; geprueft wurde also nicht der unlesbare
+         * Wert, sondern ein leeres Feld. Aufgefallen erst, als das leere Feld
+         * ein anderes Ergebnis bekam.</p>
          */
         @Test
         @DisplayName("Ein nicht lesbarer Zahlenwert laesst das Feld unveraendert")
@@ -205,12 +208,47 @@ class PopulatorTest {
                 PatientFieldPopulator populator = new PatientFieldPopulator();
                 Patient anna = teilnehmer();
                 Node feld = feld("plz");
-                ((javafx.scene.control.TextInputControl) Feldbau.bedienelement(feld))
-                        .setText("keine Zahl");
+                javafx.scene.control.TextInputControl eingabe =
+                        (javafx.scene.control.TextInputControl) Feldbau.bedienelement(feld);
+                eingabe.setText("abc");
+                assertEquals("abc", eingabe.getText(), "Der Text muss ins Feld passen, sonst prueft das hier nichts");
 
                 populator.extractToEntity(feld, "plz", anna);
 
                 assertEquals(28195, anna.getPlz(), "Der alte Wert bleibt stehen");
+            });
+        }
+
+        /**
+         * Ein geleertes Feld muss ankommen — sonst greift das Tor nicht.
+         *
+         * <p>{@code setEntityFieldValue} stieg bis zum 06.09.2026 bei leerem
+         * Text sofort aus. Wer in der Bearbeitung ein IK loeschte, umging damit
+         * die Pruefung in {@code PersonenMaske.gepruefteSpeicherung}: sie sah
+         * den alten Wert und liess durch, was auf dem Bildschirm laengst leer
+         * war. Nebenbei liess sich eine falsch eingetragene Strasse aendern,
+         * aber nicht entfernen.</p>
+         */
+        @Test
+        @DisplayName("Ein geleertes Feld wird uebernommen und nicht uebergangen")
+        void geleertesFeldKommtAn() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                PatientFieldPopulator populator = new PatientFieldPopulator();
+                Patient anna = teilnehmer();
+
+                Node strasse = feld("street");
+                populator.populateField(strasse, "street", anna);
+                ((javafx.scene.control.TextInputControl) Feldbau.bedienelement(strasse)).setText("");
+                populator.extractToEntity(strasse, "street", anna);
+
+                Node kassenIk = feld("kassenIk");
+                populator.populateField(kassenIk, "kassenIk", anna);
+                ((javafx.scene.control.TextInputControl) Feldbau.bedienelement(kassenIk)).setText("");
+                populator.extractToEntity(kassenIk, "kassenIk", anna);
+
+                assertEquals("", anna.getStreet(), "Sonst liesse sich eine Strasse nie entfernen");
+                assertEquals(0, anna.getKassenIk(),
+                        "0 ist kein gueltiges IK - genau darauf soll die Pruefung anspringen");
             });
         }
 

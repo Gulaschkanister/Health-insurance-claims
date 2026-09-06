@@ -26,45 +26,42 @@ public class PatientFieldPopulator extends EntityFieldPopulator<Patient> {
         };
     }
 
+    /**
+     * Übernimmt einen Feldwert — <b>auch einen geleerten</b>.
+     *
+     * <p>Hier stand bis zum 06.09.2026 ein {@code if (value.isBlank()) return;}
+     * ganz vorn. Ein geleertes Feld wurde damit still übergangen, und die Maske
+     * meldete trotzdem Erfolg: eine falsch eingetragene Straße ließ sich
+     * ändern, aber nicht entfernen.</p>
+     *
+     * <p>Schlimmer war die zweite Wirkung. {@code PersonenMaske} prüft vor dem
+     * Speichern an der fertigen Person, ob Vorname, Nachname, Geburtsdatum und
+     * beide IK stimmen. Wer eines davon leerte, umging diese Prüfung — sie sah
+     * den alten Wert und ließ durch, was auf dem Bildschirm längst leer war.
+     * <b>Der Leerwert muss ankommen, damit das Tor greift.</b></p>
+     *
+     * <p>Zahlen werden dabei zu 0 und das Datum zu {@code null} — beides sind
+     * die Werte, die {@link de.gkvtransmitter.util.Institutionskennzeichen}
+     * beziehungsweise die Prüfung als „fehlt" erkennt.</p>
+     */
     @Override
     protected void setEntityFieldValue(String fieldName, Patient patient, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
+        String text = value == null ? "" : value.trim();
 
         switch (fieldName) {
-            case "firstname" -> patient.setFirstname(value);
-            case "lastname" -> patient.setLastname(value);
-            case "street" -> patient.setStreet(value);
-            case "country" -> patient.setCountry(value);
-            case "housenumber" -> patient.setHousenumber(value);
-            case "plz" -> {
-                try {
-                    patient.setPlz(Integer.parseInt(value));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-            case "ik" -> {
-                try {
-                    patient.setIk(Integer.parseInt(value));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-            case "kassenIk" -> {
-                try {
-                    patient.setKassenIk(Integer.parseInt(value));
-                } catch (NumberFormatException ignored) {
-                }
-            }
-            case "birthDate" -> {
-                try {
-                    LocalDate ld = LocalDate.parse(value);
-                    patient.setBirthDate(ld);
-                } catch (Exception ignored) {
-                }
-            }
+            case "firstname" -> patient.setFirstname(text);
+            case "lastname" -> patient.setLastname(text);
+            case "street" -> patient.setStreet(text);
+            case "country" -> patient.setCountry(text);
+            case "housenumber" -> patient.setHousenumber(text);
+            case "plz" -> patient.setPlz(zahl(text, patient.getPlz()));
+            case "ik" -> patient.setIk(zahl(text, patient.getIk()));
+            case "kassenIk" -> patient.setKassenIk(zahl(text, patient.getKassenIk()));
+            case "birthDate" -> patient.setBirthDate(datum(text));
+            default -> { }
         }
     }
+
 
     @Override
     public String getDisplayName(Patient patient) {

@@ -40,14 +40,23 @@ public final class AbrechnungService {
      * nimmt den anderen Konstruktor.</p>
      */
     public AbrechnungService() {
-        this(dienstMitDauerhaftenReferenzen());
+        this(HibernateSqllite.open());
     }
 
-    private static DtaDispatchService dienstMitDauerhaftenReferenzen() {
-        DataRepository datenbank = HibernateSqllite.open();
-        return new DtaDispatchService(BillingOfficeEndpointRegistry.loadDefault(),
+    /**
+     * Der Dienst mit einer bereits geoeffneten Datenbank.
+     *
+     * <p><b>Diesen Konstruktor nimmt die Anwendung</b>, damit sie nicht eine
+     * zweite Verbindung auf dieselbe SQLite-Datei oeffnet. SQLite laesst nur
+     * einen Schreiber zu, und die Vergabe der Referenz liest erst und schreibt
+     * dann — genau der Fall, in dem {@code busy_timeout} absichtlich nicht
+     * greift. Mit einer Verbindung stellt sich die Frage gar nicht.</p>
+     */
+    public AbrechnungService(DataRepository datenbank) {
+        this(new DtaDispatchService(BillingOfficeEndpointRegistry.loadDefault(),
                 new FileBillingOfficeTransport(), DtaValidationService.standard(),
-                datenbank::nextDtaInterchangeReference);
+                Objects.requireNonNull(datenbank, "datenbank must not be null")
+                        ::nextDtaInterchangeReference));
     }
 
     public AbrechnungService(DtaDispatchService dispatchService) {

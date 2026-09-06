@@ -103,7 +103,7 @@ public final class Bedienung {
 
         Controller controller = new Controller();
         View sicht = new View(controller,
-                new de.gkvtransmitter.application.AbrechnungService());
+                new de.gkvtransmitter.application.AbrechnungService(controller.getDatabase()));
 
         Bedienung[] gebaut = new Bedienung[1];
         JavaFxLaufzeit.aufFxFaden(() -> {
@@ -438,24 +438,55 @@ public final class Bedienung {
 
     // --- Von Hand ---------------------------------------------------------
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * Von Hand aufzurufen.
+     *
+     * <p><b>Alles in einem {@code try/finally}, und der Ausstieg gehoert ins
+     * {@code finally}.</b> Am 06.09.2026 blieb ein Lauf zwanzig Minuten lang
+     * einfach stehen, ohne eine Zeile auszugeben. Die Ursache war ein
+     * veraltetes {@code gkv-core}-Jar und damit ein
+     * {@code NoSuchMethodError} — aber zu sehen war das nicht:</p>
+     *
+     * <ol>
+     *   <li>Der Fehler flog aus {@code aufbauen}, also vor dem
+     *       {@code Platform.exit()} am Ende.</li>
+     *   <li>Der JavaFX-Faden ist kein Daemon und lief damit weiter.</li>
+     *   <li>{@code exec:java} wartet auf alle Nicht-Daemon-Faeden, ehe es die
+     *       Ausnahme meldet — es wartete also ewig auf einen Faden, den nur
+     *       die nie erreichte Zeile haette beenden koennen.</li>
+     * </ol>
+     *
+     * <p>Ein Werkzeug, das einen Fehler verschweigt und stattdessen haengt,
+     * ist schlimmer als keines. Deshalb hier: melden, was schiefging, und in
+     * jedem Fall aussteigen.</p>
+     */
+    public static void main(String[] args) {
         if (args.length == 0) {
             System.err.println("Aufruf: Bedienung <befehlsdatei> [zielverzeichnis]");
             System.exit(2);
         }
-        Path ziel = Path.of(args.length > 1 ? args[1] : "target/bedienung");
-        Bedienung bedienung = aufbauen(ziel, true);
         int schluss = 0;
         try {
-            bedienung.ausDatei(Path.of(args[0]));
-            System.out.println("Ablauf durchgelaufen.");
-        } catch (AssertionError fehler) {
-            System.out.println("Ablauf abgebrochen.");
-            System.out.println(fehler.getMessage());
-            schluss = 1;
+            Path ziel = Path.of(args.length > 1 ? args[1] : "target/bedienung");
+            Bedienung bedienung = aufbauen(ziel, true);
+            try {
+                bedienung.ausDatei(Path.of(args[0]));
+                System.out.println("Ablauf durchgelaufen.");
+            } catch (AssertionError fehler) {
+                System.out.println("Ablauf abgebrochen.");
+                System.out.println(fehler.getMessage());
+                schluss = 1;
+            }
+            bedienung.protokoll().forEach(System.out::println);
+        } catch (Throwable aufbaufehler) {
+            // Auch Error faengt hier: NoSuchMethodError aus einem veralteten
+            // gkv-core-Jar ist genau der Fall, der das hier noetig gemacht hat.
+            System.out.println("Der Aufbau ist gescheitert:");
+            aufbaufehler.printStackTrace(System.out);
+            schluss = 2;
+        } finally {
+            javafx.application.Platform.exit();
         }
-        bedienung.protokoll().forEach(System.out::println);
-        javafx.application.Platform.exit();
         System.exit(schluss);
     }
 }

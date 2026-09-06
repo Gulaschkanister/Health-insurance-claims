@@ -46,9 +46,10 @@ public final class SimulierterKassenTransport implements BillingOfficeTransport 
     public Path send(Path sourceFile, BillingOfficeEndpoint endpoint) throws IOException {
         Path zugestellt = delegat.send(sourceFile, endpoint);
 
-        Path protokoll = gegenstelle.empfangeDatei(zugestellt);
-        String antworttext = java.nio.file.Files.readString(protokoll);
-        letzteAntworten.put(endpoint.kassenIk(), new BillingOfficeResponseParser().parse(antworttext));
+        // Das Urteil der Gegenstelle unveraendert uebernehmen. Hier wurde es
+        // zuvor weggeworfen und aus dem Protokolltext neu erraten - siehe
+        // SimulierteKassenGegenstelle.empfangeDatei.
+        letzteAntworten.put(endpoint.kassenIk(), gegenstelle.empfangeDatei(zugestellt));
 
         return zugestellt;
     }

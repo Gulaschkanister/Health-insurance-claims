@@ -40,9 +40,23 @@ public final class BillingOfficeResponseParser {
         static Regel of(BillingOfficeResponseType typ, String kurztext, String... begriffe) {
             String alternativen = String.join("|", begriffe);
             // \b bindet an Wortgrenzen, damit "ok" nicht in "Protokoll" trifft.
-            // UNICODE_CASE ist noetig, damit Umlaute richtig klein geschrieben werden.
+            // UNICODE_CASE ist noetig, damit Umlaute richtig klein geschrieben
+            // werden.
+            //
+            // UNICODE_CHARACTER_CLASS ist noetig, damit \b Umlaute ueberhaupt
+            // als Wortzeichen ansieht. Ohne diesen Schalter arbeitet \b nach
+            // ASCII: "Ü" gilt dann als Trennzeichen, und ein Begriff, der mit
+            // einem Umlaut BEGINNT, wird nie gefunden. "Uebertragungsfehler"
+            // traf, "Übertragungsfehler" nicht - und die Kasse schreibt in der
+            // Regel mit Umlaut. Die Rueckmeldung wurde damit UNKNOWN statt
+            // TECHNICAL_ERROR, also "ein Mensch muss draufschauen" statt
+            // "einfach noch einmal senden".
+            //
+            // Die Tests pruefte das nicht: sie fuehrten durchweg die
+            // ASCII-Umschriften auf. Gefunden am 06.09.2026 im Review.
             Pattern muster = Pattern.compile("\\b(" + alternativen + ")\\b",
-                    Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+                    Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
+                            | Pattern.UNICODE_CHARACTER_CLASS);
             return new Regel(typ, kurztext, muster);
         }
 
