@@ -42,10 +42,11 @@ den Stand angesehen hat.
 
 Drei Punkte, die niemand außer Simon entscheiden kann.
 
-### 1. Der Branch nach `main`
+### 1. Der Branch nach `main` — freigegeben
 
-Der Branch ist grün. Zur Wahl stehen ein **Pull Request** über GitHub oder ein
-**Merge**:
+**Erledigt am 06.09.2026.** Simon: *„Dazu darf der aktuelle Stand in den Main
+Branch."* Der Stand mit den beiden Reviews und dem Aufräumen liegt auf `main`.
+Was hier steht, gilt für den nächsten Zusammenführungsschritt:
 
 ```bash
 git switch main && git merge --no-ff feature/kern-architektur
@@ -76,22 +77,26 @@ Commits, die nicht in `main` lagen — sichtbar wurde das erst beim Nachzählen.
 > Push zu („Pushes can not update more than 5 branches or tags"). Ein
 > `git push --delete` mit acht Namen wird als Ganzes abgewiesen.
 
-### 3. Die Retrospektive
+### 3. Die Retrospektive — gehalten
 
-Das Ziel aus Abschnitt J ist erreicht: ein Stand, den Simon sich ansieht und
-ausprobiert. Vier Punkte gehören dort auf den Tisch:
+**Am 06.09.2026 gelaufen.** Simon hat den Stand durchgesehen; das Ergebnis sind
+die acht Punkte in Abschnitt K und die Reihenfolge unter „Der Weg nach
+Produktion". Sein Urteil zur Oberfläche: **„Sonst sieht es gut aus."**
 
-1. **Die Info-Zeichen** (G5). Die Grenze zwischen „steht offen da" und „liegt
-   hinter dem Zeichen" ist gesetzt, nicht bewiesen. `Feldbau.STETS_ERKLAERT`
-   führt die Ausnahmen.
-2. **Die eigene Titelleiste** (G2). Dagegen entschieden, mit Begründung bei
+Nicht angesprochen und damit weiter offen:
+
+1. **Die eigene Titelleiste** (G2). Dagegen entschieden, mit Begründung bei
    `Hauptfenster.fenstertitel`. Umzudrehen kostet etwa einen Tag.
-3. **Was ohne Anlage 3 offen bleibt** — Tarifkennzeichen, Positionsnummern,
+2. **Was ohne Anlage 3 offen bleibt** — Tarifkennzeichen, Positionsnummern,
    echter Versand. Das ist keine Lücke im Programm, sondern eine in den
    Unterlagen, **und es gehört gesagt statt kaschiert.**
-4. **Der Preis je Termin.** Eine Blaupause ohne Preis wird seit dem 06.09.2026
+3. **Der Preis je Termin.** Eine Blaupause ohne Preis wird seit dem 06.09.2026
    nicht mehr abgerechnet, sondern aufgehalten (siehe „Was zuletzt geschah").
    Wer bestehende Blaupausen hat, sollte einmal hineinsehen.
+
+Die Grenze bei den Info-Zeichen (G5) hat den Durchgang überstanden, ohne
+angesprochen zu werden — das ist kein Beweis, aber der erste Hinweis darauf,
+dass sie richtig liegt.
 
 ## Der Stand aller Abschnitte
 
@@ -110,7 +115,8 @@ verweisen darauf („Abschnitt H", „G5").
 | **G** | Aussehen und Bedienung | ✔ vollständig (G1 Bildlaufleisten, G2 Kopfzeile, G3 Symbol, G4 Kürzungen, G5 Info-Zeichen, G6 Statuszeile) |
 | **H** | Bedienwerkzeug | ✔ `Bedienung` unter `src/test/java`, siehe unten |
 | **I** | Der Name | ✔ „GKV-Abrechnung", samt Umzug des Datenordners |
-| **J** | Der Zwischenstand | ✔ **der Stand steht** — es fehlt nur noch, dass Simon ihn sich ansieht |
+| **J** | Der Zwischenstand | ✔ angesehen und durchgespielt, die Rückmeldung steht als **K** |
+| **K** | Simons Rückmeldung | **offen** — acht Punkte aus dem ersten eigenen Durchgang |
 
 **Alles, was ohne Anlage 3, ohne den Vertrag und ohne Zertifikate zu machen
 war, ist gemacht.** Was offen bleibt, ist entweder eine Entscheidung, eine
@@ -243,6 +249,98 @@ das Beste, was geht.
   `release=21` setzt — bei Problemen aber die erste Verdachtsstelle.
 - **`.docx` wird nicht automatisch erzeugt.** Nach Änderungen an
   `GKVTransmitter_Dokumentation.md` neu erzeugen, siehe README.
+
+### K. Simons Rückmeldung vom 06.09.2026 (Abend)
+
+Nach dem ersten eigenen Durchgang. Acht Punkte, dazu das Urteil: **„Sonst sieht
+es gut aus."**
+
+| | Punkt | Größe |
+|---|---|---|
+| **K1** | Beim Umsatzsteuersatz fehlt das `%` hinter der Zahl | klein |
+| **K2** | Felder, die niemand ausfüllen soll, sehen aus wie Eingabefelder | klein |
+| **K3** | Beim Einzelbetrag fehlt das `€` — und entsprechend bei anderen Feldern | klein |
+| **K4** | Nach dem Speichern einer Blaupause steht der Vorlagenname als Überschrift | klein |
+| **K5** | Ein Geburtsdatum lässt sich in die Zukunft legen | mittel |
+| **K6** | Um das Aufklappfeld liegt ein zweiter, unnötiger Rahmen | klein |
+| **K7** | Die Eingabefelder verschwinden auf der hellen Fläche | klein |
+| **K8** | Eine Seite „Einstellungen" mit Dunkelmodus | groß |
+
+**K1 und K3 — die Einheit gehört ans Feld.** Beides steht heute nur in der
+Erklärung darunter („mit Komma und zwei Nachkommastellen"), und die ist
+eingeklappt, sobald sie nicht zu `STETS_ERKLAERT` gehört. Die Einheit steht in
+den Segmentdefinitionen schon fest: `inputType: PERCENT` heißt Prozent,
+`COST` heißt Euro. Sie muss nicht gepflegt, nur angezeigt werden.
+
+**K2 — was das Programm selbst setzt, ist kein Eingabefeld.** Betroffen ist der
+**Abrechnungscode**: er trägt genau einen hinterlegten Wert (`61`), steht
+vorbelegt im Formular und sieht aus, als wäre er zu ändern. Simon nennt selbst
+beide Wege: kennzeichnen oder ganz in den Hintergrund. **Der zweite ist die
+bessere Lösung und hängt an B3** — ob der Code je Vorlage fest ist, steht in
+Anlage 3. Bis das beantwortet ist, wird gekennzeichnet: ein Feld, das man lesen
+und nicht bearbeiten soll, sieht auch so aus. Das mauert keine Tür zu.
+
+**K4 — die Überschrift bleibt stehen.** `BlaupausenMaske` ruft nach dem
+Speichern `rahmen.zeige(liste())`. Das tauscht den Inhalt aus, mehr nicht: die
+Kopfzeile, die Seitenleiste und der Fenstertitel gehören zum *Bereich*, und der
+ist weiterhin die Vorlage, aus der man hereingekommen ist. Der Rahmen braucht
+einen zweiten Weg — „wechsle in diesen Bereich" statt „zeige das hier".
+
+**Achtung dabei:** der Bereichswechsel räumt die Meldungsecke. Wer erst meldet
+und dann wechselt, löscht seine eigene Erfolgsmeldung.
+
+**K5 — ein Geburtsdatum in der Zukunft.** Im Kern gibt es die Regel längst
+(`VERSICHERTENANGABEN`, Code `GEBURTSDATUM_ZUKUNFT`), aber sie greift erst vor
+dem Versand. Am Feld darf so etwas gar nicht erst entstehen. Simons zweiter
+Gedanke — „eventuell keine 1-Jährigen" — ist richtig, verlangt aber Maß:
+**eine Altersgrenze, die zu hoch liegt, weist eine echte Teilnehmerin ab.**
+Fünfzehnjährige Mütter gibt es. Die Grenze gehört deshalb dorthin, wo sie nur
+noch Tippfehler trifft, nicht Lebensläufe.
+
+**K6 — der zweite Rahmen.** Nachgesehen, und es ist erklärbar: ein
+beschreibbares `ComboBox` und ein `DatePicker` enthalten *innen* ein
+`.text-field`, und `gkv.css` gibt jedem `.text-field` einen Rahmen. Zwei
+Rahmen, einer im anderen. Bei den nicht beschreibbaren Auswahlfeldern der
+Abrechnungsmaske tritt es deshalb nicht auf.
+
+**K7 — die Felder verschwinden.** Weiß auf einem fast weißen Grund
+(`#FFFFFF` auf `#F4F6F8`) mit einer sehr hellen Linie (`#DDE3E8`). Simons Wort
+war „dezenter", sein Grund „sie verschwinden" — gemeint ist erkennbar:
+**ruhig, aber deutlich abgesetzt.** Das ist eine Frage von zwei Farbwerten.
+
+**K8 — Einstellungen mit Dunkelmodus.** Der einzige große Punkt. Die
+Voraussetzung ist da: alle Farben stehen als benannte Werte in einem Block
+oben in `gkv.css` und werden unten nur benutzt. Ein zweiter Block, umgeschaltet
+über eine Stilklasse an der Wurzel, ist der ganze Kern. Dazu kommt eine neue
+Maske (nach dem Muster von `GruppenMaske`, **nicht** in `View`), ein Eintrag in
+`View.baueNavigation()` und ein Ort, an dem die Wahl den Programmstart
+übersteht — heute gibt es keinen: die Anwendung speichert **keine
+Einstellungen**. Das ist der eigentliche Aufwand, nicht die Farben.
+
+## Der Weg nach Produktion
+
+Simons Reihenfolge vom 06.09.2026, wörtlich: erst nach `main`, dann
+ausführlichere Tests, dann Planung.
+
+1. **Der Stand darf nach `main`.** Ausdrücklich freigegeben. Damit ist der
+   erste Punkt unter „Sofort zu entscheiden" beantwortet.
+2. **Die Tests sollen ausführlicher werden.** Heute sind es 372, und sie decken
+   die riskanten Stellen — was fehlt, ist nicht Menge, sondern Art: Abläufe
+   über mehrere Masken (`AblaufTest` ist der einzige), Fehlerpfade, und die
+   Fälle, die aus einer echten Abrechnung kommen und nicht aus einer erdachten.
+   **Vor dem Ausbau gehört festgelegt, was ein Test hier beweisen soll** —
+   sonst wächst die Zahl und nicht die Sicherheit, siehe `Abrechnungslauf`.
+3. **Datensicherheit.** Zu planen, nicht nebenbei zu machen. Die Anwendung hält
+   Gesundheitsdaten: Namen, Geburtsdaten, Versichertennummern, Kassen —
+   besondere Kategorien nach Art. 9 DSGVO. Heute liegt die SQLite-Datei
+   **unverschlüsselt** im Benutzerprofil, es gibt keine Anmeldung, kein
+   Protokoll darüber, wer was geändert hat, und keine Sicherung. Jeder dieser
+   vier Punkte ist eine eigene Entscheidung.
+4. **Wie sich das mit den Kassen erproben lässt.** Der offene Kern von E. Zu
+   klären ist, wer die Gegenstelle für einen Testbetrieb stellt (Annahmestelle,
+   Verband oder Abrechnungsstelle), was dafür an Zertifikaten und Zugangsdaten
+   nötig ist und ob es ein Testverfahren mit einem eigenen IK gibt. **Das sind
+   Fragen an Menschen, nicht an den Quelltext** — und sie brauchen Vorlauf.
 
 ## Was zuletzt geschah (06.09.2026, Abend)
 
