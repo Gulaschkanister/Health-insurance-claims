@@ -2,6 +2,7 @@
 title: "GKV-Abrechnung"
 subtitle: "Abrechnung mit gesetzlichen Krankenkassen — Dokumentation"
 lang: de-DE
+toc-title: "Inhaltsverzeichnis"
 toc: true
 toc-depth: 2
 ---
