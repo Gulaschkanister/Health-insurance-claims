@@ -20,7 +20,7 @@ Erledigt und geprüft:
 - **Feldprüfung mit Erklärung unter jedem Feld, IK gegen die Prüfziffer**
 - **Blaupausen: Übersicht mit Suche, Bearbeiten und Löschen; der Preis je Termin
   ist einstellbar** (war er nie, siehe D)
-- **354 Tests**, davon 194 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **367 Tests**, davon 207 in `gkv-ui`, `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - **Abschnitte B (soweit ohne Anlage 3), C, G, H, I und J sind abgearbeitet**
 - **Das Paket ist gebaut und gestartet**, das Programm heißt „GKV-Abrechnung"
 - **Ein Review über den ganzen Branch ist gelaufen; alle neun Funde sind behoben**
@@ -374,16 +374,45 @@ Vorhaben eigener Größe.
 
 **Drei Dinge, die sich jederzeit nachholen lassen und niemanden aufhalten:**
 
-1. **Drei Klassen in `gkv-ui` haben keinen eigenen Test**: `View`,
-   `Maskenkopf` und `Abrechnungslauf`. Alle drei laufen in `AblaufTest` mit,
-   das ist aber kein Ersatz; `Abrechnungslauf` ist allerdings nur eine
-   Schnittstelle und `Maskenkopf` steht in jeder Übersicht.
-   `JavaFxUiFactory` ist seit dem 06.09.2026 geprüft — und der erste Test
-   fand sofort einen Fehler, siehe unten.
+1. ~~**Klassen in `gkv-ui` ohne eigenen Test.**~~ **Erledigt am 06.09.2026.**
+   `JavaFxUiFactory`, `Maskenkopf` und `View` sind geprüft; zwei der drei
+   ersten Tests fanden dabei sofort etwas (siehe unten).
+
+   **`Abrechnungslauf` bekommt bewusst keinen.** Es ist eine Schnittstelle mit
+   einer Methode und ohne Rumpf — ein Test würde eine Lambda bauen und sie
+   aufrufen, also die JVM prüfen und nicht das Projekt. Dass die Signatur zu
+   `AbrechnungService::createAndDispatch` passt, sichert der Übersetzer. Ein
+   Test dort erhöhte die Zahl und nicht die Sicherheit.
 2. **Die Checkstyle-Befunde** (Abschnitt F): vier Konstruktoren mit neun
    Parametern. Ein Builder oder ein `record` für die Adresse wäre die Antwort.
 3. **`dev` und `restart` auf `origin`** — `dev` ist nachweislich leer und kann
    weg, `restart` trägt einen eigenen Commit.
+
+#### Der Test, der bisher fehlte: kommt man überhaupt hin?
+
+`ViewTest` geht die Seitenleiste durch und verlangt von **jedem** Eintrag, dass
+er sich öffnen lässt und danach etwas dasteht. Jede einzelne Maske war geprüft;
+dass sie von der Seitenleiste aus erreichbar ist, war es nicht. Ein Vertipper
+in einer Kennung, eine vergessene Verdrahtung oder eine Ausnahme beim Aufbau
+wäre nur beim Klicken aufgefallen.
+
+**Nachgewiesen wirksam:** wird die Verdrahtung eines Bereichs absichtlich
+kaputtgemacht, wird der Test rot. Zweimal geprüft — einmal beim ersten Bereich
+(er fällt schon im Aufbau auf, weil er beim Start geöffnet wird) und einmal bei
+einem späteren, damit auch die Schleife selbst belegt ist.
+
+Dazu prüft er die Reihenfolge des Arbeitsablaufs, die Kursnamen in der Leiste,
+den Satz unter jeder Überschrift und die Statuszeile.
+
+#### Beim Schreiben von `MaskenkopfTest` aufgefallen
+
+Die Begründung im Quelltext war seit demselben Tag falsch. Dort stand, die
+Schaltfläche stehe links, *weil* rechts oben die Meldungen erscheinen und sie
+verdecken würden — die Meldungsecke liegt seit dem 06.09.2026 aber unten
+rechts. Der Platz bleibt links, aber aus einem anderen Grund.
+
+Das ist derselbe Befund wie unten, nur harmlos: **eine Begründung veraltet
+still, wenn sich das ändert, worauf sie sich beruft.**
 
 #### Was der erste Test von `JavaFxUiFactory` gefunden hat
 
@@ -1328,8 +1357,8 @@ die Oberfläche sie prüft. Verwendbar: `108310400`, `104940005`, `102137985`,
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 354 Tests
-mvn clean test -pl gkv-ui            # nur die 194 Oberflächentests
+mvn clean test                       # alle 367 Tests
+mvn clean test -pl gkv-ui            # nur die 207 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

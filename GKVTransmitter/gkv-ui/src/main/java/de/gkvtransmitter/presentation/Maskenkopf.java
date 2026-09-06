@@ -33,8 +33,11 @@ final class Maskenkopf {
 
         Region abstand = new Region();
         HBox.setHgrow(abstand, Priority.ALWAYS);
-        // Die Schaltflaeche steht links, nicht rechts: rechts oben erscheinen
-        // die Meldungen, und die wuerden sie verdecken.
+        // Die Schaltflaeche steht links, nicht rechts. Hier stand als Grund,
+        // rechts oben erschienen die Meldungen und wuerden sie verdecken -
+        // das stimmt seit dem 06.09.2026 nicht mehr, die Meldungsecke liegt
+        // jetzt unten rechts. Der Platz bleibt trotzdem links: dort beginnt
+        // die Leserichtung, und darunter beginnt auch die Liste.
         HBox kopf = new HBox(12, neuerEintrag, abstand);
         kopf.setAlignment(Pos.CENTER_LEFT);
 
