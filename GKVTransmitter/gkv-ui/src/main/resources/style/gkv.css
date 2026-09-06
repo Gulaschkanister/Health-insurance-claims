@@ -49,6 +49,20 @@
     -fx-spacing: 4px;
 }
 
+/*
+ * Der Rollbereich um die Seitenleiste. Er darf selbst nichts zeichnen -
+ * sonst saesse ein heller Rahmen um die dunkle Leiste -, und der Viewport
+ * bekommt dieselbe Farbe: waehrend des Rollens blitzt sonst der Grund
+ * durch.
+ */
+.seitenleisten-bereich,
+.seitenleisten-bereich > .viewport {
+    -fx-background-color: -farbe-leiste;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+}
+
 .marke {
     -fx-text-fill: -farbe-text-hell;
     -fx-font-size: 17px;

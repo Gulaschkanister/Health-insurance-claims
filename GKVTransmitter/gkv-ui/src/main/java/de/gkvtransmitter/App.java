@@ -22,6 +22,34 @@ public class App extends Application {
     // Ueber diese Referenz bleibt der initialisierte Fachkontext waehrend der
     // gesamten Laufzeit erreichbar und im Debugger inspizierbar.
 
+    /**
+     * Die Groesse, in der das Fenster aufgeht.
+     *
+     * <p>Sie stand bis zum 06.09.2026 auf 900x600 und stammte aus einer Zeit,
+     * in der die Oberflaeche aus einer Menueleiste bestand. Inzwischen hat sie
+     * eine Seitenleiste von 224 Punkten und Listen mit vier Spalten und zwei
+     * Schaltflaechen je Zeile — und bei 900x600 lag <b>„Löschen" ausserhalb des
+     * Fensters</b>. Erreichbar war es (die Ansicht rollt quer), aber wer eine
+     * Anwendung startet, soll nicht erst rollen muessen, um zu sehen, was sie
+     * kann.</p>
+     *
+     * <p>Gemessen, nicht geschaetzt: die Blaupausenliste ist die breiteste
+     * Ansicht, und sie passt bei 1100 Punkten vollstaendig ins Bild.</p>
+     */
+    private static final double STARTBREITE = 1180;
+    private static final double STARTHOEHE = 760;
+
+    /**
+     * Wie klein sich das Fenster ziehen laesst.
+     *
+     * <p>Darunter faengt die Anwendung an, sich selbst zu verdecken. Die
+     * Bildlaufleisten fangen zwar auf, was nicht mehr passt — aber ein Fenster,
+     * in dem man rollen muss, um die Kopfzeile zu sehen, ist keines mehr. Das
+     * Betriebssystem setzt die Grenze durch; wir muessen sie nur nennen.</p>
+     */
+    private static final double MINDESTBREITE = 900;
+    private static final double MINDESTHOEHE = 600;
+
     private Controller controller;
     private View view;
 
@@ -40,13 +68,15 @@ public class App extends Application {
             // JSON-Dateinamen samt Nachrichtentypen - der laengste Text im
             // Programm, der in der Statuszeile abgeschnitten wurde. Er gehoert
             // ohnehin dorthin, wo auch die Texte liegen: in die View.
-            Scene scene = view.createMainScene(900, 600);
+            Scene scene = view.createMainScene(STARTBREITE, STARTHOEHE);
             // Gebunden statt gesetzt: die Leiste nennt den offenen Bereich,
             // und der wechselt. Siehe Hauptfenster.fenstertitel - warum die
             // Titelleiste die von Windows bleibt, steht dort.
             stage.titleProperty().bind(view.fenstertitel());
             stage.getIcons().addAll(Programmsymbol.alle());
             stage.setScene(scene);
+            stage.setMinWidth(MINDESTBREITE);
+            stage.setMinHeight(MINDESTHOEHE);
             stage.show();
         } catch (RuntimeException e) {
             scheitern("App konnte nicht starten", e);

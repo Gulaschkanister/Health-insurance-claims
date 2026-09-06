@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
@@ -29,6 +30,39 @@ class HauptfensterTest {
     @BeforeAll
     static void laufzeitHochfahren() {
         JavaFxLaufzeit.starten();
+    }
+
+    /**
+     * Der Fenstertitel folgt dem offenen Bereich.
+     *
+     * <p>{@code App} bindet {@code stage.titleProperty()} daran. Ohne diesen
+     * Test faellt es nicht auf, wenn die Bindung ins Leere geht: die
+     * Titelleiste bliebe schlicht leer, und das sieht man erst im gebauten
+     * Paket - so geschehen am 06.09.2026.</p>
+     */
+    @Test
+    @DisplayName("Der Fenstertitel nennt den offenen Bereich und den Programmnamen")
+    void fenstertitel() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            assertTrue(fenster.fenstertitel().get().contains(View.PROGRAMMNAME),
+                    "Auch ohne offenen Bereich darf die Leiste nicht leer sein: "
+                            + fenster.fenstertitel().get());
+
+            fenster.ergaenzeBereich("Abrechnung", () -> { });
+            fenster.ergaenzeBereich("Teilnehmer", () -> { });
+            fenster.oeffneErstenBereich();
+
+            assertTrue(fenster.fenstertitel().get().startsWith("Abrechnung"),
+                    fenster.fenstertitel().get());
+            assertTrue(fenster.fenstertitel().get().contains(View.PROGRAMMNAME),
+                    fenster.fenstertitel().get());
+
+            navigationseintrag(fenster, "Teilnehmer").fire();
+
+            assertTrue(fenster.fenstertitel().get().startsWith("Teilnehmer"),
+                    fenster.fenstertitel().get());
+        });
     }
 
     @Test
@@ -231,8 +265,30 @@ class HauptfensterTest {
         assertEquals("nav-abrechnung", Hauptfenster.kennung("Abrechnung"));
     }
 
+    /**
+     * Ein Rahmen, der sich durchsuchen laesst.
+     *
+     * <p>Seit die Seitenleiste in einem Rollbereich steckt, haengt sie erst im
+     * Knotenbaum, wenn die Darstellung aufgebaut ist — ein {@code lookup} auf
+     * einen Navigationseintrag liefe vorher ins Leere. Dieselbe Falle wie bei
+     * den Masken, und dieselbe Antwort: kurz in eine {@code Scene} haengen und
+     * {@code applyCss()} sowie {@code layout()} rufen.</p>
+     *
+     * <p>Der Test geht damit denselben Weg wie die Anwendung. Zuvor ging er
+     * einen, den es so nicht gibt.</p>
+     */
     private static Hauptfenster neuesFenster() {
-        return new Hauptfenster(new Benachrichtigungen().bereich());
+        Hauptfenster fenster = new Hauptfenster(new Benachrichtigungen().bereich());
+        new Scene(fenster.wurzel(), 1100, 720);
+        fenster.wurzel().applyCss();
+        ((Region) fenster.wurzel()).layout();
+        return fenster;
+    }
+
+    /** Baut die Darstellung neu auf, nachdem sich der Knotenbaum geaendert hat. */
+    private static void aufbauen(Hauptfenster fenster) {
+        fenster.wurzel().applyCss();
+        ((Region) fenster.wurzel()).layout();
     }
 
     private static Label statuszeile(Hauptfenster fenster) {
@@ -254,6 +310,9 @@ class HauptfensterTest {
     }
 
     private static ToggleButton navigationseintrag(Hauptfenster fenster, String beschriftung) {
+        // Die Eintraege kommen erst nach dem Aufbau der Szene dazu; ohne einen
+        // erneuten Durchlauf haengen sie noch nicht im Knotenbaum.
+        aufbauen(fenster);
         Region wurzel = (Region) fenster.wurzel();
         ToggleButton eintrag = (ToggleButton) wurzel.lookup(
                 "#" + Hauptfenster.kennung(beschriftung));

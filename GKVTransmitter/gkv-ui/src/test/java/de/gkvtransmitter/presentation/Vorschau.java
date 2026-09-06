@@ -110,8 +110,56 @@ public final class Vorschau {
             // nachtraeglich eine andere Hoehe gibt. Genug Inhalt tut es auch.
         });
 
+        zeigeSchmalesFenster(controller, ziel);
+
         System.out.println("Vorschau in " + ziel.toAbsolutePath());
         javafx.application.Platform.exit();
+    }
+
+    /** Wie schmal ein Fenster wird, ehe man es nicht mehr zumutet. */
+    private static final double SCHMALE_BREITE = 900;
+    private static final double SCHMALE_HOEHE = 600;
+
+    /**
+     * Dieselben Ansichten in einem kleinen Fenster.
+     *
+     * <p>Das war der offene Punkt aus Abschnitt G der Uebergabe: „einmal das
+     * Fenster klein ziehen und hinsehen". Von Hand ist das nicht
+     * nachzustellen - ein Schnappschuss nimmt die Groesse der Szene, und die
+     * aendert sich nicht, wenn man dem ungezeigten Fenster nachtraeglich eine
+     * andere Hoehe gibt. <b>Eine zweite, kleinere Szene tut es aber.</b></p>
+     *
+     * <p>Sie braucht eine eigene {@code View}: ein Knoten haengt in genau
+     * einer Szene, und die erste ist schon aufgebaut. Der {@code Controller}
+     * wird weiterverwendet - Profile und Vorlagen sind geladen, und die
+     * Datenbank soll dieselbe sein.</p>
+     *
+     * <p>Zu sehen ist damit zweierlei: ob die Bildlaufleiste so aussieht wie
+     * gestaltet, und ob bei wenig Platz wieder etwas abgeschnitten wird.
+     * Genau das war der schlimmste Fund der Vorschau - „Lösc…" neben
+     * „Bearbei…".</p>
+     */
+    private static void zeigeSchmalesFenster(Controller controller, Path ziel) {
+        View schmal = new View(controller, new AbrechnungService());
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Scene szene = schmal.createMainScene(SCHMALE_BREITE, SCHMALE_HOEHE);
+            javafx.stage.Stage buehne = new javafx.stage.Stage();
+            buehne.setScene(szene);
+            buehne.setWidth(SCHMALE_BREITE);
+            buehne.setHeight(SCHMALE_HOEHE);
+            szene.getRoot().applyCss();
+            szene.getRoot().layout();
+
+            for (String bereich : new String[]{"Teilnehmer", "Blaupausen"}) {
+                oeffne(szene, bereich);
+                schreibe(szene, ziel.resolve("schmal-"
+                        + bereich.toLowerCase(java.util.Locale.GERMAN) + ".png"));
+            }
+
+            oeffne(szene, "Teilnehmer");
+            klicke(szene, PersonenMaske.ID_NEU);
+            schreibe(szene, ziel.resolve("schmal-formular.png"));
+        });
     }
 
     private static void oeffne(Scene szene, String bereich) {

@@ -140,10 +140,18 @@ public class Hauptfenster implements Maskenrahmen {
         inhaltsspalte.setCenter(inhaltsbereich);
         inhaltsspalte.setBottom(statusbereich);
 
-        geruest.setLeft(seitenleiste);
+        geruest.setLeft(seitenleistenbereich());
         geruest.setCenter(inhaltsspalte);
 
         wurzel = new StackPane(geruest, meldungsecke);
+        // Oben links verankert, nicht zentriert. Eine StackPane zentriert ihre
+        // Kinder, und wenn der Rahmen groesser wird als das Fenster - bei
+        // wenig Hoehe tut er das -, verliert man dabei oben *und* unten
+        // gleichzeitig. Am 06.09.2026 fehlte so bei 760x500 der Programmname
+        // in der Ecke, waehrend unten "Testdaten anlegen" abgeschnitten war.
+        // Verankert laeuft der Ueberhang nach rechts unten, wo ihn die
+        // Bildlaufleisten auffangen.
+        StackPane.setAlignment(geruest, Pos.TOP_LEFT);
         // Unten rechts, nicht oben rechts. Oben rechts liegt bei einem
         // zweispaltigen Formular genau ueber der rechten Spalte: eine stehende
         // Fehlermeldung verdeckte dort "Nachname" und "Land" - also die
@@ -151,6 +159,39 @@ public class Hauptfenster implements Maskenrahmen {
         // allen Masken die leerste Ecke; im schlimmsten Fall verdeckt eine
         // Meldung dort eine Listenzeile, und die kann man wegscrollen.
         StackPane.setAlignment(meldungsecke, Pos.BOTTOM_RIGHT);
+    }
+
+    /**
+     * Die Seitenleiste in einem Bereich, der bei wenig Hoehe rollt.
+     *
+     * <p>Sie wuchs mit jedem Kurs: Marke, Untertitel, drei Abschnitte, acht
+     * Eintraege — und je Vorlage einer mehr. Bei 600 Punkten Hoehe, der
+     * <b>Startgroesse der Anwendung</b>, reichte der Platz am 06.09.2026 schon
+     * nicht mehr: die umbrechenden Beschriftungen wurden auf eine Zeile
+     * gequetscht und mit Auslassungspunkten gekuerzt
+     * ("Rückbildungskurs nach …"), und bei noch weniger Hoehe fielen die
+     * unteren Eintraege ganz heraus.</p>
+     *
+     * <p>Die Bildlaufleiste erscheint nur, wenn sie gebraucht wird; quer wird
+     * nie gerollt, die Leiste hat eine feste Breite.</p>
+     *
+     * <p><b>Folge fuer Tests:</b> der Inhalt eines {@code ScrollPane} haengt
+     * erst im Knotenbaum, wenn die Darstellung aufgebaut ist. Ein
+     * {@code lookup} auf einen Navigationseintrag laeuft vorher ins Leere —
+     * dieselbe Falle wie bei den Masken. {@code HauptfensterTest} haengt den
+     * Rahmen deshalb kurz in eine {@code Scene}.</p>
+     */
+    private Region seitenleistenbereich() {
+        ScrollPane bereich = new ScrollPane(seitenleiste);
+        bereich.getStyleClass().add("seitenleisten-bereich");
+        bereich.setFitToWidth(true);
+        bereich.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        bereich.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        // Ohne das bestimmt der Inhalt die Mindesthoehe, und der Bereich
+        // koennte gar nicht kleiner werden als das, was er anzeigen soll -
+        // dann rollte nichts, sondern es liefe wieder ueber.
+        bereich.setMinHeight(0);
+        return bereich;
     }
 
     /** Setzt Name und Untertitel oben in der Seitenleiste. */
