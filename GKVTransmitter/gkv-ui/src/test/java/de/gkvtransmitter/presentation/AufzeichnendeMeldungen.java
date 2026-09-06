@@ -69,6 +69,20 @@ class AufzeichnendeMeldungen implements Meldungen {
         return List.copyOf(meldungen);
     }
 
+    /**
+     * Raeumt die Ecke, wie es die Anwendung beim Bereichswechsel tut.
+     *
+     * <p>Gehoert nicht zur Schnittstelle {@code Meldungen} - dort waere es
+     * fehl am Platz, weil keine Maske ihre eigenen Meldungen loescht. Im
+     * Betrieb macht das {@code Benachrichtigungen.leeren}, gerufen vom Rahmen.
+     * Hier steht es, damit {@link AufzeichnenderRahmen#beiWechsel} dasselbe
+     * nachbilden kann.</p>
+     */
+    void raeume() {
+        meldungen.clear();
+        letzterBericht = null;
+    }
+
     /** Die Texte der gestellten Rueckfragen, in der Reihenfolge des Auftretens. */
     List<String> gestellteRueckfragen() {
         return List.copyOf(rueckfragen);

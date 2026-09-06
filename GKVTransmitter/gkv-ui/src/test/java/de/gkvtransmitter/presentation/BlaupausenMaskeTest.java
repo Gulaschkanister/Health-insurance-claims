@@ -57,7 +57,10 @@ class BlaupausenMaskeTest {
     void aufsetzen() {
         datenbank = new SpeicherRepository();
         meldungen = new AufzeichnendeMeldungen();
-        rahmen = new AufzeichnenderRahmen();
+        // Wie in der Anwendung: ein Bereichswechsel raeumt die Meldungsecke.
+        // Ohne diese Verdrahtung ginge der Test ueber die Reihenfolge in beiden
+        // Reihenfolgen durch und bewiese nichts.
+        rahmen = new AufzeichnenderRahmen().beiWechsel(meldungen::raeume);
         texte = new AppMessages("/messages/ui-messages.json");
     }
 
@@ -129,6 +132,56 @@ class BlaupausenMaskeTest {
                 assertEquals(1, datenbank.getAllBlueprints().size());
                 assertTrue(datenbank.getAllBlueprints().get(0).getPayload().contains("9,90"),
                         datenbank.getAllBlueprints().get(0).getPayload());
+            });
+        }
+
+        /**
+         * Nach dem Speichern steht der richtige Bereich in der Kopfzeile.
+         *
+         * <p>Simon (K4): "Wenn ich eine Vorlage gespeichert habe werde ich
+         * automatisch zur Blaupausen Seite weitergeleitet, jedoch ist der Titel
+         * dann nicht der Menuepunkt Blaupause sondern der Name der Vorlage."</p>
+         *
+         * <p>Die Ursache war ein {@code zeige(liste())}: das tauscht nur den
+         * Inhalt aus. Ueberschrift, Untertitel, Fenstertitel und die
+         * Hervorhebung in der Seitenleiste gehoeren zum <em>Bereich</em>, und
+         * der war weiterhin die Vorlage, aus der man hereingekommen ist.</p>
+         */
+        @Test
+        @DisplayName("wechselt nach dem Speichern in den Bereich Blaupausen")
+        void wechseltInDenBereich() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = maske().formular(VORLAGE, null);
+                namensfeld(formular).setText("Kurs A");
+                setzeWert(formular, FELD_BETRAG, "12,50");
+
+                speichernKnopf(formular).fire();
+
+                assertEquals(texte.get("menu.blueprints"), rahmen.bereich(),
+                        "Sonst steht ueber der Liste weiter der Name der Vorlage");
+            });
+        }
+
+        /**
+         * Die Erfolgsmeldung ueberlebt den Bereichswechsel.
+         *
+         * <p>Die Reihenfolge ist nicht beliebig: ein echter Bereichswechsel
+         * raeumt die Meldungsecke. Wer erst meldet und dann wechselt, loescht
+         * seine eigene Meldung - und der Benutzer sieht nach dem Speichern
+         * nichts.</p>
+         */
+        @Test
+        @DisplayName("meldet den Erfolg nach dem Wechsel, nicht davor")
+        void meldetNachDemWechsel() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = maske().formular(VORLAGE, null);
+                namensfeld(formular).setText("Kurs A");
+                setzeWert(formular, FELD_BETRAG, "12,50");
+
+                speichernKnopf(formular).fire();
+
+                assertTrue(meldungen.einzige().text().contains("Kurs A"),
+                        "Nach dem Speichern muss dastehen, was gespeichert wurde");
             });
         }
 

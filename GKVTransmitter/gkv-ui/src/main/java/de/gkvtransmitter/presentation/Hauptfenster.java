@@ -282,14 +282,37 @@ public class Hauptfenster implements Maskenrahmen {
     /** Oeffnet den ersten aufgenommenen Bereich. Fuer den Programmstart. */
     public void oeffneErstenBereich() {
         bereiche.keySet().stream().findFirst().ifPresent(erster -> {
-            navigationsgruppe.getToggles().stream()
-                    .filter(ToggleButton.class::isInstance)
-                    .map(ToggleButton.class::cast)
-                    .filter(eintrag -> erster.equals(eintrag.getText()))
-                    .findFirst()
-                    .ifPresent(eintrag -> eintrag.setSelected(true));
+            hervorhebe(erster);
             oeffne(erster);
         });
+    }
+
+    @Override
+    public void wechsleZu(String bereich) {
+        if (!bereiche.containsKey(bereich)) {
+            return;
+        }
+        hervorhebe(bereich);
+        oeffne(bereich);
+    }
+
+    /**
+     * Hebt den Eintrag in der Seitenleiste hervor.
+     *
+     * <p>Getrennt von {@link #oeffne}, weil ein Klick die Hervorhebung schon
+     * selbst mitbringt - die Umschaltgruppe besorgt sie. Nur wer <em>ohne</em>
+     * Klick in einen Bereich wechselt, muss sie nachziehen: beim Programmstart
+     * und beim Wechsel aus einer Maske heraus. Ohne das bliebe der alte
+     * Eintrag hervorgehoben, und die Leiste zeigte auf etwas anderes als die
+     * Ueberschrift daneben.</p>
+     */
+    private void hervorhebe(String beschriftung) {
+        navigationsgruppe.getToggles().stream()
+                .filter(ToggleButton.class::isInstance)
+                .map(ToggleButton.class::cast)
+                .filter(eintrag -> beschriftung.equals(eintrag.getText()))
+                .findFirst()
+                .ifPresent(eintrag -> eintrag.setSelected(true));
     }
 
     private void oeffne(String beschriftung) {

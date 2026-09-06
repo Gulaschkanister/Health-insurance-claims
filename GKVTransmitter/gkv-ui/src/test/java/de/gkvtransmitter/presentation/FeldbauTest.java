@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import de.gkvtransmitter.enums.InputOption;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
@@ -179,6 +180,35 @@ class FeldbauTest {
                 assertInstanceOf(TextField.class, bedienelement,
                         "Ein Menue mit einer Zeile ist Bedienlast ohne Nutzen");
                 assertEquals("61", ((TextField) bedienelement).getText());
+            });
+        }
+
+        /**
+         * Ein einziger Vorschlag ist nichts zum Ausfuellen.
+         *
+         * <p>Simons Rueckmeldung K2 vom 06.09.2026: "Felder die Readonly sind
+         * sollten entsprechend markiert werden und nicht als Eingabefeld zu
+         * sehen sein." Betroffen ist genau dieser Fall - der Abrechnungscode
+         * stand vorbelegt in einem Feld, das aussah wie ein leeres.</p>
+         *
+         * <p>Die Sperre haengt an der <em>Anzahl</em> der Vorschlaege, nicht an
+         * einer Entscheidung ueber den Code: kommt ein zweiter hinzu, wird das
+         * Feld von selbst wieder ein beschreibbares Auswahlfeld. Das prueft der
+         * Test darunter.</p>
+         */
+        @Test
+        @DisplayName("Ein einziger Vorschlag ist nur zu lesen und als solcher gekennzeichnet")
+        void einVorschlagIstNichtZuAendern() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                TextField feld = (TextField) Feldbau.bedienelement(
+                        feldbau.erzeugeFeld("Abrechnungscode", null, "", List.of("61")));
+
+                assertFalse(feld.isEditable(),
+                        "Ein vorbelegtes Feld, das aussieht wie ein leeres, laedt zum Ueberschreiben ein");
+                assertTrue(feld.getStyleClass().contains(Feldbau.STIL_FEST),
+                        "Ohne Kennzeichnung sieht man dem Feld die Sperre nicht an");
+                assertFalse(feld.isDisabled(),
+                        "Lesen und kopieren muss man den Wert koennen - deshalb nicht abgeschaltet");
             });
         }
 
@@ -385,6 +415,185 @@ class FeldbauTest {
 
     private static TagList beschreibung(String feldname) {
         return TagConfigLoader.loadTagConfig("/tags/person-tags.json").get(feldname);
+    }
+
+    /**
+     * Das Geburtsdatum.
+     *
+     * <p>Simon (K5): "Man kann Geburtsdaten in die Zukunft verlegen?" Der Kern
+     * kennt die Regel seit jeher, aber sie greift erst vor dem Versand - der
+     * Vertipper wurde gespeichert und fiel Wochen spaeter auf, wenn ein ganzer
+     * Lauf daran haengenblieb.</p>
+     */
+    @Nested
+    @DisplayName("Geburtsdatum")
+    class Geburtsdatum {
+
+        @Test
+        @DisplayName("Ein Datum von morgen wird beanstandet")
+        void zukunftFaelltAuf() {
+            Optional<String> befund = feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                    java.time.LocalDate.now().plusDays(1).toString());
+
+            assertTrue(befund.isPresent(), "Ein Geburtstag kann nicht nach heute liegen");
+            assertEquals(texte.get("msg.birthDateFuture"), befund.get());
+        }
+
+        @Test
+        @DisplayName("Heute geht durch - ein Kind ist an seinem Geburtstag null")
+        void heuteGehtDurch() {
+            // Die Grenze ist "nach heute", nicht "heute". Ein Neugeborenes ist
+            // keine Teilnehmerin, aber es ist auch kein unmoegliches Datum -
+            // und ein Alter von 0 faellt bereits unter das Mindestalter.
+            Optional<String> befund = feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                    java.time.LocalDate.now().toString());
+
+            assertTrue(befund.isPresent());
+            assertFalse(befund.get().equals(texte.get("msg.birthDateFuture")),
+                    "Heute liegt nicht in der Zukunft - beanstandet wird das Alter");
+        }
+
+        @Test
+        @DisplayName("Ein Alter von fuenf Jahren wird beanstandet")
+        void kleinkindFaelltAuf() {
+            Optional<String> befund = feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                    java.time.LocalDate.now().minusYears(5).toString());
+
+            assertTrue(befund.isPresent(), "Vermutlich ein Vertipper in der Jahreszahl");
+            assertTrue(befund.get().contains("5"), befund.get());
+        }
+
+        /**
+         * Die Grenze liegt tief, und das ist der Punkt.
+         *
+         * <p>Eine Fuenfzehnjaehrige, die einen Geburtsvorbereitungskurs
+         * besucht, gibt es. <b>Eine Anwendung, die sie abweist, waere
+         * schlimmer als eine, die einen Tippfehler durchlaesst</b> - der
+         * Tippfehler faellt beim naechsten Blick auf, die Abweisung schickt
+         * jemanden weg.</p>
+         */
+        @Test
+        @DisplayName("Eine Fuenfzehnjaehrige wird nicht abgewiesen")
+        void jungeMutterGehtDurch() {
+            assertEquals(Optional.empty(), feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                    java.time.LocalDate.now().minusYears(15).minusDays(1).toString()));
+        }
+
+        @Test
+        @DisplayName("Ein uebliches Geburtsdatum geht durch")
+        void ueblichesDatum() {
+            assertEquals(Optional.empty(), feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                    java.time.LocalDate.now().minusYears(32).toString()));
+        }
+
+        @Test
+        @DisplayName("Ein Alter von 130 Jahren wird beanstandet")
+        void unmoeglichAlt() {
+            assertTrue(feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                    java.time.LocalDate.now().minusYears(130).toString()).isPresent());
+        }
+
+        @Test
+        @DisplayName("Der Kalender laesst kuenftige Tage nicht zu")
+        void kalenderSperrtZukunft() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                javafx.scene.control.DatePicker kalender = (javafx.scene.control.DatePicker)
+                        Feldbau.bedienelement(feldbau.erzeugeFeld("birthDate", beschreibung("birthDate")));
+
+                assertNotNull(kalender.getDayCellFactory(),
+                        "Ein Fehler, der gar nicht erst entsteht, muss auch nicht erklaert werden");
+                javafx.scene.control.DateCell zelle = kalender.getDayCellFactory().call(null);
+                zelle.updateItem(java.time.LocalDate.now().plusDays(1), false);
+                assertTrue(zelle.isDisable(), "Morgen darf sich nicht anklicken lassen");
+                zelle.updateItem(java.time.LocalDate.now().minusYears(30), false);
+                assertFalse(zelle.isDisable(), "Ein vergangener Tag muss waehlbar bleiben");
+            });
+        }
+
+        /**
+         * Nicht jedes Datum ist ein Geburtstag.
+         *
+         * <p>Ein Leistungsdatum darf in der Zukunft liegen. Eine Regel, die
+         * auf alle Datumsfelder wirkt, waere beim naechsten Terminfeld im
+         * Weg - deshalb haengt sie am Feldnamen.</p>
+         */
+        @Test
+        @DisplayName("Ein anderes Datumsfeld bleibt unberuehrt")
+        void nurGeburtsdaten() {
+            assertEquals(Optional.empty(), feldbau.pruefe("Leistungsdatum", null,
+                    java.time.LocalDate.now().plusYears(1).toString()));
+        }
+    }
+
+    /**
+     * Die Einheit hinter dem Feld.
+     *
+     * <p>Simon (K1, K3): hinter dem Umsatzsteuersatz fehlt das Prozentzeichen,
+     * hinter dem Einzelbetrag das Eurozeichen. Beides stand nur in der
+     * Erklaerung darunter - und die ist eingeklappt, sobald das Feld nicht zu
+     * {@code STETS_ERKLAERT} gehoert.</p>
+     */
+    @Nested
+    @DisplayName("Einheit")
+    class Einheit {
+
+        @Test
+        @DisplayName("Hinter einem Prozentsatz steht ein Prozentzeichen")
+        void prozent() {
+            JavaFxLaufzeit.aufFxFaden(() ->
+                    assertEquals("%", einheitVon(feld(InputOption.PERCENT))));
+        }
+
+        @Test
+        @DisplayName("Hinter einem Betrag steht ein Eurozeichen")
+        void euro() {
+            JavaFxLaufzeit.aufFxFaden(() ->
+                    assertEquals("€", einheitVon(feld(InputOption.COST))));
+        }
+
+        @Test
+        @DisplayName("Hinter einem Text steht keine Einheit")
+        void text() {
+            JavaFxLaufzeit.aufFxFaden(() -> assertNull(einheitVon(feld(InputOption.STRING))));
+        }
+
+        /**
+         * Der Platz bleibt trotzdem frei.
+         *
+         * <p>Dieselbe Falle wie beim Info-Zeichen: bliebe der Platz leer,
+         * waeren die Felder mit Einheit schmaler als die uebrigen, und im
+         * Blaupausenformular - wo beide Arten untereinander stehen - liefe die
+         * rechte Kante sichtbar aus. Genau so sah es am 06.09.2026 im ersten
+         * Anlauf aus.</p>
+         */
+        @Test
+        @DisplayName("Ohne Einheit bleibt ihr Platz frei, damit die Felder gleich breit sind")
+        void platzBleibtFrei() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                javafx.scene.layout.HBox mitEinheit = zeile(feld(InputOption.COST));
+                javafx.scene.layout.HBox ohneEinheit = zeile(feld(InputOption.STRING));
+
+                assertEquals(mitEinheit.getChildren().size(), ohneEinheit.getChildren().size(),
+                        "Beide Zeilen brauchen dieselben Spalten");
+            });
+        }
+
+        private Node feld(InputOption art) {
+            return feldbau.erzeugeFeld("Testfeld", new TagList(art, List.of()));
+        }
+
+        private javafx.scene.layout.HBox zeile(Node feld) {
+            return (javafx.scene.layout.HBox) ((VBox) feld).getChildren().get(0);
+        }
+
+        /** Der Text der Einheit, oder {@code null}, wenn dort nur ihr Platz steht. */
+        private String einheitVon(Node feld) {
+            return zeile(feld).getChildren().stream()
+                    .filter(kind -> kind.getStyleClass().contains(Feldbau.STIL_EINHEIT))
+                    .map(kind -> ((Label) kind).getText())
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
     private String erklaerung(String feldname) {

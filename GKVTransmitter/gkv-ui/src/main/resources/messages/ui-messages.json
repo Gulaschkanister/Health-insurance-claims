@@ -70,6 +70,8 @@
   "msg.invalidIkLength": "Ein IK besteht aus genau neun Ziffern.",
   "msg.ikPruefziffer": "Zu %s gehört die Prüfziffer %d, das gültige IK lautete also %s.",
   "msg.invalidPlz": "Die Postleitzahl muss fünfstellig sein.",
+  "msg.birthDateFuture": "Das Geburtsdatum liegt in der Zukunft. Möglich sind nur Tage bis heute.",
+  "msg.birthDateImplausible": "Das ergibt ein Alter von %d Jahren — bitte die Jahreszahl prüfen.",
   "msg.invalidValue": "Der Wert ist nicht zulässig.",
   "msg.tooLong": "Höchstens %d Zeichen möglich.",
   "help.maxLength": "Höchstens %d Zeichen.",

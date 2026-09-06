@@ -306,8 +306,14 @@ public class BlaupausenMaske {
             return;
         }
 
+        // Erst in den Bereich wechseln, dann melden. Das Formular wird oft aus
+        // einer Vorlage heraus geoeffnet ("Geburtsvorbereitungskurs" in der
+        // Seitenleiste); danach steht die Liste da, und die Ueberschrift trug
+        // weiterhin den Vorlagennamen - Simons Rueckmeldung K4. Die Reihenfolge
+        // ist nicht beliebig: ein Bereichswechsel raeumt die Meldungsecke, eine
+        // vorher gezeigte Erfolgsmeldung waere damit weg.
+        rahmen.wechsleZu(texte.get("menu.blueprints"));
         meldungen.erfolg(String.format(texte.get("msg.blueprintSaved"), name));
-        rahmen.zeige(liste());
     }
 
     private void frageUndLoesche(Blueprint blaupause) {

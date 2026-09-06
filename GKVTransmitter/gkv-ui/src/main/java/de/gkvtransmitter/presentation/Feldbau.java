@@ -65,6 +65,10 @@ public class Feldbau {
     public static final String STIL_HINWEIS = "feld-hinweis";
     /** Stilklasse des Info-Zeichens neben einem Feld. */
     public static final String STIL_INFOZEICHEN = "info-zeichen";
+    /** Stilklasse der Einheit hinter einem Feld, siehe {@link #einheit}. */
+    public static final String STIL_EINHEIT = "feld-einheit";
+    /** Stilklasse eines Feldes, das nur zu lesen ist, siehe {@link #vorschlagsfeld}. */
+    public static final String STIL_FEST = "feld-fest";
     /** Vorsatz der Kennung eines Info-Zeichens, gefolgt vom Feldnamen. */
     public static final String ID_INFO = "feld-info-";
 
@@ -103,7 +107,8 @@ public class Feldbau {
      * @param auswahl      hinterlegte Werte, oder leer fuer freie Eingabe
      */
     public Node erzeugeFeld(String feldname, TagList beschreibung, String erklaerung, List<String> auswahl) {
-        Node bedienelement = bedienelementFuer(beschreibung, auswahl == null ? List.of() : auswahl);
+        Node bedienelement = bedienelementFuer(feldname, beschreibung,
+                auswahl == null ? List.of() : auswahl);
 
         Label beanstandung = bausteine.createLabel("");
         beanstandung.getStyleClass().add(STIL_FEHLER);
@@ -114,7 +119,7 @@ public class Feldbau {
                 ? erklaerung(feldname, beschreibung)
                 : Optional.of(erklaerung);
 
-        VBox feld = new VBox(3, kopfzeile(bedienelement, feldname, text));
+        VBox feld = new VBox(3, kopfzeile(bedienelement, feldname, beschreibung, text));
         text.ifPresent(inhalt -> {
             Label hinweis = bausteine.createLabel(inhalt);
             hinweis.getStyleClass().add(STIL_HINWEIS);
@@ -188,14 +193,69 @@ public class Feldbau {
      * <p>Ohne Erklaerung kein Zeichen: eines, hinter dem nichts liegt, ist
      * eine Falle. Dieselbe Regel gilt in der Statuszeile.</p>
      */
-    private Node kopfzeile(Node bedienelement, String feldname, Optional<String> erklaerung) {
-        HBox zeile = new HBox(6, bedienelement, beiwerk(feldname, erklaerung));
+    private Node kopfzeile(Node bedienelement, String feldname, TagList beschreibung,
+            Optional<String> erklaerung) {
+        HBox zeile = new HBox(6, bedienelement, einheitszeichen(beschreibung),
+                beiwerk(feldname, erklaerung));
         zeile.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(bedienelement, Priority.ALWAYS);
         if (bedienelement instanceof Region breit) {
             breit.setMaxWidth(Double.MAX_VALUE);
         }
         return zeile;
+    }
+
+    /**
+     * Die Einheit, die hinter dem Feld steht.
+     *
+     * <p>Sie muss nicht gepflegt werden: die Segmentdefinitionen sagen sie
+     * bereits. {@code PERCENT} ist ein Prozentsatz, {@code COST} ein Betrag in
+     * Euro - das Verfahren rechnet in keiner anderen Waehrung.</p>
+     *
+     * <p><b>Warum sie ans Feld gehoert und nicht in die Erklaerung darunter:</b>
+     * die Erklaerung ist eingeklappt, sobald das Feld nicht zu
+     * {@link #STETS_ERKLAERT} gehoert - beim Umsatzsteuersatz also immer. Dort
+     * stand dann eine 19 ohne jede Angabe, wovon. Simon (K1): "Statt 19 in dem
+     * Feld Umsatzsteuer koennte dort noch % danach angezeigt werden."</p>
+     *
+     * <p>Daneben und nicht hinein: ein Zeichen <em>im</em> Feld waere Teil des
+     * Wertes und ginge so in die Nachricht - {@code 19 %} statt {@code 19}.</p>
+     */
+    private static Optional<String> einheit(TagList beschreibung) {
+        if (beschreibung == null) {
+            return Optional.empty();
+        }
+        return switch (beschreibung.getInputOption()) {
+            case PERCENT -> Optional.of("%");
+            case COST -> Optional.of("€");
+            default -> Optional.empty();
+        };
+    }
+
+    /** Breite der Einheitenspalte, gross genug fuer % und €. */
+    private static final double BREITE_EINHEIT = 12;
+
+    /**
+     * Das Zeichen - oder sein Platz.
+     *
+     * <p>Derselbe Grund wie beim Info-Zeichen: bliebe der Platz leer, waeren
+     * die Felder mit Einheit um die Breite des Zeichens schmaler als die
+     * uebrigen. Im Blaupausenformular stehen beide Arten untereinander, und
+     * die rechte Kante liefe sichtbar aus. Am gezeichneten Bild sofort zu
+     * sehen - so ist es auch aufgefallen, beim zweiten Mal.</p>
+     */
+    private Node einheitszeichen(TagList beschreibung) {
+        Optional<String> zeichen = einheit(beschreibung);
+        if (zeichen.isEmpty()) {
+            Region platzhalter = new Region();
+            platzhalter.setMinWidth(BREITE_EINHEIT);
+            platzhalter.setPrefWidth(BREITE_EINHEIT);
+            return platzhalter;
+        }
+        Label einheit = bausteine.createLabel(zeichen.get());
+        einheit.getStyleClass().add(STIL_EINHEIT);
+        einheit.setMinWidth(BREITE_EINHEIT);
+        return einheit;
     }
 
     /**
@@ -352,7 +412,7 @@ public class Feldbau {
      */
     private static final int ZAEHLERGRENZE = 2;
 
-    private Node bedienelementFuer(TagList beschreibung, List<String> auswahl) {
+    private Node bedienelementFuer(String feldname, TagList beschreibung, List<String> auswahl) {
         InputOption art = beschreibung == null ? InputOption.STRING : beschreibung.getInputOption();
         int grenze = hoechstlaenge(beschreibung).orElse(0);
 
@@ -376,9 +436,36 @@ public class Feldbau {
             // liesse sich aufklappen und enthielte nichts. Das Tarifkennzeichen
             // ist vertraglich vereinbart, es gibt dafuer keine Codeliste.
             case CODE, NUMBER_SUGGESTION -> textfeld(grenze);
-            case DATE, TIME -> bausteine.createDatePicker();
+            case DATE, TIME -> datumsfeld(feldname);
             default -> bausteine.createTextField();
         };
+    }
+
+    /**
+     * Ein Kalenderfeld; bei einem Geburtsdatum ohne Zukunft.
+     *
+     * <p>Die kuenftigen Tage sind ausgegraut und lassen sich nicht anklicken.
+     * Das ist mehr als die Beanstandung daneben: <b>ein Fehler, der gar nicht
+     * erst entsteht, muss auch nicht erklaert werden.</b> Simon (K5): "nur
+     * schon abgelaufene Tage waeren moeglich".</p>
+     *
+     * <p>Die Beanstandung in {@link #beanstandeGeburtsdatum} bleibt trotzdem
+     * noetig - der Kalender laesst sich auch beschreiben, und ueber
+     * {@code EntityFieldPopulator} kommen Werte herein, die nie durch ihn
+     * gegangen sind.</p>
+     */
+    private Node datumsfeld(String feldname) {
+        DatePicker kalender = bausteine.createDatePicker();
+        if (istGeburtsdatum(feldname)) {
+            kalender.setDayCellFactory(spalte -> new javafx.scene.control.DateCell() {
+                @Override
+                public void updateItem(LocalDate tag, boolean leer) {
+                    super.updateItem(tag, leer);
+                    setDisable(leer || tag.isAfter(LocalDate.now()));
+                }
+            });
+        }
+        return kalender;
     }
 
     /**
@@ -390,16 +477,33 @@ public class Feldbau {
      * Nutzen - man klappt es auf, um zu erfahren, dass es nichts zu waehlen
      * gibt. Es wird deshalb ein Textfeld, in dem der Wert schon steht.</p>
      *
-     * <p>Das Feld bleibt bewusst beschreibbar, in beiden Faellen. Ein Vorschlag
-     * darf nichts ausschliessen: kaeme ein Leistungsbereich mit einem anderen
-     * Code hinzu oder gaelte einmal ein anderer Umsatzsteuersatz, waere ein
-     * gesperrtes Feld eine Sackgasse - und die Codeliste laesst sich schneller
-     * falsch pflegen als ein Vertrag geschlossen ist.</p>
+     * <p><b>Bei genau einem Wert ist das Feld seit dem 06.09.2026 nur noch zu
+     * lesen.</b> Simon nach dem ersten Durchgang (K2): "Felder die Readonly
+     * sind sollten entsprechend markiert werden und nicht als Eingabefeld zu
+     * sehen sein." Ein vorbelegtes Feld, das aussieht wie ein leeres, lädt zum
+     * Ueberschreiben ein - und der Abrechnungscode ist nichts, was man sich
+     * aussucht.</p>
+     *
+     * <p>Hier stand zuvor die entgegengesetzte Begruendung: das Feld bleibe
+     * beschreibbar, weil ein gesperrtes eine Sackgasse waere, sollte je ein
+     * anderer Code gelten. <b>Der Einwand faellt mit der Mechanik selbst weg:</b>
+     * gesperrt ist das Feld nur, solange die Liste <em>einen</em> Eintrag hat.
+     * Bringt ein weiterer Leistungsbereich einen zweiten, wird daraus von
+     * selbst wieder ein beschreibbares Auswahlfeld - ohne dass hier etwas zu
+     * aendern waere. Die Tuer ist nicht zugemauert, sie geht nur auf, wenn es
+     * etwas zu waehlen gibt.</p>
+     *
+     * <p>{@code setEditable(false)} und nicht {@code setDisable(true)}: ein
+     * abgeschaltetes Feld waere ausgegraut, nicht auswaehlbar und nicht
+     * kopierbar. Man soll den Wert lesen und mitnehmen koennen.</p>
      */
     private Node vorschlagsfeld(List<String> auswahl, int grenze) {
         if (auswahl.size() == 1) {
             TextField feld = textfeld(grenze);
             feld.setText(auswahl.get(0));
+            feld.setEditable(false);
+            feld.setFocusTraversable(false);
+            feld.getStyleClass().add(STIL_FEST);
             return feld;
         }
         return auswahlfeld(auswahl);
@@ -517,6 +621,9 @@ public class Feldbau {
         if (istKennzeichen(feldname)) {
             return beanstandeKennzeichen(bereinigt);
         }
+        if (istGeburtsdatum(feldname)) {
+            return beanstandeGeburtsdatum(bereinigt);
+        }
         if ("plz".equalsIgnoreCase(feldname) && !bereinigt.matches("\\d{5}")) {
             return Optional.of(texte.get("msg.invalidPlz"));
         }
@@ -551,6 +658,69 @@ public class Feldbau {
      * <em>eingegebenen</em> acht Stellen, ob es dieses IK gibt, sagt sie
      * nicht.</p>
      */
+    /**
+     * Ob ein Feld ein Geburtsdatum traegt.
+     *
+     * <p>Ueber den Namen und nicht ueber {@code InputOption.DATE}: nicht jedes
+     * Datum ist ein Geburtstag. Ein Leistungsdatum darf in der Zukunft liegen,
+     * ein Geburtstag nicht - und eine Regel, die auf alle Datumsfelder wirkt,
+     * waere beim naechsten Terminfeld im Weg.</p>
+     */
+    private static boolean istGeburtsdatum(String feldname) {
+        if (feldname == null) {
+            return false;
+        }
+        String klein = feldname.toLowerCase(java.util.Locale.GERMAN);
+        return klein.contains("birthdate") || klein.contains("geburtsdatum");
+    }
+
+    /** Juengstes Alter, das noch angenommen wird, siehe {@link #beanstandeGeburtsdatum}. */
+    static final int MINDESTALTER = 10;
+    /** Aeltestes Alter, das noch angenommen wird. */
+    static final int HOECHSTALTER = 120;
+
+    /**
+     * Beanstandet ein unmoegliches Geburtsdatum.
+     *
+     * <p>Simon (K5): "Man kann Geburtsdaten in die Zukunft verlegen?" Ja - im
+     * Kern gibt es die Regel seit jeher ({@code GEBURTSDATUM_ZUKUNFT} in
+     * {@code VersichertenangabenRegel}), aber sie greift erst vor dem Versand.
+     * Ein Vertipper wurde also gespeichert und faellt Wochen spaeter auf, wenn
+     * ein ganzer Lauf daran haengenbleibt. <b>Am Feld ist er in dem Augenblick
+     * zu berichtigen, in dem er entsteht.</b></p>
+     *
+     * <p><b>Zur Untergrenze.</b> Simons zweiter Gedanke war "eventuell keine
+     * 1-Jaehrigen". Richtig - aber die Grenze muss tief liegen: eine
+     * Fuenfzehnjaehrige, die einen Geburtsvorbereitungskurs besucht, gibt es,
+     * und eine Anwendung, die sie abweist, waere schlimmer als eine, die einen
+     * Tippfehler durchlaesst. {@value #MINDESTALTER} Jahre trifft die
+     * Vertipper im Jahr (2020 statt 1990) und keinen einzigen Lebenslauf.</p>
+     *
+     * <p>Die Obergrenze entspricht {@code VersichertenangabenRegel}. Dort ist
+     * sie eine Warnung, hier eine Beanstandung: der Kern prueft eine fertige
+     * Nachricht, in der sich nichts mehr aendern laesst, das Feld einen Wert,
+     * den gerade jemand eintippt.</p>
+     */
+    Optional<String> beanstandeGeburtsdatum(String wert) {
+        LocalDate datum;
+        try {
+            datum = LocalDate.parse(wert);
+        } catch (java.time.format.DateTimeParseException unlesbar) {
+            // Ein DatePicker liefert nichts Unlesbares; ein von Hand
+            // getippter Text schon. Den beanstandet die allgemeine Pruefung.
+            return Optional.empty();
+        }
+        LocalDate heute = LocalDate.now();
+        if (datum.isAfter(heute)) {
+            return Optional.of(texte.get("msg.birthDateFuture"));
+        }
+        int alter = java.time.Period.between(datum, heute).getYears();
+        if (alter < MINDESTALTER || alter > HOECHSTALTER) {
+            return Optional.of(String.format(texte.get("msg.birthDateImplausible"), alter));
+        }
+        return Optional.empty();
+    }
+
     Optional<String> beanstandeKennzeichen(String wert) {
         if (Institutionskennzeichen.istGueltig(wert)) {
             return Optional.empty();

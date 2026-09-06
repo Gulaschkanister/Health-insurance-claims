@@ -16,6 +16,11 @@
     -farbe-flaeche:      #FFFFFF;
     -farbe-linie:        #DDE3E8;
 
+    /* Eingabefelder: eigene Kante, deutlicher als eine Trennlinie (K7) */
+    -farbe-feld-linie:   #B3BFCA;
+    /* Grund eines Feldes, das nur zu lesen ist (K2) */
+    -farbe-fest:         #EAEEF2;
+
     /* Seitenleiste */
     -farbe-leiste:       #22303C;
     -farbe-leiste-hell:  #2E4150;
@@ -365,10 +370,23 @@
 
 /* ---------------------------------------------------- Bedienelemente */
 
+/*
+ * Eingabefelder muessen sich vom Grund abheben.
+ *
+ * Bis zum 06.09.2026 stand hier -farbe-linie, dieselbe Linie wie unter einer
+ * Tabellenzeile - weiss auf fast weissem Grund mit einer Linie, die kaum eine
+ * war. Simon nach dem ersten Durchgang: die Felder "verschwinden ziemlich
+ * leicht auf der hellen Oberflaeche" (K7).
+ *
+ * -farbe-feld-linie ist deshalb deutlich dunkler als -farbe-linie und wird
+ * NUR hier verwendet: eine Feldkante und eine Trennlinie haben verschiedene
+ * Aufgaben, und wer sie an einen Wert bindet, kann nur noch beide zugleich
+ * aendern.
+ */
 .text-field, .spinner, .combo-box, .date-picker, .choice-box {
     -fx-background-radius: 6px;
     -fx-border-radius: 6px;
-    -fx-border-color: -farbe-linie;
+    -fx-border-color: -farbe-feld-linie;
     -fx-border-width: 1px;
     -fx-background-color: -farbe-flaeche;
     -fx-padding: 6px 8px 6px 8px;
@@ -376,6 +394,57 @@
 
 .text-field:focused, .combo-box:focused, .date-picker:focused {
     -fx-border-color: -farbe-akzent;
+}
+
+/*
+ * Kein zweiter Rahmen um Aufklapp- und Datumsfeld.
+ *
+ * Ein beschreibbares ComboBox und ein DatePicker tragen INNEN ein
+ * .text-field. Die Regel oben trifft beide - das aeussere Feld und das innere
+ * Textfeld -, und man sah einen Rahmen im Rahmen (K6). Bei den nicht
+ * beschreibbaren Auswahlfeldern der Abrechnungsmaske fiel es nicht auf, weil
+ * die gar kein Textfeld enthalten.
+ *
+ * Das innere Feld gibt Rahmen, Fuellung und Radius ab; es soll nur noch Text
+ * tragen. Die Innenabstaende muessen dabei auf null, sonst stuende der Text
+ * doppelt eingerueckt.
+ */
+.combo-box > .text-field,
+.date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-padding: 0;
+}
+
+/* Auch der Knopf daneben zeichnet keinen eigenen Rand mehr. */
+.combo-box > .arrow-button,
+.date-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 0 0 6px;
+}
+
+/*
+ * Ein Feld, das man lesen und nicht ausfuellen soll.
+ *
+ * Es sieht bewusst nicht aus wie ein Eingabefeld: keine Feldkante, ein ruhig
+ * getoenter Grund, stillere Schrift. Simon (K2): "Felder die Readonly sind
+ * sollten entsprechend markiert werden und nicht als Eingabefeld zu sehen
+ * sein."
+ */
+.text-field.feld-fest {
+    -fx-background-color: -farbe-fest;
+    -fx-border-color: transparent;
+    -fx-text-fill: -farbe-text-still;
+}
+
+/* Die Einheit hinter einem Feld: Prozent, Euro. */
+.feld-einheit {
+    -fx-text-fill: -farbe-text-still;
+    -fx-font-size: 12.5px;
+    -fx-padding: 0 0 0 2px;
 }
 
 .scroll-pane {

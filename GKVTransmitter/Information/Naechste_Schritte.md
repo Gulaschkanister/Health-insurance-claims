@@ -30,13 +30,13 @@ Erledigt und geprüft:
 - Oberfläche: Seitenleiste, Listen, Meldungsecke, Stylesheet, Programmsymbol
 - Feldprüfung mit Erklärung am Feld, IK gegen die Prüfziffer
 - Blaupausen mit einstellbarem Preis je Termin
-- **372 Tests** (164 Kern, 208 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **389 Tests** (164 Kern, 225 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - Zwei Reviews über den Branch gelaufen, **alle vierzehn Funde behoben**
 - Das Paket ist gebaut und gestartet; das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
 
-**Der Branch ist gepusht.** Der Weg nach `main` bleibt offen, bis Simon sich
-den Stand angesehen hat.
+**Der Stand liegt auf `main`** (Merge `a596ac5` vom 06.09.2026, von Simon
+freigegeben). Weitergearbeitet wird auf `feature/kern-architektur`.
 
 ## Sofort zu entscheiden
 
@@ -116,7 +116,7 @@ verweisen darauf („Abschnitt H", „G5").
 | **H** | Bedienwerkzeug | ✔ `Bedienung` unter `src/test/java`, siehe unten |
 | **I** | Der Name | ✔ „GKV-Abrechnung", samt Umzug des Datenordners |
 | **J** | Der Zwischenstand | ✔ angesehen und durchgespielt, die Rückmeldung steht als **K** |
-| **K** | Simons Rückmeldung | **offen** — acht Punkte aus dem ersten eigenen Durchgang |
+| **K** | Simons Rückmeldung | K1–K7 ✔ · **K8 offen**: Einstellungen mit Dunkelmodus |
 
 **Alles, was ohne Anlage 3, ohne den Vertrag und ohne Zertifikate zu machen
 war, ist gemacht.** Was offen bleibt, ist entweder eine Entscheidung, eine
@@ -255,16 +255,19 @@ das Beste, was geht.
 Nach dem ersten eigenen Durchgang. Acht Punkte, dazu das Urteil: **„Sonst sieht
 es gut aus."**
 
-| | Punkt | Größe |
+| | Punkt | Stand |
 |---|---|---|
-| **K1** | Beim Umsatzsteuersatz fehlt das `%` hinter der Zahl | klein |
-| **K2** | Felder, die niemand ausfüllen soll, sehen aus wie Eingabefelder | klein |
-| **K3** | Beim Einzelbetrag fehlt das `€` — und entsprechend bei anderen Feldern | klein |
-| **K4** | Nach dem Speichern einer Blaupause steht der Vorlagenname als Überschrift | klein |
-| **K5** | Ein Geburtsdatum lässt sich in die Zukunft legen | mittel |
-| **K6** | Um das Aufklappfeld liegt ein zweiter, unnötiger Rahmen | klein |
-| **K7** | Die Eingabefelder verschwinden auf der hellen Fläche | klein |
-| **K8** | Eine Seite „Einstellungen" mit Dunkelmodus | groß |
+| **K1** | Beim Umsatzsteuersatz fehlt das `%` hinter der Zahl | ✔ 06.09.2026 |
+| **K2** | Felder, die niemand ausfüllen soll, sehen aus wie Eingabefelder | ✔ 06.09.2026 |
+| **K3** | Beim Einzelbetrag fehlt das `€` — und entsprechend bei anderen Feldern | ✔ 06.09.2026 |
+| **K4** | Nach dem Speichern einer Blaupause steht der Vorlagenname als Überschrift | ✔ 06.09.2026 |
+| **K5** | Ein Geburtsdatum lässt sich in die Zukunft legen | ✔ 06.09.2026 |
+| **K6** | Um das Aufklappfeld liegt ein zweiter, unnötiger Rahmen | ✔ 06.09.2026 |
+| **K7** | Die Eingabefelder verschwinden auf der hellen Fläche | ✔ 06.09.2026 |
+| **K8** | Eine Seite „Einstellungen" mit Dunkelmodus | **offen**, siehe unten |
+
+**K1 bis K7 sind erledigt**, mit 17 neuen Tests und zwei Gegenproben. Was dabei
+zu entscheiden war, steht bei den Punkten selbst.
 
 **K1 und K3 — die Einheit gehört ans Feld.** Beides steht heute nur in der
 Erklärung darunter („mit Komma und zwei Nachkommastellen"), und die ist
@@ -279,6 +282,17 @@ beide Wege: kennzeichnen oder ganz in den Hintergrund. **Der zweite ist die
 bessere Lösung und hängt an B3** — ob der Code je Vorlage fest ist, steht in
 Anlage 3. Bis das beantwortet ist, wird gekennzeichnet: ein Feld, das man lesen
 und nicht bearbeiten soll, sieht auch so aus. Das mauert keine Tür zu.
+
+*Erledigt.* Das Feld ist `setEditable(false)` mit eigener Stilklasse — kein
+Rahmen, ruhig getönt, stillere Schrift. Bewusst **nicht** `setDisable(true)`:
+ausgegraut ließe es sich nicht mehr markieren und kopieren.
+
+**Hier stand bis dahin die entgegengesetzte Begründung** („das Feld bleibt
+bewusst beschreibbar, ein gesperrtes wäre eine Sackgasse"). Sie fällt mit der
+Mechanik selbst weg: gesperrt ist das Feld nur, solange die Liste **einen**
+Eintrag hat. Bringt Anlage 3 einen zweiten Code, wird daraus von selbst wieder
+ein beschreibbares Auswahlfeld — ohne dass jemand etwas ändert. Ein Test hält
+beide Fälle fest.
 
 **K4 — die Überschrift bleibt stehen.** `BlaupausenMaske` ruft nach dem
 Speichern `rahmen.zeige(liste())`. Das tauscht den Inhalt aus, mehr nicht: die
@@ -297,6 +311,15 @@ Gedanke — „eventuell keine 1-Jährigen" — ist richtig, verlangt aber Maß:
 Fünfzehnjährige Mütter gibt es. Die Grenze gehört deshalb dorthin, wo sie nur
 noch Tippfehler trifft, nicht Lebensläufe.
 
+*Erledigt, zweifach.* Der Kalender lässt künftige Tage gar nicht erst anklicken
+(**ein Fehler, der nicht entsteht, muss auch nicht erklärt werden**), und die
+Feldprüfung fängt ab, was daran vorbeikommt — über `EntityFieldPopulator`
+kommen Werte herein, die nie durch den Kalender gegangen sind. Die Grenzen
+stehen als `Feldbau.MINDESTALTER` (10) und `HOECHSTALTER` (120). Sie hängen am
+Feld**namen**, nicht an `InputOption.DATE`: ein Leistungsdatum darf in der
+Zukunft liegen, und eine Regel über alle Datumsfelder wäre beim nächsten
+Terminfeld im Weg.
+
 **K6 — der zweite Rahmen.** Nachgesehen, und es ist erklärbar: ein
 beschreibbares `ComboBox` und ein `DatePicker` enthalten *innen* ein
 `.text-field`, und `gkv.css` gibt jedem `.text-field` einen Rahmen. Zwei
@@ -307,6 +330,18 @@ Abrechnungsmaske tritt es deshalb nicht auf.
 (`#FFFFFF` auf `#F4F6F8`) mit einer sehr hellen Linie (`#DDE3E8`). Simons Wort
 war „dezenter", sein Grund „sie verschwinden" — gemeint ist erkennbar:
 **ruhig, aber deutlich abgesetzt.** Das ist eine Frage von zwei Farbwerten.
+
+*Erledigt* über einen eigenen Wert `-farbe-feld-linie` (`#B3BFCA`). Er wird
+**nur** für Feldkanten benutzt: eine Feldkante und eine Trennlinie haben
+verschiedene Aufgaben, und wer sie an denselben Wert bindet, kann nur noch
+beide zugleich ändern.
+
+**Beim Nachsehen am Bild fiel eine zweite Sache auf**, die kein Test gefunden
+hätte: mit der Einheit dahinter waren die Felder mit `%` und `€` zwanzig Punkte
+schmaler als die übrigen, und im Blaupausenformular lief die rechte Kante
+sichtbar aus. Dieselbe Falle wie beim Info-Zeichen, dieselbe Antwort — die
+Einheit hat jetzt eine feste Spalte, die auch dann Platz hält, wenn nichts
+darin steht.
 
 **K8 — Einstellungen mit Dunkelmodus.** Der einzige große Punkt. Die
 Voraussetzung ist da: alle Farben stehen als benannte Werte in einem Block
@@ -664,8 +699,8 @@ genau diese Zahl.
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 372 Tests
-mvn clean test -pl gkv-ui            # nur die 208 Oberflächentests
+mvn clean test                       # alle 389 Tests
+mvn clean test -pl gkv-ui            # nur die 225 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

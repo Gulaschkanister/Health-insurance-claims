@@ -269,6 +269,54 @@ class HauptfensterTest {
         });
     }
 
+    /**
+     * Ein Wechsel aus einer Maske heraus nimmt alles mit.
+     *
+     * <p>{@code zeige} tauscht nur den Inhalt aus. Ueberschrift, Untertitel,
+     * Fenstertitel und die Hervorhebung in der Seitenleiste gehoeren zum
+     * <em>Bereich</em> - und blieben stehen. Sichtbar wurde das beim Speichern
+     * einer Blaupause, die aus einer Vorlage heraus angelegt wird (Simons K4):
+     * die Liste stand da, darueber der Vorlagenname.</p>
+     */
+    @Test
+    @DisplayName("Ein Bereichswechsel nimmt Ueberschrift und Seitenleiste mit")
+    void wechselNimmtAllesMit() {
+        List<String> geoeffnet = new ArrayList<>();
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            fenster.ergaenzeBereich("Geburtsvorbereitungskurs", () -> geoeffnet.add("vorlage"));
+            fenster.ergaenzeBereich("Blaupausen", () -> geoeffnet.add("liste"));
+            navigationseintrag(fenster, "Geburtsvorbereitungskurs").fire();
+            assertEquals("Geburtsvorbereitungskurs", ueberschrift(fenster).getText());
+
+            fenster.wechsleZu("Blaupausen");
+
+            assertEquals("Blaupausen", ueberschrift(fenster).getText());
+            assertEquals("Blaupausen – " + View.PROGRAMMNAME, fenster.fenstertitel().get(),
+                    "Auch die Titelleiste gehoert zum Bereich");
+            assertTrue(navigationseintrag(fenster, "Blaupausen").isSelected(),
+                    "Sonst zeigt die Leiste auf etwas anderes als die Ueberschrift daneben");
+            assertFalse(navigationseintrag(fenster, "Geburtsvorbereitungskurs").isSelected());
+            assertEquals(List.of("vorlage", "liste"), geoeffnet,
+                    "Der Bereich muss dabei auch wirklich aufgebaut werden");
+        });
+    }
+
+    @Test
+    @DisplayName("Ein Wechsel in einen unbekannten Bereich geschieht nicht")
+    void wechselInsLeere() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            Hauptfenster fenster = neuesFenster();
+            fenster.ergaenzeBereich("Blaupausen", () -> { });
+            navigationseintrag(fenster, "Blaupausen").fire();
+
+            fenster.wechsleZu("Gibt es nicht");
+
+            assertEquals("Blaupausen", ueberschrift(fenster).getText(),
+                    "Ein Vertipper im Bereichsnamen darf die Kopfzeile nicht leeren");
+        });
+    }
+
     @Test
     @DisplayName("Umlaute und Satzzeichen werden zu Bindestrichen")
     void kennungOhneSonderzeichen() {
