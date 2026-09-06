@@ -83,7 +83,7 @@
   "help.plz": "Fünfstellig, ohne Leerzeichen.",
   "help.ik": "Institutionskennzeichen des Dienstleisters, neunstellig. Es wird vergeben und ist nicht frei wählbar — die letzte Ziffer ergibt sich aus den übrigen.",
   "help.kassenIk": "Institutionskennzeichen der Krankenkasse, neunstellig. Steht auf der Versichertenkarte und ist nicht frei wählbar.",
-  "help.birthDate": "Geburtsdatum der teilnehmenden Person.",
+  "help.birthDate": "Steht auf der Versichertenkarte und geht mit an die Kasse. Wählbar sind nur vergangene Tage, die ein Alter zwischen 10 und 120 Jahren ergeben — alles andere wäre ein Vertipper in der Jahreszahl.",
   "nav.section.billing": "Abrechnen",
   "nav.section.data": "Stammdaten",
   "nav.section.templates": "Vorlagen",

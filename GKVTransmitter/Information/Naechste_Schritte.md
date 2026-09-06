@@ -30,7 +30,7 @@ Erledigt und geprüft:
 - Oberfläche: Seitenleiste, Listen, Meldungsecke, Stylesheet, Programmsymbol
 - Feldprüfung mit Erklärung am Feld, IK gegen die Prüfziffer
 - Blaupausen mit einstellbarem Preis je Termin
-- **389 Tests** (164 Kern, 225 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **390 Tests** (164 Kern, 226 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
 - Zwei Reviews über den Branch gelaufen, **alle vierzehn Funde behoben**
 - Das Paket ist gebaut und gestartet; das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
@@ -261,7 +261,7 @@ es gut aus."**
 | **K2** | Felder, die niemand ausfüllen soll, sehen aus wie Eingabefelder | ✔ 06.09.2026 |
 | **K3** | Beim Einzelbetrag fehlt das `€` — und entsprechend bei anderen Feldern | ✔ 06.09.2026 |
 | **K4** | Nach dem Speichern einer Blaupause steht der Vorlagenname als Überschrift | ✔ 06.09.2026 |
-| **K5** | Ein Geburtsdatum lässt sich in die Zukunft legen | ✔ 06.09.2026 |
+| **K5** | Ein Geburtsdatum lässt sich in die Zukunft legen | ✔ 06.09.2026, **nachgebessert** (K5a) |
 | **K6** | Um das Aufklappfeld liegt ein zweiter, unnötiger Rahmen | ✔ 06.09.2026 |
 | **K7** | Die Eingabefelder verschwinden auf der hellen Fläche | ✔ 06.09.2026 |
 | **K8** | Eine Seite „Einstellungen" mit Dunkelmodus | **offen**, siehe unten |
@@ -311,14 +311,37 @@ Gedanke — „eventuell keine 1-Jährigen" — ist richtig, verlangt aber Maß:
 Fünfzehnjährige Mütter gibt es. Die Grenze gehört deshalb dorthin, wo sie nur
 noch Tippfehler trifft, nicht Lebensläufe.
 
-*Erledigt, zweifach.* Der Kalender lässt künftige Tage gar nicht erst anklicken
-(**ein Fehler, der nicht entsteht, muss auch nicht erklärt werden**), und die
-Feldprüfung fängt ab, was daran vorbeikommt — über `EntityFieldPopulator`
-kommen Werte herein, die nie durch den Kalender gegangen sind. Die Grenzen
-stehen als `Feldbau.MINDESTALTER` (10) und `HOECHSTALTER` (120). Sie hängen am
-Feld**namen**, nicht an `InputOption.DATE`: ein Leistungsdatum darf in der
-Zukunft liegen, und eine Regel über alle Datumsfelder wäre beim nächsten
-Terminfeld im Weg.
+*Erledigt, zweifach.* Der Kalender lässt unmögliche Tage gar nicht erst
+anklicken (**ein Fehler, der nicht entsteht, muss auch nicht erklärt werden**),
+und die Feldprüfung fängt ab, was daran vorbeikommt — über
+`EntityFieldPopulator` kommen Werte herein, die nie durch den Kalender gegangen
+sind. Die Grenzen stehen als `Feldbau.MINDESTALTER` (10) und `HOECHSTALTER`
+(120). Sie hängen am Feld**namen**, nicht an `InputOption.DATE`: ein
+Leistungsdatum darf in der Zukunft liegen, und eine Regel über alle
+Datumsfelder wäre beim nächsten Terminfeld im Weg.
+
+**K5a — nachgebessert am selben Abend, auf Simons Hinweis.** Die erste Fassung
+sperrte im Kalender **nur die Zukunft**, während die Prüfung zusätzlich das
+Alter maß. Wer einen Tag von vor zwei Jahren anklickte, durfte ihn wählen — und
+bekam danach eine rote Zeile. Simon: *„bis zu einem gewissen Punkt macht es
+keinen Sinn auszuwählen, dann soll es auch nicht möglich sein eins
+auszuwählen, was im Programm zu Fehlern führt."*
+
+> **Merksatz:** eine Auswahl anzubieten und sie anschließend abzulehnen, ist
+> schlechter als sie gar nicht erst anzubieten. Wer beides prüft — die
+> Auswahlmöglichkeit und den Wert —, muss beides aus **einer** Regel speisen.
+
+Umgesetzt als `Feldbau.befundZu(LocalDate)`, die einzige Stelle, die über ein
+Geburtsdatum entscheidet; Kalender und Prüfung gehen beide hindurch. Ein Test
+vergleicht sie Tag für Tag und wird rot, sobald jemand eine Grenze nur an einer
+Stelle ändert.
+
+**Und die Erklärung stimmte nicht mehr.** Hinter dem „i" stand weiterhin
+„Geburtsdatum der teilnehmenden Person." — kein Wort davon, was wählbar ist,
+obwohl das Feld seit demselben Tag Grenzen hat. Sie nennt sie jetzt. *Dritter
+Fall derselben Art in drei Tagen* (Maskenkopf-Begründung, Maskenkopf-Kurzfassung,
+jetzt ein Hilfetext): **wer eine Regel schärft, muss den Satz mitnehmen, der
+sie erklärt.**
 
 **K6 — der zweite Rahmen.** Nachgesehen, und es ist erklärbar: ein
 beschreibbares `ComboBox` und ein `DatePicker` enthalten *innen* ein
@@ -343,14 +366,48 @@ sichtbar aus. Dieselbe Falle wie beim Info-Zeichen, dieselbe Antwort — die
 Einheit hat jetzt eine feste Spalte, die auch dann Platz hält, wenn nichts
 darin steht.
 
-**K8 — Einstellungen mit Dunkelmodus.** Der einzige große Punkt. Die
-Voraussetzung ist da: alle Farben stehen als benannte Werte in einem Block
-oben in `gkv.css` und werden unten nur benutzt. Ein zweiter Block, umgeschaltet
-über eine Stilklasse an der Wurzel, ist der ganze Kern. Dazu kommt eine neue
-Maske (nach dem Muster von `GruppenMaske`, **nicht** in `View`), ein Eintrag in
-`View.baueNavigation()` und ein Ort, an dem die Wahl den Programmstart
-übersteht — heute gibt es keinen: die Anwendung speichert **keine
-Einstellungen**. Das ist der eigentliche Aufwand, nicht die Farben.
+**K8 — Einstellungen mit Dunkelmodus.** Der einzige große Punkt.
+
+Die Farben selbst sind der kleinste Teil: sie stehen als benannte Werte in
+einem Block oben in `gkv.css` und werden unten nur benutzt. Ein zweiter Block,
+umgeschaltet über eine Stilklasse an der Wurzel, ist der ganze Kern. Dazu eine
+neue Maske nach dem Muster von `GruppenMaske` (**nicht** in `View`) und ein
+Eintrag in `View.baueNavigation()`.
+
+### Das Problem an der Einstellungsseite
+
+**Die Anwendung hat keinen Ort für Einstellungen.** Nichts, was jemand einmal
+wählt, übersteht heute den Programmstart — es gibt weder eine Datei noch eine
+Tabelle dafür. Eine Einstellungsseite ohne diesen Ort wäre eine Seite, die beim
+nächsten Start vergisst, was man ihr gesagt hat; **das ist schlechter als keine
+Seite.** Das ist der eigentliche Aufwand an K8, nicht der Dunkelmodus.
+
+Drei Wege, mit ihren Folgen:
+
+| Ort | Dafür | Dagegen |
+|---|---|---|
+| **Tabelle in der SQLite-Datei** | liegt beim Rest der Daten, wird mitgesichert, `hbm2ddl=update` legt sie an | Einstellungen sind keine Fachdaten; wer die Datenbank austauscht, verliert sie |
+| **Eigene Datei im Datenordner** (`einstellungen.json`) | unabhängig von der Datenbank, von Hand zu lesen und zu berichtigen | eine zweite Ablage mit eigenen Fehlerfällen (gesperrt, unlesbar, halb geschrieben) |
+| **`java.util.prefs`** | nichts selbst zu bauen | landet in der Windows-Registry, entzieht sich `Anwendungsverzeichnis` und damit jedem Umzug und jeder Sicherung |
+
+**Empfehlung: die eigene Datei**, gelesen und geschrieben über
+`Anwendungsverzeichnis` — dann gilt für sie dasselbe wie für die Datenbank
+(Umzug, Sicherung, `gkv.home` in Tests und Werkzeugen), und eine unlesbare
+Datei darf auf Vorgaben zurückfallen, ohne dass jemand ohne Programm dasteht.
+
+Was dabei zu beachten ist, steht schon fest:
+
+- **Ein Fehlschlag beim Lesen darf den Start nicht aufhalten.** Vorgaben
+  nehmen und weiterlaufen — wie `Leistungsparameter` bei unlesbarer Blaupause.
+  Eine Farbwahl ist nichts, wofür eine Anwendung nicht startet.
+- **Die Umschaltung muss zur Laufzeit greifen**, nicht erst beim nächsten
+  Start. Sonst ist der erste Eindruck, der Schalter sei kaputt.
+- **Jede Farbe muss in beiden Fassungen geprüft werden.** Was heute an
+  Kontrast knapp ist, kann im Dunkelmodus unlesbar sein — und das sieht kein
+  Test, sondern nur die `Vorschau`. Sie kann beide Fassungen zeichnen.
+- Sobald es *einen* Ort für Einstellungen gibt, drängt sich der nächste
+  Kandidat auf: der Pfad zum Datenordner und der Ausgangsordner für den
+  Versand. Beides steht heute nur in Systemeigenschaften.
 
 ## Der Weg nach Produktion
 
@@ -514,7 +571,14 @@ gekostet hat.
 
 > **Wer eine Begründung nachzieht, muss die Zusammenfassung darüber
 > mitnehmen.** Eine veraltete Kurzfassung ist genauso irreführend wie eine
-> veraltete Begründung — und sie wird öfter gelesen.
+> veraltete Begründung — und sie wird öfter gelesen. **Und wer eine Regel
+> schärft, muss den Satz mitnehmen, der sie erklärt:** die Erklärung hinter dem
+> „i" am Geburtsdatum stand noch auf dem Stand von davor.
+
+> **Eine Auswahl anzubieten und sie anschließend abzulehnen, ist schlechter als
+> sie gar nicht erst anzubieten.** Wer beides prüft — was wählbar ist und was
+> gilt —, muss beides aus einer Regel speisen. Sonst sperrt der Kalender die
+> Zukunft, während die Prüfung zusätzlich das Alter misst.
 
 > **Eine Gegenprobe, die den falschen Fehler einbaut, beweist nichts.** Sie
 > muss den Fehler nachstellen, den der Test *nicht* offensichtlich findet — den
@@ -699,8 +763,8 @@ genau diese Zahl.
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 389 Tests
-mvn clean test -pl gkv-ui            # nur die 225 Oberflächentests
+mvn clean test                       # alle 390 Tests
+mvn clean test -pl gkv-ui            # nur die 226 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

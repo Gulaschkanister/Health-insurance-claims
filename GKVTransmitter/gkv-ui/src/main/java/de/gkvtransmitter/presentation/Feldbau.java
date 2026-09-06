@@ -442,12 +442,12 @@ public class Feldbau {
     }
 
     /**
-     * Ein Kalenderfeld; bei einem Geburtsdatum ohne Zukunft.
+     * Ein Kalenderfeld; bei einem Geburtsdatum nur mit moeglichen Tagen.
      *
-     * <p>Die kuenftigen Tage sind ausgegraut und lassen sich nicht anklicken.
-     * Das ist mehr als die Beanstandung daneben: <b>ein Fehler, der gar nicht
-     * erst entsteht, muss auch nicht erklaert werden.</b> Simon (K5): "nur
-     * schon abgelaufene Tage waeren moeglich".</p>
+     * <p>Ausgegraut ist alles, was {@link #befundZu} ablehnen wuerde - die
+     * Zukunft <em>und</em> die Jahrgaenge, die kein Alter zwischen
+     * {@value #MINDESTALTER} und {@value #HOECHSTALTER} ergeben. <b>Ein Fehler,
+     * der gar nicht erst entsteht, muss auch nicht erklaert werden.</b></p>
      *
      * <p>Die Beanstandung in {@link #beanstandeGeburtsdatum} bleibt trotzdem
      * noetig - der Kalender laesst sich auch beschreiben, und ueber
@@ -461,7 +461,7 @@ public class Feldbau {
                 @Override
                 public void updateItem(LocalDate tag, boolean leer) {
                     super.updateItem(tag, leer);
-                    setDisable(leer || tag.isAfter(LocalDate.now()));
+                    setDisable(leer || befundZu(tag) != Geburtsdatum.MOEGLICH);
                 }
             });
         }
@@ -643,22 +643,6 @@ public class Feldbau {
     }
 
     /**
-     * Beanstandet ein Institutionskennzeichen und nennt den Ausweg.
-     *
-     * <p>Die alte Meldung lautete "Die Pruefziffer stimmt nicht. Ein IK hat
-     * neun Ziffern." und war eine Sackgasse: sie sagte nicht, dass man sich
-     * kein IK ausdenken kann. Wer neun plausible Ziffern eintippte, stand vor
-     * einer Ablehnung ohne Hinweis, wie er zu einer gueltigen Zahl kaeme - denn
-     * dafuer muss man die Pruefziffer ausrechnen.</p>
-     *
-     * <p>Ausrechnen kann {@link Institutionskennzeichen#berechnePruefziffer}
-     * das laengst; es wurde nur nirgends angezeigt. Jetzt steht die richtige
-     * Ziffer in der Beanstandung. Das macht aus der Sackgasse einen Hinweis -
-     * und ist keine Einladung, sich ein IK zu bauen: die Ziffer passt zu den
-     * <em>eingegebenen</em> acht Stellen, ob es dieses IK gibt, sagt sie
-     * nicht.</p>
-     */
-    /**
      * Ob ein Feld ein Geburtsdatum traegt.
      *
      * <p>Ueber den Namen und nicht ueber {@code InputOption.DATE}: nicht jedes
@@ -710,17 +694,57 @@ public class Feldbau {
             // getippter Text schon. Den beanstandet die allgemeine Pruefung.
             return Optional.empty();
         }
-        LocalDate heute = LocalDate.now();
-        if (datum.isAfter(heute)) {
-            return Optional.of(texte.get("msg.birthDateFuture"));
-        }
-        int alter = java.time.Period.between(datum, heute).getYears();
-        if (alter < MINDESTALTER || alter > HOECHSTALTER) {
-            return Optional.of(String.format(texte.get("msg.birthDateImplausible"), alter));
-        }
-        return Optional.empty();
+        return switch (befundZu(datum)) {
+            case ZUKUNFT -> Optional.of(texte.get("msg.birthDateFuture"));
+            case ALTER -> Optional.of(String.format(texte.get("msg.birthDateImplausible"),
+                    java.time.Period.between(datum, LocalDate.now()).getYears()));
+            case MOEGLICH -> Optional.empty();
+        };
     }
 
+    /** Warum ein Geburtsdatum nicht in Frage kommt - oder dass es das tut. */
+    private enum Geburtsdatum { MOEGLICH, ZUKUNFT, ALTER }
+
+    /**
+     * Die eine Stelle, die ueber ein Geburtsdatum entscheidet.
+     *
+     * <p><b>Kalender und Pruefung muessen dasselbe sagen.</b> Bis zum
+     * 06.09.2026 taten sie es nicht: der Kalender sperrte nur die Zukunft,
+     * waehrend die Pruefung zusaetzlich das Alter mass. Wer den 12.03.2024
+     * anklickte, durfte ihn waehlen und bekam danach eine Beanstandung -
+     * <b>eine Auswahl anzubieten und sie anschliessend abzulehnen, ist
+     * schlechter als sie gar nicht erst anzubieten.</b> Simon: "wenn es keinen
+     * Sinn macht, soll es auch nicht moeglich sein, eins auszuwaehlen".</p>
+     *
+     * <p>Beide gehen deshalb hier durch. Zwei Stellen mit derselben Regel
+     * laufen auseinander, sobald jemand eine davon aendert.</p>
+     */
+    private static Geburtsdatum befundZu(LocalDate datum) {
+        LocalDate heute = LocalDate.now();
+        if (datum.isAfter(heute)) {
+            return Geburtsdatum.ZUKUNFT;
+        }
+        int alter = java.time.Period.between(datum, heute).getYears();
+        return alter < MINDESTALTER || alter > HOECHSTALTER
+                ? Geburtsdatum.ALTER : Geburtsdatum.MOEGLICH;
+    }
+
+    /**
+     * Beanstandet ein Institutionskennzeichen und nennt den Ausweg.
+     *
+     * <p>Die alte Meldung lautete "Die Pruefziffer stimmt nicht. Ein IK hat
+     * neun Ziffern." und war eine Sackgasse: sie sagte nicht, dass man sich
+     * kein IK ausdenken kann. Wer neun plausible Ziffern eintippte, stand vor
+     * einer Ablehnung ohne Hinweis, wie er zu einer gueltigen Zahl kaeme - denn
+     * dafuer muss man die Pruefziffer ausrechnen.</p>
+     *
+     * <p>Ausrechnen kann {@link Institutionskennzeichen#berechnePruefziffer}
+     * das laengst; es wurde nur nirgends angezeigt. Jetzt steht die richtige
+     * Ziffer in der Beanstandung. Das macht aus der Sackgasse einen Hinweis -
+     * und ist keine Einladung, sich ein IK zu bauen: die Ziffer passt zu den
+     * <em>eingegebenen</em> acht Stellen, ob es dieses IK gibt, sagt sie
+     * nicht.</p>
+     */
     Optional<String> beanstandeKennzeichen(String wert) {
         if (Institutionskennzeichen.istGueltig(wert)) {
             return Optional.empty();

@@ -497,17 +497,60 @@ class FeldbauTest {
         @DisplayName("Der Kalender laesst kuenftige Tage nicht zu")
         void kalenderSperrtZukunft() {
             JavaFxLaufzeit.aufFxFaden(() -> {
-                javafx.scene.control.DatePicker kalender = (javafx.scene.control.DatePicker)
-                        Feldbau.bedienelement(feldbau.erzeugeFeld("birthDate", beschreibung("birthDate")));
+                javafx.scene.control.DateCell zelle = zelle();
 
-                assertNotNull(kalender.getDayCellFactory(),
-                        "Ein Fehler, der gar nicht erst entsteht, muss auch nicht erklaert werden");
-                javafx.scene.control.DateCell zelle = kalender.getDayCellFactory().call(null);
                 zelle.updateItem(java.time.LocalDate.now().plusDays(1), false);
                 assertTrue(zelle.isDisable(), "Morgen darf sich nicht anklicken lassen");
                 zelle.updateItem(java.time.LocalDate.now().minusYears(30), false);
                 assertFalse(zelle.isDisable(), "Ein vergangener Tag muss waehlbar bleiben");
             });
+        }
+
+        /**
+         * Was die Pruefung ablehnt, bietet der Kalender gar nicht erst an.
+         *
+         * <p>Bis zum 06.09.2026 gingen die beiden auseinander: der Kalender
+         * sperrte nur die Zukunft, die Pruefung mass zusaetzlich das Alter. Wer
+         * einen Tag von vor zwei Jahren anklickte, durfte ihn waehlen und bekam
+         * danach eine rote Zeile. <b>Eine Auswahl anzubieten und sie
+         * anschliessend abzulehnen, ist schlechter als sie gar nicht erst
+         * anzubieten.</b></p>
+         *
+         * <p>Der Test vergleicht beide Seiten Tag fuer Tag. Er wird rot, sobald
+         * jemand eine der Grenzen nur an einer Stelle aendert - und genau davor
+         * schuetzt er.</p>
+         */
+        @Test
+        @DisplayName("Kalender und Pruefung sind sich ueber jeden Tag einig")
+        void kalenderUndPruefungStimmenUeberein() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                javafx.scene.control.DateCell zelle = zelle();
+                java.time.LocalDate heute = java.time.LocalDate.now();
+                List<java.time.LocalDate> tage = List.of(
+                        heute.plusYears(1), heute.plusDays(1), heute,
+                        heute.minusYears(1), heute.minusYears(Feldbau.MINDESTALTER).plusDays(1),
+                        heute.minusYears(Feldbau.MINDESTALTER), heute.minusYears(15),
+                        heute.minusYears(40), heute.minusYears(Feldbau.HOECHSTALTER),
+                        heute.minusYears(Feldbau.HOECHSTALTER + 1).minusDays(1),
+                        heute.minusYears(150));
+
+                for (java.time.LocalDate tag : tage) {
+                    zelle.updateItem(tag, false);
+                    boolean beanstandet = feldbau.pruefe("birthDate", beschreibung("birthDate"),
+                            tag.toString()).isPresent();
+
+                    assertEquals(beanstandet, zelle.isDisable(),
+                            "Kalender und Pruefung widersprechen sich bei " + tag);
+                }
+            });
+        }
+
+        private javafx.scene.control.DateCell zelle() {
+            javafx.scene.control.DatePicker kalender = (javafx.scene.control.DatePicker)
+                    Feldbau.bedienelement(feldbau.erzeugeFeld("birthDate", beschreibung("birthDate")));
+            assertNotNull(kalender.getDayCellFactory(),
+                    "Ein Fehler, der gar nicht erst entsteht, muss auch nicht erklaert werden");
+            return kalender.getDayCellFactory().call(null);
         }
 
         /**
