@@ -234,7 +234,7 @@ public class EditFormController<T> {
             // Schluessel dafuer lagen unbenutzt in ui-messages.json.
             meldungen.erfolg(String.format(messages.get(
                     "msg." + entityTypeName.toLowerCase(java.util.Locale.ROOT) + "Updated", "msg.saved"),
-                    populator.getDisplayName(entity)));
+                    populator.getPlainName(entity)));
             onChanged.accept(this);
             formContainer.getChildren().clear();
         } catch (NumberFormatException e) {
@@ -265,7 +265,7 @@ public class EditFormController<T> {
             meldungen.fehler(e.getMessage());
             return;
         }
-        meldungen.erfolg(String.format(messages.get("msg.deleted"), populator.getDisplayName(entity)));
+        meldungen.erfolg(String.format(messages.get("msg.deleted"), populator.getPlainName(entity)));
         onChanged.accept(this);
         formContainer.getChildren().clear();
     }

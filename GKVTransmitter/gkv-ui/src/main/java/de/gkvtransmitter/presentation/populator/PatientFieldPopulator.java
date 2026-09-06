@@ -68,7 +68,12 @@ public class PatientFieldPopulator extends EntityFieldPopulator<Patient> {
 
     @Override
     public String getDisplayName(Patient patient) {
-        return patient.getFirstname() + " " + patient.getLastname() + " (ID: " + patient.getId() + ")";
+        return getPlainName(patient) + " (ID: " + patient.getId() + ")";
+    }
+
+    @Override
+    public String getPlainName(Patient patient) {
+        return (patient.getFirstname() + " " + patient.getLastname()).strip();
     }
 
     @Override

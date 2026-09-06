@@ -405,10 +405,18 @@ public class AbrechnungsMaske {
             }
         }
 
+        /**
+         * Die Zeile unter der Liste: wie viele angehakt, wie viele Termine.
+         *
+         * <p>Einzahl und Mehrzahl getrennt. „1 Termine insgesamt" stand dort
+         * bei jedem einzelnen Kurs, und das ist die Zeile, an der man vor dem
+         * Versand abliest, ob die Zahlen stimmen — sie sollte selbst stimmen.</p>
+         */
         private void aktualisiereZusammenfassung() {
             List<Zeile> gewaehlt = zeilen.stream().filter(zeile -> zeile.kaestchen().isSelected()).toList();
             int summe = gewaehlt.stream().mapToInt(zeile -> wert(zeile.termine())).sum();
-            zusammenfassung.setText(String.format(texte.get("msg.selectionSummary"),
+            String schluessel = summe == 1 ? "msg.selectionSummaryOne" : "msg.selectionSummary";
+            zusammenfassung.setText(String.format(texte.get(schluessel),
                     gewaehlt.size(), zeilen.size(), summe));
         }
 

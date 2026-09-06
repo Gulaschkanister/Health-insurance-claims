@@ -68,8 +68,12 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
 
     @Override
     public String getDisplayName(ServiceProvider serviceProvider) {
-        return serviceProvider.getFirstname() + " " + serviceProvider.getLastname()
-                + " (ID: " + serviceProvider.getId() + ")";
+        return getPlainName(serviceProvider) + " (ID: " + serviceProvider.getId() + ")";
+    }
+
+    @Override
+    public String getPlainName(ServiceProvider serviceProvider) {
+        return (serviceProvider.getFirstname() + " " + serviceProvider.getLastname()).strip();
     }
 
     @Override

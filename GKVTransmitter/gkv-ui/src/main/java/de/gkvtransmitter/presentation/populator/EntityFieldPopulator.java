@@ -84,6 +84,22 @@ public abstract class EntityFieldPopulator<T> {
     public abstract String getDisplayName(T entity);
 
     /**
+     * Der Name ohne die laufende Nummer.
+     *
+     * <p>{@link #getDisplayName} trägt sie mit — in einer Auswahlliste ist das
+     * nötig, weil zwei Frauen gleich heißen können. In einer Meldung ist sie
+     * eine Datenbank-Einzelheit, die niemanden angeht: „Anna Muster (ID: 1)
+     * aktualisiert." erzählt von einer Tabellenspalte statt von einem
+     * Menschen.</p>
+     *
+     * <p>Die Vorgabe fällt auf den vollen Namen zurück, damit eine neue Art
+     * von Entität nicht stillschweigend ohne Namen dasteht.</p>
+     */
+    public String getPlainName(T entity) {
+        return getDisplayName(entity);
+    }
+
+    /**
      * Gibt die eindeutige ID der Entity zurück.
      *
      * @param entity Die Entity

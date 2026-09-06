@@ -119,6 +119,7 @@ public class PersonenMaske {
                                 this::zeigeTeilnehmerform)
                         .aktion(texte.get("menu.delete"), AKTION_LOESCHEN, "schaltflaeche-gefahr",
                                 person -> frageUndLoesche(person, teilnehmerFelder.getDisplayName(person),
+                                        teilnehmerFelder.getPlainName(person),
                                         datenbank::deletePatient, texte.get("msg.patientDeleted")))
                         .baue(datenbank.getAllPatients()));
     }
@@ -139,6 +140,7 @@ public class PersonenMaske {
                         .aktion(texte.get("menu.delete"), AKTION_LOESCHEN, "schaltflaeche-gefahr",
                                 person -> frageUndLoesche(person,
                                         dienstleisterFelder.getDisplayName(person),
+                                        dienstleisterFelder.getPlainName(person),
                                         datenbank::deleteServiceProvider, texte.get("msg.selfDeleted")))
                         .baue(datenbank.getAllServiceProviders()));
     }
@@ -194,11 +196,17 @@ public class PersonenMaske {
      * Moment Ablenkung auf die Frage zurueckkommt, liest sonst nur noch die
      * Antwortmoeglichkeiten und weiss nicht mehr, wozu.</p>
      */
-    private <T> void frageUndLoesche(T eintrag, String anzeigename, Consumer<T> loeschen,
-            String wennGeloescht) {
+    /**
+     * @param anzeigename mit laufender Nummer, fuer die Rueckfrage: zwei Frauen
+     *        koennen gleich heissen, und geloescht wird nur eine
+     * @param schlichterName ohne Nummer, fuer die Meldung danach: dass es die
+     *        mit der Nummer 1 war, ist eine Einzelheit der Datenbank
+     */
+    private <T> void frageUndLoesche(T eintrag, String anzeigename, String schlichterName,
+            Consumer<T> loeschen, String wennGeloescht) {
         meldungen.frageNach(String.format(texte.get("msg.deleteConfirmBody"), anzeigename),
                 texte.get("button.delete"),
-                () -> loesche(eintrag, loeschen, String.format(wennGeloescht, anzeigename)));
+                () -> loesche(eintrag, loeschen, String.format(wennGeloescht, schlichterName)));
     }
 
     private <T> void loesche(T eintrag, Consumer<T> loeschen, String wennGeloescht) {

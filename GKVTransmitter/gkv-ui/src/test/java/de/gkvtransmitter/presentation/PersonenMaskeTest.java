@@ -305,7 +305,7 @@ class PersonenMaskeTest {
                 loeschenKnopf(maske().teilnehmerliste(), PersonenMaske.KENNUNG_TEILNEHMER, 1).fire();
 
                 assertTrue(datenbank.getAllPatients().isEmpty());
-                assertEquals(String.format(texte.get("msg.patientDeleted"), "Anna Muster (ID: 1)"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.patientDeleted"), "Anna Muster"), meldungen.einzige().text());
             });
         }
 
@@ -320,7 +320,7 @@ class PersonenMaskeTest {
 
                 assertTrue(datenbank.getAllServiceProviders().isEmpty());
                 assertEquals(1, datenbank.getAllPatients().size(), "Der Teilnehmer bleibt unberuehrt");
-                assertEquals(String.format(texte.get("msg.selfDeleted"), "Max Muster (ID: 9)"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.selfDeleted"), "Max Muster"), meldungen.einzige().text());
             });
         }
 
@@ -418,7 +418,7 @@ class PersonenMaskeTest {
                 aktualisieren(rahmen.inhalt()).fire();
 
                 assertEquals(List.of(anna), datenbank.gespeichertePatienten());
-                assertEquals(String.format(texte.get("msg.patientUpdated"), "Anna Muster (ID: 1)"), meldungen.einzige().text());
+                assertEquals(String.format(texte.get("msg.patientUpdated"), "Anna Muster"), meldungen.einzige().text());
             });
         }
     }

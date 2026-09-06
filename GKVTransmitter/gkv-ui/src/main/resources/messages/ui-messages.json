@@ -65,6 +65,7 @@
   "button.apply": "Setzen",
   "label.appointmentsForAll": "Termine für alle:",
   "msg.selectionSummary": "%d von %d ausgewählt · %d Termine insgesamt",
+  "msg.selectionSummaryOne": "%d von %d ausgewählt · %d Termin insgesamt",
   "msg.invalidIk": "Ein IK wird von der Datenannahmestelle vergeben und lässt sich nicht frei wählen: die letzte Ziffer muss zu den übrigen passen.",
   "msg.invalidIkLength": "Ein IK besteht aus genau neun Ziffern.",
   "msg.ikPruefziffer": "Zu %s gehört die Prüfziffer %d, das gültige IK lautete also %s.",
