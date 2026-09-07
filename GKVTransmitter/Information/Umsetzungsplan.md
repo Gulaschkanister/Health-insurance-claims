@@ -137,7 +137,7 @@ Dazu gehört die zweite Pflicht aus Absatz 4: eine **Sicherungskopie bis zur Bez
 |---|---|
 | **Weg** | A |
 | **Größe** | M |
-| **Hängt an** | 1.3 |
+| **Hängt an** | 1.3, 1.7 |
 
 Zu jeder Nutzdatendatei gehört eine unverschlüsselte Auftragsdatei mit den Transportangaben (GGT Anlage 2). Prüfstufe 1 prüft ausdrücklich, ob die Dateien **paarweise** ankommen.
 
@@ -146,6 +146,62 @@ Der physikalische Dateiname ist vorgeschrieben (Anhang 1, Abschnitt 4.3): `E` od
 **Achtung:** auch eine Erprobungsdatei trägt den physikalischen Namen einer **Test**datei. Testindikator `1` und `TSOL` gehören zusammen.
 
 **Fertig, wenn:** zu jeder Nutzdatei eine Auftragsdatei entsteht, beide denselben logischen Dateinamen tragen und der physikalische Name zur eingestellten Übermittlungsart passt.
+
+
+### 1.7 Betriebsdaten — die eigenen Angaben an einem Ort
+
+| | |
+|---|---|
+| **Weg** | A, B, C |
+| **Größe** | M |
+| **Hängt an** | nichts — **1.6 und 2.1 hängen daran** |
+
+Simons Vorschlag vom 07.09.2026: *„wie wär's noch, wenn man noch seine Daten/Konto für die Registrierung auch irgendwie hinzufügen kann?"*
+
+**Die Anwendung weiß heute nicht, wer sie betreibt.** Der Absender einer Datei stammt aus dem Dienstleister, der je Abrechnung ausgewählt wird — als wäre die absendende Stelle eine Eigenschaft des einzelnen Vorgangs. Sie ist es nicht: sie ist eine Eigenschaft des Betriebs, sie ändert sich fast nie, und sie wird bei **jeder** Registrierung wieder gebraucht.
+
+#### Was hineingehört
+
+| Angabe | Wofür |
+|---|---|
+| Name der Praxis, Anschrift | Zertifikatsantrag, Anmeldung bei der Annahmestelle |
+| **Eigenes IK** | Absender im `UNB`, `FKT`, Stellen 3–8 des logischen Dateinamens |
+| **Rolle: Selbstabrechner oder Abrechnungsstelle** | neunte Stelle des logischen Dateinamens (`S` oder `A`) |
+| Steuernummer, Umsatzsteuerpflicht | `UST`-Segment |
+| **Bankverbindung (IBAN, BIC)** | Anmeldung bei den Kassen — **nicht** für die Datei, siehe unten |
+| Ansprechpartner, Telefon, E-Mail | Anmeldung als Kommunikationspartner; die Annahmestelle braucht jemanden, den sie erreichen kann |
+| Zertifikat: ausgestellt am, gültig bis | Ablaufwarnung, siehe Wartungsplan |
+
+#### Die Bankverbindung steht in keiner Nachricht
+
+**Nachgeschlagen, nicht angenommen:** Anlage 1 kennt kein Feld für IBAN, Konto oder Geldinstitut — in keinem der dreizehn Segmente. Die Kasse zahlt auf das Konto, das zum Institutionskennzeichen hinterlegt ist. Hinterlegt wird es bei der **Anmeldung**, nicht bei der Abrechnung.
+
+Das entwertet den Vorschlag nicht, es schärft ihn: **die Maske ist kein Nachrichtenlieferant, sondern ein Aktenordner.** Und genau darin liegt ihr Nutzen — ARGE·IK, ITSG-Trust-Center und jede Datenannahmestelle fragen im Kern dieselben Angaben ab. Heute liegen sie auf Papier, in einer alten E-Mail oder im Kopf.
+
+Zwei Angaben sind die Ausnahme und gehen sehr wohl in die Nachricht: **das eigene IK und die Rolle.** Ohne sie ist der logische Dateiname nicht bildbar — er wird heute aus dem Dienstleister-IK gebildet und nimmt `Selbstabrechner` als gesetzt an.
+
+#### Was das nebenbei geraderückt
+
+Der Absender wandert von der einzelnen Abrechnung an den Betrieb. Für eine allein arbeitende Hebamme ist das dasselbe IK und fällt nicht auf; sobald eine zweite Person abrechnet oder eine Abrechnungsstelle einspringt, ist es der Unterschied zwischen richtiger und falscher Datei.
+
+#### Wo die Daten liegen
+
+In der Datenbank, eine Zeile, eigene Entität — nicht in den Einstellungen. Einstellungen sind Wahlmöglichkeiten, Betriebsdaten sind Stammdaten mit Struktur und Prüfregeln (das IK gegen die Prüfziffer, wie überall im Programm).
+
+> **Die IBAN ist die erste wirklich schützenswerte Angabe außerhalb der Patientendaten**, und die Datenbank ist unverschlüsselt. Das verschiebt die Festplattenverschlüsselung aus Teil 5 nach vorn: sie sollte stehen, bevor hier eine Kontoverbindung eingetragen wird.
+>
+> **Keine Zugangsdaten und keine privaten Schlüssel hier.** Die gehören in den Windows-Anmeldeinformationsspeicher. Ein Ablaufdatum ist unbedenklich, ein Schlüssel nicht.
+
+#### Fertig, wenn
+
+- die Betriebsdaten in einer eigenen Maske erfasst und geändert werden können,
+- das eigene IK gegen die Prüfziffer geprüft wird,
+- der logische Dateiname Rolle und IK **von dort** nimmt und nicht mehr aus dem Dienstleister,
+- fehlende Pflichtangaben den Abrechnungslauf mit einer verständlichen Meldung anhalten, statt eine Datei mit Lücken zu erzeugen.
+
+#### Naheliegende Erweiterung
+
+Ein **Registrierungsblatt** zum Ausdrucken oder als PDF: alle Angaben auf einer Seite, in der Form, die die Anmeldung verlangt. Damit wird aus dem Aktenordner ein Formular, das man nur noch unterschreiben muss. Größe **S**, sobald die Daten einmal stehen — und es ist der Punkt, an dem die Maske sich das erste Mal auszahlt.
 
 ## Phase 2 — Beschaffung und Verschlüsselung
 
@@ -160,6 +216,8 @@ Hier fällt die Entscheidung: **selbst übertragen oder nicht.** Wer sie vernein
 | Anmeldung als Kommunikationspartner | bei der Datenannahmestelle | keine |
 
 Das Zertifikat gilt **für alle Kassen**, nicht je Kasse; die öffentlichen Schlüssel aller Annahmestellen kommen als Schlüsselliste kostenlos mit. Gültigkeit ein Jahr, Ausstellung in drei bis vier Arbeitstagen.
+
+**Alle drei Anträge fragen im Kern dieselben Angaben ab.** Wenn 1.7 steht, sind sie an einer Stelle und müssen nicht dreimal zusammengesucht werden.
 
 ### 2.2 Verschlüsselung
 
@@ -222,14 +280,16 @@ Einstellung `uebermittlungsart = echt`, Testindikator `2`, physikalischer Name `
 ```
 1.1 Warnungen sichtbar ──┬── 1.2 Beanstandungen erklären
                          └── 1.5 Übermittlungsprotokoll
-1.3 Kostenträgerdatei ────── 1.6 Auftragsdatei ── 2.2 Verschlüsselung ── 2.3 Versandweg
-1.4 Verarbeitungskennzeichen (unabhängig)              │
-                                                 2.1 Beschaffen
-                                                       │
-                                    Phase 3 Test ── Phase 4 Erprobung ── Phase 5 Echt
+1.3 Kostenträgerdatei ──┐
+1.7 Betriebsdaten ──────┴── 1.6 Auftragsdatei ── 2.2 Verschlüsselung ── 2.3 Versandweg
+         │                                                │
+         └── 2.1 Beschaffen (IK, Zertifikat, Anmeldung) ───┘
+1.4 Verarbeitungskennzeichen (unabhängig)
+
+                       Phase 3 Test ── Phase 4 Erprobung ── Phase 5 Echt
 ```
 
-**Der kritische Pfad läuft über 1.3.** Wer zuerst die Kostenträgerdatei liest, hat den richtigen Empfänger — und ohne den ist alles Weitere an die falsche Adresse gerichtet.
+**Der kritische Pfad läuft über 1.3 und 1.7.** Die Kostenträgerdatei sagt, an wen geliefert wird; die Betriebsdaten sagen, wer liefert. Fehlt eines von beiden, ist die Datei falsch adressiert oder falsch unterschrieben.
 
 # Teil 2 — Wartungsplan
 
@@ -256,7 +316,7 @@ Bei einer Abrechnungsstelle ist diese Pflege im Preis enthalten. Wer selbst übe
 Drei Bausteine verwandeln wiederkehrende Handarbeit in einmalige Arbeit:
 
 1. **Kostenträgerdatei einlesen** (1.3) — aus vier Pflegeterminen im Jahr wird ein Dateiaustausch.
-2. **Ablaufwarnung für das Zertifikat** — die Anwendung kennt das Datum und kann rechtzeitig erinnern. Größe **S**, Wirkung groß: das ist der einzige Wartungspunkt, dessen Versäumnis den Betrieb anhält.
+2. **Ablaufwarnung für das Zertifikat** — die Anwendung kennt das Datum aus den Betriebsdaten (1.7) und kann rechtzeitig erinnern. Größe **S**, Wirkung groß: das ist der einzige Wartungspunkt, dessen Versäumnis den Betrieb anhält.
 3. **Versionsangabe sichtbar machen** — der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`). Wer sieht, mit welcher Version er sendet, bemerkt einen Wechsel.
 
 Mit diesen dreien bleibt **eine** Aufgabe im Jahr: das Zertifikat erneuern.
@@ -465,7 +525,7 @@ Punkt 5 ist nicht Formsache: der Dunkelmodus hatte zwei Fehler, die kein Test ge
 
 Nach Wirkung geordnet, nicht nach Aufwand:
 
-1. **Festplattenverschlüsselung auf dem Arbeitsgerät** — deckt den häufigsten realen Fall ab (Verlust, Diebstahl) und kostet keine Zeile Quelltext. **Zuerst.**
+1. **Festplattenverschlüsselung auf dem Arbeitsgerät** — deckt den häufigsten realen Fall ab (Verlust, Diebstahl) und kostet keine Zeile Quelltext. **Zuerst** — und spätestens, bevor mit 1.7 eine Kontoverbindung in die unverschlüsselte Datenbank kommt.
 2. **Sicherung und Aufbewahrungsfristen** — was wann gelöscht werden darf und muss.
 3. **Datenbankverschlüsselung** — der kleinere Gewinn, solange Punkt 1 fehlt.
 4. **Anmeldung und Zugriffsprotokoll** — erst sinnvoll, wenn mehr als eine Person arbeitet.
@@ -503,6 +563,7 @@ Sobald echte Zugangsdaten dazukommen: **nicht in die Datenbank**, sondern in den
 | Erprobung vorgeschrieben | Anlage 1, Abschnitt 2 |
 | Test- und Erprobungsverfahren | Anhang 2, Abschnitte 3 bis 6 |
 | Aufbau der Kostenträgerdatei | Anhang 3, Abschnitte 5 und 8 |
+| Keine Bankverbindung in der Nutzdatendatei | Anlage 1, Abschnitt 5.5 — kein Segment und kein Feld dafür |
 | Auftragsdatei | GGT Anlage 2 |
 | KIM ersetzt KKS, Auftragsdatei, SECON | GGT Anlage 20, Abschnitt 1 |
 | Zertifikat: Preis, Gültigkeit, je IK | ITSG Trust Center |
