@@ -134,6 +134,24 @@ Die Versandziele stehen in
 `gkv-core/src/main/resources/billing-office-endpoints.json`. Eine weitere Kasse
 wird dort eingetragen; am Code ist nichts zu ändern.
 
+> Für einen echten Versand ist diese Zuordnung zu eng: Empfänger ist die
+> **Datenannahmestelle** der jeweiligen Kassenart, nicht die einzelne Kasse.
+> Siehe „Der Weg zur Kasse" in `Information/GKVTransmitter_Dokumentation.md`.
+
+## Einstellungen
+
+Was sich in der Anwendung einstellen lässt, steht in `einstellungen.json` im
+Datenordner — neben der Datenbank, **nicht** im Programmordner:
+
+| Schlüssel | Werte | Vorgabe |
+|---|---|---|
+| `darstellung` | `hell`, `dunkel` | `hell` |
+| `uebermittlungsart` | `test`, `erprobung`, `echt` | `erprobung` |
+
+Die Übermittlungsart steht an der letzten Stelle des `UNB`-Segments und
+entscheidet, ob eine Lieferung als Forderung gilt. Sie bleibt auf `erprobung`,
+solange niemand ausdrücklich etwas anderes wählt — auch bei fehlender Datei.
+
 ## Ablauf einer Abrechnung
 
 ```

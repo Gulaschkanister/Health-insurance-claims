@@ -38,10 +38,83 @@
     -farbe-warnung:      #A8630A;
     -farbe-fehler:       #B3261E;
 
+    /* Ueberfahren einer stillen beziehungsweise gefaehrlichen Schaltflaeche */
+    -farbe-still-hover:  #EAF1F5;
+    -farbe-gefahr-hover: #FBEDEC;
+
     -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     -fx-font-size: 13px;
     -fx-background-color: -farbe-grund;
     -fx-text-fill: -farbe-text;
+}
+
+/*
+ * Die dunkle Fassung.
+ *
+ * Sie besteht aus nichts als denselben Namen mit anderen Werten - alle Regeln
+ * darunter bleiben unberuehrt. Genau dafuer stehen die Farben oben an einem
+ * Ort; haetten sie verstreut im Quelltext gestanden (siebzehn setStyle-Aufrufe,
+ * wie vor dem Umbau), waere ein Dunkelmodus eine Woche Arbeit gewesen.
+ *
+ * Die Stilklasse haengt an der Wurzel der Szene, siehe View.setzeDarstellung.
+ *
+ * Zwei Dinge sind hier keine Geschmacksfrage:
+ *
+ * - Der Akzent ist heller als in der hellen Fassung. Ein Blau, das auf Weiss
+ *   gut lesbar ist, verschwindet auf Anthrazit, und es traegt hier die
+ *   Hauptschaltflaechen.
+ * - Die Flaeche ist HELLER als der Grund, nicht dunkler. Im Dunkeln liest man
+ *   Erhebung als Naehe: eine Karte, die dunkler waere als ihr Untergrund, saehe
+ *   aus wie ein Loch.
+ */
+.root.dunkel {
+    -farbe-grund:        #1B2027;
+    -farbe-flaeche:      #232B34;
+    -farbe-linie:        #333D48;
+
+    -farbe-feld-linie:   #55636F;
+    -farbe-fest:         #2B333D;
+
+    -farbe-leiste:       #12171D;
+    -farbe-leiste-hell:  #1F2831;
+    -farbe-leiste-text:  #AEBECC;
+
+    -farbe-text:         #E6EAEE;
+    -farbe-text-still:   #97A5B2;
+    -farbe-text-hell:    #FFFFFF;
+
+    -farbe-akzent:       #4E9EC6;
+    -farbe-akzent-dunkel:#3D89AE;
+    -farbe-erfolg:       #4FB07A;
+    -farbe-warnung:      #D79A3C;
+    -farbe-fehler:       #E8776E;
+
+    -farbe-still-hover:  #2C3742;
+    -farbe-gefahr-hover: #3A2A2A;
+}
+
+/*
+ * Grundfarbe fuer Beschriftungen und Eingaben.
+ *
+ * JavaFX bringt in modena eine eigene Textfarbe fuer .label und .text-input
+ * mit, abgeleitet von einem hellen Grund. Die Angabe an .root wirkt darauf
+ * nicht - ein Label bekommt seine Farbe aus der spezifischeren Regel. In der
+ * hellen Fassung faellt das nicht auf, weil beide Werte fast gleich sind; in
+ * der dunklen standen die Namen in den Listen dunkelgrau auf Anthrazit.
+ *
+ * DIESER BLOCK MUSS VOR den Sonderfaellen stehen (.marke, .nav-gruppe,
+ * .feld-hinweis, .zeile-still ...): bei gleicher Spezifitaet gewinnt die
+ * spaetere Regel, und die Sonderfaelle sollen gewinnen.
+ */
+.label,
+.text-input {
+    -fx-text-fill: -farbe-text;
+}
+
+.text-input {
+    -fx-prompt-text-fill: -farbe-text-still;
+    -fx-highlight-fill: -farbe-akzent;
+    -fx-highlight-text-fill: -farbe-text-hell;
 }
 
 /* ---------------------------------------------------------------- Schale */
@@ -248,7 +321,7 @@
 }
 
 .schaltflaeche-still:hover {
-    -fx-background-color: #EAF1F5;
+    -fx-background-color: -farbe-still-hover;
 }
 
 .schaltflaeche-gefahr {
@@ -260,7 +333,7 @@
 }
 
 .schaltflaeche-gefahr:hover {
-    -fx-background-color: #FBEDEC;
+    -fx-background-color: -farbe-gefahr-hover;
 }
 
 /*
@@ -424,6 +497,76 @@
     -fx-background-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 0 0 0 6px;
+}
+
+/*
+ * Schrift und Pfeil der Auswahlfelder.
+ *
+ * Ohne diesen Block nimmt JavaFX seine eigene Textfarbe aus modena - ein
+ * dunkles Grau. In der hellen Fassung faellt das nicht auf; in der dunklen
+ * stand der gewaehlte Wert praktisch unsichtbar im Feld. Gefunden hat es die
+ * Vorschau am ersten Bild, kein Test.
+ */
+.combo-box > .list-cell,
+.date-picker > .text-field,
+.combo-box > .text-field {
+    -fx-text-fill: -farbe-text;
+}
+
+.combo-box .arrow,
+.date-picker .arrow {
+    -fx-background-color: -farbe-text-still;
+}
+
+/* Das aufgeklappte Menue und der Kalender gehoeren zur selben Fassung. */
+.combo-box-popup > .list-view,
+.date-picker-popup {
+    -fx-background-color: -farbe-flaeche;
+    -fx-border-color: -farbe-linie;
+    -fx-border-width: 1px;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+    -fx-background-color: -farbe-flaeche;
+    -fx-text-fill: -farbe-text;
+    -fx-padding: 6px 10px 6px 10px;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:hover,
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected {
+    -fx-background-color: -farbe-akzent;
+    -fx-text-fill: -farbe-text-hell;
+}
+
+.date-picker-popup > * > .month-year-pane,
+.date-picker-popup > * > .week-number-cell {
+    -fx-background-color: -farbe-flaeche;
+}
+
+.date-picker-popup > * > .day-cell,
+.date-picker-popup > * > .day-name-cell,
+.date-picker-popup > * > .month-year-pane .label {
+    -fx-background-color: -farbe-flaeche;
+    -fx-text-fill: -farbe-text;
+}
+
+/*
+ * Ein Tag, der sich nicht waehlen laesst - kuenftig, oder ausserhalb eines
+ * moeglichen Alters (siehe Feldbau.befundZu). Er muss als gesperrt zu
+ * erkennen sein, sonst klickt man ins Leere und weiss nicht, warum.
+ */
+.date-picker-popup > * > .day-cell:disabled {
+    -fx-text-fill: -farbe-linie;
+    -fx-opacity: 1;
+}
+
+.date-picker-popup > * > .day-cell:hover:filled {
+    -fx-background-color: -farbe-still-hover;
+}
+
+.date-picker-popup > * > .selected {
+    -fx-background-color: -farbe-akzent;
+    -fx-text-fill: -farbe-text-hell;
 }
 
 /*

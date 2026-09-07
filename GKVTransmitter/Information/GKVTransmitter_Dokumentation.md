@@ -135,6 +135,20 @@ Die Zuordnung erfolgt über das Institutionskennzeichen der Krankenkasse. Welche
 
 Ist für eine Kasse kein Ziel hinterlegt, landet die Lieferung in einem Sammelordner. Sie geht also nicht verloren.
 
+> **Für den echten Betrieb ist diese Zuordnung zu eng.** Empfänger einer Lieferung ist nicht die einzelne Krankenkasse, sondern die **Datenannahmestelle mit Entschlüsselungsbefugnis** ihrer Kassenart. Siehe „Der Weg zur Kasse".
+
+## Art der erzeugten Dateien
+
+Die letzte Stelle des `UNB`-Segments sagt, wofür sich eine Datei ausgibt:
+
+| Wert | Bedeutung | Folge |
+|---|---|---|
+| `0` | Testdatei | wird angenommen, aber nicht verarbeitet |
+| `1` | Erprobungsdatei | wird verarbeitet und geprüft, aber **nicht bezahlt** |
+| `2` | Echtdatei | gilt als Forderung |
+
+Einstellbar unter „Einstellungen"; die Vorgabe ist **Erprobung**. Das Programm wechselt nicht von selbst in den Echtbetrieb — auch dann nicht, wenn die Einstellungsdatei fehlt oder unlesbar ist.
+
 ## Rückmeldungen
 
 | Einstufung | Bedeutung | Was zu tun ist |
@@ -154,6 +168,83 @@ Für Übung und Abnahme steht eine simulierte Gegenstelle bereit. Sie nimmt eine
 Damit lässt sich der vollständige Ablauf bis zur Rückmeldung durchspielen, ohne Zugangsdaten und ohne Zertifikate.
 
 **Das ersetzt keinen echten Versand** und keine Prüfung durch eine reale Kasse.
+
+# Der Weg zur Kasse
+
+Dieses Kapitel beschreibt, wie eine Lieferung tatsächlich zur Krankenkasse gelangt, was davon das Programm leistet und was dafür noch fehlt. Grundlage ist die **Technische Anlage** (Anlage 1 zu den Richtlinien nach § 302 SGB V, Version 21, Stand 15.01.2026), die dem Projekt vorliegt.
+
+## Der vorgesehene Weg
+
+```
+Leistungserbringerin (eigenes IK)
+      │  Nutzdatendatei (UNB … UNZ) + Auftragsdatei
+      │  signiert und verschlüsselt
+      ▼
+Datenannahmestelle mit Entschlüsselungsbefugnis   ← je Kassenart eine
+      │  Prüfstufe 1  Datei und Dateistruktur
+      │  Prüfstufe 2  Syntax
+      │  Prüfstufe 3  Inhalte der Datenelemente
+      ▼
+Krankenkasse
+      │  Prüfstufe 4  vertrags-, versicherungs- und leistungsrechtlich
+      ▼
+Bezahlung  oder  Zurückweisung
+```
+
+Drei Punkte daran werden regelmäßig unterschätzt:
+
+**Empfänger ist die Datenannahmestelle, nicht die Kasse.** Für jede Datenannahmestelle mit Entschlüsselungsbefugnis ist **je Kassenart eine** Nutzdatendatei zu erstellen. Welche Stelle für welche Kasse zuständig ist, steht in der **Kostenträgerdatei** der jeweiligen Kassenart — nicht im Programm und nicht in dieser Dokumentation.
+
+**Zu jeder Nutzdatendatei gehört eine Auftragsdatei.** Sie ist in den „Richtlinien für den Datenaustausch mit den gesetzlichen Krankenkassen" beschrieben. Ohne sie ist eine Lieferung unvollständig.
+
+**Die Erprobung ist vorgeschrieben, nicht optional.** Vor der erstmaligen Durchführung und vor jeder Änderung des Verfahrens sind die Einzelheiten mit dem Empfänger abzustimmen und die ordnungsgemäße Verarbeitung zu erproben.
+
+## Was das Programm davon leistet
+
+| Schritt | Stand |
+|---|---|
+| Nutzdaten erzeugen (SLGA + SLLA) | vollständig |
+| Prüfstufen 1 bis 3 vorab selbst durchlaufen | weitgehend, sieben Regeln |
+| Datenaustauschreferenz fortlaufend und dauerhaft vergeben | vollständig |
+| Art der Datei (Test / Erprobung / Echt) | einstellbar |
+| Auftragsdatei | **fehlt** |
+| Signatur und Verschlüsselung | **fehlt** |
+| Zuordnung zur Datenannahmestelle statt zur Kasse | **fehlt** |
+| Übertragung selbst | dateibasiert, kein realer Weg |
+
+Die eigene Prüfung vor dem Versand ist kein Beiwerk: der Absender hat sicherzustellen, dass **nur geprüfte Datensätze übermittelt werden**. Genau dafür ist die Prüfstufe im Programm das Tor vor dem Versand.
+
+## Drei mögliche Wege
+
+**A — Selbst übermitteln.** Eigenes Betriebsstätten-IK, eigenes Zertifikat, eigener Transportweg. Volle Kontrolle, keine laufenden Kosten je Rechnung. Dafür sind Schlüsselverwaltung, Auftragsdatei, Transportprotokoll und eine Erprobung je Annahmestelle nötig — und die Verantwortung für jede Übermittlung liegt bei der Leistungserbringerin.
+
+**B — Über eine Abrechnungsstelle.** Ein Dienstleister übernimmt Übermittlung und häufig auch das Inkasso. Die Technische Anlage sieht dafür ausdrücklich die **Rechnungsart 2** vor: der Dienstleister fasst die Rechnungen zusammen, Rechnungssteller bleibt die einzelne Leistungserbringerin, die Zahlung geht an deren IK. Der Einstieg ist deutlich einfacher, es entstehen Kosten je Rechnung, und eine Abhängigkeit.
+
+**C — Erzeugen und prüfen, Übergabe als Datei.** Der heutige Stand: das Programm erstellt die geprüfte Datei, die Übermittlung geschieht auf anderem Weg.
+
+**Empfehlung: C, dann B, dann A.** Das Programm erzeugt und prüft bereits vollständig; was fehlt, ist ausschließlich der Transport. Wer zuerst über eine Abrechnungsstelle geht, kann abrechnen, während der eigene Weg vorbereitet wird — und die dabei zurückkommenden Beanstandungen sind die beste Vorbereitung auf die Erprobung.
+
+**Der Umbau bleibt in jedem Fall klein**, weil er hinter einer einzigen Schnittstelle liegt: `BillingOfficeTransport`. Erzeugung, Prüfung, Zuordnung und Auswertung der Rückmeldungen bleiben unverändert.
+
+## Was zu beschaffen ist
+
+Keiner dieser Punkte lässt sich programmieren:
+
+- ein eigenes **Betriebsstätten-IK**
+- ein **Zertifikat** einer anerkannten Stelle für Signatur und Verschlüsselung
+- **Zugangsdaten** der Datenannahmestelle
+- die **Kostenträgerdatei** der jeweiligen Kassenart
+- die beiden fehlenden Unterlagen: **Anhang 1 zur Anlage 1, Kapitel 4** (Übermittlungsverfahren) und **Anhang 2 zur Anlage 1, Kapitel 9** (Testverfahren)
+- die gültigen **Abrechnungspositionsnummern** und das **Tarifkennzeichen** aus Anlage 3 beziehungsweise dem Vertrag
+
+## Pflichten neben der Übermittlung
+
+Die Technische Anlage verlangt zweierlei, das nicht in der Datei steht:
+
+- Über den Datenaustausch ist eine **Dokumentation** zu führen und **mindestens zwei Jahre** aufzubewahren — von der Initiierung bis zur Quittierung.
+- Eine **Sicherungskopie** der Daten ist bis zur Bezahlung vorzuhalten, damit sich eine verlorene oder zurückgewiesene Lieferung rekonstruieren lässt.
+
+Beides ist im Programm bisher nicht abgebildet und gehört zum Weg in den Echtbetrieb.
 
 # Aufbau des Programms
 
@@ -204,7 +295,22 @@ An fünf Stellen ist ein Vertrag bewusst von seiner Umsetzung getrennt, damit si
 
 # Konfiguration
 
-Alle Einstellungen sind optional; ohne Angabe gelten die Vorgabewerte.
+## Einstellungen in der Anwendung
+
+Was sich im Bereich „Einstellungen" wählen lässt, steht in `einstellungen.json` im Ablageort der Daten — **neben der Datenbank, nicht im Programmordner**. Wer die Daten sichert oder auf einen anderen Rechner mitnimmt, nimmt diese Datei mit.
+
+| Schlüssel | Werte | Vorgabe | Bedeutung |
+|---|---|---|---|
+| `darstellung` | `hell`, `dunkel` | `hell` | helle oder dunkle Oberfläche |
+| `uebermittlungsart` | `test`, `erprobung`, `echt` | `erprobung` | wofür sich erzeugte Dateien ausgeben |
+
+Jede Änderung wirkt sofort und wird sofort geschrieben. Ist die Datei beschädigt oder nicht lesbar, gelten die Vorgaben und die Anwendung startet trotzdem — eine Farbwahl ist nichts, wofür ein Programm nicht aufgehen darf.
+
+**Zugangsdaten und Schlüssel gehören nicht in diese Datei.** Sie liegt im Klartext im Benutzerprofil. Sobald ein echter Übermittlungsweg Zugangsdaten braucht, gehören diese in den Anmeldeinformationsspeicher des Betriebssystems.
+
+## Beim Start
+
+Alle folgenden Angaben sind optional; ohne Angabe gelten die Vorgabewerte.
 
 | Systemeigenschaft | Umgebungsvariable | Vorgabe | Bedeutung |
 |---|---|---|---|
@@ -305,7 +411,11 @@ Im Ordner `Information` liegen:
 
 Was das Programm heute **nicht** leistet:
 
-- Der Versand ist dateibasiert. Ein signierter und verschlüsselter Übermittlungsweg an reale Annahmestellen ist nicht umgesetzt. Dafür wären Zertifikate einer anerkannten Stelle, Zugangsdaten und ein eigenes Betriebsstätten-IK erforderlich.
+- Der Versand ist dateibasiert. Ein signierter und verschlüsselter Übermittlungsweg an reale Annahmestellen ist nicht umgesetzt. Dafür wären Zertifikate einer anerkannten Stelle, Zugangsdaten und ein eigenes Betriebsstätten-IK erforderlich. Siehe „Der Weg zur Kasse".
+- Die **Auftragsdatei**, die zu jeder Nutzdatendatei gehört, wird nicht erzeugt.
+- Die Zuordnung erfolgt zur einzelnen Krankenkasse; vorgesehen ist die Zuordnung zur **Datenannahmestelle je Kassenart**.
+- Die vorgeschriebene **Dokumentation des Datenaustauschs** (zwei Jahre) und die **Sicherungskopie bis zur Bezahlung** sind nicht abgebildet.
+- Die Daten liegen **unverschlüsselt** im Benutzerprofil. Es gibt keine Anmeldung und kein Protokoll darüber, wer was geändert hat.
 - Positionsnummern, Tarifkennzeichen und Abrechnungscodes werden auf Form, nicht aber auf fachliche Zulässigkeit geprüft. Das setzt den jeweiligen Vertrag und Anlage 3 voraus.
 - Es gibt keine Stornierung und keine Nachberechnung.
 - Der Umsatzsteuersatz ist mit 19 fest hinterlegt.

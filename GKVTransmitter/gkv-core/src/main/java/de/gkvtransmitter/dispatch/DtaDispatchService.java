@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.gkvtransmitter.dta.DtaFactory;
+import de.gkvtransmitter.dta.Uebermittlungsart;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.model.Abrechnung;
 import de.gkvtransmitter.validator.DtaValidationService;
@@ -34,6 +35,8 @@ public class DtaDispatchService {
     private final BillingOfficeTransport transport;
     private final DtaValidationService validierung;
     private final Datenaustauschreferenzen referenzen;
+    /** Wofuer sich die erzeugten Dateien ausgeben, siehe {@link Uebermittlungsart}. */
+    private final Uebermittlungsart art;
     private final BillingOfficeResponseParser antwortAuswertung = new BillingOfficeResponseParser();
 
     /**
@@ -65,10 +68,20 @@ public class DtaDispatchService {
 
     public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
             DtaValidationService validierung, Datenaustauschreferenzen referenzen) {
+        this(endpointRegistry, transport, validierung, referenzen, Uebermittlungsart.ERPROBUNG);
+    }
+
+    /**
+     * @param art wofuer sich die erzeugten Dateien ausgeben; siehe
+     *        {@link Uebermittlungsart}
+     */
+    public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
+            DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art) {
         this.endpointRegistry = Objects.requireNonNull(endpointRegistry, "endpointRegistry must not be null");
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
         this.validierung = Objects.requireNonNull(validierung, "validierung must not be null");
         this.referenzen = Objects.requireNonNull(referenzen, "referenzen must not be null");
+        this.art = Objects.requireNonNull(art, "art must not be null");
     }
 
     /**
@@ -172,12 +185,12 @@ public class DtaDispatchService {
             // aussen - hier stand eine lokale Variable, die bei jedem Lauf
             // wieder bei 1 begann. Siehe LaufenderZaehler.
             long sequence = referenzen.naechste();
-            String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk);
+            String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk,
+                    de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(abrechnung.getBlueprint()), art);
             String filename = String.format("patient_%d_%s.dta",
                     patient.getId(), LocalDateTime.now().format(FILE_TIME));
 
             erzeugt.add(new ErzeugteNachricht(abrechnung, content, filename));
-            sequence++;
         }
         return erzeugt;
     }

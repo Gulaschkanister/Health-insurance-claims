@@ -56,7 +56,14 @@ public final class AbrechnungService {
         this(new DtaDispatchService(BillingOfficeEndpointRegistry.loadDefault(),
                 new FileBillingOfficeTransport(), DtaValidationService.standard(),
                 Objects.requireNonNull(datenbank, "datenbank must not be null")
-                        ::nextDtaInterchangeReference));
+                        ::nextDtaInterchangeReference,
+                // Wofuer sich die Dateien ausgeben, steht in den Einstellungen.
+                // Ohne Angabe gilt Erprobung - ein Programm, das Forderungen an
+                // Krankenkassen stellt, wechselt nicht von selbst in den
+                // Echtbetrieb, weil eine Datei fehlt.
+                de.gkvtransmitter.dta.Uebermittlungsart.aus(
+                        de.gkvtransmitter.einstellung.Einstellungen.laden()
+                                .get(de.gkvtransmitter.einstellung.Einstellung.UEBERMITTLUNGSART))));
     }
 
     public AbrechnungService(DtaDispatchService dispatchService) {

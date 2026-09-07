@@ -51,6 +51,7 @@ class ViewTest {
 
     private static Scene szene;
     private static Controller controller;
+    private static View sicht;
     private static AppMessages texte;
 
     @BeforeAll
@@ -64,7 +65,7 @@ class ViewTest {
         JavaFxLaufzeit.starten();
         texte = new AppMessages("/messages/ui-messages.json");
         controller = new Controller();
-        View sicht = new View(controller, new AbrechnungService(controller.getDatabase()));
+        sicht = new View(controller, new AbrechnungService(controller.getDatabase()));
         JavaFxLaufzeit.aufFxFaden(() -> {
             szene = sicht.createMainScene(1180, 760);
             szene.getRoot().applyCss();
@@ -188,6 +189,45 @@ class ViewTest {
                     assertTrue(untertitel.isVisible() && !untertitel.getText().isBlank(),
                             "Kein Satz unter \"" + bereich + "\"");
                 }
+            });
+        }
+    }
+
+    /**
+     * Die dunkle Fassung haengt an einer Stilklasse an der Wurzel.
+     *
+     * <p>Mehr braucht es nicht, weil alle Farben in {@code gkv.css} als
+     * benannte Werte stehen und die dunkle Fassung dieselben Namen anders
+     * besetzt. Der Test haelt genau diese Verabredung fest: <b>geht die
+     * Stilklasse verloren oder wird sie umbenannt, faellt der Dunkelmodus
+     * lautlos aus</b> - man saehe es erst am Bildschirm.</p>
+     */
+    @Nested
+    @DisplayName("Die Darstellung")
+    class Darstellung {
+
+        @Test
+        @DisplayName("setzt und nimmt die Stilklasse an der Wurzel")
+        void umschalten() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                sicht.setzeDarstellung(EinstellungenMaske.DUNKEL);
+                assertTrue(szene.getRoot().getStyleClass().contains(EinstellungenMaske.DUNKEL));
+
+                sicht.setzeDarstellung(EinstellungenMaske.HELL);
+                assertTrue(!szene.getRoot().getStyleClass().contains(EinstellungenMaske.DUNKEL));
+            });
+        }
+
+        @Test
+        @DisplayName("setzt die Klasse nicht zweimal")
+        void nichtDoppelt() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                sicht.setzeDarstellung(EinstellungenMaske.DUNKEL);
+                sicht.setzeDarstellung(EinstellungenMaske.DUNKEL);
+
+                assertEquals(1, szene.getRoot().getStyleClass().stream()
+                        .filter(EinstellungenMaske.DUNKEL::equals).count());
+                sicht.setzeDarstellung(EinstellungenMaske.HELL);
             });
         }
     }

@@ -48,6 +48,10 @@ public final class DtaFactory {
     /**
      * Erzeugt die Nachricht mit ausdruecklich vorgegebenen Leistungsangaben.
      *
+     * <p>Ohne Angabe der Art gilt {@link Uebermittlungsart#ERPROBUNG} - der
+     * Wert, der bis zum 07.09.2026 fest im UNB stand. Wer eine Echtdatei
+     * erzeugen will, muss das sagen.</p>
+     *
      * @param a                  die Abrechnung
      * @param interchangeRefValue laufende Datenaustauschreferenz
      * @param senderIk           IK des Absenders
@@ -56,6 +60,22 @@ public final class DtaFactory {
      */
     public static String buildDtaFor(Abrechnung a, long interchangeRefValue, String senderIk, String receiverIk,
             Leistungsparameter leistung) {
+        return buildDtaFor(a, interchangeRefValue, senderIk, receiverIk, leistung,
+                Uebermittlungsart.ERPROBUNG);
+    }
+
+    /**
+     * Erzeugt die Nachricht und sagt, wofuer sie sich ausgibt.
+     *
+     * @param a                  die Abrechnung
+     * @param interchangeRefValue laufende Datenaustauschreferenz
+     * @param senderIk           IK des Absenders
+     * @param receiverIk         IK des Empfaengers (Datenannahmestelle)
+     * @param leistung           Betrag und Schluessel der Leistungszeile
+     * @param art                Test-, Erprobungs- oder Echtdatei
+     */
+    public static String buildDtaFor(Abrechnung a, long interchangeRefValue, String senderIk, String receiverIk,
+            Leistungsparameter leistung, Uebermittlungsart art) {
         LocalDateTime now = a.getCreatedAt();
         LocalDate serviceDate = now.toLocalDate();
         String interchangeRef = String.format("%05d", interchangeRefValue);
@@ -75,12 +95,15 @@ public final class DtaFactory {
         String sum = formatAmount(fallSum);
 
         List<String> lines = new ArrayList<>();
-        lines.add(String.format("UNB+UNOC:3+%s+%s+%s+%s+H+%s+1'",
+        // Die letzte Stelle sagt, wofuer sich die Datei ausgibt: 0 Test,
+        // 1 Erprobung, 2 Echt. Sie stand bis zum 07.09.2026 fest auf 1.
+        lines.add(String.format("UNB+UNOC:3+%s+%s+%s+%s+H+%s+%s'",
                 senderIk,
                 receiverIk,
                 now.format(HEADER_TIME),
                 interchangeRef,
-                applicationRef));
+                applicationRef,
+                art.kennzeichen()));
 
         String slgaRef = "00001";
         List<String> slga = new ArrayList<>();

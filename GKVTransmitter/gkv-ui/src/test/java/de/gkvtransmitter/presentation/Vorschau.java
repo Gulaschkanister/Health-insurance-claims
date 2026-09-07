@@ -114,6 +114,23 @@ public final class Vorschau {
             // war ein Umweg - ein Schnappschuss nimmt die Groesse der Szene,
             // und die aendert sich nicht, wenn man dem ungezeigten Fenster
             // nachtraeglich eine andere Hoehe gibt. Genug Inhalt tut es auch.
+
+            // Dieselben Ansichten in der dunklen Fassung.
+            //
+            // Ein Dunkelmodus ist nicht dadurch fertig, dass es ihn gibt: was
+            // im Hellen knapp lesbar ist, kann im Dunkeln verschwinden, und das
+            // sieht kein Test. Deshalb steht er hier neben den hellen Bildern -
+            // wer eine Farbe aendert, sieht beide Fassungen nebeneinander.
+            szene.getRoot().getStyleClass().add(EinstellungenMaske.DUNKEL);
+            for (String bereich : new String[]{"Abrechnung", "Teilnehmer", "Blaupausen", "Einstellungen"}) {
+                oeffne(szene, bereich);
+                schreibe(szene, ziel.resolve("dunkel-"
+                        + bereich.toLowerCase(java.util.Locale.GERMAN) + ".png"));
+            }
+            oeffne(szene, "Blaupausen");
+            klicke(szene, BlaupausenMaske.ID_NEU);
+            schreibe(szene, ziel.resolve("dunkel-formular-blaupause.png"));
+            szene.getRoot().getStyleClass().remove(EinstellungenMaske.DUNKEL);
         });
 
         zeigeSchmalesFenster(controller, ziel);

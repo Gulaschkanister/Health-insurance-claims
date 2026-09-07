@@ -1,6 +1,6 @@
 # Nächste Schritte
 
-Stand: 6. September 2026, Branch `feature/kern-architektur`.
+Stand: 7. September 2026, Branch `feature/kern-architektur`.
 
 Dieses Dokument ist die Übergabe: **wo das Projekt steht, was als Nächstes
 ansteht, und welche Fallstricke schon Zeit gekostet haben.**
@@ -30,7 +30,8 @@ Erledigt und geprüft:
 - Oberfläche: Seitenleiste, Listen, Meldungsecke, Stylesheet, Programmsymbol
 - Feldprüfung mit Erklärung am Feld, IK gegen die Prüfziffer
 - Blaupausen mit einstellbarem Preis je Termin
-- **390 Tests** (164 Kern, 226 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **415 Tests** (177 Kern, 238 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **Einstellungen** in einer eigenen JSON-Datei, samt Dunkelmodus
 - Zwei Reviews über den Branch gelaufen, **alle vierzehn Funde behoben**
 - Das Paket ist gebaut und gestartet; das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
@@ -110,13 +111,13 @@ verweisen darauf („Abschnitt H", „G5").
 | **B** | Fachliche Felder | 1–3 ✔ · **4 und 5 blockiert**: dafür braucht es Anlage 3 beziehungsweise den Vertrag |
 | **C** | Oberflächentests | ✔ jede Klasse in `gkv-ui` hat einen Test, bis auf `Abrechnungslauf` (siehe unten) |
 | **D** | Fachliche Lücken | **blockiert oder groß**: Storno, weitere Leistungsbereiche, echte Rechnungsnummern |
-| **E** | Echter Übermittlungsweg | **blockiert**: Zertifikate, Zugangsdaten, Betriebsstätten-IK sind nicht zu programmieren |
+| **E** | Echter Übermittlungsweg | **Konzept steht** (07.09.2026), Umsetzung blockiert: Zertifikate, Zugangsdaten, IK |
 | **F** | Kleinigkeiten | ✔ bis auf die Checkstyle-Befunde — die verlangen einen Eingriff in die Entitäten |
 | **G** | Aussehen und Bedienung | ✔ vollständig (G1 Bildlaufleisten, G2 Kopfzeile, G3 Symbol, G4 Kürzungen, G5 Info-Zeichen, G6 Statuszeile) |
 | **H** | Bedienwerkzeug | ✔ `Bedienung` unter `src/test/java`, siehe unten |
 | **I** | Der Name | ✔ „GKV-Abrechnung", samt Umzug des Datenordners |
 | **J** | Der Zwischenstand | ✔ angesehen und durchgespielt, die Rückmeldung steht als **K** |
-| **K** | Simons Rückmeldung | K1–K7 ✔ · **K8 offen**: Einstellungen mit Dunkelmodus |
+| **K** | Simons Rückmeldung | ✔ alle acht, einschließlich Einstellungsseite und Dunkelmodus |
 
 **Alles, was ohne Anlage 3, ohne den Vertrag und ohne Zertifikate zu machen
 war, ist gemacht.** Was offen bleibt, ist entweder eine Entscheidung, eine
@@ -214,15 +215,65 @@ Nach Nutzen geordnet:
    Nummer ab. Eine echte Sammel- und Einzelrechnungsnummer führt das Programm
    nicht. Vor einem echten Versand zu klären.
 
-### E. Echter Übermittlungsweg
+### E. Echter Übermittlungsweg — durchdacht am 07.09.2026
 
-Der Versand ist dateibasiert. Ein realer Weg gehört hinter
-`BillingOfficeTransport`; der übrige Ablauf bleibt unverändert.
+**Das Konzept steht jetzt in der Dokumentation**, Kapitel „Der Weg zur Kasse".
+Grundlage ist die Technische Anlage (Anlage 1, Version 21), die im Projekt
+liegt und bis dahin niemand für diese Frage gelesen hatte. Hier nur, was daraus
+für die Arbeit folgt.
 
-Voraussetzungen, die **nicht** durch Programmierung zu beschaffen sind:
-Zertifikate einer anerkannten Stelle, Zugangsdaten der Annahmestelle, ein
-eigenes Betriebsstätten-IK. Solange die fehlen, ist die simulierte Gegenstelle
-das Beste, was geht.
+#### Drei Annahmen im Projekt waren falsch
+
+**1. Empfänger ist nicht die Kasse, sondern die Datenannahmestelle.** Die
+Technische Anlage ist eindeutig: *„Für jede Datenannahmestelle mit
+Entschlüsselungsbefugnis ist je Kassenart eine Nutzdatendatei (UNB bis UNZ) zu
+erstellen."* Unser `billing-office-endpoints.json` führt 23 einzelne Kassen und
+schreibt deren IK als Empfänger ins UNB. **Für den Dateiversand ins
+Testverzeichnis ist das folgenlos, für einen echten Versand ist es falsch.**
+Die Zuordnung Kasse → Annahmestelle steht in der **Kostenträgerdatei** der
+Kassenart, die wir nicht haben.
+
+**2. Die Auftragsdatei fehlt.** Zu jedem Übermittlungsvorgang gehört neben der
+Nutzdatendatei eine Auftragsdatei; sie ist in den „Richtlinien für den
+Datenaustausch mit den gesetzlichen Krankenkassen" beschrieben — eine
+Unterlage, die im Projekt ebenfalls fehlt.
+
+**3. Das Testkennzeichen stand fest auf „Erprobung".** *Erledigt am
+07.09.2026*, siehe unten.
+
+#### Was zu beschaffen ist, und was das für die Reihenfolge heißt
+
+Nichts davon lässt sich programmieren: Betriebsstätten-IK, Zertifikat einer
+anerkannten Stelle, Zugangsdaten, Kostenträgerdatei, und die beiden fehlenden
+Anhänge (Übermittlungsverfahren und Testverfahren).
+
+**Die Empfehlung steht in der Dokumentation: erst C, dann B, dann A.**
+Erzeugen und prüfen (heute), dann über eine Abrechnungsstelle abrechnen
+(Rechnungsart 2 ist dafür vorgesehen), und selbst übermitteln erst, wenn das
+Übrige läuft. Der Grund ist nicht Bequemlichkeit: **die Beanstandungen, die
+über eine Abrechnungsstelle zurückkommen, sind die beste Vorbereitung auf die
+Erprobung.**
+
+#### Wie sich das mit den Kassen erproben lässt
+
+Das war Simons vierte Frage, und die Antwort ist erfreulich: **es ist ein
+vorgesehener Schritt, kein Behelf.** Die Technische Anlage schreibt vor, dass
+vor der ersten Übermittlung die Einzelheiten mit dem Empfänger abzustimmen und
+die ordnungsgemäße Verarbeitung zu **erproben** ist. Dazu kommt ein eigenes
+Testverfahren (Abschnitt 10), beschrieben in einem Anhang, der uns fehlt.
+
+Praktisch heißt das: **eine** Datenannahmestelle ansprechen, das Verfahren
+abstimmen, mit `uebermittlungsart = erprobung` liefern, die Rückmeldungen
+auswerten — und erst danach auf `echt` stellen.
+
+#### Zwei Pflichten, die nicht in der Datei stehen
+
+Die Technische Anlage verlangt eine **Dokumentation des Datenaustauschs**, zwei
+Jahre aufzubewahren, und eine **Sicherungskopie bis zur Bezahlung**. Beides
+bildet das Programm heute nicht ab, und beides gehört zum Weg in den
+Echtbetrieb. Das ist kein großer Umbau — die erzeugten Dateien liegen bereits
+in `staging`, es fehlt der Nachweis darüber, wann was wohin ging und was
+zurückkam.
 
 ### F. Kleinigkeiten
 
@@ -264,10 +315,10 @@ es gut aus."**
 | **K5** | Ein Geburtsdatum lässt sich in die Zukunft legen | ✔ 06.09.2026, **nachgebessert** (K5a) |
 | **K6** | Um das Aufklappfeld liegt ein zweiter, unnötiger Rahmen | ✔ 06.09.2026 |
 | **K7** | Die Eingabefelder verschwinden auf der hellen Fläche | ✔ 06.09.2026 |
-| **K8** | Eine Seite „Einstellungen" mit Dunkelmodus | **offen**, siehe unten |
+| **K8** | Eine Seite „Einstellungen" mit Dunkelmodus | ✔ 07.09.2026 |
 
-**K1 bis K7 sind erledigt**, mit 17 neuen Tests und zwei Gegenproben. Was dabei
-zu entscheiden war, steht bei den Punkten selbst.
+**Alle acht sind erledigt.** Was dabei zu entscheiden war, steht bei den
+Punkten selbst.
 
 **K1 und K3 — die Einheit gehört ans Feld.** Beides steht heute nur in der
 Erklärung darunter („mit Komma und zwei Nachkommastellen"), und die ist
@@ -374,15 +425,21 @@ umgeschaltet über eine Stilklasse an der Wurzel, ist der ganze Kern. Dazu eine
 neue Maske nach dem Muster von `GruppenMaske` (**nicht** in `View`) und ein
 Eintrag in `View.baueNavigation()`.
 
-### Das Problem an der Einstellungsseite
+### Das Problem an der Einstellungsseite — gelöst am 07.09.2026
 
-**Die Anwendung hat keinen Ort für Einstellungen.** Nichts, was jemand einmal
-wählt, übersteht heute den Programmstart — es gibt weder eine Datei noch eine
-Tabelle dafür. Eine Einstellungsseite ohne diesen Ort wäre eine Seite, die beim
-nächsten Start vergisst, was man ihr gesagt hat; **das ist schlechter als keine
-Seite.** Das ist der eigentliche Aufwand an K8, nicht der Dunkelmodus.
+**Die Anwendung hatte keinen Ort für Einstellungen.** Nichts, was jemand einmal
+wählte, überstand den Programmstart. Eine Einstellungsseite ohne diesen Ort
+wäre eine Seite, die beim nächsten Start vergisst, was man ihr gesagt hat;
+**das ist schlechter als keine Seite.** Das war der eigentliche Aufwand an K8,
+nicht der Dunkelmodus.
 
-Drei Wege, mit ihren Folgen:
+**Simons Entscheidung: die eigene JSON-Datei** — *„ähnlich wie die Datenbank,
+die ja auch nicht in der EXE liegt."* Genau der Punkt: sie liegt im Datenordner
+und erbt damit alles, was dafür schon geregelt ist — den Umzug beim Umbenennen
+der Anwendung, die Sicherung, und die Umlenkung über `gkv.home` in Tests und
+Werkzeugen.
+
+Die drei erwogenen Wege, mit ihren Folgen:
 
 | Ort | Dafür | Dagegen |
 |---|---|---|
@@ -390,24 +447,37 @@ Drei Wege, mit ihren Folgen:
 | **Eigene Datei im Datenordner** (`einstellungen.json`) | unabhängig von der Datenbank, von Hand zu lesen und zu berichtigen | eine zweite Ablage mit eigenen Fehlerfällen (gesperrt, unlesbar, halb geschrieben) |
 | **`java.util.prefs`** | nichts selbst zu bauen | landet in der Windows-Registry, entzieht sich `Anwendungsverzeichnis` und damit jedem Umzug und jeder Sicherung |
 
-**Empfehlung: die eigene Datei**, gelesen und geschrieben über
-`Anwendungsverzeichnis` — dann gilt für sie dasselbe wie für die Datenbank
-(Umzug, Sicherung, `gkv.home` in Tests und Werkzeugen), und eine unlesbare
-Datei darf auf Vorgaben zurückfallen, ohne dass jemand ohne Programm dasteht.
+#### Was daraus wurde
 
-Was dabei zu beachten ist, steht schon fest:
+`einstellung.Einstellungen` liest und schreibt `einstellungen.json` über
+`Anwendungsverzeichnis`; `EinstellungenMaske` zeigt sie. Vier Punkte standen
+vorher fest und haben sich gehalten:
 
-- **Ein Fehlschlag beim Lesen darf den Start nicht aufhalten.** Vorgaben
-  nehmen und weiterlaufen — wie `Leistungsparameter` bei unlesbarer Blaupause.
-  Eine Farbwahl ist nichts, wofür eine Anwendung nicht startet.
-- **Die Umschaltung muss zur Laufzeit greifen**, nicht erst beim nächsten
-  Start. Sonst ist der erste Eindruck, der Schalter sei kaputt.
-- **Jede Farbe muss in beiden Fassungen geprüft werden.** Was heute an
-  Kontrast knapp ist, kann im Dunkelmodus unlesbar sein — und das sieht kein
-  Test, sondern nur die `Vorschau`. Sie kann beide Fassungen zeichnen.
-- Sobald es *einen* Ort für Einstellungen gibt, drängt sich der nächste
-  Kandidat auf: der Pfad zum Datenordner und der Ausgangsordner für den
-  Versand. Beides steht heute nur in Systemeigenschaften.
+- **Ein Fehlschlag beim Lesen hält den Start nicht auf.** Vorgaben nehmen und
+  weiterlaufen — wie `Leistungsparameter` bei unlesbarer Blaupause.
+- **Geschrieben wird über eine Nebendatei**, die anschließend umbenannt wird.
+  Sonst bliebe nach einem Abbruch mitten im Schreiben eine halbe Datei zurück,
+  und die vorige Fassung wäre weg, obwohl sie gereicht hätte.
+- **Die Umschaltung greift sofort.** Ein Schalter, der erst beim nächsten Start
+  wirkt, sieht aus wie ein kaputter.
+- **Scheitert das Speichern, wirkt die Wahl trotzdem** und die Meldungsecke
+  sagt, dass sie die Sitzung nicht überlebt. Die Wirkung darf nicht davon
+  abhängen, ob ein Ordner beschreibbar ist.
+
+**Und die dunkle Fassung ist mehr als ein zweiter Farbblock.** Die Vorschau hat
+am ersten Bild zwei Stellen gefunden, die kein Test gefunden hätte: die Schrift
+in den Auswahlfeldern und die Namen in allen Listen standen dunkelgrau auf
+Anthrazit. Beides kam aus JavaFX' eigenem Stylesheet, das für `.label` und
+`.text-input` eine von einem hellen Grund abgeleitete Farbe mitbringt — die
+Angabe an `.root` wirkt darauf nicht.
+
+> **Merksatz:** ein Dunkelmodus ist nicht fertig, wenn es ihn gibt. Was im
+> Hellen knapp lesbar ist, verschwindet im Dunkeln — und das sieht kein Test.
+> `Vorschau` zeichnet deshalb beide Fassungen.
+
+**Der zweite Kandidat für die Datei war sofort da**, und er ist der wichtigere:
+die **Übermittlungsart** (Test / Erprobung / Echt). Sie stand bis dahin fest im
+Quelltext, siehe E.
 
 ## Der Weg nach Produktion
 
@@ -422,19 +492,82 @@ ausführlichere Tests, dann Planung.
    Fälle, die aus einer echten Abrechnung kommen und nicht aus einer erdachten.
    **Vor dem Ausbau gehört festgelegt, was ein Test hier beweisen soll** —
    sonst wächst die Zahl und nicht die Sicherheit, siehe `Abrechnungslauf`.
-3. **Datensicherheit.** Zu planen, nicht nebenbei zu machen. Die Anwendung hält
-   Gesundheitsdaten: Namen, Geburtsdaten, Versichertennummern, Kassen —
-   besondere Kategorien nach Art. 9 DSGVO. Heute liegt die SQLite-Datei
-   **unverschlüsselt** im Benutzerprofil, es gibt keine Anmeldung, kein
-   Protokoll darüber, wer was geändert hat, und keine Sicherung. Jeder dieser
-   vier Punkte ist eine eigene Entscheidung.
-4. **Wie sich das mit den Kassen erproben lässt.** Der offene Kern von E. Zu
-   klären ist, wer die Gegenstelle für einen Testbetrieb stellt (Annahmestelle,
-   Verband oder Abrechnungsstelle), was dafür an Zertifikaten und Zugangsdaten
-   nötig ist und ob es ein Testverfahren mit einem eigenen IK gibt. **Das sind
-   Fragen an Menschen, nicht an den Quelltext** — und sie brauchen Vorlauf.
+3. **Datensicherheit.** Zu planen, nicht nebenbei zu machen — siehe unten.
+4. ~~**Wie sich das mit den Kassen erproben lässt.**~~ **Beantwortet am
+   07.09.2026**, siehe Abschnitt E und das Kapitel „Der Weg zur Kasse" in der
+   Dokumentation. Kurz: die Erprobung ist ein **vorgeschriebener Schritt** des
+   Verfahrens, kein Behelf. Was dafür zu beschaffen ist, steht dort — und es
+   sind Fragen an Menschen, nicht an den Quelltext.
 
-## Was zuletzt geschah (06.09.2026, Abend)
+### Datensicherheit — der Stand und die Reihenfolge
+
+Die Anwendung hält **besondere Kategorien personenbezogener Daten** nach
+Art. 9 DSGVO: Namen, Geburtsdaten, Anschriften, Versichertennummern,
+Kassenzugehörigkeit, dazu die Tatsache, dass jemand einen
+Geburtsvorbereitungskurs besucht. Was heute gilt:
+
+| | Stand |
+|---|---|
+| Datenbank | **unverschlüsselt** im Benutzerprofil |
+| Erzeugte DTA-Dateien | **unverschlüsselt** im Ausgangsordner, unbegrenzt lange |
+| Anmeldung | keine — wer den Rechner öffnet, öffnet die Daten |
+| Protokoll, wer was geändert hat | keines |
+| Sicherung | keine; die Technische Anlage verlangt eine bis zur Bezahlung |
+| Löschfristen | keine |
+
+**Die Reihenfolge sollte nicht nach Aufwand gehen, sondern nach Wirkung.** Der
+Rechner selbst ist die erste Verteidigungslinie: **BitLocker auf dem
+Arbeitsgerät** schützt gegen den häufigsten realen Fall — ein verlorenes oder
+gestohlenes Notebook — und kostet keine Zeile Quelltext. Danach:
+
+1. **Aufbewahrung begrenzen.** Erzeugte DTA-Dateien sind Kopien von
+   Gesundheitsdaten. Sie brauchen eine Frist und einen Ort, der mitgesichert
+   wird — und nach der Bezahlung nichts weiter.
+2. **Sicherung.** Sie ist ohnehin vorgeschrieben (Anlage 1, Abschnitt 3) und
+   fehlt bisher ganz. Eine Sicherung, die neben der Datenbank liegt, ist keine.
+3. **Verschlüsselung der Datenbank** (etwa SQLCipher). Wirkt aber nur, solange
+   die Anwendung *nicht* läuft, und verlangt eine Schlüsselverwaltung, die
+   heute niemand hat. **Nach BitLocker der kleinere Gewinn.**
+4. **Anmeldung und Protokoll** — sinnvoll erst, wenn mehr als eine Person mit
+   dem Programm arbeitet. Bei einer Einzelpraxis wäre es Aufwand ohne Schutz.
+
+**Was ohnehin gilt und nichts kostet:** Zugangsdaten und Schlüssel gehören
+nicht in `einstellungen.json` (Klartext im Benutzerprofil), sondern in den
+Anmeldeinformationsspeicher des Betriebssystems. Das steht als Warnung im
+Quelltext von `Einstellungen`.
+
+## Was zuletzt geschah (07.09.2026)
+
+Drei Dinge: die Einstellungsdatei, der Weg zu den Kassen — und ein Fund, der
+aus dem zweiten in den ersten hineinragte.
+
+**Die Einstellungen liegen jetzt in `einstellungen.json`**, neben der
+Datenbank, mit Dunkelmodus und Einstellungsseite. Einzelheiten unter K8.
+
+**Das Übermittlungskonzept steht** (Abschnitt E und das neue Kapitel „Der Weg
+zur Kasse" in der Dokumentation). Grundlage war die Technische Anlage, die seit
+Juli im Projekt liegt und für diese Frage niemand gelesen hatte. Sie hat drei
+Annahmen widerlegt.
+
+**Der Fund dazwischen: das Testkennzeichen.** Die letzte Stelle des UNB sagt,
+wofür sich eine Datei ausgibt — 0 Test, 1 Erprobung, 2 Echt. Bei uns stand dort
+seit jeher eine fest verdrahtete **1**.
+
+Das war zum Stand des Programms sogar richtig. Der Punkt ist ein anderer:
+**niemand konnte es sehen, und niemand konnte es ändern.** Beim ersten
+Echtversand wäre es die stillste denkbare Zurückweisung gewesen — die Datei ist
+formal fehlerfrei, wird angenommen, verarbeitet, und nicht bezahlt, weil sie
+sich selbst als Erprobung ausweist. Kein Prüfbericht hätte etwas gemeldet.
+
+> **Merksatz:** eine fest verdrahtete Angabe ist nicht deshalb harmlos, weil
+> sie stimmt. Sie ist es erst, wenn jemand sie sehen kann. Was über Bezahlung
+> oder Nichtbezahlung entscheidet, gehört dorthin, wo man es liest.
+
+Die Angabe steht jetzt in den Einstellungen, mit `erprobung` als Vorgabe — auch
+bei fehlender oder unlesbarer Datei. **Ein Programm, das Forderungen an
+Krankenkassen stellt, wechselt nicht von selbst in den Echtbetrieb.**
+
+## Was davor geschah (06.09.2026, Abend)
 
 Aufräumen im ganzen Projekt, und dabei drei Funde.
 
@@ -763,8 +896,8 @@ genau diese Zahl.
 ## Nützliche Befehle
 
 ```bash
-mvn clean test                       # alle 390 Tests
-mvn clean test -pl gkv-ui            # nur die 226 Oberflächentests
+mvn clean test                       # alle 415 Tests
+mvn clean test -pl gkv-ui            # nur die 238 Oberflächentests
 mvn install -DskipTests              # Kern bereitstellen (siehe Fallstricke)
 mvn -Ppaket clean package            # eigenständiges Windows-Paket
 mvn -Pdebug -pl gkv-ui javafx:run    # mit Debug-Anschluss auf Port 5005

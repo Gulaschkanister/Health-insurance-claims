@@ -74,6 +74,30 @@ public class View {
     /** Das Stylesheet der Anwendung. Ohne es sieht alles nach JavaFX-Vorgabe aus. */
     static final String STYLESHEET = "/style/gkv.css";
 
+    /** Die Einstellungen aus {@code einstellungen.json} im Datenordner. */
+    private final de.gkvtransmitter.einstellung.Einstellungen einstellungen =
+            de.gkvtransmitter.einstellung.Einstellungen.laden();
+
+    /**
+     * Setzt die helle oder dunkle Fassung.
+     *
+     * <p>Es genuegt eine Stilklasse an der Wurzel: alle Farben stehen in
+     * {@code gkv.css} als benannte Werte, und die dunkle Fassung besetzt
+     * dieselben Namen anders. <b>Die Umschaltung wirkt sofort</b> - eine
+     * Einstellung, die erst nach einem Neustart greift, sieht aus wie ein
+     * kaputter Schalter.</p>
+     */
+    void setzeDarstellung(String wert) {
+        if (hauptfenster.wurzel() == null) {
+            return;
+        }
+        var klassen = hauptfenster.wurzel().getStyleClass();
+        klassen.remove(EinstellungenMaske.DUNKEL);
+        if (EinstellungenMaske.DUNKEL.equals(wert)) {
+            klassen.add(EinstellungenMaske.DUNKEL);
+        }
+    }
+
     /**
      * Der Name, unter dem die Anwendung auftritt: Fenstertitel und Seitenleiste.
      *
@@ -105,6 +129,7 @@ public class View {
         hauptfenster.setzeMarke(PROGRAMMNAME, messages.get("app.subtitle"));
         setzeLadestatus();
         hauptfenster.oeffneErstenBereich();
+        setzeDarstellung(einstellungen.get(de.gkvtransmitter.einstellung.Einstellung.DARSTELLUNG));
 
         Scene scene = componentFactory.createScene(hauptfenster.wurzel(), width, height);
         scene.getStylesheets().add(getClass().getResource(STYLESHEET).toExternalForm());
@@ -187,6 +212,9 @@ public class View {
         }
 
         hauptfenster.ergaenzeAbschnitt(messages.get("nav.section.dev"));
+        hauptfenster.ergaenzeBereich(messages.get("menu.settings"),
+                () -> hauptfenster.zeige(new EinstellungenMaske(componentFactory, messages,
+                        meldungen, einstellungen, this::setzeDarstellung).maske()));
         hauptfenster.ergaenzeBereich(messages.get("nav.testdata"), this::seedTestData);
 
         erklaereBereiche();
@@ -210,6 +238,7 @@ public class View {
         hauptfenster.erklaereBereich(messages.get("menu.self"), messages.get("intro.self"));
         hauptfenster.erklaereBereich(messages.get("menu.groups"), messages.get("intro.groups"));
         hauptfenster.erklaereBereich(messages.get("menu.blueprints"), messages.get("intro.blueprints"));
+        hauptfenster.erklaereBereich(messages.get("menu.settings"), messages.get("intro.settings"));
         hauptfenster.erklaereBereich(messages.get("nav.testdata"), messages.get("intro.testdata"));
     }
 
