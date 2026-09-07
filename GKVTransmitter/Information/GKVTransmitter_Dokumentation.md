@@ -317,9 +317,36 @@ Die eigene Prüfung vor dem Versand ist kein Beiwerk: der Absender hat sicherzus
 
 > **Der Betrag fällt einmal an, nicht je Kasse.** Das Zertifikat wird auf das **eigene IK** ausgestellt und gilt für den Datenaustausch mit **allen** Datenannahmestellen. Zum Verschlüsseln wird der öffentliche Schlüssel des jeweiligen Empfängers gebraucht — den liefert das Trust Center als Schlüsselliste (`annahme-sha256.key`) zusammen mit dem Zertifikat mit, ohne weitere Kosten. Es gibt also weder eine Gebühr je Kasse noch eine je Lieferung.
 
-Trotzdem bleibt die Reihenfolge. Nicht wegen der Kosten, sondern wegen der Reihenfolge des Lernens: Weg B liefert echte Beanstandungen echter Kassen, und genau die sind die Vorbereitung auf die Erprobung, die Weg A verlangt.
+Trotzdem bleibt die Reihenfolge. Nicht wegen der Kosten, sondern wegen der Reihenfolge des Lernens: Weg B liefert echte Beanstandungen echter Kassen, und genau die sind die Vorbereitung auf die Erprobung, die Weg A verlangt. Und wegen der laufenden Pflege — siehe den nächsten Abschnitt, der die Empfehlung erst vollständig macht.
 
 **Der Umbau bleibt in jedem Fall überschaubar**, weil der Transport hinter einer einzigen Schnittstelle liegt: `BillingOfficeTransport`. Erzeugung, Prüfung, Zuordnung und Auswertung der Rückmeldungen bleiben unverändert.
+
+## Was der eigene Weg wirklich kostet
+
+Die Gebühr ist der kleinere Teil. **Wer selbst überträgt, pflegt auch selbst** — und das Verfahren steht nicht still. Simons Einwand am 07.09.2026: *„jedoch auch Wartung und Co, das fließt auch mit ein, da jedes Jahr sich was ändern könnte."*
+
+Was sich tatsächlich bewegt, und wie oft:
+
+| Was | Rhythmus | Passiert was, wenn man es verpasst |
+|---|---|---|
+| **Kostenträgerdatei** | **vierteljährlich** | Lieferung geht an eine Stelle, die nicht mehr zuständig ist |
+| **Zertifikat** | **jährlich**, Antrag 1–2 Wochen vorher | Datenaustausch steht still, bis das neue da ist |
+| **Technische Anlage 1** | neue Version etwa jährlich, 3 Monate Übergangsfrist | Datei wird nach Ablauf abgewiesen |
+| **Anlage 3 (Schlüssel)** | mehrmals jährlich | ungültige Schlüsselausprägung, Prüfstufe 3 |
+| **Positionsnummernverzeichnis** | bei Vertragsänderung | zuletzt zum 01.11.2025: vier Stellen wurden fünf |
+| **Vergütungsvereinbarung** | bei Anpassung | falsche Beträge, Rückforderung |
+
+**Der Beleg liegt im Projekt selbst.** Die verbindlichen Anlagen unter `Information/` waren am 07.09.2026 vom Juli — nach zwei Monaten überholt, und es war niemandem aufgefallen. Genau so sieht die Wartungslast in der Praxis aus: nicht als Aufwand, den man einplant, sondern als Veralten, das niemand bemerkt.
+
+Bei einer Abrechnungsstelle ist das **im Preis enthalten** — sie muss dem Verfahren folgen, nicht die Leistungserbringerin. Das ist der eigentliche Gegenwert der drei Prozent, nicht der Briefversand.
+
+**Was die Wartung klein hält**, und deshalb vor dem Echtbetrieb gebaut gehört:
+
+1. **Kostenträgerdatei einlesen statt Endpunkte pflegen** — aus vier Pflegeterminen im Jahr wird ein Dateiaustausch.
+2. **Ablaufwarnung für das Zertifikat** — die Anwendung kennt das Datum, sie kann rechtzeitig daran erinnern.
+3. **Versionsangabe in der Nachricht sichtbar machen** — der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, mit welcher Version er sendet, merkt einen Wechsel.
+
+Ohne diese drei ist der eigene Weg jedes Jahr Handarbeit. Mit ihnen bleibt eine Aufgabe im Jahr: das Zertifikat erneuern.
 
 ## Was noch zu beschaffen ist
 
