@@ -16,6 +16,7 @@ Dieser Plan beantwortet vier Fragen:
 2. **Was ist danach dauerhaft zu tun**, damit es nicht unbemerkt veraltet?
 3. **Was geschieht, wenn eine Nachricht beanstandet wird** — und wie erfährt die Anwenderin, was genau falsch ist?
 4. **Wie wird gearbeitet**, damit ein Mensch und ein Agent an denselben Vorgaben arbeiten können?
+5. **Wie wird der Alltag leichter** — von der Kursstunde bis zum Zahlungseingang?
 
 > **Ein Grundsatz zieht sich durch alles Folgende.** Jede Angabe in einer Nachricht muss auf eine Fundstelle zeigen — Anlage, Abschnitt. Wo das versäumt wurde, sind Werte erfunden worden: der Leistungsbereich `H`, der logische Dateiname `HEB260907…`, eine neunstellige Positionsnummer. Alle drei sahen plausibel aus, alle drei waren falsch, keiner ist aufgefallen. **Was keine Fundstelle hat, ist eine Vermutung.**
 
@@ -546,6 +547,196 @@ Sobald echte Zugangsdaten dazukommen: **nicht in die Datenbank**, sondern in den
 - **Privatabrechnung.** Ein anderes Verfahren mit eigenen Regeln.
 - **Eine Weboberfläche.** Die Daten liegen beim Benutzer, und das ist ein Vorzug, kein Mangel.
 
+
+# Teil 6 — Den Arbeitsablauf verbessern
+
+Die Teile 1 bis 5 machen die Abrechnung **richtig**. Dieser Teil macht sie **erträglich**. Er beschreibt den Weg von der Kursstunde bis zum Zahlungseingang und die Stellen, an denen heute abgetippt wird, was schon jemand aufgeschrieben hat.
+
+## Wie der Ablauf heute aussieht
+
+```
+Kursstunde ──> Anwesenheitsliste auf Papier ──> abends abtippen
+                                                      │
+                                        „Termine für alle: 8"
+                                                      │
+                                          Abrechnung ──> Datei
+                                                      │
+                                       Zahlungseingang? irgendwann
+```
+
+Drei Bruchstellen: **die Liste wird zweimal geführt** (auf Papier und im Programm), **die Terminzahl ist eine getippte Zahl** statt einer gezählten, und **niemand merkt, wenn eine Zahlung ausbleibt.**
+
+## 6.1 Der Kurs als eigenes Ding
+
+| | |
+|---|---|
+| **Größe** | M |
+| **Hängt an** | nichts — **6.2 bis 6.4 hängen daran** |
+
+Heute kennt das Programm Blaupausen, Gruppen und eine getippte Terminzahl. Was fehlt, ist der **Kurs**: ein Anfang, eine Reihe von Terminen, eine Teilnehmerliste.
+
+Damit wird die Terminzahl vom **Eingabefeld zum Ergebnis**. Sie ist dann keine Behauptung mehr, sondern die Zahl der Termine, an denen jemand da war — und sie ist belegbar, wenn die Kasse fragt.
+
+**Fertig, wenn:** ein Kurs mit Terminen angelegt werden kann, Teilnehmerinnen ihm zugeordnet sind und der Abrechnungslauf die Terminzahl von dort nimmt statt aus einem Feld.
+
+## 6.2 Anwesenheit unterschreiben — auf dem Telefon oder Tablet
+
+| | |
+|---|---|
+| **Größe** | L |
+| **Hängt an** | 6.1 |
+
+Simons Vorschlag vom 07.09.2026. **Er ist besser begründet, als er zunächst aussieht** — das Verfahren sieht so etwas ausdrücklich vor.
+
+#### Wofür es eine Fundstelle gibt
+
+Anhang 3, Abschnitt 8.2 kennt bei „Art der Datenlieferung" den Schlüssel **30 = Vollelektronische Abrechnung einschließlich elektronischem Leistungsnachweis**. Der elektronische Leistungsnachweis ist also kein Behelf, sondern eine vorgesehene Stufe — die höchste.
+
+Anhang 4c regelt, was dafür gilt, und enthält den entscheidenden Satz: *„Sofern Dokumente bereits in digitaler Form vorliegen, gilt diese Verfahrensdokumentation ebenfalls, es erübrigen sich die Verfahrensschritte und Maßnahmen die Papierbelege betreffen."*
+
+**Im Klartext: eine von Anfang an digitale Unterschrift muss nicht erst gedruckt und wieder eingescannt werden.** Sie ist unmittelbar zulässig — wenn die Bedingungen erfüllt sind.
+
+#### Was das kostet, außer Programmierung
+
+| Bedingung | Woher |
+|---|---|
+| **Verfahrensdokumentation** samt ausgefülltem Formular „Verfahrensbeschreibung Imageverfahren" | Anhang 4c, liegt als Formular vor |
+| **Integritätssicherung** — ab der Unterschrift unveränderbar | Anhang 4c, Abschnitt 4.4; angelehnt an BSI TR-03138 (Ersetzendes Scannen) |
+| **Aufbewahrung und geregelte Löschung** | Anhang 4c, Abschnitte 5 und 6 |
+| **Kontrollrecht der Kassen** — sie dürfen einsehen | Anhang 4c, Abschnitt 7 |
+
+Das ist der eigentliche Aufwand. **Die Unterschrift einzusammeln ist der einfache Teil; sie beweiskräftig zu halten, ist der schwierige.** Wer das Formular nicht ausfüllt, hat eine hübsche App und keinen gültigen Leistungsnachweis.
+
+#### Wie es gebaut gehört, ohne alles zu zerstören
+
+Ein Telefon darf **nicht** in die Datenbank schreiben. SQLite lässt einen Schreiber zu, die Datenbank liegt auf dem Rechner der Praxis, und eine zweite Datenhaltung auf dem Telefon wäre genau das, was am 07.09.2026 schon einmal verworfen wurde: eine zweite Ablage mit eigenen Fehlerfällen.
+
+**Der Weg, der ohne all das auskommt:** die Anwendung öffnet für die Dauer des Kurses eine Seite im eigenen Netz. Das Telefon ruft sie im Browser auf, die Unterschrift entsteht dort und geht direkt in dieselbe Datenbank.
+
+```
+Rechner der Praxis (die Anwendung)
+   │  öffnet für die Kursstunde eine Seite im WLAN
+   ▼
+Telefon/Tablet im Browser ── Unterschrift ──> dieselbe Datenbank
+```
+
+**Keine App im Store, keine Cloud, keine zweite Datenhaltung, keine Synchronisierung.** Die Daten verlassen die Praxis nicht. Und es funktioniert ohne Internet — im Kursraum ein nicht zu unterschätzender Vorzug.
+
+Der Preis: der Rechner muss laufen und im selben Netz sein. Für einen Kurs im eigenen Raum ist das gegeben; für einen Hausbesuch nicht — dafür bliebe die Erfassung im Nachhinein.
+
+#### Datenschutz
+
+Eine Unterschrift ist ein personenbezogenes Datum. Sie gehört nicht in eine Cloud und nicht auf ein Telefon, das der Kurs nur ausleiht. Beim hier vorgeschlagenen Weg liegt sie nie irgendwo anders als in der Datenbank der Praxis — das ist der zweite Grund für diesen Zuschnitt. Auch hier gilt: **die Festplattenverschlüsselung sollte vorher stehen.**
+
+**Fertig, wenn:** eine Teilnehmerin auf dem Telefon unterschreibt, die Unterschrift dem Termin und der Person zugeordnet in der Datenbank liegt, danach nicht mehr änderbar ist, und ein Kursnachweis daraus erzeugt werden kann.
+
+## 6.3 Die Teilnehmerin trägt sich selbst ein
+
+| | |
+|---|---|
+| **Größe** | M |
+| **Hängt an** | 6.2 (dieselbe Seite im eigenen Netz) |
+
+Zum Kursbeginn ruft jede Teilnehmerin dieselbe Seite auf und trägt Name, Anschrift, Krankenkasse und **Versichertennummer** selbst ein — von ihrer Karte abgelesen.
+
+**Das ist die fehleranfälligste Stelle des ganzen Verfahrens.** Eine falsch abgetippte Versichertennummer führt zur Zurückweisung, und sie fällt bei keiner Formprüfung auf, weil sie formal richtig aussieht. Wer sie selbst einträgt, hat die Karte in der Hand.
+
+**Fertig, wenn:** eine Teilnehmerin sich ohne Zutun der Hebamme vollständig erfassen kann und die Angaben denselben Prüfregeln unterliegen wie bei der Eingabe am Rechner.
+
+## 6.4 Zahlungseingang abgleichen
+
+| | |
+|---|---|
+| **Größe** | M |
+| **Hängt an** | 1.5 |
+
+Das Übermittlungsprotokoll aus 1.5 kennt den Zustand „bezahlt" — heute müsste ihn jemand von Hand setzen, und deshalb wird es niemand tun.
+
+**Zu bauen:** Einlesen eines Kontoauszugs (CAMT.053 oder MT940, beides bekommt man bei jeder Bank) und Zuordnung über Betrag und Verwendungszweck. Was sich nicht sicher zuordnen lässt, bleibt offen und wird gezeigt — **nie automatisch als bezahlt gelten lassen.**
+
+Der Nutzen ist doppelt: die Sicherungskopie darf weg (Pflicht aus Anlage 1, Abschnitt 3 Absatz 4 erfüllt), und **eine ausbleibende Zahlung fällt auf.** Heute fällt sie nicht auf.
+
+**Fertig, wenn:** nach dem Einlesen eines Auszugs erkennbar ist, welche Forderung bezahlt ist, welche offen und welche überfällig.
+
+## 6.5 „Was ansteht" — eine Übersicht
+
+| | |
+|---|---|
+| **Größe** | S bis M |
+| **Hängt an** | 1.5, 6.4 |
+
+Die günstigste Verbesserung im ganzen Plan. Eine Seite, die zeigt:
+
+- Kurse, die zu Ende sind und noch nicht abgerechnet wurden
+- Forderungen ohne Zahlungseingang, älter als acht Wochen
+- Zurückweisungen, auf die noch niemand geantwortet hat
+- **Zertifikat läuft in weniger als einem Monat ab**
+- neues Quartal — Kostenträgerdatei prüfen
+
+**Damit wird aus dem Wartungsplan in Teil 2 etwas, das von selbst erinnert**, statt ein Dokument zu sein, in das jemand hineinsehen müsste. Ein Wartungsplan, an den niemand denkt, ist kein Wartungsplan.
+
+## 6.6 Kursvorlagen und Serientermine
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Hängt an** | 6.1 |
+
+Ein Kurs entsteht aus Blaupause, Anfangsdatum und Rhythmus („zehn Termine, dienstags, 19 Uhr"); die Termine werden erzeugt. Ausfälle und Nachholtermine lassen sich einzeln ändern.
+
+Kleine Arbeit, spürbarer Unterschied: das ist die Tätigkeit, die sonst mehrmals im Jahr von Hand anfällt.
+
+## 6.7 Belege ablegen
+
+| | |
+|---|---|
+| **Größe** | M |
+| **Hängt an** | 6.1 |
+
+Solange Papier im Spiel ist — Verordnungen, Bescheinigungen, unterschriebene Listen aus der Zeit vor 6.2 — brauchen sie einen Platz beim Kurs oder bei der Teilnehmerin.
+
+**Nur sinnvoll zusammen mit der Verfahrensdokumentation aus Anhang 4c.** Ein Scan ohne dieses Verfahren ersetzt das Original nicht, und das Papier muss trotzdem aufgehoben werden — dann hat man beides statt keines.
+
+## 6.8 Verlauf je Teilnehmerin
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Hängt an** | 6.1 |
+
+Eine Seite je Person: welche Kurse, welche Termine, welche Abrechnungen, was zurückkam, was bezahlt ist. Heute liegen diese Angaben in vier verschiedenen Masken.
+
+Das ist die Seite, die man aufschlägt, wenn jemand anruft und fragt.
+
+## 6.9 Alles wieder herausbekommen
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Hängt an** | nichts |
+
+Ein vollständiger Export aller Daten in ein offenes Format. Zwei Gründe, und der zweite ist der wichtigere: der Steuerberater fragt danach — und **niemand sollte in einem Programm festsitzen**, auch nicht in diesem.
+
+## Reihenfolge
+
+```
+6.1 Kurs ──┬── 6.2 Unterschrift ── 6.3 Selbsteintrag
+           ├── 6.6 Serientermine
+           ├── 6.7 Belege
+           └── 6.8 Verlauf
+1.5 Protokoll ── 6.4 Zahlungsabgleich ── 6.5 „Was ansteht"
+6.9 Export (unabhängig)
+```
+
+**Zuerst 6.1**, weil ohne den Kurs als eigenes Ding nichts davon trägt. **Dann 6.5**, weil es das billigste Stück mit der größten Wirkung auf den Alltag ist. **Dann 6.2 und 6.3** — dort liegt die eigentliche Arbeitserleichterung, und dort liegt auch der größte Aufwand.
+
+## Was bewusst nicht dazugehört
+
+- **Keine Cloud und kein Konto bei uns.** Die Daten liegen bei der Praxis. Alles, was das Telefon tut, tut es im eigenen Netz.
+- **Keine dauerhaften Daten auf dem Telefon.** Es zeigt eine Seite, es speichert nichts.
+- **Keine Terminerinnerung an Teilnehmerinnen.** Das ist Kursverwaltung, nicht Abrechnung — und es gibt gute Programme dafür.
+- **Keine App in einem Store.** Sie brächte Veröffentlichung, Pflege und zwei Betriebssysteme mit sich, für einen Vorteil, den eine Seite im Browser auch liefert.
+
 # Anhang — Woher die Angaben stammen
 
 | Aussage | Fundstelle |
@@ -564,6 +755,8 @@ Sobald echte Zugangsdaten dazukommen: **nicht in die Datenbank**, sondern in den
 | Test- und Erprobungsverfahren | Anhang 2, Abschnitte 3 bis 6 |
 | Aufbau der Kostenträgerdatei | Anhang 3, Abschnitte 5 und 8 |
 | Keine Bankverbindung in der Nutzdatendatei | Anlage 1, Abschnitt 5.5 — kein Segment und kein Feld dafür |
+| Vollelektronische Abrechnung mit elektronischem Leistungsnachweis (Schlüssel 30) | Anhang 3, Abschnitt 8.2 |
+| Digitale Belege, Integritätssicherung, Aufbewahrung, Kontrollrecht | Anhang 4c; angelehnt an BSI TR-03138 |
 | Auftragsdatei | GGT Anlage 2 |
 | KIM ersetzt KKS, Auftragsdatei, SECON | GGT Anlage 20, Abschnitt 1 |
 | Zertifikat: Preis, Gültigkeit, je IK | ITSG Trust Center |

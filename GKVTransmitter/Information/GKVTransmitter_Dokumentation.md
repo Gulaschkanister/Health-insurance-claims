@@ -188,6 +188,8 @@ Grundlage sind die Unterlagen unter `Information/`. Sie liegen **vollständig** 
 | Anhang 1 zur Anlage 1 | `Anhang_1_Datenuebermittlung_20170831.pdf` | Übermittlung, Dateinamen, Dokumentation |
 | Anhang 2 zur Anlage 1 | `Anhang_2_Pruefverfahren.pdf` | Prüf- und Erprobungsverfahren |
 | Anhang 3 zur Anlage 1 | `Anhang_3_Kostentraegerdatei_V10_20260414.pdf` | Aufbau der Kostenträgerdatei |
+| Anhang 4c zur Anlage 1 | `Anhang_4c_Verfahrensdokumentation_20250924.pdf` | Digitalisierung, Aufbewahrung und Vernichtung von Belegen |
+| Anhang 4c, Formular | `Anhang_4c_Formular_Imageverfahren_20250924.pdf` | auszufüllen für das Imageverfahren |
 | GGT Anlage 2 | `GGT_Anlage_2_Auftragsdatei.pdf` | Auftragsdatei |
 | GGT Anlage 7 | `GGT_Anlage_7_EMail.pdf` | Übertragung per E-Mail |
 | GGT Anlage 20 | `GGT_Anlage_20_KIM.pdf` | Übertragung über KIM in der Telematikinfrastruktur |
