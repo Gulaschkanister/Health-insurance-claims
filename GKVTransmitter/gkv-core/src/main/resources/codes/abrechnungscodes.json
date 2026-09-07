@@ -1,14 +1,23 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "codeType": "Abrechnungscodes",
-  "description": "Gültige Abrechnungscodes für Leistungszeilen (ENF-Feld 2)",
-  "note": "Codes nach SGS H (Rehabilitationssport und ähnliche Leistungen)",
+  "description": "Auswählbare Abrechnungscodes für Leistungszeilen (ENF, Leistungserbringergruppe)",
+  "note": "Schlüssel nach Anlage 3 zu den Richtlinien nach § 302 SGB V, Abschnitte 8.1.5 und 8.1.14. Der Sammelgruppenschlüssel gehört ins UNB und wird aus dem Abrechnungscode abgeleitet (dta.Leistungsbereich); er steht hier nur zur Erläuterung.",
+  "historie": "Bis zum 07.09.2026 enthielt diese Liste ausschließlich den Code 61 (Rehabilitationssport). Damit ließ sich der Code einer Hebamme in der Oberfläche nicht auswählen - das Feld bot genau einen Wert an, und der war der falsche.",
   "codes": [
     {
+      "code": "50",
+      "sammelgruppe": "F",
+      "bereich": "Hebammen",
+      "beschreibung": "Hebamme/Entbindungspfleger",
+      "hinweis": "Wird mit 5-stelligem Tarifkennzeichen kombiniert (z.B. 50:00000). Die Abrechnungspositionsnummer ist hier vier- oder fünfstellig, siehe Anlage 3 Abschnitt 8.2.6."
+    },
+    {
       "code": "61",
+      "sammelgruppe": "H",
       "bereich": "SGS H",
-      "beschreibung": "Abrechnungscode für Rehabilitationssport",
-      "hinweis": "Wird mit 5-stelligem Tarifkennzeichen kombiniert (z.B. 61:00000)"
+      "beschreibung": "Leistungserbringer von Rehabilitationssport",
+      "hinweis": "Der Code der Referenzdatei Valide.DTA. Bleibt wählbar, damit bestehende Blaupausen weiter lesbar sind."
     }
   ]
 }

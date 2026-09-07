@@ -18,9 +18,10 @@ import javafx.scene.layout.VBox;
  * Was sich einstellen laesst - und wo es liegt.
  *
  * <p>Die erste Maske, die nichts mit einer Abrechnung zu tun hat. Sie schreibt
- * in {@code einstellungen.json} im Datenordner, neben die Datenbank; Simons
- * Vorschlag, und der richtige: <em>"eine JSON-Datei, aehnlich wie die
- * Datenbank, die ja auch nicht in der EXE liegt."</em></p>
+ * in die Tabelle {@code einstellung} der Datenbank - erst war es eine eigene
+ * Datei daneben, bis Simons Einwand sie ueberfluessig machte: <em>"da kann es
+ * auch einfach in der DB gespeichert werden, muessen ja nicht extra Dateien
+ * herzaubern."</em></p>
  *
  * <p><b>Jede Aenderung wirkt sofort und ist sofort gespeichert.</b> Kein
  * "Speichern"-Knopf: es gibt hier nichts, was man zusammenhaengend eingibt und
@@ -131,12 +132,11 @@ public class EinstellungenMaske {
      * Wo die Einstellungen liegen.
      *
      * <p>Steht hier, weil es die einzige Auskunft ist, die im Ernstfall
-     * hilft: wer die Datei sichern, mitnehmen oder von Hand berichtigen will,
-     * muss wissen, wo sie ist - und sie liegt nicht dort, wo das Programm
-     * liegt.</p>
+     * hilft: wer sichern oder umziehen will, muss wissen, wo die Datenbank
+     * liegt - und sie liegt nicht dort, wo das Programm liegt.</p>
      */
     private Region ablageort() {
-        Label ort = bausteine.createLabel(einstellungen.ort().toString());
+        Label ort = bausteine.createLabel(einstellungen.ort());
         ort.setId(ID_ORT);
         ort.getStyleClass().add("feld-hinweis");
         ort.setWrapText(true);

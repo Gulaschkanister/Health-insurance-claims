@@ -3,6 +3,7 @@ package de.gkvtransmitter.presentation;
 import de.gkvtransmitter.bootstrap.ApplicationBootstrap;
 import de.gkvtransmitter.definition.GlobalDefinitions;
 import de.gkvtransmitter.factory.FactoryManager;
+import de.gkvtransmitter.hibernate.sqllite.DatabaseSettings;
 import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
 import de.gkvtransmitter.repository.DataRepository;
 
@@ -19,6 +20,9 @@ public class Controller {
     private final ApplicationBootstrap bootstrap;
     private final DataRepository database;
 
+    /** Wo die Datenbank liegt - fuer die Auskunft in der Einstellungsmaske. */
+    private final String datenbankOrt;
+
     /**
      * Baut den fachlichen Anwendungskontext auf.
      */
@@ -31,7 +35,9 @@ public class Controller {
             // Fuehrt Initialladungen aus und registriert die Profile in GlobalDefinitions.
             bootstrap = new ApplicationBootstrap(globalDefinitions, factoryManager);
             // Oeffnet die per gkv.db.path / GKV_DB_PATH konfigurierte Datenbank.
-            this.database = HibernateSqllite.open();
+            DatabaseSettings datenbankEinstellungen = DatabaseSettings.fromEnvironment();
+            this.datenbankOrt = datenbankEinstellungen.getBeschreibung();
+            this.database = HibernateSqllite.open(datenbankEinstellungen);
             initialize();
         } catch (IllegalArgumentException e) {
             System.err.println("Controller konnte nicht initialisiert werden: " + e.getMessage());
@@ -69,6 +75,11 @@ public class Controller {
     /**
      * Provides access to the database for persistence operations.
      */
+    /** Wo die Datenbank liegt, in Worten fuer einen Menschen. */
+    public String getDatenbankOrt() {
+        return datenbankOrt;
+    }
+
     public DataRepository getDatabase() {
         return database;
     }

@@ -10,6 +10,7 @@ import de.gkvtransmitter.validator.rules.InstitutionskennzeichenRegel;
 import de.gkvtransmitter.validator.rules.LeistungspositionRegel;
 import de.gkvtransmitter.validator.rules.NachrichtenAbschlussRegel;
 import de.gkvtransmitter.validator.rules.NachrichtenRahmenRegel;
+import de.gkvtransmitter.validator.rules.PositionsnummerRegel;
 import de.gkvtransmitter.validator.rules.SegmentSyntaxRegel;
 import de.gkvtransmitter.validator.rules.VersichertenangabenRegel;
 
@@ -49,6 +50,7 @@ public final class DtaValidationService {
                 new InstitutionskennzeichenRegel(),
                 new VersichertenangabenRegel(),
                 new LeistungspositionRegel(),
+                new PositionsnummerRegel(),
                 new BetragskonsistenzRegel()));
     }
 

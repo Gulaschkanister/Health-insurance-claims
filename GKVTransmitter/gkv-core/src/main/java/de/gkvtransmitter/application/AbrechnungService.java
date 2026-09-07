@@ -60,9 +60,9 @@ public final class AbrechnungService {
                 // Wofuer sich die Dateien ausgeben, steht in den Einstellungen.
                 // Ohne Angabe gilt Erprobung - ein Programm, das Forderungen an
                 // Krankenkassen stellt, wechselt nicht von selbst in den
-                // Echtbetrieb, weil eine Datei fehlt.
+                // Echtbetrieb, weil eine Zeile fehlt.
                 de.gkvtransmitter.dta.Uebermittlungsart.aus(
-                        de.gkvtransmitter.einstellung.Einstellungen.laden()
+                        de.gkvtransmitter.einstellung.Einstellungen.aus(datenbank)
                                 .get(de.gkvtransmitter.einstellung.Einstellung.UEBERMITTLUNGSART))));
     }
 

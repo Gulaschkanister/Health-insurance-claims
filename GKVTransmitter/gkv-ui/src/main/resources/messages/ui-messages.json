@@ -102,7 +102,7 @@
   "settings.transfer.live": "Echtdatei (2) — eine Forderung, die bezahlt werden soll",
   "settings.transfer.liveWarning": "Ab jetzt gelten erzeugte Dateien als echte Forderungen. Das setzt voraus, dass die Erprobung mit der Datenannahmestelle abgeschlossen ist.",
   "settings.location": "Wo die Einstellungen liegen",
-  "settings.location.help": "Neben der Datenbank im Datenordner — nicht im Programmordner. Wer sie sichert oder mitnimmt, nimmt diese Datei mit.",
+  "settings.location.help": "In der Datenbank, im Datenordner — nicht im Programmordner. Wer die Datenbank sichert oder mitnimmt, nimmt die Einstellungen mit.",
   "settings.notSaved": "Die Einstellung ließ sich nicht speichern. Sie gilt für diese Sitzung, aber nicht darüber hinaus.",
 
   "intro.settings": "Was sich einstellen lässt — und wo es gespeichert wird.",

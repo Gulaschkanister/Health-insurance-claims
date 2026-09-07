@@ -4,132 +4,253 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.gkvtransmitter.entity.Blueprint;
+import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.PersonGroup;
+import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.hibernate.sqllite.DatabaseSettings;
+import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
+import de.gkvtransmitter.repository.DataRepository;
+
 /**
- * Prueft die Einstellungsdatei.
+ * Prueft die Einstellungen.
  *
- * <p>Sie ist die erste Stelle, an der die Anwendung sich etwas merkt, das keine
- * Fachdatei ist. Wichtiger als das Speichern selbst ist deshalb, <b>was
- * geschieht, wenn es schiefgeht</b>: eine unlesbare Datei darf den Start nicht
- * aufhalten, und ein abgebrochenes Schreiben darf die vorige Fassung nicht
- * mitnehmen.</p>
+ * <p>Sie sind die erste Stelle, an der die Anwendung sich etwas merkt, das
+ * keine Fachangabe ist. Seit dem 07.09.2026 liegen sie in der Tabelle
+ * {@code einstellung} der Datenbank und nicht mehr in einer eigenen Datei
+ * daneben; die Tests laufen deshalb gegen eine echte SQLite-Datei, wie alle
+ * Persistenztests des Projekts.</p>
  *
- * <p>Hier ist {@code @TempDir} unbedenklich - anders als bei der Datenbank
- * bleibt keine Verbindung offen, die Windows am Loeschen hindern wuerde.</p>
+ * <p>Wichtiger als das Speichern selbst ist, <b>was geschieht, wenn es
+ * schiefgeht</b>: ein Lesefehler darf den Start nicht aufhalten, und ein
+ * gescheitertes Schreiben darf die getroffene Wahl nicht mitnehmen.</p>
  */
 @DisplayName("Einstellungen")
 class EinstellungenTest {
 
-    @Test
-    @DisplayName("Ohne Datei gelten die Vorgaben")
-    void ohneDatei(@TempDir Path ordner) {
-        Einstellungen einstellungen = Einstellungen.laden(ordner.resolve("gibt-es-nicht.json"));
+    @TempDir
+    Path ordner;
 
-        assertEquals("hell", einstellungen.get(Einstellung.DARSTELLUNG));
-        assertEquals("erprobung", einstellungen.get(Einstellung.UEBERMITTLUNGSART));
+    private HibernateSqllite datenbank;
+
+    @BeforeEach
+    void oeffne() {
+        datenbank = HibernateSqllite.open(DatabaseSettings.forFile(ordner.resolve("test.db")));
     }
 
-    @Test
-    @DisplayName("Was gesetzt wurde, steht beim naechsten Laden wieder da")
-    void ueberlebtDenNeustart(@TempDir Path ordner) {
-        Path datei = ordner.resolve(Einstellungen.DATEINAME);
-
-        assertTrue(Einstellungen.laden(datei).setze(Einstellung.DARSTELLUNG, "dunkel"));
-
-        assertEquals("dunkel", Einstellungen.laden(datei).get(Einstellung.DARSTELLUNG),
-                "Eine Einstellung, die den Neustart nicht uebersteht, ist keine");
+    @AfterEach
+    void schliesse() {
+        if (datenbank != null) {
+            datenbank.close();
+        }
     }
 
-    @Test
-    @DisplayName("Ein leerer Wert stellt die Vorgabe wieder her")
-    void leerSetztZurueck(@TempDir Path ordner) {
-        Path datei = ordner.resolve(Einstellungen.DATEINAME);
-        Einstellungen einstellungen = Einstellungen.laden(datei);
-        einstellungen.setze(Einstellung.DARSTELLUNG, "dunkel");
+    @Nested
+    @DisplayName("Lesen")
+    class Lesen {
 
-        einstellungen.setze(Einstellung.DARSTELLUNG, null);
+        @Test
+        @DisplayName("Ohne gespeicherten Wert gilt die Vorgabe")
+        void ohneWert() {
+            Einstellungen einstellungen = Einstellungen.aus(datenbank);
 
-        assertEquals("hell", Einstellungen.laden(datei).get(Einstellung.DARSTELLUNG));
+            assertEquals("hell", einstellungen.get(Einstellung.DARSTELLUNG));
+            assertEquals("erprobung", einstellungen.get(Einstellung.UEBERMITTLUNGSART));
+        }
+
+        @Test
+        @DisplayName("Ein leer gespeicherter Wert zaehlt als nicht gesetzt")
+        void leererWert() {
+            datenbank.speichereEinstellung(Einstellung.DARSTELLUNG.schluessel(), "   ");
+
+            assertEquals("hell", Einstellungen.aus(datenbank).get(Einstellung.DARSTELLUNG));
+        }
+
+        @Test
+        @DisplayName("Ein Lesefehler haelt nichts auf - es gelten die Vorgaben")
+        void lesefehler() {
+            Einstellungen einstellungen = Einstellungen.aus(new UnlesbaresRepository());
+
+            assertEquals("hell", einstellungen.get(Einstellung.DARSTELLUNG));
+        }
     }
 
-    @Test
-    @DisplayName("Die Datei wird angelegt, wenn es den Ordner noch nicht gibt")
-    void legtOrdnerAn(@TempDir Path ordner) throws IOException {
-        Path datei = ordner.resolve("noch").resolve("nicht").resolve(Einstellungen.DATEINAME);
+    @Nested
+    @DisplayName("Schreiben")
+    class Schreiben {
 
-        assertTrue(Einstellungen.laden(datei).setze(Einstellung.DARSTELLUNG, "dunkel"));
+        @Test
+        @DisplayName("Ein gesetzter Wert ueberlebt das Schliessen der Datenbank")
+        void ueberlebtNeustart() {
+            assertTrue(Einstellungen.aus(datenbank).setze(Einstellung.DARSTELLUNG, "dunkel"));
+            datenbank.close();
 
-        assertTrue(Files.isRegularFile(datei), "Beim ersten Start gibt es den Ordner noch nicht");
+            datenbank = HibernateSqllite.open(DatabaseSettings.forFile(ordner.resolve("test.db")));
+            assertEquals("dunkel", Einstellungen.aus(datenbank).get(Einstellung.DARSTELLUNG),
+                    "Eine Einstellung, die den Neustart nicht ueberlebt, ist keine");
+        }
+
+        @Test
+        @DisplayName("Ein leerer Wert loescht die Zeile und stellt die Vorgabe wieder her")
+        void leerLoescht() {
+            Einstellungen einstellungen = Einstellungen.aus(datenbank);
+            einstellungen.setze(Einstellung.DARSTELLUNG, "dunkel");
+
+            einstellungen.setze(Einstellung.DARSTELLUNG, "");
+
+            assertEquals("hell", Einstellungen.aus(datenbank).get(Einstellung.DARSTELLUNG));
+            assertFalse(datenbank.ladeEinstellungen().containsKey(Einstellung.DARSTELLUNG.schluessel()),
+                    "Eine geleerte Einstellung soll keine Zeile hinterlassen: sonst gaebe es zwei "
+                            + "Zustaende mit derselben Bedeutung");
+        }
+
+        @Test
+        @DisplayName("Zwei Einstellungen stehen nebeneinander, ohne sich zu ueberschreiben")
+        void nebeneinander() {
+            Einstellungen einstellungen = Einstellungen.aus(datenbank);
+            einstellungen.setze(Einstellung.DARSTELLUNG, "dunkel");
+            einstellungen.setze(Einstellung.UEBERMITTLUNGSART, "echt");
+
+            Einstellungen erneut = Einstellungen.aus(datenbank);
+            assertEquals("dunkel", erneut.get(Einstellung.DARSTELLUNG));
+            assertEquals("echt", erneut.get(Einstellung.UEBERMITTLUNGSART));
+        }
+
+        @Test
+        @DisplayName("Scheitert das Speichern, gilt der Wert trotzdem - aber nur fuer diese Sitzung")
+        void schreibenScheitert() {
+            Einstellungen einstellungen = Einstellungen.aus(new UnschreibbaresRepository());
+
+            assertFalse(einstellungen.setze(Einstellung.DARSTELLUNG, "dunkel"),
+                    "Ein gescheitertes Speichern muss sich melden");
+            assertEquals("dunkel", einstellungen.get(Einstellung.DARSTELLUNG),
+                    "Wer die dunkle Fassung waehlt, soll sie sehen - auch wenn sie nicht bleibt");
+        }
+    }
+
+    @Nested
+    @DisplayName("Ablageort")
+    class Ablageort {
+
+        @Test
+        @DisplayName("Wird durchgereicht, damit die Maske ihn nennen kann")
+        void ortWirdGereicht() {
+            assertEquals("irgendwo/database.db",
+                    Einstellungen.aus(datenbank, "irgendwo/database.db").ort());
+        }
+
+        @Test
+        @DisplayName("Ohne Angabe bleibt er leer und wird nicht erfunden")
+        void ohneOrt() {
+            assertEquals("", Einstellungen.aus(datenbank).ort());
+        }
+    }
+
+    /** Eine Datenbank, aus der sich nichts lesen laesst. */
+    private static class UnlesbaresRepository extends NutzlosesRepository {
+        @Override
+        public Map<String, String> ladeEinstellungen() {
+            throw new IllegalStateException("Tabelle nicht lesbar");
+        }
+    }
+
+    /** Eine Datenbank, in die sich nichts schreiben laesst. */
+    private static class UnschreibbaresRepository extends NutzlosesRepository {
+        @Override
+        public void speichereEinstellung(String schluessel, String wert) {
+            throw new IllegalStateException("Tabelle nicht schreibbar");
+        }
     }
 
     /**
-     * Der Fall, der zaehlt.
+     * Alles, was {@link DataRepository} sonst noch verlangt.
      *
-     * <p>Eine beschaedigte Einstellungsdatei darf die Anwendung nicht am
-     * Starten hindern. Sie enthaelt eine Farbwahl - nichts, wofuer jemand vor
-     * einem Programm sitzen sollte, das nicht aufgeht.</p>
+     * <p>Die beiden Faelle oben brauchen genau eine Methode, die anders
+     * reagiert als sonst. Der Rest steht hier, damit er dort nicht vom
+     * Wesentlichen ablenkt.</p>
      */
-    @Nested
-    @DisplayName("Wenn die Datei kaputt ist")
-    class Kaputt {
-
-        @Test
-        @DisplayName("Unlesbarer Inhalt fuehrt zu den Vorgaben, nicht zum Abbruch")
-        void unlesbar(@TempDir Path ordner) throws IOException {
-            Path datei = ordner.resolve(Einstellungen.DATEINAME);
-            Files.writeString(datei, "{das ist kein json");
-
-            assertEquals("hell", Einstellungen.laden(datei).get(Einstellung.DARSTELLUNG));
+    private static class NutzlosesRepository implements DataRepository {
+        @Override
+        public void savePatient(Patient patient) {
         }
 
-        @Test
-        @DisplayName("Ein fremder Aufbau fuehrt zu den Vorgaben")
-        void falscherAufbau(@TempDir Path ordner) throws IOException {
-            Path datei = ordner.resolve(Einstellungen.DATEINAME);
-            Files.writeString(datei, "[\"eine Liste statt eines Objekts\"]");
-
-            assertEquals("hell", Einstellungen.laden(datei).get(Einstellung.DARSTELLUNG));
+        @Override
+        public void saveServiceProvider(ServiceProvider serviceProvider) {
         }
 
-        @Test
-        @DisplayName("Ein unbekannter Schluessel stoert nicht")
-        void unbekannterSchluessel(@TempDir Path ordner) throws IOException {
-            Path datei = ordner.resolve(Einstellungen.DATEINAME);
-            Files.writeString(datei, "{\"darstellung\":\"dunkel\",\"was-auch-immer\":\"x\"}");
-
-            assertEquals("dunkel", Einstellungen.laden(datei).get(Einstellung.DARSTELLUNG),
-                    "Eine spaetere Fassung darf mehr hineinschreiben, ohne diese zu brechen");
+        @Override
+        public List<Patient> getAllPatients() {
+            return List.of();
         }
 
-        /**
-         * Ein gescheitertes Schreiben meldet sich, statt zu werfen.
-         *
-         * <p>Nachgestellt ueber einen Ordner, den es nicht geben kann: der
-         * Elternpfad ist eine Datei. Die Oberflaeche muss darauf hinweisen
-         * koennen ("nicht gespeichert"), und eine Ausnahme mitten im Klick auf
-         * einen Umschalter waere das Gegenteil davon.</p>
-         *
-         * <p>Der erste Anlauf dieses Tests legte stattdessen einen leeren
-         * Ordner am Zielpfad an - und {@code Files.move} ersetzte ihn
-         * anstandslos. <b>Ein Test, der einen Fehler nachstellen soll, muss
-         * nachrechnen, dass es wirklich einer ist.</b></p>
-         */
-        @Test
-        @DisplayName("Ein gescheitertes Schreiben wirft nicht, sondern meldet sich")
-        void schreibenScheitert(@TempDir Path ordner) throws IOException {
-            Path keinOrdner = ordner.resolve("eine-datei");
-            Files.writeString(keinOrdner, "ich bin ein Ordner, der keiner ist");
+        @Override
+        public List<ServiceProvider> getAllServiceProviders() {
+            return List.of();
+        }
 
-            assertFalse(Einstellungen.laden(keinOrdner.resolve(Einstellungen.DATEINAME))
-                    .setze(Einstellung.DARSTELLUNG, "dunkel"));
+        @Override
+        public List<PersonGroup> getAllPersonGroups() {
+            return List.of();
+        }
+
+        @Override
+        public Patient getPatientById(int id) {
+            return null;
+        }
+
+        @Override
+        public void deletePatient(Patient patient) {
+        }
+
+        @Override
+        public void deleteServiceProvider(ServiceProvider serviceProvider) {
+        }
+
+        @Override
+        public void savePersonGroup(PersonGroup personGroup) {
+        }
+
+        @Override
+        public void deletePersonGroup(PersonGroup personGroup) {
+        }
+
+        @Override
+        public void saveBlueprint(Blueprint blueprint) {
+        }
+
+        @Override
+        public void deleteBlueprint(Blueprint blueprint) {
+        }
+
+        @Override
+        public List<Blueprint> getAllBlueprints() {
+            return List.of();
+        }
+
+        @Override
+        public long nextDtaInterchangeReference() {
+            return 1;
+        }
+
+        @Override
+        public Map<String, String> ladeEinstellungen() {
+            return new LinkedHashMap<>();
+        }
+
+        @Override
+        public void speichereEinstellung(String schluessel, String wert) {
         }
     }
 }

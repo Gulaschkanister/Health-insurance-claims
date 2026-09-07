@@ -199,6 +199,14 @@ Steuerung von außen:
 in der Konfiguration und leerte die Datenbank bei jedem Programmstart. Nicht
 ohne Not setzen.
 
+**Die Einstellungen der Anwendung liegen in der Tabelle `einstellung`**,
+Entität `Einstellungswert`, Zugriff über `DataRepository.ladeEinstellungen()`
+und `speichereEinstellung(...)`, gelesen über `einstellung.Einstellungen`. Eine
+neue Einstellung wird in der Aufzählung `einstellung.Einstellung` eingetragen —
+mit Schlüssel und Vorgabe an einer Stelle. Am 07.09.2026 war das kurzzeitig
+eine eigene Datei `einstellungen.json` daneben; sie konnte nichts, was die
+Datenbank nicht auch kann.
+
 Neue Repository-Methoden nutzen `TransactionRunner`, nicht eigene
 `openSession`/`commit`/`rollback`-Blöcke:
 

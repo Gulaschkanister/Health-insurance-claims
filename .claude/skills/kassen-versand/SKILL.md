@@ -160,8 +160,36 @@ Fehlermeldung.
 
 ## Für einen echten Versandweg
 
-Wird künftig ein realer Weg umgesetzt (etwa signierte und verschlüsselte
-Übermittlung), gehört das hinter `BillingOfficeTransport`. Dazu werden
-zusätzlich benötigt: Zertifikate einer anerkannten Stelle, Zugangsdaten und ein
-eigenes Betriebsstätten-IK. Der übrige Ablauf — Erzeugung, Prüfung, Routing,
+Wird künftig ein realer Weg umgesetzt, gehört das hinter
+`BillingOfficeTransport`. Der übrige Ablauf — Erzeugung, Prüfung, Routing,
 Auswertung — bleibt unverändert.
+
+**Empfänger ist nicht die Kasse, sondern die Datenannahmestelle mit
+Entschlüsselungsbefugnis der jeweiligen Kassenart** (Anlage 1, Abschnitte 3 und
+5.3.1). Ihr IK steht im UNB. `billing-office-endpoints.json` bildet das nicht
+ab: es führt 23 einzelne Kassen. Für den Dateiversand ins Testverzeichnis ist
+das folgenlos, für einen echten Versand ist es falsch.
+
+Die Zuordnung steht in der **Kostenträgerdatei** des Kassenartenverbandes,
+vierteljährlich veröffentlicht auf `gkv-datenaustausch.de`. Sie ist selbst eine
+EDIFACT-Datei und mit `DtaDocument` lesbar:
+
+```
+IDK   IK der Versichertenkarte
+ └─ VKG+01+<IK>            → Kostenträger
+      └─ VKG+03+<IK>+…+50  → Datenannahmestelle MIT Entschlüsselungsbefugnis
+           │                 (VKG+02 wäre ein Netzbetreiber OHNE)
+           └─ DFU           → Adresse: 070 E-Mail, 016 FTAM, 080 KIM
+```
+
+Die vorletzte Stelle im VKG ist der Abrechnungscode; für Hebammenhilfe die
+`50`. Aufbau vollständig in `Information/Anhang_3_Kostentraegerdatei_V10_20260414.pdf`.
+
+Zusätzlich benötigt: ein Zertifikat des ITSG Trust Centers (79 € zzgl. USt.
+erstmalig, ein Jahr gültig), ein eigenes Betriebsstätten-IK und die Anmeldung
+als Kommunikationspartner bei der Annahmestelle.
+
+**Zu jeder Nutzdatendatei gehört eine Auftragsdatei** (GGT Anlage 2). Ohne sie
+scheitert die Lieferung in Prüfstufe 1. Ausnahme: bei Übermittlung über KIM
+entfallen Auftragsdatei, KKS und SECON (GGT Anlage 20) — heute führt allerdings
+keine Annahmestelle für Sonstige Leistungserbringer eine KIM-Adresse.

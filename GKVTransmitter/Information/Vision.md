@@ -54,7 +54,7 @@ An drei Stellen ist bewusst ein Vertrag von seiner Umsetzung getrennt, damit sic
 |---|---|---|
 | `DataRepository` | `HibernateSqllite` | eine andere Datenhaltung |
 | `BillingOfficeTransport` | `FileBillingOfficeTransport`, `SimulierterKassenTransport` | einen echten Übermittlungsweg |
-| `ValidationRule` | sieben mitgelieferte Regeln | weitere fachliche Prüfungen |
+| `ValidationRule` | acht mitgelieferte Regeln | weitere fachliche Prüfungen |
 
 ### UML-Struktur
 
@@ -117,6 +117,7 @@ Schritt 9 ist die wesentliche Entscheidung im Ablauf: Prüfung und Zustellung si
 | `InstitutionskennzeichenRegel` | Länge und Prüfziffer der IK |
 | `VersichertenangabenRegel` | Name, Geburtsdatum, Versichertennummer |
 | `LeistungspositionRegel` | Einzelbetrag und Menge im ENF stehen nicht auf null |
+| `PositionsnummerRegel` | Länge der Positionsnummer passt zum Abrechnungscode |
 | `BetragskonsistenzRegel` | ENF gegen BES, BES gegen GES |
 
 Nur Fehler halten den Versand auf, Warnungen nicht. Diese Abstufung ist bewusst: eine Warnung, die man nicht braucht, ist lästig — ein Fehler, den man nicht braucht, verhindert eine berechtigte Abrechnung.

@@ -79,7 +79,12 @@ public final class DtaFactory {
         LocalDateTime now = a.getCreatedAt();
         LocalDate serviceDate = now.toLocalDate();
         String interchangeRef = String.format("%05d", interchangeRefValue);
-        String applicationRef = buildApplicationRef(now, interchangeRefValue);
+        // Elf Stellen nach Anhang 1 zur Anlage 1, Abschnitt 4.2 - keine
+        // freie Bildung, siehe LogischerDateiname.
+        String applicationRef = LogischerDateiname.bilde(senderIk, true, serviceDate);
+        // Der Leistungsbereich folgt dem Abrechnungscode der Leistungszeile,
+        // er stand bis zum 07.09.2026 fest auf H (Rehabilitationssport).
+        String leistungsbereich = Leistungsbereich.zuAbrechnungscode(leistung.abrechnungscode());
 
         // Menge und Summe muessen aus derselben Zahl entstehen. Zuvor rechnete
         // die Fallsumme mit mindestens einem Termin, die Menge im ENF aber mit
@@ -97,11 +102,12 @@ public final class DtaFactory {
         List<String> lines = new ArrayList<>();
         // Die letzte Stelle sagt, wofuer sich die Datei ausgibt: 0 Test,
         // 1 Erprobung, 2 Echt. Sie stand bis zum 07.09.2026 fest auf 1.
-        lines.add(String.format("UNB+UNOC:3+%s+%s+%s+%s+H+%s+%s'",
+        lines.add(String.format("UNB+UNOC:3+%s+%s+%s+%s+%s+%s+%s'",
                 senderIk,
                 receiverIk,
                 now.format(HEADER_TIME),
                 interchangeRef,
+                leistungsbereich,
                 applicationRef,
                 art.kennzeichen()));
 
@@ -137,10 +143,6 @@ public final class DtaFactory {
         lines.add(String.format("UNZ+%06d+%s'", nachrichten, interchangeRef));
 
         return String.join("\n", lines) + "\n";
-    }
-
-    public static String buildApplicationRef(LocalDateTime now, long interchangeSeq) {
-        return "HEB" + now.format(DateTimeFormatter.ofPattern("yyMMdd")) + String.format("%02d", interchangeSeq % 100);
     }
 
     private static String buildProviderNameSegment(ServiceProvider provider) {

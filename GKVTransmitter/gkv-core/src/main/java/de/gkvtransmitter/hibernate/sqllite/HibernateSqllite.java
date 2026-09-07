@@ -1,6 +1,8 @@
 package de.gkvtransmitter.hibernate.sqllite;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -10,6 +12,7 @@ import org.hibernate.SessionFactory;
 
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.DtaCounter;
+import de.gkvtransmitter.entity.Einstellungswert;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -199,5 +202,45 @@ public final class HibernateSqllite implements DataRepository, AutoCloseable {
         } finally {
             referenzSperre.unlock();
         }
+    }
+
+    /**
+     * Liest alle Einstellungen.
+     *
+     * <p>Fehlt die Tabelle noch, ist das Ergebnis leer und nicht ein Fehler:
+     * beim ersten Start hat noch niemand etwas eingestellt.</p>
+     */
+    @Override
+    public Map<String, String> ladeEinstellungen() {
+        List<Einstellungswert> zeilen = runner.read("Einstellungen laden",
+                session -> session.createQuery("FROM Einstellungswert", Einstellungswert.class).getResultList());
+        Map<String, String> werte = new LinkedHashMap<>();
+        for (Einstellungswert zeile : zeilen) {
+            werte.put(zeile.getSchluessel(), zeile.getWert());
+        }
+        return werte;
+    }
+
+    /**
+     * Speichert eine Einstellung.
+     *
+     * <p>Ein leerer Wert loescht die Zeile, statt sie leer stehen zu lassen.
+     * Sonst gaebe es zwei Zustaende mit derselben Bedeutung - "nie gesetzt" und
+     * "auf leer gesetzt" -, und nur einer davon faellt beim Nachsehen in der
+     * Datenbank auf.</p>
+     */
+    @Override
+    public void speichereEinstellung(String schluessel, String wert) {
+        Objects.requireNonNull(schluessel, "schluessel must not be null");
+        runner.writeVoid("Einstellung speichern", session -> {
+            if (wert == null || wert.isBlank()) {
+                Einstellungswert vorhanden = session.get(Einstellungswert.class, schluessel);
+                if (vorhanden != null) {
+                    session.remove(vorhanden);
+                }
+            } else {
+                session.merge(new Einstellungswert(schluessel, wert.trim()));
+            }
+        });
     }
 }

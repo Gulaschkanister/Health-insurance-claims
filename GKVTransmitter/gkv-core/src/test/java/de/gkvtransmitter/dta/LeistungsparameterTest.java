@@ -157,10 +157,23 @@ class LeistungsparameterTest {
                     Leistungsparameter.ausBlueprint(blueprint("{\"template\":\"x\"}")));
         }
 
+        /**
+         * Der Abrechnungscode ist der einer Hebamme.
+         *
+         * <p>Er stand bis zum 07.09.2026 auf 61 - "Leistungserbringer von
+         * Rehabilitationssport". Der Wert kam aus {@code Valide.DTA} und war
+         * dort stimmig; fuer eine Hebamme gilt 50 (Anlage 3, Abschnitt
+         * 8.1.5), Sammelgruppe F.</p>
+         *
+         * <p>Die Positionsnummer bleibt vorerst neunstellig und damit falsch -
+         * fuer Hebammenhilfe sind vier oder fuenf Stellen vorgesehen. Sie hier
+         * festzuhalten ist kein Gutheissen: das Verzeichnis liegt dem Projekt
+         * nicht vor, und {@code PositionsnummerRegel} warnt bei jedem Lauf.</p>
+         */
         @Test
-        @DisplayName("Die Schluesselwerte der Vorbelegung entsprechen dem Beispiel")
-        void vorbelegungEntsprichtAltemVerhalten() {
-            assertEquals("61", Leistungsparameter.VORBELEGUNG.abrechnungscode());
+        @DisplayName("Der Abrechnungscode der Vorbelegung ist der einer Hebamme")
+        void vorbelegungIstHebammenabrechnung() {
+            assertEquals("50", Leistungsparameter.VORBELEGUNG.abrechnungscode());
             assertEquals("00000", Leistungsparameter.VORBELEGUNG.tarifkennzeichen());
             assertEquals("306050601", Leistungsparameter.VORBELEGUNG.positionsnummer());
         }

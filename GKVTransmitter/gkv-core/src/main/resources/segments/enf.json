@@ -58,8 +58,8 @@
       "type": "STRING",
       "maxLength": 9,
       "mandatory": true,
-      "example": "306050601",
-      "description": "Neunstellige Abrechnungspositionsnummer, die für diesen Leistungsbereich vertraglich zulässig ist (Anlage 3, Abschnitt 8.2).",
+      "example": "30605",
+      "description": "Abrechnungspositionsnummer aus dem Positionsnummernverzeichnis des Leistungsbereichs. Für Hebammenhilfe (Abrechnungscode 50) vier oder fünf Stellen, seit Leistungsdatum 01.11.2025 fünf (Anlage 3, Abschnitt 8.2.6). Andere Leistungsbereiche haben andere Längen.",
       "fieldArt": "M",
       "inputType": "NUMBER",
       "internal": false

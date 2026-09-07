@@ -160,4 +160,39 @@ class SpeicherRepository implements DataRepository {
     public long nextDtaInterchangeReference() {
         return naechsteReferenz++;
     }
+
+    /** Die Einstellungen, wie sie in der Tabelle {@code einstellung} laegen. */
+    private final java.util.Map<String, String> einstellungen = new java.util.LinkedHashMap<>();
+
+    /** Ob das Speichern einer Einstellung fehlschlagen soll. */
+    private boolean einstellungSchreibenScheitert;
+
+    /**
+     * Laesst jedes weitere Speichern einer Einstellung fehlschlagen.
+     *
+     * <p>Ein Ersatz fuer den Fall, den man an einer echten Datenbank nur mit
+     * Muehe herstellt - gesperrte Datei, volle Platte. Was geprueft werden
+     * soll, ist nicht der Grund, sondern die Reaktion: die Wahl gilt trotzdem,
+     * und die Meldungsecke sagt, dass sie die Sitzung nicht ueberlebt.</p>
+     */
+    void lassSpeichernScheitern() {
+        einstellungSchreibenScheitert = true;
+    }
+
+    @Override
+    public java.util.Map<String, String> ladeEinstellungen() {
+        return java.util.Map.copyOf(einstellungen);
+    }
+
+    @Override
+    public void speichereEinstellung(String schluessel, String wert) {
+        if (einstellungSchreibenScheitert) {
+            throw new IllegalStateException("Speichern nicht moeglich");
+        }
+        if (wert == null || wert.isBlank()) {
+            einstellungen.remove(schluessel);
+        } else {
+            einstellungen.put(schluessel, wert.trim());
+        }
+    }
 }

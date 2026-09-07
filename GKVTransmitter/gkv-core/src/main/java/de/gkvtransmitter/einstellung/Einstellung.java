@@ -10,8 +10,8 @@ package de.gkvtransmitter.einstellung;
  * Uebersetzer geprueft.</p>
  *
  * <p>Die Vorgabe ist Teil der Aufzaehlung, damit sie nicht dreimal im Quelltext
- * steht. Sie gilt, solange niemand etwas anderes gewaehlt hat, und ebenso bei
- * einer unlesbaren Datei.</p>
+ * steht. Sie gilt, solange niemand etwas anderes gewaehlt hat, und ebenso, wenn
+ * sich die Tabelle nicht lesen laesst.</p>
  */
 public enum Einstellung {
 
@@ -39,8 +39,8 @@ public enum Einstellung {
      *
      * <p>Die Vorgabe bleibt bewusst {@code erprobung}. Ein Programm, das
      * Forderungen an Krankenkassen stellt, darf nicht von selbst in den
-     * Echtbetrieb wechseln, weil jemand eine Einstellungsdatei geloescht
-     * hat.</p>
+     * Echtbetrieb wechseln, weil sich eine Zeile in der Datenbank nicht lesen
+     * laesst.</p>
      */
     UEBERMITTLUNGSART("uebermittlungsart", "erprobung");
 
@@ -52,7 +52,7 @@ public enum Einstellung {
         this.vorgabe = vorgabe;
     }
 
-    /** Der Name in der JSON-Datei. */
+    /** Der Schluessel in der Tabelle {@code einstellung}. */
     public String schluessel() {
         return schluessel;
     }

@@ -135,13 +135,15 @@ Die Versandziele stehen in
 wird dort eingetragen; am Code ist nichts zu ändern.
 
 > Für einen echten Versand ist diese Zuordnung zu eng: Empfänger ist die
-> **Datenannahmestelle** der jeweiligen Kassenart, nicht die einzelne Kasse.
-> Siehe „Der Weg zur Kasse" in `Information/GKVTransmitter_Dokumentation.md`.
+> **Datenannahmestelle mit Entschlüsselungsbefugnis** der jeweiligen Kassenart,
+> nicht die einzelne Kasse. Welche das ist, steht in der Kostenträgerdatei des
+> Kassenartenverbandes. Siehe „Der Weg zur Kasse" in
+> `Information/GKVTransmitter_Dokumentation.md`.
 
 ## Einstellungen
 
-Was sich in der Anwendung einstellen lässt, steht in `einstellungen.json` im
-Datenordner — neben der Datenbank, **nicht** im Programmordner:
+Was sich in der Anwendung einstellen lässt, steht in der Tabelle `einstellung`
+der Datenbank — also im Datenordner und **nicht** im Programmordner:
 
 | Schlüssel | Werte | Vorgabe |
 |---|---|---|
@@ -150,7 +152,8 @@ Datenordner — neben der Datenbank, **nicht** im Programmordner:
 
 Die Übermittlungsart steht an der letzten Stelle des `UNB`-Segments und
 entscheidet, ob eine Lieferung als Forderung gilt. Sie bleibt auf `erprobung`,
-solange niemand ausdrücklich etwas anderes wählt — auch bei fehlender Datei.
+solange niemand ausdrücklich etwas anderes wählt — auch dann, wenn sich die
+Tabelle nicht lesen lässt.
 
 ## Ablauf einer Abrechnung
 
@@ -190,6 +193,7 @@ Zurückweisung.
 | `InstitutionskennzeichenRegel` | Länge und Prüfziffer der IK |
 | `VersichertenangabenRegel` | Name, Geburtsdatum, Versichertennummer |
 | `LeistungspositionRegel` | Einzelbetrag und Menge im ENF stehen nicht auf null |
+| `PositionsnummerRegel` | Länge der Positionsnummer passt zum Abrechnungscode |
 | `BetragskonsistenzRegel` | ENF gegen BES, BES gegen GES |
 
 Nur Fehler halten den Versand auf, Warnungen nicht. Neue Regeln setzen
@@ -214,7 +218,9 @@ GKVTransmitter/
     ├── Abrechnung_Checkliste_kurz.md
     ├── codes/                 Codelisten des Verfahrens
     ├── Valide.DTA             gültige Referenznachricht
-    └── Anlage_*.pdf           verbindliche Vorgaben
+    ├── Anlage_*.pdf           Technische Anlagen 1 und 3 (verbindlich)
+    ├── Anhang_*.pdf           Übermittlung, Prüfverfahren, Kostenträgerdatei
+    └── GGT_Anlage_*.pdf       Auftragsdatei, E-Mail, KIM
 ```
 
 ## Dokumentation aktualisieren

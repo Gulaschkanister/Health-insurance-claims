@@ -11,6 +11,7 @@ import org.hibernate.cfg.AvailableSettings;
 
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.DtaCounter;
+import de.gkvtransmitter.entity.Einstellungswert;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -62,6 +63,7 @@ public final class SessionFactoryProvider {
                     .addAnnotatedClass(PersonGroup.class)
                     .addAnnotatedClass(Blueprint.class)
                     .addAnnotatedClass(DtaCounter.class)
+                    .addAnnotatedClass(Einstellungswert.class)
                     .getMetadataBuilder()
                     .build();
             return metadata.getSessionFactoryBuilder().build();

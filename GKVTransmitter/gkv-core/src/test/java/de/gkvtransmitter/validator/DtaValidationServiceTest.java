@@ -432,4 +432,55 @@ class DtaValidationServiceTest {
             assertTrue(zusammen.hatFehler());
         }
     }
+
+    /**
+     * Die Positionsnummer und der Abrechnungscode gehoeren zusammen.
+     *
+     * <p>Die Referenz fuehrt den Abrechnungscode 61 (Rehabilitationssport) und
+     * dazu eine neunstellige Positionsnummer - stimmig, und deshalb bleibt sie
+     * unbeanstandet. Erst mit dem Abrechnungscode 50 (Hebamme) gilt die Vorgabe
+     * aus Anlage 3, Abschnitt 8.2.6: vier oder fuenf Stellen.</p>
+     */
+    @Nested
+    @DisplayName("Positionsnummer")
+    class Positionsnummer {
+
+        @Test
+        @DisplayName("Eine neunstellige Nummer zum Abrechnungscode 50 wird gemeldet")
+        void zuLangFuerHebammen() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+", "ENF+01+50:00000+306050601+"));
+
+            assertTrue(enthaeltCode(bericht, "POSITION_HEBAMME_LAENGE"), bericht.toString());
+        }
+
+        @Test
+        @DisplayName("Sie haelt den Versand aber nicht auf")
+        void nurEineWarnung() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+", "ENF+01+50:00000+306050601+"));
+
+            assertTrue(bericht.istVersandfaehig(),
+                    "Eine Sperre ohne Ausgang waere schlimmer als die Warnung: das"
+                            + " Positionsnummernverzeichnis liegt dem Projekt nicht vor");
+        }
+
+        @Test
+        @DisplayName("Eine fuenfstellige Nummer zum Abrechnungscode 50 bleibt unbeanstandet")
+        void fuenfstelligIstRichtig() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+", "ENF+01+50:00000+30605+"));
+
+            assertFalse(enthaeltCode(bericht, "POSITION_HEBAMME_LAENGE"), bericht.toString());
+        }
+
+        @Test
+        @DisplayName("Zu einem anderen Abrechnungscode sagt die Regel nichts")
+        void anderenBereichUnberuehrt() {
+            ValidationReport bericht = service.pruefe(REFERENZ);
+
+            assertFalse(enthaeltCode(bericht, "POSITION_HEBAMME_LAENGE"),
+                    "Die Referenz fuehrt den Code 61 - dafuer gilt eine andere Laenge");
+        }
+    }
 }

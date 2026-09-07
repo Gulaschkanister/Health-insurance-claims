@@ -12,7 +12,10 @@ Dieser Text hält fest, was im Projekt belegt ist. Quellen sind
 `gkv-core/src/main/resources/segments/`.
 
 Die verbindlichen Vorgaben stehen in den beiliegenden PDF:
-`Anlage_1_TP5_V21_20260115.pdf` und `Anlage_3_TP5_V22_20260218.pdf`. **Bei einer
+`Anlage_1_TP5_V21_20260115.pdf` (heute gueltig), `Anlage_1_TP5_V22_20260521.pdf`
+(ab 01.02.2027), `Anlage_3_TP5_V22_20260521.pdf` sowie die drei Anhaenge
+`Anhang_1_Datenuebermittlung`, `Anhang_2_Pruefverfahren`,
+`Anhang_3_Kostentraegerdatei` und die GGT-Anlagen 2, 7 und 20. **Bei einer
 Frage, die über das hier Belegte hinausgeht, dort nachsehen und nicht raten** —
 eine falsch erfundene Regel führt zu abgewiesenen Abrechnungen.
 
@@ -95,7 +98,11 @@ Eine Versichertennummer aus lauter Nullen gilt als fehlend.
 
 ## Die Leistungszeile
 
-Für den Leistungsbereich SGS H (Abrechnungscode `61`):
+Für Hebammenhilfe gilt der Abrechnungscode `50` und der
+Leistungserbringer-Sammelgruppenschlüssel `F` (Anlage 3, Abschnitte 8.1.5 und
+8.1.14). Das folgende Beispiel stammt aus `Valide.DTA` und führt den
+Abrechnungscode `61` — Rehabilitationssport. **Die Referenzdatei ist in sich
+stimmig und trotzdem nicht die einer Hebamme:**
 
 ```
 ENF+01+61:00000+306050601+08,00+15000,00+20240301+0,00'
@@ -112,7 +119,15 @@ ENF+01+61:00000+306050601+08,00+15000,00+20240301+0,00'
 | Zuzahlung | `0,00` | Anteil des Versicherten, Kannfeld |
 
 Abrechnungscode `61` steht laut `Information/codes/03_leistungscodes_sgs_h.json`
-für Rehabilitationssport im Bereich SGS H. Das Tarifkennzeichen ist fünfstellig
+für Rehabilitationssport im Bereich SGS H; für eine Hebamme ist er `50`. Das
+Programm leitet den Sammelgruppenschlüssel im UNB seit dem 07.09.2026 aus dem
+Abrechnungscode ab (`dta.Leistungsbereich`) — vorher stand dort fest ein `H`.
+
+**Die Abrechnungspositionsnummer ist für Hebammenhilfe vier- oder fünfstellig**
+(Anlage 3, Abschnitt 8.2.6); seit Leistungsdatum 01.11.2025 gilt das
+fünfstellige Verzeichnis. Die Vorbelegung des Projekts führt neun Stellen und
+ist damit falsch; `PositionsnummerRegel` warnt, sperrt aber nicht, weil das
+Verzeichnis dem Projekt nicht vorliegt. Das Tarifkennzeichen ist fünfstellig
 und vertraglich vereinbart. Die Positionsnummer muss für den Leistungsbereich
 gültig sein — welche Nummern zulässig sind, steht in Anlage 3, Abschnitt 8.2.
 
@@ -213,4 +228,5 @@ Ehrlich zu benennen, damit niemand sich darauf verlässt:
   aber nicht auf fachliche Zulässigkeit geprüft.
 - Es gibt keine Stornierung und keine Nachberechnung.
 - Der Umsatzsteuersatz ist fest mit 19 hinterlegt.
-- Es wird nur der Leistungsbereich SGS H mit Abrechnungscode `61` abgedeckt.
+- Die Abrechnungspositionsnummer der Vorbelegung ist keine gültige
+  Hebammenposition, siehe oben.

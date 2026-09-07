@@ -23,15 +23,16 @@ Erledigt und geprüft:
 
 - Aufteilung in `gkv-core` (ohne JavaFX, per Enforcer erzwungen) und `gkv-ui`
 - Hibernate 6.6 mit `jakarta.persistence`, SQLite-Persistenz instand gesetzt
-- Validierungsstufe als Tor vor dem Versand, **sieben Regeln**
+- Validierungsstufe als Tor vor dem Versand, **acht Regeln**
 - Kassen-Kommunikation: Antwortauswertung berichtigt, simulierte Gegenstelle
 - Datenablage im Benutzerprofil, eigenständiges Windows-Paket über `jpackage`
 - `View` von 1438 auf rund 300 Zeilen zerlegt, fünf Masken herausgelöst
 - Oberfläche: Seitenleiste, Listen, Meldungsecke, Stylesheet, Programmsymbol
 - Feldprüfung mit Erklärung am Feld, IK gegen die Prüfziffer
 - Blaupausen mit einstellbarem Preis je Termin
-- **415 Tests** (177 Kern, 238 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
-- **Einstellungen** in einer eigenen JSON-Datei, samt Dunkelmodus
+- **430 Tests** (192 Kern, 238 Oberfläche), `BUILD SUCCESS`, Checkstyle 10 Warnungen
+- **Einstellungen** in der Tabelle `einstellung` der Datenbank, samt Dunkelmodus
+- **Leistungsbereich und logischer Dateiname** im UNB nach Anhang 1, nicht mehr erfunden
 - Zwei Reviews über den Branch gelaufen, **alle vierzehn Funde behoben**
 - Das Paket ist gebaut und gestartet; das Programm heißt „GKV-Abrechnung"
 - Fünf Skills unter `.claude/skills/`, Dokumentation und Diagramme aktuell
@@ -198,15 +199,41 @@ for f in $(find gkv-core/src/main/java gkv-ui/src/main/java -name "*.java"); do
     && echo "unreferenziert: $f"
 done
 ```
-
 ### D. Fachliche Lücken
 
 Nach Nutzen geordnet:
 
+0. **Warnungen erreichen den Bildschirm nicht.** *Gefunden am 07.09.2026, noch
+   offen — und die dringendste Lücke in dieser Liste.* Die Dokumentation sagt:
+   „Nur Fehler halten den Versand auf, Hinweise werden gemeldet, verhindern
+   aber nichts." **Der zweite Halbsatz stimmt nicht.**
+   `DtaDispatchService.generateAndRoute` sammelt den Prüfbericht, wirft bei
+   `hatFehler()` eine `DtaValidierungsException` — und lässt den Bericht sonst
+   fallen. Die Oberfläche zeigt ihn nur im Fehlerfall
+   (`AbrechnungsMaske`, `catch (DtaValidierungsException)`). **Eine Warnung,
+   die niemand sieht, ist keine Warnung.** Betroffen sind alle Warnungen und
+   Hinweise, nicht nur die neue `PositionsnummerRegel`.
+
+   Der Weg dahin ist klar, aber nicht klein: `generateAndRoute` müsste statt
+   `List<DispatchBatch>` ein Ergebnis mit Lieferungen **und** Bericht liefern.
+   Das zieht `AbrechnungService.createAndDispatch`, die Schnittstelle
+   `Abrechnungslauf` und `AbrechnungsMaske` nach sich, dazu rund fünfzehn
+   Teststellen. **Nicht heimlich nebenbei zu machen** — deshalb steht es hier
+   und nicht im letzten Commit.
+
+   Zwei Umwege sind geprüft und verworfen: eine zweite Prüfung in der Maske
+   würde `referenzen.naechste()` ein zweites Mal ziehen und
+   Datenaustauschreferenzen verbrennen; ein Rückrufe entgegennehmender
+   Konstruktorparameter am Versanddienst erreicht die Oberfläche nicht, weil
+   `AbrechnungService` den Dienst selbst aufbaut.
+
 1. **Stornierung und Nachberechnung** — heute gar nicht vorhanden. Sobald real
    abgerechnet wird, wird das gebraucht.
-2. **Weitere Leistungsbereiche** — abgedeckt ist nur SGS H mit Abrechnungscode
-   `61`. Die Struktur steht, es fehlen die Daten aus Anlage 3.
+2. **Die Abrechnungspositionsnummer ist keine Hebammenposition.** Für
+   Hebammenhilfe sind vier oder fünf Stellen vorgesehen (Anlage 3, Abschnitt
+   8.2.6), die Vorbelegung führt neun. Es fehlt das bundeseinheitliche
+   Positionsnummernverzeichnis der Hebammenhilfe-Vergütungsvereinbarung.
+   `PositionsnummerRegel` warnt — siehe aber Punkt 0.
 3. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
    fachliche Zulässigkeit geprüft. Dafür bräuchte es die Schlüsseltabellen aus
    Anlage 3 als JSON — dann wäre es eine weitere `ValidationRule`.
@@ -214,66 +241,157 @@ Nach Nutzen geordnet:
    schreibt `REC+00000000:0` und leitet die Belegnummer aus Zeit und laufender
    Nummer ab. Eine echte Sammel- und Einzelrechnungsnummer führt das Programm
    nicht. Vor einem echten Versand zu klären.
+5. **Weitere Leistungsbereiche.** Wählbar sind die Abrechnungscodes `50`
+   (Hebamme) und `61` (Rehabilitationssport); `dta.Leistungsbereich` kennt
+   bereits alle Sammelgruppenschlüssel aus Anlage 3. Es fehlen nur die
+   Einträge in `codes/abrechnungscodes.json`.
 
-### E. Echter Übermittlungsweg — durchdacht am 07.09.2026
+### E. Echter Übermittlungsweg — nachrecherchiert am 07.09.2026 (Abend)
 
-**Das Konzept steht jetzt in der Dokumentation**, Kapitel „Der Weg zur Kasse".
-Grundlage ist die Technische Anlage (Anlage 1, Version 21), die im Projekt
-liegt und bis dahin niemand für diese Frage gelesen hatte. Hier nur, was daraus
-für die Arbeit folgt.
+**Das Konzept steht in der Dokumentation**, Kapitel „Der Weg zur Kasse", und es
+ist am Abend des 07.09.2026 vollständig überarbeitet worden. Der Grund ist
+unangenehm und lehrreich zugleich.
 
-#### Drei Annahmen im Projekt waren falsch
+#### Die „fehlenden" Unterlagen fehlten nicht — sie waren nur nicht geholt
 
-**1. Empfänger ist nicht die Kasse, sondern die Datenannahmestelle.** Die
-Technische Anlage ist eindeutig: *„Für jede Datenannahmestelle mit
-Entschlüsselungsbefugnis ist je Kassenart eine Nutzdatendatei (UNB bis UNZ) zu
-erstellen."* Unser `billing-office-endpoints.json` führt 23 einzelne Kassen und
-schreibt deren IK als Empfänger ins UNB. **Für den Dateiversand ins
-Testverzeichnis ist das folgenlos, für einen echten Versand ist es falsch.**
-Die Zuordnung Kasse → Annahmestelle steht in der **Kostenträgerdatei** der
-Kassenart, die wir nicht haben.
+Am Vormittag stand hier, es fehlten die Kostenträgerdatei, der Anhang 1
+(Übermittlungsverfahren) und der Anhang 2 (Testverfahren), und deshalb sei
+Abschnitt E blockiert. **Alle drei stehen frei zum Herunterladen** auf
+`gkv-datenaustausch.de`, dem Portal des GKV-Spitzenverbandes. Sie liegen jetzt
+unter `Information/`.
 
-**2. Die Auftragsdatei fehlt.** Zu jedem Übermittlungsvorgang gehört neben der
-Nutzdatendatei eine Auftragsdatei; sie ist in den „Richtlinien für den
-Datenaustausch mit den gesetzlichen Krankenkassen" beschrieben — eine
-Unterlage, die im Projekt ebenfalls fehlt.
+> **Merksatz.** *Eine Unterlage, die niemand gesucht hat, ist nicht
+> unauffindbar.* „Liegt uns nicht vor" ist eine Aussage über den eigenen
+> Schreibtisch und keine über die Welt. Wer daraus eine Blockade macht, hat
+> nicht recherchiert, sondern aufgehört.
 
-**3. Das Testkennzeichen stand fest auf „Erprobung".** *Erledigt am
-07.09.2026*, siehe unten.
+Dazu kam: die beiden verbindlichen Anlagen im Projekt waren vom Juli und
+inzwischen überholt. Anlage 1 liegt jetzt in Version 21 (heute gültig) **und**
+Version 22 (ab 01.02.2027) vor, Anlage 3 im Stand vom 21.05.2026.
 
-#### Was zu beschaffen ist, und was das für die Reihenfolge heißt
+#### Drei Angaben im Programm waren erfunden — zwei sind berichtigt
 
-Nichts davon lässt sich programmieren: Betriebsstätten-IK, Zertifikat einer
-anerkannten Stelle, Zugangsdaten, Kostenträgerdatei, und die beiden fehlenden
-Anhänge (Übermittlungsverfahren und Testverfahren).
+**1. Der Leistungsbereich im UNB stand fest auf `H`.** *Erledigt.* Das sechste
+Element des UNB ist nach Anlage 1, Abschnitt 5.4 der
+**Leistungserbringer-Sammelgruppenschlüssel** aus Anlage 3, Abschnitt 8.1.14.
+`H` ist „Leistungserbringer von Rehabilitationssport". Für eine Hebamme gilt
+**`F`**, Abrechnungscode **50**. Der Wert stammte aus `Valide.DTA`, das
+denselben Bereich führt — die Referenzdatei ist in sich stimmig und in dieser
+Sache trotzdem nicht die einer Hebamme. Jetzt leitet `Leistungsbereich` den
+Buchstaben aus dem Abrechnungscode ab, und die Vorbelegung in
+`Leistungsparameter` steht auf 50.
 
-**Die Empfehlung steht in der Dokumentation: erst C, dann B, dann A.**
-Erzeugen und prüfen (heute), dann über eine Abrechnungsstelle abrechnen
-(Rechnungsart 2 ist dafür vorgesehen), und selbst übermitteln erst, wenn das
-Übrige läuft. Der Grund ist nicht Bequemlichkeit: **die Beanstandungen, die
-über eine Abrechnungsstelle zurückkommen, sind die beste Vorbereitung auf die
-Erprobung.**
+**2. Der logische Dateiname war frei gebildet.** *Erledigt.* Er hieß `HEB` plus
+Datum plus laufende Nummer — elf Stellen, und sonst nichts Richtiges. Anhang 1,
+Abschnitt 4.2 gibt ihn genau vor: `SL` + Stellen 3–8 des Absender-IK + `S` oder
+`A` + Abrechnungsmonat. Für IK 261914007 im September also `SL191400S09`. Jetzt
+in `LogischerDateiname`.
+
+**3. Die Abrechnungspositionsnummer ist neunstellig und damit falsch.** *Offen,
+und bewusst nicht erfunden.* Für Hebammenhilfe sind nach Anlage 3, Abschnitt
+8.2.6 **vier oder fünf Stellen** vorgesehen; seit Leistungsdatum 01.11.2025
+gilt das fünfstellige Verzeichnis. Eine richtige Nummer steht im
+bundeseinheitlichen Positionsnummernverzeichnis der
+Hebammenhilfe-Vergütungsvereinbarung, das dem Projekt nicht vorliegt.
+`PositionsnummerRegel` **warnt** bei jedem Lauf, hält ihn aber nicht auf.
+
+> **Merksatz.** *Eine Sperre ohne Ausgang ist keine Sorgfalt.* Ein Fehler wäre
+> hier die strengere und die unbrauchbarere Wahl gewesen: er hielte jede
+> Abrechnung an, ohne dass irgendwer sie lösen könnte. Die Warnung nennt die
+> Lücke bei jedem Lauf und lässt die Arbeit weitergehen.
+
+#### Der Empfänger steht in einer öffentlichen Datei
+
+Die Kostenträgerdatei jedes Kassenartenverbandes ist selbst eine
+EDIFACT-Datei — **im selben Segmentstil wie unsere Nutzdaten.** Der Weg von der
+Kasse auf der Karte zur Annahmestelle:
+
+```
+IDK   IK der Versichertenkarte
+ └─ VKG+01+<IK>            → Kostenträger
+      └─ VKG+03+<IK>+…+50  → Datenannahmestelle MIT Entschlüsselungsbefugnis
+           │                 (VKG+02 wäre ein Netzbetreiber OHNE)
+           └─ DFU           → Adresse: 070 E-Mail, 016 FTAM, 080 KIM
+```
+
+Nachgeschlagen und nicht angenommen: AOK-Bundesverband und vdek führen für den
+Abrechnungscode 50 **dieselbe** Stelle — IQVIA Health System Services GmbH,
+**IK 661430035**, `edi302@iqvia-hss.de`. Aus 23 Kassen in
+`billing-office-endpoints.json` wird eine sehr viel kürzere Liste.
+
+**Das ist der nächste sinnvolle Baustein**: die Kostenträgerdatei einlesen und
+den Empfänger daraus bestimmen, statt ihn zu pflegen. Der vorhandene
+`DtaDocument`-Leser trägt das Format bereits.
+
+#### KIM würde drei Bausteine überflüssig machen
+
+Wird KIM als Übermittlungsverfahren verwendet, gelten nach GGT Anlage 20 die
+Vorgaben zu **Krankenkassenkommunikationssystem, Auftragsdatei und SECON
+ausdrücklich nicht** — sie werden durch Komponenten der Telematikinfrastruktur
+ersetzt. Der DFÜ-Schlüssel `080` ist dafür vorgesehen.
+
+**Aber:** in den geprüften Kostenträgerdateien führt heute **keine**
+Annahmestelle für Sonstige Leistungserbringer eine KIM-Adresse. Es bleibt bei
+E-Mail mit verschlüsseltem Anhang. Beim nächsten Quartalsstand lohnt ein Blick.
+
+#### Was noch zu beschaffen ist
+
+Die Liste ist deutlich kürzer als heute Vormittag:
+
+- ein eigenes **Betriebsstätten-IK**
+- ein **Zertifikat** des ITSG Trust Centers: **79 € zzgl. USt.** für den
+  Erstantrag, **49 €** je Folgeantrag über die Online-Schnittstelle, Gültigkeit
+  **ein Jahr**, Ausstellung in drei bis vier Arbeitstagen
+- die **Anmeldung als Kommunikationspartner** bei der Datenannahmestelle —
+  Prüfstufe 1 prüft sie ab
+- das **Positionsnummernverzeichnis** und das **Tarifkennzeichen** aus dem
+  Vertrag
+
+**Die Empfehlung bleibt: erst C, dann B, dann A** — aber aus einem anderen
+Grund als heute Vormittag. Weg A ist nicht mehr weit; was ihn versperrt hat,
+war Unkenntnis und nicht Aufwand. Die Reihenfolge hält trotzdem, weil Weg B
+echte Beanstandungen echter Kassen liefert, und genau die sind die Vorbereitung
+auf die Erprobung, die Weg A verlangt.
 
 #### Wie sich das mit den Kassen erproben lässt
 
-Das war Simons vierte Frage, und die Antwort ist erfreulich: **es ist ein
-vorgesehener Schritt, kein Behelf.** Die Technische Anlage schreibt vor, dass
-vor der ersten Übermittlung die Einzelheiten mit dem Empfänger abzustimmen und
-die ordnungsgemäße Verarbeitung zu **erproben** ist. Dazu kommt ein eigenes
-Testverfahren (Abschnitt 10), beschrieben in einem Anhang, der uns fehlt.
+**Es ist ein vorgesehener Schritt, kein Behelf.** Anhang 2 bietet das
+Prüfverfahren ausdrücklich auch Leistungserbringern an, „die ihre
+Abrechnungssoftware selbst entwickelt haben". Zwei Stufen:
 
-Praktisch heißt das: **eine** Datenannahmestelle ansprechen, das Verfahren
-abstimmen, mit `uebermittlungsart = erprobung` liefern, die Rückmeldungen
-auswerten — und erst danach auf `echt` stellen.
+| | Testverfahren | Erprobungsverfahren |
+|---|---|---|
+| Testindikator im UNB | `0` | `1` |
+| Physikalischer Name | `TSOL…` | `TSOL…` |
+| Geprüft wird | Prüfstufen 1–3 | vollständige Verarbeitung |
+| Endet | mit der Rückmeldung | mit der **Zulassung zum Echtverfahren** |
+
+Beachtenswert: **auch die Erprobungsdatei trägt den physikalischen Namen einer
+Testdatei.** Testindikator `1` und `TSOL` gehören zusammen.
 
 #### Zwei Pflichten, die nicht in der Datei stehen
 
 Die Technische Anlage verlangt eine **Dokumentation des Datenaustauschs**, zwei
-Jahre aufzubewahren, und eine **Sicherungskopie bis zur Bezahlung**. Beides
-bildet das Programm heute nicht ab, und beides gehört zum Weg in den
-Echtbetrieb. Das ist kein großer Umbau — die erzeugten Dateien liegen bereits
-in `staging`, es fehlt der Nachweis darüber, wann was wohin ging und was
-zurückkam.
+Jahre aufzubewahren, und eine **Sicherungskopie bis zur Bezahlung**. Anhang 1,
+Abschnitt 4.5 nennt die Mindestinhalte: physikalischer Dateiname,
+Erstellungsdatum, laufende Nummer, Kommunikationspartner, Beginn und Ende der
+Übermittlung, Dateigröße, Verarbeitungshinweise, Richtung, fehlerfrei oder
+fehlerhaft, im Fehlerfall der Fehlerstatus.
+
+**Das ist fast ein Nebenprodukt**: die Angaben entstehen ohnehin beim Versand,
+sie werden nur nirgends festgehalten.
+
+#### Was daraus als Arbeitsreihenfolge folgt
+
+1. **Kostenträgerdatei einlesen**, Empfänger daraus bestimmen — braucht nichts
+   von außen, ist mit dem vorhandenen Leser zu machen und ersetzt eine
+   handgepflegte Liste durch die amtliche.
+2. **Auftragsdatei** nach GGT Anlage 2, dazu der physikalische Dateiname.
+3. **Dokumentation des Datenaustauschs** — die Angaben liegen bereits vor.
+4. **Verschlüsselung** nach SECON, sobald das Zertifikat da ist.
+5. **Versandweg** hinter `BillingOfficeTransport`.
+
+Schritt 1 bis 3 hängen an nichts und niemandem.
 
 ### F. Kleinigkeiten
 
@@ -433,36 +551,58 @@ wäre eine Seite, die beim nächsten Start vergisst, was man ihr gesagt hat;
 **das ist schlechter als keine Seite.** Das war der eigentliche Aufwand an K8,
 nicht der Dunkelmodus.
 
-**Simons Entscheidung: die eigene JSON-Datei** — *„ähnlich wie die Datenbank,
-die ja auch nicht in der EXE liegt."* Genau der Punkt: sie liegt im Datenordner
-und erbt damit alles, was dafür schon geregelt ist — den Umzug beim Umbenennen
-der Anwendung, die Sicherung, und die Umlenkung über `gkv.home` in Tests und
-Werkzeugen.
+#### Der Ort war einen Tag lang der falsche
 
-Die drei erwogenen Wege, mit ihren Folgen:
+Am Vormittag wurde es eine eigene Datei `einstellungen.json` neben der
+Datenbank — Simons erster Vorschlag: *„ähnlich wie die Datenbank, die ja auch
+nicht in der EXE liegt."* Am Nachmittag hat er ihn selbst zurückgenommen:
+*„da kann es auch einfach in der DB gespeichert werden, müssen ja nicht extra
+Dateien herzaubern."*
 
-| Ort | Dafür | Dagegen |
-|---|---|---|
-| **Tabelle in der SQLite-Datei** | liegt beim Rest der Daten, wird mitgesichert, `hbm2ddl=update` legt sie an | Einstellungen sind keine Fachdaten; wer die Datenbank austauscht, verliert sie |
-| **Eigene Datei im Datenordner** (`einstellungen.json`) | unabhängig von der Datenbank, von Hand zu lesen und zu berichtigen | eine zweite Ablage mit eigenen Fehlerfällen (gesperrt, unlesbar, halb geschrieben) |
-| **`java.util.prefs`** | nichts selbst zu bauen | landet in der Windows-Registry, entzieht sich `Anwendungsverzeichnis` und damit jedem Umzug und jeder Sicherung |
+**Er hat recht, und die Begründung für die Datei war eine Behauptung ohne
+Rechnung.** Sie lautete, eine Tabelle „vermische Einstellungen mit Fachdaten"
+und ginge beim Austausch der Datenbank verloren. Nachgerechnet:
 
-#### Was daraus wurde
+| Was die Datei können sollte | Was tatsächlich gilt |
+|---|---|
+| eigener Ablageort | derselbe Ordner wie die Datenbank |
+| eigene Sicherung | dieselbe Sicherung |
+| unabhängig umziehen | zieht mit derselben `gkv.home` um |
+| Trennung von Fachdaten | eine eigene Tabelle vermischt nichts |
 
-`einstellung.Einstellungen` liest und schreibt `einstellungen.json` über
-`Anwendungsverzeichnis`; `EinstellungenMaske` zeigt sie. Vier Punkte standen
-vorher fest und haben sich gehalten:
+Übrig blieb ein zweiter Ablageweg mit eigenem Lesefehler, eigenem
+Schreibfehler und eigener Nebendatei — **Aufwand ohne Gegenwert.** Der
+Ablageort ist jetzt die Tabelle `einstellung`, Entität `Einstellungswert`,
+Zugriff über `DataRepository.ladeEinstellungen()` und
+`speichereEinstellung(...)`.
+
+> **Merksatz.** *Zwei Ablagen im selben Ordner sind nicht zwei Ablagen, sondern
+> eine mit doppelten Fehlerfällen.* Eine zweite Ablage rechtfertigt sich durch
+> das, was sie anders kann — nicht dadurch, dass sie getrennt aussieht.
+
+`java.util.prefs` war der dritte erwogene Weg und bleibt ausgeschieden: es
+landet in der Windows-Registry und entzieht sich damit `Anwendungsverzeichnis`,
+jedem Umzug und jeder Sicherung.
+
+#### Was sich gehalten hat
+
+`einstellung.Einstellungen` liest und schreibt jetzt über das Repository;
+`EinstellungenMaske` zeigt sie. Vier Punkte standen vorher fest und haben den
+Umzug überstanden:
 
 - **Ein Fehlschlag beim Lesen hält den Start nicht auf.** Vorgaben nehmen und
   weiterlaufen — wie `Leistungsparameter` bei unlesbarer Blaupause.
-- **Geschrieben wird über eine Nebendatei**, die anschließend umbenannt wird.
-  Sonst bliebe nach einem Abbruch mitten im Schreiben eine halbe Datei zurück,
-  und die vorige Fassung wäre weg, obwohl sie gereicht hätte.
+- **Geschrieben wird sofort**, nicht erst beim Beenden. Eine Anwendung, die
+  abstürzt, hat die Einstellung sonst nie gehabt.
 - **Die Umschaltung greift sofort.** Ein Schalter, der erst beim nächsten Start
   wirkt, sieht aus wie ein kaputter.
 - **Scheitert das Speichern, wirkt die Wahl trotzdem** und die Meldungsecke
   sagt, dass sie die Sitzung nicht überlebt. Die Wirkung darf nicht davon
-  abhängen, ob ein Ordner beschreibbar ist.
+  abhängen, ob sich etwas speichern lässt.
+
+Der Umzug hat den letzten Punkt sogar leichter prüfbar gemacht: statt einen
+Elternpfad anzulegen, der eine Datei ist, weist das Ersatz-Repository das
+Schreiben einfach ab.
 
 **Und die dunkle Fassung ist mehr als ein zweiter Farbblock.** Die Vorschau hat
 am ersten Bild zwei Stellen gefunden, die kein Test gefunden hätte: die Schrift
@@ -475,9 +615,9 @@ Angabe an `.root` wirkt darauf nicht.
 > Hellen knapp lesbar ist, verschwindet im Dunkeln — und das sieht kein Test.
 > `Vorschau` zeichnet deshalb beide Fassungen.
 
-**Der zweite Kandidat für die Datei war sofort da**, und er ist der wichtigere:
-die **Übermittlungsart** (Test / Erprobung / Echt). Sie stand bis dahin fest im
-Quelltext, siehe E.
+**Der zweite Kandidat für die Einstellungen war sofort da**, und er ist der
+wichtigere: die **Übermittlungsart** (Test / Erprobung / Echt). Sie stand bis
+dahin fest im Quelltext, siehe E.
 
 ## Der Weg nach Produktion
 
@@ -536,13 +676,77 @@ nicht in `einstellungen.json` (Klartext im Benutzerprofil), sondern in den
 Anmeldeinformationsspeicher des Betriebssystems. Das steht als Warnung im
 Quelltext von `Einstellungen`.
 
-## Was zuletzt geschah (07.09.2026)
+## Was zuletzt geschah (07.09.2026, Abend)
+
+Zwei Aufträge von Simon, und der zweite hat den Tag umgeschrieben.
+
+**Die Einstellungen liegen jetzt in der Datenbank**, nicht mehr in einer
+eigenen Datei. *„Da kann es auch einfach in der DB gespeichert werden, müssen
+ja nicht extra Dateien herzaubern."* Er hat recht: die Datei lag im selben
+Ordner, in derselben Sicherung, unter demselben `gkv.home` — sie konnte nichts,
+was die Datenbank nicht auch kann, und brachte einen zweiten Ablageweg mit
+eigenen Fehlerfällen mit. Einzelheiten unter K8. Die Datei hat keine Spuren
+hinterlassen: im Datenordner lag keine, sie ist nie über die Werkzeuge hinaus
+entstanden.
+
+**Und dann: „Wie genau machen wir jetzt mit der Kommunikation der
+Krankenkassen? Informiere dich auch ausführlich im Internet."**
+
+Das war der eigentliche Auftrag, und er hat gesessen. Am Vormittag stand in
+Abschnitt E, das Thema sei blockiert — es fehlten die Kostenträgerdatei und
+zwei Anhänge. **Alle drei standen frei zum Herunterladen** auf
+`gkv-datenaustausch.de`, dem Portal des GKV-Spitzenverbandes. Zwanzig Minuten
+Suchen hätten am Vormittag gereicht.
+
+> **Merksatz:** *eine Unterlage, die niemand gesucht hat, ist nicht
+> unauffindbar.* „Liegt uns nicht vor" ist eine Aussage über den eigenen
+> Schreibtisch und keine über die Welt. Wer daraus eine Blockade macht, hat
+> nicht recherchiert, sondern aufgehört. Das ist die unangenehmere Schwester
+> des Merksatzes über die Rechtfertigung, die niemand nachrechnet.
+
+Was die Unterlagen zutage gefördert haben, steht vollständig in E und im
+überarbeiteten Kapitel „Der Weg zur Kasse". Die drei Kurzfassungen:
+
+**Der Empfänger steht in einer öffentlichen Datei.** Die Kostenträgerdatei
+jedes Kassenartenverbandes ist selbst eine EDIFACT-Datei im selben Segmentstil
+wie unsere Nutzdaten. Für Hebammenhilfe führen AOK und vdek dieselbe
+Annahmestelle: IQVIA HSS, IK 661430035.
+
+**Zwei Angaben im UNB waren erfunden.** Das sechste Element ist der
+Leistungserbringer-Sammelgruppenschlüssel — bei uns stand fest ein `H`
+(Rehabilitationssport), richtig ist `F` (Hebammen). Und der logische Dateiname
+hieß `HEB` plus Datum: elf Stellen, aber Anhang 1, Abschnitt 4.2 gibt ihn genau
+vor. Beides ist berichtigt, beides wäre in Prüfstufe 2 oder 3 aufgefallen.
+
+> **Merksatz:** *eine Angabe, die aus der Beispieldatei stammt, ist nicht
+> deshalb richtig, weil die Beispieldatei richtig ist.* `Valide.DTA` ist in
+> sich stimmig — und rechnet Rehabilitationssport ab, nicht Hebammenhilfe. Wer
+> eine Vorlage übernimmt, übernimmt auch ihren Fall.
+
+**Die dritte erfundene Angabe bleibt stehen**, und zwar mit Ansage: die
+Abrechnungspositionsnummer ist neunstellig, für Hebammenhilfe sind vier oder
+fünf Stellen vorgesehen. Eine richtige wäre zu erfinden — das Verzeichnis liegt
+nicht vor. `PositionsnummerRegel` **warnt** deshalb bei jedem Lauf, statt zu
+sperren: eine Sperre ohne Ausgang wäre die strengere und die unbrauchbarere
+Wahl.
+
+Die Empfehlung **erst C, dann B, dann A** hält, aber aus einem anderen Grund
+als am Vormittag: Weg A ist nicht mehr weit — ein Zertifikat kostet 79 € und
+gilt ein Jahr. Die Reihenfolge hält, weil Weg B echte Beanstandungen echter
+Kassen liefert, und genau die sind die Vorbereitung auf die Erprobung.
+
+**Nächster Baustein, der an nichts und niemandem hängt:** die Kostenträgerdatei
+einlesen und den Empfänger daraus bestimmen. Der vorhandene
+`DtaDocument`-Leser trägt das Format bereits.
+
+## Was davor geschah (07.09.2026, Vormittag)
 
 Drei Dinge: die Einstellungsdatei, der Weg zu den Kassen — und ein Fund, der
 aus dem zweiten in den ersten hineinragte.
 
-**Die Einstellungen liegen jetzt in `einstellungen.json`**, neben der
-Datenbank, mit Dunkelmodus und Einstellungsseite. Einzelheiten unter K8.
+**Die Einstellungen bekamen einen Ort** — an diesem Vormittag noch eine eigene
+Datei `einstellungen.json` neben der Datenbank, dazu Dunkelmodus und
+Einstellungsseite. Der Ablageort hat nur bis zum Abend gehalten, siehe oben.
 
 **Das Übermittlungskonzept steht** (Abschnitt E und das neue Kapitel „Der Weg
 zur Kasse" in der Dokumentation). Grundlage war die Technische Anlage, die seit
@@ -756,6 +960,30 @@ gekostet hat.
 > **Wer einen Pfad umlenkt, muss den Ordner umlenken.** Eine Anwendung schreibt
 > mehr als eine Datei, und die zweite fällt erst auf, wenn jemand hinsieht — im
 > Zweifel nach 98 Dateien im Ausgangsordner des Benutzers.
+
+> **Eine Unterlage, die niemand gesucht hat, ist nicht unauffindbar.** „Liegt
+> uns nicht vor" ist eine Aussage über den eigenen Schreibtisch und keine über
+> die Welt. Drei Dokumente galten in diesem Papier als fehlend und damit als
+> Grund für eine Blockade; alle drei standen frei zum Herunterladen beim
+> GKV-Spitzenverband. Wer aus einer Lücke eine Blockade macht, hat nicht
+> recherchiert, sondern aufgehört.
+
+> **Eine Angabe aus der Beispieldatei ist nicht richtig, weil die Beispieldatei
+> richtig ist.** `Valide.DTA` ist in sich stimmig — und rechnet
+> Rehabilitationssport ab, nicht Hebammenhilfe. Aus ihr stammten der
+> Leistungsbereich `H`, der Abrechnungscode `61` und eine neunstellige
+> Positionsnummer. Wer eine Vorlage übernimmt, übernimmt auch ihren Fall.
+
+> **Eine Sperre ohne Ausgang ist keine Sorgfalt.** Bei der falschen
+> Positionsnummer wäre ein Fehler die strengere und die unbrauchbarere Wahl
+> gewesen: er hielte jede Abrechnung an, ohne dass irgendwer sie lösen könnte,
+> solange das Verzeichnis fehlt. Eine Warnung, die bei jedem Lauf erscheint,
+> nennt dieselbe Lücke und lässt die Arbeit weitergehen.
+
+> **Zwei Ablagen im selben Ordner sind nicht zwei Ablagen, sondern eine mit
+> doppelten Fehlerfällen.** Die Einstellungsdatei sollte „unabhängig von der
+> Datenbank" sein — sie lag daneben, wurde mit ihr gesichert und zog mit ihr
+> um. Eine zweite Ablage rechtfertigt sich durch das, was sie anders kann.
 
 ## Fallstricke, die schon Zeit gekostet haben
 

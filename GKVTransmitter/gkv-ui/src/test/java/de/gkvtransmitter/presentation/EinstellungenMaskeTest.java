@@ -5,9 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import de.gkvtransmitter.einstellung.Einstellung;
 import de.gkvtransmitter.einstellung.Einstellungen;
@@ -37,11 +33,12 @@ import javafx.scene.layout.Region;
 @DisplayName("Einstellungen (Maske)")
 class EinstellungenMaskeTest {
 
-    @TempDir
-    private Path ordner;
+    /** Ein erfundener, aber wiedererkennbarer Ablageort. */
+    private static final String ORT = "C:\\Daten\\GKV-Abrechnung\\database.db";
 
     private AppMessages texte;
     private AufzeichnendeMeldungen meldungen;
+    private SpeicherRepository datenbank;
     private Einstellungen einstellungen;
     private List<String> angewandt;
 
@@ -54,7 +51,8 @@ class EinstellungenMaskeTest {
     void aufsetzen() {
         texte = new AppMessages("/messages/ui-messages.json");
         meldungen = new AufzeichnendeMeldungen();
-        einstellungen = Einstellungen.laden(ordner.resolve(Einstellungen.DATEINAME));
+        datenbank = new SpeicherRepository();
+        einstellungen = Einstellungen.aus(datenbank, ORT);
         angewandt = new ArrayList<>();
     }
 
@@ -86,14 +84,14 @@ class EinstellungenMaskeTest {
     }
 
     @Test
-    @DisplayName("Die Wahl steht danach in der Datei")
+    @DisplayName("Die Wahl steht danach in der Datenbank")
     void ueberlebtDenNeustart() {
         JavaFxLaufzeit.aufFxFaden(() ->
                 auswahl(maske(), EinstellungenMaske.ID_DARSTELLUNG)
                         .getSelectionModel().select(texte.get("settings.appearance.dark")));
 
         assertEquals(EinstellungenMaske.DUNKEL,
-                Einstellungen.laden(ordner.resolve(Einstellungen.DATEINAME)).get(Einstellung.DARSTELLUNG));
+                Einstellungen.aus(datenbank).get(Einstellung.DARSTELLUNG));
     }
 
     @Test
@@ -106,18 +104,18 @@ class EinstellungenMaskeTest {
                         .getSelectionModel().select(texte.get("settings.appearance.light")));
 
         assertEquals(EinstellungenMaske.HELL,
-                Einstellungen.laden(ordner.resolve(Einstellungen.DATEINAME)).get(Einstellung.DARSTELLUNG));
+                Einstellungen.aus(datenbank).get(Einstellung.DARSTELLUNG));
         assertEquals(List.of(EinstellungenMaske.HELL), angewandt);
     }
 
     @Test
-    @DisplayName("Die Maske nennt den Ablageort der Datei")
+    @DisplayName("Die Maske nennt den Ablageort der Datenbank")
     void nenntDenOrt() {
         JavaFxLaufzeit.aufFxFaden(() -> {
             Label ort = (Label) maske().lookup("#" + EinstellungenMaske.ID_ORT);
 
-            assertNotNull(ort, "Wer sichern oder mitnehmen will, muss wissen, wo die Datei liegt");
-            assertTrue(ort.getText().endsWith(Einstellungen.DATEINAME), ort.getText());
+            assertNotNull(ort, "Wer sichern oder mitnehmen will, muss wissen, wo die Datenbank liegt");
+            assertEquals(ORT, ort.getText());
         });
     }
 
@@ -141,13 +139,13 @@ class EinstellungenMaskeTest {
         }
 
         @Test
-        @DisplayName("Die Wahl steht danach in der Datei")
+        @DisplayName("Die Wahl steht danach in der Datenbank")
         void wirdGespeichert() {
             JavaFxLaufzeit.aufFxFaden(() ->
                     auswahl(maske(), EinstellungenMaske.ID_UEBERMITTLUNG)
                             .getSelectionModel().select(texte.get("settings.transfer.live")));
 
-            assertEquals("echt", Einstellungen.laden(ordner.resolve(Einstellungen.DATEINAME))
+            assertEquals("echt", Einstellungen.aus(datenbank)
                     .get(Einstellung.UEBERMITTLUNGSART));
         }
 
@@ -177,24 +175,22 @@ class EinstellungenMaskeTest {
     /**
      * Wenn sich nichts speichern laesst.
      *
-     * <p>Nachgestellt ueber einen Elternpfad, der eine Datei ist. Die Wahl muss
-     * trotzdem wirken - sonst laesst sich die Anwendung nicht mehr bedienen,
-     * weil ein Ordner klemmt - und die Meldungsecke muss sagen, dass sie die
-     * Sitzung nicht ueberlebt.</p>
+     * <p>Nachgestellt ueber eine Datenbank, die jedes Schreiben abweist. Die
+     * Wahl muss trotzdem wirken - sonst laesst sich die Anwendung nicht mehr
+     * bedienen, weil eine Datei klemmt - und die Meldungsecke muss sagen, dass
+     * sie die Sitzung nicht ueberlebt.</p>
      */
     @Test
     @DisplayName("Laesst sich nichts speichern, wirkt die Wahl trotzdem und wird gemeldet")
-    void nichtSpeicherbar() throws IOException {
-        Path keinOrdner = ordner.resolve("eine-datei");
-        Files.writeString(keinOrdner, "kein Ordner");
-        einstellungen = Einstellungen.laden(keinOrdner.resolve(Einstellungen.DATEINAME));
+    void nichtSpeicherbar() {
+        datenbank.lassSpeichernScheitern();
 
         JavaFxLaufzeit.aufFxFaden(() -> {
             auswahl(maske(), EinstellungenMaske.ID_DARSTELLUNG)
                     .getSelectionModel().select(texte.get("settings.appearance.dark"));
 
             assertEquals(List.of(EinstellungenMaske.DUNKEL), angewandt,
-                    "Die Wirkung darf nicht davon abhaengen, ob eine Datei beschreibbar ist");
+                    "Die Wirkung darf nicht davon abhaengen, ob sich etwas speichern laesst");
             assertEquals(texte.get("settings.notSaved"), meldungen.einzige().text());
             assertFalse(meldungen.leer());
         });

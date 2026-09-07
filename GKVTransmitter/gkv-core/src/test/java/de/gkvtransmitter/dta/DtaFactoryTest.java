@@ -26,7 +26,10 @@ class DtaFactoryTest {
         String dta = DtaFactory.buildDtaFor(abrechnung, 1L, String.valueOf(provider.getIk()), String.valueOf(patient.getKassenIk()));
 
         assertTrue(dta.contains("UNB+UNOC:3+104940005+101560000+"));
-        assertTrue(dta.contains("+00001+H+HEB"));
+        // Sechstes Element: der Leistungsbereich. F = Hebammen, abgeleitet aus
+        // dem Abrechnungscode 50 - dort stand bis zum 07.09.2026 fest ein H.
+        // Siebtes: der logische Dateiname nach Anhang 1, Abschnitt 4.2.
+        assertTrue(dta.contains("+00001+F+SL494000S"), dta);
         assertTrue(dta.contains("UNH+00001+SLGA:21:0:0'"));
         assertTrue(dta.contains("UNH+00002+SLLA:21:0:0'"));
         assertTrue(dta.contains("UST+19'"));
@@ -34,7 +37,7 @@ class DtaFactoryTest {
         assertTrue(dta.contains("GES+99+45000,00+45000,00'"));
         assertTrue(dta.contains("INV+000000000001"));
         assertTrue(dta.contains("NAD+BEISPIEL+ANNA+19900101+MUSTERSTRASSE 1+12345+ORT'"));
-        assertTrue(dta.contains("ENF+01+61:00000+306050601+3,00+15000,00+"));
+        assertTrue(dta.contains("ENF+01+50:00000+306050601+3,00+15000,00+"));
         assertTrue(dta.contains("BES+45000,00'"));
         assertTrue(dta.contains("UNZ+000002+00001'"));
     }
@@ -109,15 +112,24 @@ class DtaFactoryTest {
         void laesstDieVorbelegungGreifen() {
             String dta = dtaMitBlaupause("\"Umsatzsteuersatz\":\"7\"", 1);
 
-            assertTrue(dta.contains("ENF+01+61:00000+306050601+"),
+            assertTrue(dta.contains("ENF+01+50:00000+306050601+"),
                     "Vorbelegung greift nicht mehr:\n" + dta);
         }
     }
 
+    /**
+     * Der logische Dateiname im UNB.
+     *
+     * <p>Er hiess bis zum 07.09.2026 {@code HEB} plus Datum plus laufende
+     * Nummer - elf Stellen, aber frei erfunden. Anhang 1 zur Anlage 1,
+     * Abschnitt 4.2 gibt ihn genau vor, siehe {@link LogischerDateiname}.</p>
+     */
     @Test
-    void applicationReferenceHasElevenCharacters() {
-        String ref = DtaFactory.buildApplicationRef(java.time.LocalDateTime.of(2026, 5, 30, 20, 17), 12);
+    @org.junit.jupiter.api.DisplayName("Der logische Dateiname folgt Anhang 1, nicht der Belegnummer")
+    void logischerDateinameFolgtDerVorgabe() {
+        String ref = LogischerDateiname.bilde("261914007", true, java.time.LocalDate.of(2026, 5, 30));
+
         assertEquals(11, ref.length());
-        assertTrue(ref.startsWith("HEB"));
+        assertEquals("SL191400S05", ref);
     }
 }

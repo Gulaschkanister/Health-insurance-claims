@@ -91,8 +91,25 @@ public record Leistungsparameter(
      * Tor abfaengt</b> - dieselbe Entscheidung wie beim fehlenden Geburtsdatum
      * in {@code DtaFactory.buildNadSegment}.</p>
      */
+    /**
+     * Der Abrechnungscode ist seit dem 07.09.2026 die 50.
+     *
+     * <p>Er stand auf 61 - "Leistungserbringer von Rehabilitationssport" nach
+     * Anlage 3, Abschnitt 8.1.5. Fuer eine Hebamme gilt <b>50 =
+     * Hebamme/Entbindungspfleger</b>, Sammelgruppe F. Der Wert stammte aus
+     * {@code Information/Valide.DTA}; die Referenzdatei ist in sich stimmig und
+     * in dieser Sache trotzdem nicht die einer Hebamme.</p>
+     *
+     * <p><b>Die Positionsnummer bleibt bis auf Weiteres falsch</b>, und das ist
+     * Absicht: fuer Hebammenhilfe sind nach Anlage 3, Abschnitt 8.2.6 vier oder
+     * fuenf Stellen vorgesehen, hier stehen neun. Eine richtige waere zu
+     * erfinden - das bundeseinheitliche Positionsnummernverzeichnis der
+     * Hebammenhilfe-Verguetungsvereinbarung liegt dem Projekt nicht vor.
+     * {@code PositionsnummerRegel} macht die Luecke sichtbar, statt sie zu
+     * verdecken.</p>
+     */
     public static final Leistungsparameter VORBELEGUNG = new Leistungsparameter(
-            BigDecimal.ZERO, "61", "00000", "306050601", BigDecimal.ZERO, "19");
+            BigDecimal.ZERO, "50", "00000", "306050601", BigDecimal.ZERO, "19");
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 

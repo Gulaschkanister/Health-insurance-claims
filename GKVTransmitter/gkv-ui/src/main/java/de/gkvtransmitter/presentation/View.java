@@ -69,14 +69,17 @@ public class View {
         this.serviceProviderPopulator = new ServiceProviderFieldPopulator();
         this.abrechnungService = java.util.Objects.requireNonNull(abrechnungService,
             "abrechnungService must not be null");
+        // Erst hier und nicht am Feld: die Einstellungen kommen aus der
+        // Datenbank, und die haelt der Controller.
+        this.einstellungen = de.gkvtransmitter.einstellung.Einstellungen.aus(
+                controller.getDatabase(), controller.getDatenbankOrt());
     }
 
     /** Das Stylesheet der Anwendung. Ohne es sieht alles nach JavaFX-Vorgabe aus. */
     static final String STYLESHEET = "/style/gkv.css";
 
-    /** Die Einstellungen aus {@code einstellungen.json} im Datenordner. */
-    private final de.gkvtransmitter.einstellung.Einstellungen einstellungen =
-            de.gkvtransmitter.einstellung.Einstellungen.laden();
+    /** Die Einstellungen aus der Tabelle {@code einstellung} der Datenbank. */
+    private final de.gkvtransmitter.einstellung.Einstellungen einstellungen;
 
     /**
      * Setzt die helle oder dunkle Fassung.
