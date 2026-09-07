@@ -341,7 +341,10 @@ Die Liste ist deutlich kürzer als heute Vormittag:
 - ein eigenes **Betriebsstätten-IK**
 - ein **Zertifikat** des ITSG Trust Centers: **79 € zzgl. USt.** für den
   Erstantrag, **49 €** je Folgeantrag über die Online-Schnittstelle, Gültigkeit
-  **ein Jahr**, Ausstellung in drei bis vier Arbeitstagen
+  **ein Jahr**, Ausstellung in drei bis vier Arbeitstagen. **Einmal für alle
+  Kassen** — das Zertifikat hängt am eigenen IK, nicht am Empfänger. Die
+  öffentlichen Schlüssel aller Datenannahmestellen kommen als Schlüsselliste
+  (`annahme-sha256.key`) kostenlos mit
 - die **Anmeldung als Kommunikationspartner** bei der Datenannahmestelle —
   Prüfstufe 1 prüft sie ab
 - das **Positionsnummernverzeichnis** und das **Tarifkennzeichen** aus dem
@@ -731,9 +734,10 @@ sperren: eine Sperre ohne Ausgang wäre die strengere und die unbrauchbarere
 Wahl.
 
 Die Empfehlung **erst C, dann B, dann A** hält, aber aus einem anderen Grund
-als am Vormittag: Weg A ist nicht mehr weit — ein Zertifikat kostet 79 € und
-gilt ein Jahr. Die Reihenfolge hält, weil Weg B echte Beanstandungen echter
-Kassen liefert, und genau die sind die Vorbereitung auf die Erprobung.
+als am Vormittag: Weg A ist nicht mehr weit — ein Zertifikat kostet 79 €, gilt
+ein Jahr und deckt alle Kassen ab. Die Reihenfolge hält, weil Weg B echte
+Beanstandungen echter Kassen liefert, und genau die sind die Vorbereitung auf
+die Erprobung.
 
 **Nächster Baustein, der an nichts und niemandem hängt:** die Kostenträgerdatei
 einlesen und den Empfänger daraus bestimmen. Der vorhandene

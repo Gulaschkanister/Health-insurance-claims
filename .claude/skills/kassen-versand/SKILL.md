@@ -186,8 +186,10 @@ Die vorletzte Stelle im VKG ist der Abrechnungscode; für Hebammenhilfe die
 `50`. Aufbau vollständig in `Information/Anhang_3_Kostentraegerdatei_V10_20260414.pdf`.
 
 Zusätzlich benötigt: ein Zertifikat des ITSG Trust Centers (79 € zzgl. USt.
-erstmalig, ein Jahr gültig), ein eigenes Betriebsstätten-IK und die Anmeldung
-als Kommunikationspartner bei der Annahmestelle.
+erstmalig, dann 49 € jährlich, ein Jahr gültig) — **eines je eigenem IK, nicht
+eines je Kasse**; die öffentlichen Schlüssel aller Datenannahmestellen kommen
+als Schlüsselliste kostenlos mit. Dazu ein eigenes Betriebsstätten-IK und die
+Anmeldung als Kommunikationspartner bei der Annahmestelle.
 
 **Zu jeder Nutzdatendatei gehört eine Auftragsdatei** (GGT Anlage 2). Ohne sie
 scheitert die Lieferung in Prüfstufe 1. Ausnahme: bei Übermittlung über KIM

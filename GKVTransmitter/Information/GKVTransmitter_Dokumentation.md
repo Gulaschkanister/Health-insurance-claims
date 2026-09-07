@@ -315,6 +315,8 @@ Die eigene Prüfung vor dem Versand ist kein Beiwerk: der Absender hat sicherzus
 
 **Empfehlung: C, dann B, dann A — mit einer Einschränkung gegenüber der Einschätzung vom Vortag.** Weg A ist näher, als er aussah. Was ihn versperrt hat, war nicht die Schwierigkeit, sondern die Unkenntnis: die fehlenden Anhänge waren frei verfügbar, der Empfänger steht in einer öffentlichen Datei, und das Zertifikat kostet **79 € zuzüglich Umsatzsteuer** für den Erstantrag, danach **49 €** je Folgeantrag über die Online-Schnittstelle. Es gilt **ein Jahr** und wird in drei bis vier Arbeitstagen ausgestellt; beantragt wird es beim [ITSG Trust Center für sonstige Leistungserbringer](https://www.itsg.de/produkte/trust-center/zertifikat-beantragen/).
 
+> **Der Betrag fällt einmal an, nicht je Kasse.** Das Zertifikat wird auf das **eigene IK** ausgestellt und gilt für den Datenaustausch mit **allen** Datenannahmestellen. Zum Verschlüsseln wird der öffentliche Schlüssel des jeweiligen Empfängers gebraucht — den liefert das Trust Center als Schlüsselliste (`annahme-sha256.key`) zusammen mit dem Zertifikat mit, ohne weitere Kosten. Es gibt also weder eine Gebühr je Kasse noch eine je Lieferung.
+
 Trotzdem bleibt die Reihenfolge. Nicht wegen der Kosten, sondern wegen der Reihenfolge des Lernens: Weg B liefert echte Beanstandungen echter Kassen, und genau die sind die Vorbereitung auf die Erprobung, die Weg A verlangt.
 
 **Der Umbau bleibt in jedem Fall überschaubar**, weil der Transport hinter einer einzigen Schnittstelle liegt: `BillingOfficeTransport`. Erzeugung, Prüfung, Zuordnung und Auswertung der Rückmeldungen bleiben unverändert.
