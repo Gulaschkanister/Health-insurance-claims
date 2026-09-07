@@ -5,6 +5,12 @@ Stand: 7. September 2026, Branch `feature/kern-architektur`.
 Dieses Dokument ist die Übergabe: **wo das Projekt steht, was als Nächstes
 ansteht, und welche Fallstricke schon Zeit gekostet haben.**
 
+> **Für den Weg in den Echtbetrieb gibt es seit dem 07.09.2026 einen eigenen
+> Plan:** `Umsetzungsplan.md`. Dort stehen die Arbeitspakete mit Reihenfolge
+> und Abhängigkeiten, der Wartungskalender, der Fehlerkreislauf und die
+> Vorlage für spezifikationsgetriebenes Arbeiten. Dieses Dokument bleibt die
+> Übergabe des Ist-Zustands.
+
 Es enthält bewusst **keine Chronik mehr.** Bis zum 06.09.2026 war es auf 1.436
 Zeilen angewachsen, gut die Hälfte davon Nacherzählung behobener Fehler — und
 das ist die Aufgabe von `git log`. Was von einem behobenen Fehler bleiben muss,

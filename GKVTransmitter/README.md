@@ -213,6 +213,8 @@ GKVTransmitter/
 └── Information/               Fachdokumentation
     ├── GKVTransmitter_Dokumentation.md    Gesamtdokumentation (Quelle)
     ├── GKVTransmitter_Dokumentation.docx  daraus erzeugte Word-Fassung
+    ├── Umsetzungsplan.md / .docx          Weg in den Echtbetrieb, Wartung, Fehlerbehebung
+    ├── spezifikationen/       Vorlage und Spezifikationen je Arbeitspaket
     ├── Vision.md              Ziel und Architektur
     ├── *.puml / *.png         UML-Diagramme mit gerenderten Bildern
     ├── Abrechnung_Checkliste_kurz.md
@@ -233,6 +235,7 @@ bearbeiten:
 cd Information
 java -jar C:/Tools/plantuml/plantuml.jar -tpng -charset UTF-8 "*.puml"
 pandoc GKVTransmitter_Dokumentation.md -o GKVTransmitter_Dokumentation.docx --toc --toc-depth=2
+pandoc Umsetzungsplan.md -o Umsetzungsplan.docx --toc --toc-depth=2
 ```
 
 ## Agentische Unterstützung

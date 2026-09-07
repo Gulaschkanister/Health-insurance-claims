@@ -174,6 +174,8 @@ Damit lässt sich der vollständige Ablauf bis zur Rückmeldung durchspielen, oh
 
 # Der Weg zur Kasse
 
+> **Die Umsetzung dazu steht in `Umsetzungsplan.md`** — Arbeitspakete mit Reihenfolge und Abhängigkeiten, der Wartungskalender, der Umgang mit Beanstandungen und Rückmeldungen sowie die Zukunftsplanung. Dieses Kapitel sagt, *was gilt*; der Umsetzungsplan sagt, *was zu tun ist*.
+
 Dieses Kapitel beschreibt, wie eine Lieferung tatsächlich zur Krankenkasse gelangt, was davon das Programm leistet und was dafür noch fehlt.
 
 Grundlage sind die Unterlagen unter `Information/`. Sie liegen **vollständig** vor; bis zum 07.09.2026 fehlten zwei Anhänge, und ihr Fehlen war der Grund, warum drei Angaben im Programm frei erfunden waren. Sie waren nie schwer zu bekommen — sie stehen frei zum Herunterladen auf [gkv-datenaustausch.de](https://www.gkv-datenaustausch.de/leistungserbringer/sonstige_leistungserbringer/sonstige_leistungserbringer.jsp), dem Portal des GKV-Spitzenverbandes.
