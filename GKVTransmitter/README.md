@@ -214,6 +214,8 @@ GKVTransmitter/
     ├── GKVTransmitter_Dokumentation.md    Gesamtdokumentation (Quelle)
     ├── GKVTransmitter_Dokumentation.docx  daraus erzeugte Word-Fassung
     ├── Umsetzungsplan.md / .docx          Weg in den Echtbetrieb, Wartung, Fehlerbehebung
+    ├── Schulprojekt.md / .docx            Sitzungsplan der schulischen Aufarbeitung
+    ├── dokumentation/         Fortschrittsberichte je Sitzung, Bilder
     ├── spezifikationen/       Vorlage und Spezifikationen je Arbeitspaket
     ├── Vision.md              Ziel und Architektur
     ├── *.puml / *.png         UML-Diagramme mit gerenderten Bildern
