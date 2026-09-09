@@ -30,6 +30,34 @@ Die Daten, aus denen eine Abrechnung besteht, liegen ohnehin vor: wer hat wann
 welche Leistung erhalten, in welchem Umfang, bei welcher Kasse versichert.
 **Sie liegen nur in Listen und Köpfen statt in einer Datei.**
 
+## Vision — was das Programm am Ende können soll
+
+Ein Satz vorweg, an dem sich alles Weitere messen lassen muss:
+
+> **Eine einzelne Leistungserbringerin rechnet ihre Leistungen selbst mit den
+> gesetzlichen Kassen ab — ohne Abrechnungsstelle, ohne Fachwissen über das
+> Datenformat und ohne die Sorge, dass eine fehlerhafte Datei erst Wochen
+> später auffällt.**
+
+Ausformuliert heißt das: am Ende kann das Programm dies.
+
+| # | Am Ende kann das Programm … | Woran man merkt, dass es stimmt |
+|---|---|---|
+| 1 | **Stammdaten führen** — versicherte Personen, die Leistungserbringerin, Leistungsfälle und was sie kosten | Ein neuer Kurs ist in wenigen Minuten erfasst, ohne Handbuch |
+| 2 | **Aus einem Zeitraum eine Lieferung erzeugen** — je Empfänger eine, im vorgeschriebenen Format | Aus „März, diese drei Kurse" wird eine fertige Datei |
+| 3 | **Vor dem Versand prüfen** und in verständlicher Sprache sagen, was fehlt | Der Bericht nennt die Stelle und was zu tun ist, nicht nur den Feldnamen |
+| 4 | **Die Lieferung zustellen** — auf dem vorgeschriebenen Weg, an die zuständige Datenannahmestelle, verschlüsselt und signiert | Die Kasse nimmt sie an, ohne dass jemand nachfassen muss |
+| 5 | **Die Antwort einordnen** — angenommen, fachlich zurückgewiesen, Syntaxfehler, technischer Fehler | Die Anwenderin weiß nach dem Lesen, ob sie korrigieren, neu erzeugen oder nur erneut senden muss |
+| 6 | **Eine Zurückweisung nachbearbeiten**, ohne alles neu zu erfassen | Die korrigierte Abrechnung geht als neue Lieferung hinaus, mit sauberer Nummer |
+| 7 | **Einen weiteren Leistungsbereich aufnehmen** — über Einträge, nicht über Umbau | Rehabilitationssport neben Hebammenhilfe, ohne dass eine Klasse sich ändert |
+
+Und das alles **auf einem einzelnen Rechner, ohne Installation und ohne dass
+Gesundheitsdaten das Haus verlassen.**
+
+Nicht jeder dieser Punkte ist am Ende dieses Teils entschieden, und nicht jeder
+ist allein durch Programmieren erreichbar — Punkt 4 hängt an Zulassungen, die
+niemand schreiben kann. Das ist Gegenstand von Teil 04.
+
 ## Ziel dieses Teils
 
 - Festlegen, was das Programm können soll — und ebenso wichtig, was nicht.
@@ -113,6 +141,11 @@ eine prüffähige Abrechnungsdatei erzeugt — und das jede Datei prüft, bevor 
 hinausgeht.** Der Aufbau folgt dem Verfahren, nicht einem einzelnen
 Leistungsbereich; der erste bediente ist die Hebammenhilfe.
 
+Von den sieben Punkten der Vision werden damit **die ersten fünf zum Bauauftrag**
+— gegliedert in fünf Kernfähigkeiten. Die Punkte 6 und 7, Nachbearbeitung einer
+Zurückweisung und ein weiterer Leistungsbereich, bleiben Ziel, aber nicht
+Gegenstand des ersten Durchgangs.
+
 | # | Kernfähigkeit | Was dahintersteckt |
 |---|---|---|
 | 1 | **Stammdaten führen** | versicherte Personen mit ihren Versicherungsangaben, die Leistungserbringerin selbst, Leistungsfälle als Zusammenfassung — ein Kurs, eine Behandlungsserie |
@@ -145,36 +178,46 @@ Aufwand nicht.
 | **Das Programm** | erzeugt daraus die Abrechnungsdatei **und prüft sie, bevor sie das Haus verlässt** |
 | **Die Krankenkasse** | zahlt oder beanstandet |
 
-### Die Begriffe und ihre Beziehungen
+### Womit begonnen wird
 
-Bevor entschieden werden kann, wie etwas gebaut wird, muss feststehen, **wovon
-überhaupt die Rede ist** — noch nicht als Klassen eines Programms, sondern als
-Landkarte des Gegenstands.
+Ein Klassenbild des ganzen Programms wäre an dieser Stelle unbrauchbar: zu
+groß, um es zu besprechen, und zu früh, um es zu verantworten. Stattdessen
+**ein Ausschnitt von elf Klassen** — der Bereich, in dem aus einer Abrechnung
+die Nachricht entsteht. Er ist der Anfang, weil hier die Datei erzeugt wird,
+um die es im ganzen Vorhaben geht.
 
-![Fachliches Übersichtsmodell](../GKVTransmitter_Vision_Fachmodell.png)
+![Ausschnitt Nachrichtenerzeugung](../GKVTransmitter_Vision_Nachrichtenerzeugung.png)
 
-Die Begriffe sind bewusst so gewählt, dass sie den ersten Anwendungsfall
-überdauern: **Leistungsfall** statt Kurs, **versicherte Person** statt
-Teilnehmerin, **Leistungsnachweis** statt Anwesenheit. Drei Beobachtungen aus
-dem Bild prägen alles Weitere:
+Drei Dinge lassen sich daran schon besprechen, bevor eine Zeile geändert wird:
 
-| Beobachtung | Was daraus folgt |
+| Stelle | Worüber zu reden ist |
 |---|---|
-| **Die versicherte Person ist nicht die Zahlende** — zwischen Leistung und Geld steht die Kasse | An ihr hängt ein zweiter Satz Angaben: Versichertennummer, Status, Kasse. Mit der Leistung hat er nichts zu tun, ohne ihn geht trotzdem nichts |
-| **Die Lieferung ist eine eigene Sache**, kein bloßer Versandvorgang | Sie bündelt mehrere Abrechnungen an *einen* Empfänger und führt eine laufende Nummer, die sich nie wiederholen darf. Was eine Nummer führt und einen Zustand hat, gehört ins Modell |
-| **Zwischen Erzeugen und Versenden steht ein Tor** | Der Prüfbericht ist kein Nebenprodukt, sondern die Bedingung dafür, dass die Lieferung hinausgeht. Er hängt deshalb an der Lieferung und nicht neben ihr |
+| `DtaFactory` hat **keinen Zustand**, nur statische Methoden | Bequem beim Aufrufen, aber nicht austauschbar und im Test nicht ersetzbar. Ob das so bleibt, ist eine der ersten Fragen |
+| `Leistungsparameter` fällt bei unlesbarer Blaupause auf eine **Vorbelegung** zurück, statt abzubrechen | Vertretbar, weil die Prüfung ohnehin folgt — aber genau diese Rückfallebene stand einmal auf einem plausiblen Betrag statt auf null |
+| `Leistungsbereich` bildet den Abrechnungscode auf den **Sammelgruppenschlüssel** ab | Ein einziger Buchstabe im Nachrichtenkopf. Steht dort der falsche, sieht die Datei fehlerfrei aus und wird trotzdem zurückgewiesen |
 
-Auffällig ist außerdem: Die Lieferung geht **nicht an die Krankenkasse**, sondern
-an eine Datenannahmestelle. Wie sich diese Unterscheidung auswirkt, war zu
-diesem Zeitpunkt nicht absehbar — sie wird in Teil 04 zum Problem.
+Bemerkenswert ist die gestrichelte Linie zurück: Die Prüfung arbeitet nicht auf
+dem, was die Erzeugung im Speicher hatte, sondern **liest die fertige Datei
+wieder ein** — über `DtaDocument` und `DtaSegment`. Deshalb fällt ein Fehler
+auf, der erst beim Zusammensetzen entsteht, und deshalb lässt sich mit
+demselben Werkzeug auch eine fremde Datei prüfen.
+
+Das vollständige Klassenbild und das fachliche Übersichtsmodell folgen in Teil
+06, wenn genug entschieden ist, um sie zu verantworten.
 
 ### Was dauerhaft festgehalten werden muss
 
-Aus denselben Begriffen ergibt sich ein erster Entwurf der Datenhaltung. Er ist
-bewusst noch fachlich gehalten: **die Schlüssel sind hier Gedanken, keine
-Spalten.**
+Anders als der Ausschnitt oben zeigt das zweite Bild **die ganze Breite** — aber
+auf fachlicher Ebene, nicht als Schema: **die Schlüssel sind hier Gedanken, keine
+Spalten.** Ein Datenmodell verträgt das, ein Klassenbild nicht; deshalb ist das
+eine vollständig und das andere ein Ausschnitt.
 
 ![Erstes Datenmodell](../GKVTransmitter_Vision_ER.png)
+
+Auffällig darin ist ein Kasten, der in der Vision noch harmlos aussieht: Die
+Lieferung geht **nicht an die Krankenkasse**, sondern an eine Annahmestelle. Wie
+sich diese Unterscheidung auswirkt, war zu diesem Zeitpunkt nicht absehbar — sie
+wird in Teil 04 zum Thema.
 
 Die Dreiteilung ist die eigentliche Aussage des Bildes:
 

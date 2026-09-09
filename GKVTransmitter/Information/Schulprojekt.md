@@ -149,15 +149,16 @@ und nicht anders*, ist eine Projektdokumentation.
 
 # Die Diagramme
 
-Elf Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
+Zwölf Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 
 | Diagramm | Teil |
 |---|---|
-| Fachliches Übersichtsmodell (Entwurf) | 01 |
-| Erstes Datenmodell (Entwurf) | 01 |
+| Klassendiagramm-Ausschnitt: Nachrichtenerzeugung | 01 |
+| Erstes Datenmodell, fachlich | 01 |
 | Komponenten- und Abhängigkeitsdiagramm | 05 |
 | Klassendiagramm der Domäne | 06 |
-| ER-Diagramm | 07 |
+| Fachliches Übersichtsmodell | 06 |
+| ER-Diagramm aus dem echten Schema | 07 |
 | Aufbau der Nachricht | 11 |
 | Klassendiagramm des Prüfwerks | 14 |
 | Sequenzdiagramm des Abrechnungslaufs | 15 |
@@ -165,19 +166,25 @@ Elf Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 | Verteilungsdiagramm | 19 |
 | Aktivitätsdiagramm der Fehlerbehandlung | 20 |
 
-**Acht Bilder liegen bereits vor**: `GKVTransmitter_Vision_Fachmodell` und
-`_Vision_ER` in Teil 01, dazu `_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
-`_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER` in der
-Gesamtdokumentation.
+**Neun Bilder liegen bereits vor.** In Teil 01 eingebettet sind
+`GKVTransmitter_Vision_Nachrichtenerzeugung` und `_Vision_ER`;
+`_Vision_Fachmodell` ist gezeichnet, gehört aber erst in Teil 06. In der
+Gesamtdokumentation stehen `_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
+`_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER`.
 
-Von den elf Zeilen oben sind damit **fünf abgedeckt** — die Teile 01, 05, 06 und
-07. Die übrigen sechs entstehen dort, wo sie gebraucht werden.
+Von den zwölf Zeilen oben sind damit **sechs abgedeckt** — die Teile 01, 05, 06
+und 07. Die übrigen sechs entstehen dort, wo sie gebraucht werden.
 
-Die beiden Bilder aus Teil 01 sind **absichtlich Entwürfe**. Sie zeigen die
-Begriffe, bevor entschieden war, wie sie umgesetzt werden. Ihre späteren
-Gegenstücke in den Teilen 06 und 07 weichen davon ab — und genau diese
-Abweichung ist ein eigener Gegenstand der Dokumentation: sie zeigt, was sich
-beim Bauen als anders herausgestellt hat.
+**Teil 01 zeigt bewusst nicht alles.** Das Klassenbild dort ist ein Ausschnitt
+von elf Klassen aus einem Bereich — genug, um darüber zu reden, zu wenig, um zu
+erschlagen. Ein Gesamtbild aller Klassen wäre an dieser Stelle weder besprechbar
+noch zu verantworten; es folgt in Teil 06.
+
+Das Datenmodell in Teil 01 ist dagegen vollständig, aber fachlich: die Schlüssel
+sind Gedanken, keine Spalten. Ein Datenmodell verträgt diese Breite, ein
+Klassenbild nicht. Wo es vom späteren Schema abweicht, ist das ein eigener
+Gegenstand der Dokumentation — die Abweichung zeigt, was sich beim Bauen als
+anders herausgestellt hat.
 
 Das ER-Diagramm ist **aus dem tatsächlichen Datenbankschema ausgelesen**, nicht
 aus den Klassen abgeleitet. Der Unterschied ist keiner auf dem Papier: dabei kam

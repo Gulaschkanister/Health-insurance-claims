@@ -1,0 +1,185 @@
+@startuml GKVTransmitter_Vision_Nachrichtenerzeugung
+hide empty members
+skinparam shadowing false
+skinparam ranksep 50
+skinparam nodesep 30
+skinparam class {
+  BackgroundColor White
+  BorderColor #4A5A6A
+  ArrowColor #4A5A6A
+}
+skinparam package {
+  BackgroundColor #FAFBFC
+  BorderColor #8A99A8
+}
+
+title Ausschnitt: aus einer Abrechnung wird die Nachricht
+
+legend top left
+  **Elf Klassen aus einem Bereich**, nicht das ganze Programm.
+  Der Ausschnitt ist der Anfang: hier entsteht die Datei, um die es geht.
+  Das vollständige Klassenbild folgt in Teil 06.
+endlegend
+
+package "Was hineingeht" as eingang {
+
+  class Abrechnung {
+    - patient : Patient
+    - provider : ServiceProvider
+    - blueprint : Blueprint
+    - appointments : int
+    - createdAt : LocalDateTime
+  }
+
+  class Patient <<Entity>> {
+    - firstname, lastname : String
+    - street, housenumber : String
+    - plz : int
+    - kassenIk : int
+  }
+
+  class ServiceProvider <<Entity>> {
+    - firstname, lastname : String
+    - ik : int
+  }
+
+  class Blueprint <<Entity>> {
+    - name : String
+    - templateName : String
+    - payload : String
+  }
+  note bottom
+    Das Feld **payload** trägt die
+    ausgefüllten Felder als JSON —
+    in einer Textspalte.
+
+    Eine der Stellen, über die sich
+    streiten lässt: bequem beim
+    Speichern, unauffindbar beim
+    Suchen.
+  end note
+}
+
+package "Wer sie zusammensetzt" as erzeugung {
+
+  class DtaFactory <<final, nur statisch>> {
+    + buildDtaFor(a, ref, senderIk, receiverIk) : String
+    + buildDtaFor(a, ref, senderIk, receiverIk, leistung) : String
+    + buildDtaFor(a, ref, senderIk, receiverIk, leistung, art) : String
+    + writeDtaFile(inhalt, outDir, dateiname) : Path
+    --
+    - buildProviderNameSegment(provider) : String
+    - buildInvSegment(patient, leistungsdatum) : String
+    - buildNadSegment(patient) : String
+    - buildEnfSegment(a, menge, leistung) : String
+  }
+  note right
+    **Eine Klasse ohne Zustand, nur statische Methoden.**
+
+    Das ist bequem und hat einen Preis:
+    sie lässt sich nicht austauschen und
+    im Test nicht ersetzen. Ob das so
+    bleiben soll, ist eine der Fragen,
+    mit denen die Umsetzung beginnt.
+  end note
+
+  class Leistungsparameter <<record>> {
+    + einzelbetrag : BigDecimal
+    + abrechnungscode : String
+    + tarifkennzeichen : String
+    + positionsnummer : String
+    + zuzahlung : BigDecimal
+    + umsatzsteuersatz : String
+    --
+    + {static} ausBlueprint(blueprint) : Leistungsparameter
+    + {static} ausFeldern(felder) : Leistungsparameter
+    + einzelbetragFormatiert() : String
+    + leistungserbringergruppe() : String
+  }
+  note bottom
+    Liest die Werte aus der Blaupause.
+    Ist sie unlesbar, greift **VORBELEGUNG**
+    statt eines Abbruchs — die Nachricht
+    durchläuft ohnehin die Prüfung.
+
+    Diese Rückfallebene stand einmal auf
+    einem plausiblen Betrag statt auf null.
+  end note
+
+  class Leistungsbereich <<final, nur statisch>> {
+    + {static} UNBEKANNT : String = "J"
+    + {static} zuAbrechnungscode(code) : String
+  }
+  note bottom
+    Abrechnungscode → Sammelgruppen-
+    schlüssel im Nachrichtenkopf.
+
+    **Genau hier saß der Fehler**, der
+    fehlerfrei aussieht und trotzdem
+    zurückgewiesen wird.
+  end note
+
+  class LogischerDateiname <<final, nur statisch>> {
+    + {static} bilde(absenderIk, selbstAbrechnend, monat) : String
+  }
+}
+
+package "Was herauskommt und zurückgelesen wird" as ausgang {
+
+  class DtaDocument <<final>> {
+    - segments : List<DtaSegment>
+    - rohtext : String
+    --
+    + {static} parse(inhalt) : DtaDocument
+    + mitTag(tag) : List<DtaSegment>
+    + erstesMitTag(tag) : Optional<DtaSegment>
+    + anzahlMitTag(tag) : int
+  }
+
+  class DtaSegment <<record>> {
+    + tag : String
+    + elements : List<String>
+    + raw : String
+    + zeilennummer : int
+    --
+    + element(position) : String
+    + komponente(position, komponente) : String
+    + ort() : String
+  }
+}
+
+class DtaDispatchService <<Ablauf>> {
+  + generateAndRoute(abrechnungen, outDir)
+  + pruefe(abrechnungen) : ValidationReport
+}
+
+DtaDispatchService --> DtaFactory : ruft je Abrechnung
+DtaFactory --> Abrechnung
+DtaFactory --> Patient
+DtaFactory --> ServiceProvider
+DtaFactory --> Leistungsparameter
+DtaFactory --> Leistungsbereich
+DtaFactory --> LogischerDateiname
+Abrechnung --> Patient
+Abrechnung --> ServiceProvider
+Abrechnung --> Blueprint
+Leistungsparameter ..> Blueprint : liest
+DtaDocument *-- DtaSegment
+
+note as rueck #FFF8DC
+  **Die Prüfung liest die eigene Datei zurück**
+
+  Sie arbeitet nicht auf dem, was die Erzeugung
+  im Speicher hatte, sondern auf dem, was
+  tatsächlich in der Datei steht — über
+  DtaDocument und DtaSegment.
+
+  Deshalb lässt sich damit auch eine **fremde**
+  Datei prüfen. Und deshalb fällt ein Fehler auf,
+  der beim Zusammensetzen entstanden ist.
+end note
+
+rueck .. DtaDocument
+DtaFactory ..> DtaDocument : erzeugter Text\nwird zurückgelesen
+
+@enduml
