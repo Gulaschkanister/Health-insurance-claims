@@ -34,7 +34,7 @@ package "Stammdaten — werden gepflegt" {
     Steuernummer
   }
 
-  entity "Teilnehmerin" as TN {
+  entity "Versicherte Person" as VP {
     **PK** Kennung
     --
     Name
@@ -60,12 +60,12 @@ package "Stammdaten — werden gepflegt" {
     Zugangsweg
   }
 
-  entity "Gruppe (Kurs)" as GR {
+  entity "Leistungsfall" as LF {
     **PK** Kennung
     --
     Bezeichnung
     Zeitraum
-    Anzahl der Termine
+    Anzahl der Einheiten
     **FK** Leistungserbringerin
     **FK** Leistungsbeschreibung
   }
@@ -74,21 +74,22 @@ package "Stammdaten — werden gepflegt" {
     **PK** Kennung
     --
     Bezeichnung
+    Leistungsbereich
     Abrechnungsposition
     Tarifkennzeichen
-    Betrag je Termin
+    Betrag je Einheit
     Umsatzsteuersatz
   }
 }
 
 package "Bewegungsdaten — entstehen im Betrieb" {
 
-  entity "Teilnahme" as TE {
+  entity "Leistungsnachweis" as LN {
     **PK** Kennung
     --
-    **FK** Gruppe
-    **FK** Teilnehmerin
-    wahrgenommene Termine
+    **FK** Leistungsfall
+    **FK** Versicherte Person
+    erbrachte Einheiten
   }
 
   entity "Abrechnung" as AB {
@@ -97,7 +98,7 @@ package "Bewegungsdaten — entstehen im Betrieb" {
     Belegnummer
     Abrechnungszeitraum
     Betrag
-    **FK** Teilnahme
+    **FK** Leistungsnachweis
     **FK** Lieferung
   }
 
@@ -161,14 +162,14 @@ package "Betriebsdaten — einmal eingerichtet" {
   end note
 }
 
-LE ||--o{ GR
-LB ||--o{ GR
-GR ||--|{ TE
-TN ||--o{ TE
-KK ||--o{ TN
+LE ||--o{ LF
+LB ||--o{ LF
+LF ||--|{ LN
+VP ||--o{ LN
+KK ||--o{ VP
 AS ||--|{ KK
 
-TE ||--|| AB
+LN ||--|| AB
 LI ||--|{ AB
 AS ||--o{ LI
 LI ||--o{ BE
@@ -188,6 +189,19 @@ note as regel #FFF8DC
   Abrechnung einen Platz.
 end note
 
+note as bereich #EAF3FA
+  **Wo ein neuer Leistungsbereich andockt**
+
+  Nur die **Leistungsbeschreibung** trägt, was sich je
+  Bereich unterscheidet: Leistungsbereich,
+  Abrechnungsposition, Tarifkennzeichen.
+
+  Alles übrige im Bild — Personen, Fälle, Lieferungen,
+  Befunde — bleibt gleich. Ein weiterer Bereich ist
+  damit ein Eintrag, kein Umbau.
+end note
+
 regel .. BE
+bereich .. LB
 
 @enduml

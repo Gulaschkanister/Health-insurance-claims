@@ -10,29 +10,35 @@ toc-title: "Inhaltsverzeichnis"
 
 ## Ausgangslage
 
-Eine freiberuflich tätige Hebamme gibt Kurse — Geburtsvorbereitung, Rückbildung,
-Beratung in Gruppen. Die Teilnehmerinnen sind gesetzlich krankenversichert und
-zahlen diese Kurse in der Regel nicht selbst: **abgerechnet wird mit ihrer
-Krankenkasse.**
+Wer als Freiberuflerin Leistungen für gesetzlich Versicherte erbringt, rechnet
+sie nicht mit den Versicherten ab, sondern **mit deren Krankenkasse**. Das gilt
+für Hebammenhilfe ebenso wie für Heilmittel oder Rehabilitationssport — die
+Leistungen unterscheiden sich, das Verfahren dahinter kaum.
 
-Das ist kein Rechnungsschreiben. Die Kassen nehmen dafür weder Briefe noch
-PDF-Dateien entgegen, sondern eine strukturierte Datenlieferung in einem
+Der konkrete Anlass dieses Projekts sind Kurse einer freiberuflich tätigen
+Hebamme: Geburtsvorbereitung, Rückbildung, Beratung in Gruppen. Er ist der erste
+Fall, nicht der einzige denkbare.
+
+Abgerechnet wird nicht mit einer Rechnung. Die Kassen nehmen dafür weder Briefe
+noch PDF-Dateien entgegen, sondern eine strukturierte Datenlieferung in einem
 festgelegten Format — **bis auf das einzelne Zeichen vorgegeben.**
 
-Für eine einzelne Hebamme gibt es dafür zwei Wege:
+Für eine einzelne Leistungserbringerin gibt es dafür zwei Wege:
 
 | Weg | Was er bedeutet | Was er kostet |
 |---|---|---|
 | **Über eine Abrechnungsstelle** | Ein Dienstleister übernimmt Erstellung, Übermittlung und das Nachhalten der Zahlungen | einen Anteil des abgerechneten Betrags, üblich sind wenige Prozent |
 | **Selbst** | Ein eigenes Programm erzeugt die Datei | die Einarbeitung in das Verfahren |
 
-Die Daten, aus denen eine Abrechnung besteht, liegen ohnehin vor: wer war in
-welchem Kurs, an wie vielen Terminen, bei welcher Kasse versichert. **Sie liegen
-nur in Listen und Köpfen statt in einer Datei.**
+Die Daten, aus denen eine Abrechnung besteht, liegen ohnehin vor: wer hat wann
+welche Leistung erhalten, in welchem Umfang, bei welcher Kasse versichert.
+**Sie liegen nur in Listen und Köpfen statt in einer Datei.**
 
 ## Ziel dieses Teils
 
 - Festlegen, was das Programm können soll — und ebenso wichtig, was nicht.
+- Entscheiden, wie weit es tragen soll: ein Programm für einen Kursanbieter oder
+  eines für die Abrechnung mit gesetzlichen Kassen überhaupt.
 - Ein erstes Bild der Fachlichkeit: welche Begriffe es gibt, wie sie
   zusammenhängen, was von ihnen dauerhaft festgehalten werden muss.
 
@@ -55,18 +61,41 @@ Daraus folgt die Festlegung, die den ganzen Aufbau prägt: **das Programm prüft
 bevor etwas das Haus verlässt** — nicht als Zusatzfunktion, sondern als Tor, an
 dem jede Lieferung vorbeimuss.
 
+### Wie weit soll es tragen
+
+Man könnte das Programm auf Hebammenkurse zuschneiden. Das wäre die kleinere
+Aufgabe und für den ersten Fall vollkommen ausreichend.
+
+Dagegen spricht ein Blick auf das Verfahren selbst: **fast alles daran ist nicht
+leistungsspezifisch.**
+
+| Bleibt über die Leistungsbereiche gleich | Wechselt je Leistungsbereich |
+|---|---|
+| Der Aufbau der Nachricht — Rahmen, Rechnungs-, Versicherten-, Leistungs- und Summenteile | Der Sammelgruppenschlüssel im Nachrichtenkopf |
+| Die Beteiligten und ihre Institutionskennzeichen samt Prüfziffer | Der Abrechnungscode |
+| Prüfung, Zählerführung, Summenbildung | Positionsnummern und Tarifkennzeichen |
+| Lieferung, Zustellweg, Einordnung der Rückmeldung | Der Vertrag, aus dem sich die zulässigen Werte ergeben |
+
+Die rechte Spalte ist kurz, und sie besteht ausschließlich aus **Werten**, nicht
+aus Abläufen. Ein zweiter Leistungsbereich verlangt also Einträge, keinen Umbau
+— vorausgesetzt, das Modell trennt beides von Anfang an.
+
+Genau das kostet in der Vision fast nichts und später sehr viel: ein Begriff,
+der von Beginn an „Leistungsfall" heißt statt „Kurs", trägt eine
+Behandlungsserie mit, ohne dass jemand ihn umbenennen muss.
+
 ### Wer es bedient
 
 Eine einzelne Person, an einem einzelnen Rechner, ohne besondere
 Computerkenntnisse und ohne jemanden, der bei Problemen hilft. Meist abends,
-nach den Kursen.
+nach der Arbeit.
 
 | Umstand | Was daraus für das Programm folgt |
 |---|---|
 | Niemand richtet etwas ein | Es darf **nichts zusätzlich installiert** werden müssen — keine Datenbank, keine Laufzeitumgebung, kein Serverdienst |
-| Es geht um Gesundheitsdaten von Schwangeren | Die Daten bleiben **auf dem Rechner der Anwenderin**, nicht im Netz |
+| Es geht um Gesundheitsdaten | Die Daten bleiben **auf dem Rechner der Anwenderin**, nicht im Netz |
 | Niemand hilft, wenn etwas klemmt | Eine Meldung sagt, **was zu tun ist** — nicht, was schiefging. „Feld 4 ungültig" hilft niemandem |
-| Abends, nach den Kursen | Der Weg von den Kursdaten zur fertigen Datei muss kurz sein |
+| Abends, nebenher | Der Weg von den erfassten Daten zur fertigen Datei muss kurz sein |
 
 ### Was es ausdrücklich nicht wird
 
@@ -74,23 +103,25 @@ So wichtig wie die andere Liste — ein Projekt ohne Grenzen wird nie fertig.
 
 | Nicht | Warum |
 |---|---|
-| Kursverwaltung, Terminplanung, Erinnerungen | ein eigenes Feld, und dafür gibt es Werkzeuge |
+| Kurs- und Terminverwaltung, Erinnerungen | ein eigenes Feld, und dafür gibt es Werkzeuge |
 | Buchhaltung, Steuer, Einnahmenüberschussrechnung | ebenso, und mit eigenen Vorschriften |
 | Privatabrechnung mit Selbstzahlern | ein anderes Verfahren mit anderen Regeln |
 | Mehrbenutzerbetrieb, Praxisverwaltung | eine bewusste Grenze; die gewählte Datenhaltung lässt genau einen Schreiber zu |
-| Fachliche Beratung, welche Leistung abrechenbar ist | das entscheidet der Vertrag, nicht ein Programm |
+| Ein mitgelieferter Katalog gültiger Positionsnummern je Bereich | die ergeben sich aus dem Vertrag. Das Programm hält den Rahmen bereit, die Werte trägt ein, wer den Vertrag hat |
+| Fachliche Beratung, welche Leistung abrechenbar ist | das entscheidet ebenfalls der Vertrag, nicht ein Programm |
 
 ## Entscheidung
 
-**Das Projekt wird ein Einzelplatzprogramm, das aus vorhandenen Kursdaten eine
-prüffähige Abrechnungsdatei erzeugt — und das jede Datei prüft, bevor sie
-hinausgeht.**
+**Das Projekt wird ein Einzelplatzprogramm, das aus vorhandenen Leistungsdaten
+eine prüffähige Abrechnungsdatei erzeugt — und das jede Datei prüft, bevor sie
+hinausgeht.** Der Aufbau folgt dem Verfahren, nicht einem einzelnen
+Leistungsbereich; der erste bediente ist die Hebammenhilfe.
 
 | # | Kernfähigkeit | Was dahintersteckt |
 |---|---|---|
-| 1 | **Stammdaten führen** | Teilnehmerinnen mit Versicherungsangaben, die Leistungserbringerin selbst, Gruppen als Zusammenfassung eines Kurses |
-| 2 | **Leistungen beschreiben** | was ein Kurs kostet, unter welcher Position er abgerechnet wird — einmal festgelegt, mehrfach verwendet |
-| 3 | **Abrechnung erzeugen** | aus Gruppe, Leistungsbeschreibung und Terminanzahl entsteht die Nachricht im vorgeschriebenen Format |
+| 1 | **Stammdaten führen** | versicherte Personen mit ihren Versicherungsangaben, die Leistungserbringerin selbst, Leistungsfälle als Zusammenfassung — ein Kurs, eine Behandlungsserie |
+| 2 | **Leistungen beschreiben** | was eine Einheit kostet, unter welcher Position sie abgerechnet wird — einmal festgelegt, mehrfach verwendet. Hier sitzt das Bereichsspezifische |
+| 3 | **Abrechnung erzeugen** | aus Leistungsfall, Beschreibung und Anzahl der Einheiten entsteht die Nachricht im vorgeschriebenen Format |
 | 4 | **Prüfen** | Aufbau, Zähler, Summen, Pflichtangaben — ein Fehler hält den gesamten Lauf auf |
 | 5 | **Zustellen und einordnen** | die Datei an den richtigen Empfänger, und die Antwort verständlich machen |
 
@@ -114,7 +145,7 @@ Aufwand nicht.
 
 | Station | Was dort geschieht |
 |---|---|
-| **Kursdaten** | liegen ohnehin vor — in Listen und Köpfen |
+| **Leistungsdaten** | liegen ohnehin vor — in Listen und Köpfen |
 | **Das Programm** | erzeugt daraus die Abrechnungsdatei **und prüft sie, bevor sie das Haus verlässt** |
 | **Die Krankenkasse** | zahlt oder beanstandet |
 
@@ -126,11 +157,14 @@ Landkarte des Gegenstands.
 
 ![Fachliches Übersichtsmodell](../GKVTransmitter_Vision_Fachmodell.png)
 
-Drei Beobachtungen aus diesem Bild prägen alles Weitere:
+Die Begriffe sind bewusst so gewählt, dass sie den ersten Anwendungsfall
+überdauern: **Leistungsfall** statt Kurs, **versicherte Person** statt
+Teilnehmerin, **Leistungsnachweis** statt Anwesenheit. Drei Beobachtungen aus
+dem Bild prägen alles Weitere:
 
 | Beobachtung | Was daraus folgt |
 |---|---|
-| **Die Teilnehmerin ist nicht die Zahlende** — zwischen Leistung und Geld steht die Kasse | An jeder Teilnehmerin hängt ein zweiter Satz Angaben: Versichertennummer, Status, Kasse. Mit dem Kurs hat er nichts zu tun, ohne ihn geht trotzdem nichts |
+| **Die versicherte Person ist nicht die Zahlende** — zwischen Leistung und Geld steht die Kasse | An ihr hängt ein zweiter Satz Angaben: Versichertennummer, Status, Kasse. Mit der Leistung hat er nichts zu tun, ohne ihn geht trotzdem nichts |
 | **Die Lieferung ist eine eigene Sache**, kein bloßer Versandvorgang | Sie bündelt mehrere Abrechnungen an *einen* Empfänger und führt eine laufende Nummer, die sich nie wiederholen darf. Was eine Nummer führt und einen Zustand hat, gehört ins Modell |
 | **Zwischen Erzeugen und Versenden steht ein Tor** | Der Prüfbericht ist kein Nebenprodukt, sondern die Bedingung dafür, dass die Lieferung hinausgeht. Er hängt deshalb an der Lieferung und nicht neben ihr |
 
@@ -164,6 +198,10 @@ wird:
 | Der Zähler bekommt eine **eigene Ablage** statt eines Werts im Arbeitsspeicher | Eine Nummer, die nach dem Neustart von vorn zählt, erzeugt eine doppelte Datenaustauschreferenz — ein Zurückweisungsgrund, der sich nicht mehr aus der Datei heraus reparieren lässt |
 | Einstellungen als **Schlüssel-Wert-Vorrat** statt fester Spalten | Eine neue Einstellung soll keine Änderung am Datenmodell verlangen |
 
+Alles Bereichsspezifische sammelt sich in einer einzigen Entität, der
+**Leistungsbeschreibung**. Das ist keine Schönheit, sondern der Preis dafür, dass
+ein weiterer Leistungsbereich später ein Eintrag bleibt und kein Umbau wird.
+
 ### Woran sich Erfolg messen lässt
 
 In dieser Reihenfolge:
@@ -172,13 +210,17 @@ In dieser Reihenfolge:
 |---|---|
 | Eine erzeugte Datei wird ohne Beanstandung angenommen | der eigentliche Zweck |
 | Ein Fehler in den Daten fällt vor dem Versand auf | der eigentliche Wert |
-| Der Weg von den Kursdaten zur Datei dauert Minuten | sonst benutzt es niemand |
+| Der Weg von den Leistungsdaten zur Datei dauert Minuten | sonst benutzt es niemand |
 | Die Anwenderin versteht, was das Programm ihr sagt | sonst ruft sie doch wieder an |
+| Ein weiterer Leistungsbereich kommt ohne Änderung am Aufbau hinzu | die Probe darauf, ob die Verallgemeinerung getragen hat |
 
 ## Offen geblieben
 
 - **Wie das Format genau aussieht** und welche Vorgaben verbindlich sind — das
   ist Gegenstand von Teil 02.
+- **Welche Leistungsbereiche tatsächlich bedient werden.** Die Vision hält den
+  Rahmen offen; welche Werte darin gültig sind, ergibt sich aus Verträgen, die
+  nicht vorliegen. Teil 03 grenzt das ein.
 - **Was von der Vision überhaupt erreichbar ist.** Der Versand an eine
   Krankenkasse ist kein technisches Problem allein; es gibt Zulassungen und
   Nachweise, die niemand programmieren kann. Teil 04 grenzt das ab.
