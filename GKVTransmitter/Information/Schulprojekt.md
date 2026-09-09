@@ -1,255 +1,206 @@
 ---
-title: "GKV-Abrechnung — schulische Aufarbeitung"
-subtitle: "Sitzungsplan, Berichtsvorlage und Abgabemappe"
-date: "9. September 2026"
+title: "GKV-Abrechnung — Aufbau der Projektdokumentation"
+subtitle: "Dreiundzwanzig Teile von der Vision bis zum Abschluss"
 lang: de
 toc-title: "Inhaltsverzeichnis"
 ---
 
-# Was verlangt ist
+# Wozu dieses Dokument
 
-Das Projekt soll für die Schule aufgearbeitet werden. Aus der Aufgabe:
+Das Projekt soll vollständig dokumentiert werden — **von der ersten Idee bis zum
+fertigen Programm**, in dreiundzwanzig aufeinander aufbauenden Teilen.
 
-- **Einteilung des Fortschritts** in die verbleibenden Wochen bis Ende Februar,
-  je **90 Minuten** (zwei Unterrichtsstunden) an einem Tag
-- **jedes Mal ein Dokument** über den aktuellen Fortschritt
-- am Ende **mehrere Dokumentationen**, die den Fortschritt belegen
-- **Mockups**
-- **neu erstellte UML-Diagramme**, eventuell weitere Diagramme
-- eine Darstellung, **welche architektonischen Mittel** eingesetzt wurden
+Jeder Teil entsteht in einer Doppelstunde. Planung und Umsetzung wechseln sich
+ab: erst wird entschieden, dann gebaut, dann wieder entschieden. Am Ende liegt
+eine Reihe vor, die den Weg nachvollziehbar macht — nicht als Rückblick in einem
+Stück, sondern als Kette, in der jeder Teil auf dem vorigen steht.
 
-# Der Grundsatz, auf dem alles steht
+Dieses Dokument ist der Bauplan dafür. **Es gehört nicht in die Abgabe**; die
+Abgabe sind die dreiundzwanzig Teile selbst.
 
-> **Das Dokument ist das Ergebnis, nicht der Code.**
+# Der Kniff, und wie man ihn ehrlich handhabt
 
-Das klingt nach Formsache und ist das Gegenteil. Es bedeutet: **eine Sitzung, in
-der nichts funktioniert hat, ist keine verlorene Sitzung.** Sie ist ein Bericht
-darüber, warum etwas nicht ging — und das ist regelmäßig der lehrreichere Text.
+Das Programm steht bereits. Die Dokumentation beschreibt also einen Weg, der
+schon gegangen wurde.
 
-Dieses Projekt hat davon reichlich, und zwar gute:
+Das ist kein Nachteil, sondern ein Vorteil — **aber nur, wenn man es richtig
+anfasst.** Zwei Regeln:
 
-- Der Leistungsbereich im `UNB` stand fest auf `H` — dem Wert aus der
-  Beispieldatei. Für eine Hebamme ist er `F`. Übersetzt fehlerfrei, prüft
-  fehlerfrei, **wird von der Kasse zurückgewiesen.**
-- 98 Testdateien landeten im echten Ausgangsordner, weil ein Werkzeug nur den
-  Datenbankpfad umlenkte und nicht den Ordner.
-- Warnungen erreichen den Bildschirm bis heute nicht, obwohl die Dokumentation
-  jahrelang das Gegenteil behauptete.
+**Beschreibe, was entschieden wurde, und warum.** Alle Entscheidungen in diesem
+Projekt sind echt getroffen worden: die Trennung in zwei Module, die Prüfung als
+Tor vor dem Versand, der Verzicht auf Dialogfenster. Sie zu beschreiben ist keine
+Erfindung, sondern Rekonstruktion.
 
-**Solche Stellen sind in einer Schulmappe mehr wert als zwanzig Seiten „hat
-funktioniert".** Sie zeigen, dass jemand hingesehen hat.
+**Behalte die Sackgassen.** Ein Weg ohne Umwege sieht erfunden aus, und er ist
+langweilig. Dieses Projekt hat echte:
 
-# Wie viele Sitzungen es sind
+- Ein Wert im Nachrichtenkopf stand fest auf einem Buchstaben aus der
+  Beispieldatei. Die Datei übersetzt fehlerfrei, prüft fehlerfrei — und wird von
+  der Kasse zurückgewiesen.
+- Achtundneunzig Testdateien landeten im echten Ausgabeordner, weil ein Werkzeug
+  nur den Datenbankpfad umlenkte und nicht das Verzeichnis.
+- Eine Rückfallebene stand auf einem plausiblen Betrag statt auf null — und
+  rechnete jeden Termin mit fünfzehntausend Euro ab, ohne dass eine Prüfung
+  anschlug.
 
-Vom 9. September 2026 bis Ende Februar 2027:
+**Jede dieser Stellen ist mehr wert als zwei Seiten „hat funktioniert".** Sie
+zeigen, dass jemand hingesehen hat.
 
-| Monat | Kalenderwochen | Sitzungen |
-|---|---|---|
-| September | 37 – 40 | 4 |
-| Oktober | 41 – 44 | 4 |
-| November | 45 – 48 | 4 |
-| Dezember | 49 – 51 | 3 |
-| Januar | 2 – 5 | 4 |
-| Februar | 6 – 9 | 4 |
-| | **rechnerisch** | **23** |
+# Stil
 
-Abzüglich Herbstferien (je nach Bundesland ein bis zwei Wochen) und
-Weihnachtsferien bleiben **rund 20 Sitzungen**. Der Plan unten hat **20
-nummerierte Sitzungen plus zwei Puffer** — wer schneller ist, zieht vor; wer
-hängenbleibt, verliert nicht den Abschluss.
+| | |
+|---|---|
+| **Keine Datumsangaben** | Die Teile sind nummeriert, nicht datiert. Ein Datum bindet die Reihe an einen Kalender, den niemand nachprüfen kann und der nichts erklärt. |
+| **Keine Werkzeugnamen** | Es geht um Entscheidungen und ihre Gründe, nicht um die Hilfsmittel, mit denen getippt wurde. |
+| **Sachliche Prosa** | Ganze Sätze, keine Stichpunktwüsten. Tabellen dort, wo etwas vergleichbar ist. |
+| **Fachbegriffe erklärt** | Beim ersten Auftreten. Wer das liest, kennt die Abrechnung mit Krankenkassen nicht. |
 
-**90 Minuten sind kurz.** Nach Hochfahren, Hineindenken und Aufräumen bleiben
-etwa 60 Minuten echte Arbeit. Deshalb hat jede Sitzung **ein** Ziel, nicht drei.
+> Falls die Schule einen Nachweis über verwendete Hilfsmittel verlangt, gehört
+> der in den Anhang der Abgabe. Das ist eine Formfrage und keine Stilfrage.
 
-# Die Vorlage für den Fortschrittsbericht
-
-Eine Datei je Sitzung, `dokumentation/NN-kurzname.md`. Immer dieselben
-Abschnitte — dann sieht man beim Durchblättern die Entwicklung statt
-verschiedener Aufsätze.
+# Aufbau eines Teils
 
 ```markdown
-# Sitzung NN — <Thema>
+# Teil NN — <Titel>
 
-Datum · Dauer · Kalenderwoche
+## Ausgangslage
+Wo steht das Projekt zu Beginn dieses Teils? Ein Absatz, der an den
+vorigen anschließt.
 
-## Ziel dieser Sitzung
-Ein Satz. Was sollte am Ende können, was vorher nicht ging?
+## Ziel
+Was soll am Ende dieses Teils entschieden oder gebaut sein?
 
-## Was entstanden ist
-Kurz und sachlich. Dateien, Klassen, Diagramme.
+## Überlegungen
+Der eigentliche Text. Welche Möglichkeiten gab es, was spricht wofür.
 
-## Die Entscheidung dieser Sitzung
-Jede Sitzung enthält eine. Welche Möglichkeiten gab es, welche wurde
-gewählt, und **warum die andere nicht**?
+## Entscheidung
+Was wurde gewählt — und **warum die Alternative nicht**.
 
-## Was nicht funktioniert hat
-Ehrlich. Auch „nichts" ist eine Antwort — aber selten die richtige.
+## Ergebnis
+Was liegt jetzt vor: Diagramm, Klasse, Datei, Erkenntnis.
 
-## Belege
-- Commit: `abc1234`
-- Testlauf: 430 Tests, grün
-- Bildschirmfoto: `bilder/NN-....png`
-
-## Nächster Schritt
-Ein Satz, damit die nächste Sitzung nicht mit Suchen beginnt.
+## Offen geblieben
+Was in diesem Teil nicht beantwortet wurde und wo es wieder auftaucht.
 ```
 
-Der Abschnitt **„Die Entscheidung dieser Sitzung"** ist der wichtigste. Eine
-Projektdokumentation, die nur beschreibt *was* gebaut wurde, ist ein
-Bautagebuch. Eine, die zeigt *warum so und nicht anders*, ist eine
-Projektdokumentation.
+Der Abschnitt **Entscheidung** ist der wichtigste. Eine Dokumentation, die nur
+beschreibt *was* gebaut wurde, ist ein Bautagebuch. Eine, die zeigt *warum so
+und nicht anders*, ist eine Projektdokumentation.
 
-> **Jede Sitzung endet mit einem Commit.** Dann belegt `git log` den Fortschritt
-> von selbst — mit Datum, Umfang und Beschreibung. Das ist der billigste Nachweis
-> der Welt, und er lässt sich nicht nachträglich erfinden.
+# Die dreiundzwanzig Teile
 
-# Der Sitzungsplan
+## Grundlegung
 
-## Teil 1 — Grundlage schaffen (Sitzungen 1–4)
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **01** | **Vision** | Was soll das Programm können, für wen, und woran misst man Erfolg | Visionsdokument |
+| **02** | **Fachliche Grundlagen** | Wie funktioniert die Abrechnung mit gesetzlichen Krankenkassen überhaupt | Begriffsmodell |
+| **03** | **Anforderungen** | Was das Programm können muss, was es leisten muss, was es nicht soll | Anforderungsliste |
+| **04** | **Machbarkeit und Grenzen** | Was ist erreichbar, was hängt an Dritten | Abgrenzungsdokument |
 
-Kein Code. Der Ist-Zustand wird beschrieben, und dabei entstehen die Diagramme,
-die man später ohnehin braucht.
+## Entwurf
 
-| Nr | Thema | Am Ende liegt vor |
-|---|---|---|
-| **1** | **Projektauftrag und Ausgangslage** — worum geht es fachlich, wer sind die Beteiligten, was ist der Nutzen | `01-Projektauftrag.md` |
-| **2** | **Ist-Analyse** — was kann das Programm heute, was nicht | `02-Ist-Analyse.md` + **Komponentendiagramm** (die zwei Module und ihre Grenze) |
-| **3** | **Architekturmittel** — siehe eigenes Kapitel unten | `03-Architektur.md` + **Klassendiagramm** des Kerns |
-| **4** | **Fachlicher Ablauf** — von den Stammdaten bis zur zugestellten Datei | `04-Ablauf.md` + **Sequenzdiagramm** des Abrechnungslaufs |
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **05** | **Architektur** | Aufteilung in Module, Schichten, warum die Grenze erzwungen wird | **Komponentendiagramm** |
+| **06** | **Fachliches Modell** | Die Begriffe der Domäne als Klassen | **Klassendiagramm** |
+| **07** | **Datenhaltung** | Was gespeichert wird und wie | **ER-Diagramm** |
+| **08** | **Technologieauswahl** | Sprache, Oberfläche, Datenbank — mit Begründung und Verworfenem | Entscheidungsdokument |
 
-Sitzung 3 ist die, die der Aufgabenstellung am unmittelbarsten entspricht. Sie
-ist gut vorbereitet: die Mittel sind vorhanden, sie müssen nur benannt und
-belegt werden.
+## Umsetzung, erster Durchgang
 
-## Teil 2 — Bauen mit Nachweis (Sitzungen 5–14)
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **09** | **Persistenz** | Der Zugang zur Datenbank hinter einer Schnittstelle | Code + Tests |
+| **10** | **Domänenmodell** | Personen, Gruppen, Blaupausen, Abrechnungen | Code + Tests |
+| **11** | **Nachrichtenformat** | Aufbau der Abrechnungsdatei, Segmente, Felder | **Aufbaudiagramm** |
+| **12** | **Nachrichtenerzeugung** | Aus Stammdaten wird eine Datei | Code + Beispieldatei |
 
-Jede Sitzung nimmt ein Arbeitspaket aus dem `Umsetzungsplan.md` und
-dokumentiert es. **Das ist der Teil, der echten Fortschritt belegt.**
+## Planung und Umsetzung der Prüfung
 
-| Nr | Thema | Am Ende liegt vor |
-|---|---|---|
-| **5** | **Spezifikation schreiben** für „Warnungen sichtbar machen" (1.1) nach `spezifikationen/VORLAGE.md` | `05-Spezifikation.md` — zeigt die Arbeitsweise, nicht nur das Ergebnis |
-| **6** | 1.1 umsetzen, Teil 1: der Kern liefert den Bericht mit | Commit, Tests |
-| **7** | 1.1 abschließen: die Oberfläche zeigt Warnungen | `07-Warnungen.md` mit **Vorher/Nachher-Bild** |
-| **8** | **Verarbeitungskennzeichen** (1.4) — Korrekturrechnung wird möglich | `08-Korrekturrechnung.md` |
-| **9** | **Kostenträgerdatei lesen**, Teil 1: das Format verstehen und eine echte Datei zerlegen | `09-Kostentraegerdatei.md` |
-| **10** | Kostenträgerdatei, Teil 2: der Leser | Commit, Tests |
-| **11** | **Empfängerermittlung** fertig — aus 23 Kassen wird die richtige Annahmestelle | `11-Empfaenger.md` + **Sequenzdiagramm** der Auflösung |
-| **12** | **Lebenszyklus einer Abrechnung** entwerfen | `12-Lebenszyklus.md` + **Zustandsdiagramm** |
-| **13** | **Übermittlungsprotokoll** (1.5), Teil 1: Datenmodell und Speicherung | Commit + **ER-Diagramm** |
-| **14** | Protokoll, Teil 2: die Übersicht in der Oberfläche | `14-Protokoll.md` |
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **13** | **Warum geprüft wird** | Prüfstufen, Fehler gegen Warnung, was eine Zurückweisung kostet | Prüfkonzept |
+| **14** | **Das Prüfwerk** | Regeln als austauschbare Einheiten | Code + **Klassendiagramm** |
+| **15** | **Der Ablauf eines Laufs** | Erst alles prüfen, dann alles zustellen | **Sequenzdiagramm** |
 
-Die Sitzungen 9 bis 11 sind der fachlich interessanteste Block: eine echte
-EDIFACT-Datei einer Behörde einlesen und daraus den richtigen Empfänger
-ermitteln. **Das ist der Teil, den man in einer Prüfung erzählen kann.**
+## Oberfläche
 
-## Teil 3 — Oberfläche und Bilder (Sitzungen 15–17)
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **16** | **Bedienkonzept** | Wer bedient das, unter welchen Umständen, und was folgt daraus | **Mockups** |
+| **17** | **Stammdatenmasken** | Erfassen, ändern, löschen | Code + Bildschirmfotos |
+| **18** | **Abrechnungsmaske und Meldungen** | Der Weg von der Auswahl bis zur Rückmeldung | Code + Bildschirmfotos |
 
-| Nr | Thema | Am Ende liegt vor |
-|---|---|---|
-| **15** | **Mockups** für die Betriebsdatenmaske — erst zeichnen, dann bauen | `15-Mockups.md` + Entwurfsbilder |
-| **16** | Betriebsdaten (1.7) umsetzen | Commit + Bildschirmfotos aus `Vorschau` |
-| **17** | **Alle Diagramme neu erzeugen** und mit dem Stand abgleichen | `17-Diagramme.md` + aktualisierte `.puml` und `.png` |
+## Versand, Güte, Auslieferung
 
-Zu den Bildschirmfotos: das Projekt hat mit `Vorschau` bereits ein Werkzeug, das
-alle Masken ohne Fenster in PNG zeichnet — **hell und dunkel.** Damit kostet ein
-vollständiger Satz Bilder einen Befehl statt einer halben Stunde Klickerei.
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **19** | **Versandwege** | Empfänger, Transporte, Rückmeldungen einordnen | **Verteilungsdiagramm** |
+| **20** | **Fehlerbehandlung** | Was geschieht bei einer Zurückweisung | **Aktivitätsdiagramm** |
+| **21** | **Qualitätssicherung** | Teststrategie, was wie geprüft wird, was bewusst nicht | Testkonzept |
+| **22** | **Auslieferung** | Paket, Datenablage, Konfiguration | Betriebsdokument |
 
-## Teil 4 — Abgabe (Sitzungen 18–20 + Puffer)
+## Abschluss
 
-| Nr | Thema | Am Ende liegt vor |
-|---|---|---|
-| **18** | **Gesamtdokumentation** zusammenführen, Widersprüche zwischen den Einzelberichten beseitigen | `00-Gesamtdokumentation.md` (+ `.docx`) |
-| **19** | **Präsentation** — roter Faden, was zeigt man, was lässt man weg | Folien |
-| **20** | **Probevortrag**, Nacharbeit | fertige Mappe |
-| **P1/P2** | Puffer | — |
+| Nr | Titel | Worum es geht | Ergebnis |
+|---|---|---|---|
+| **23** | **Rückblick und Ausblick** | Was gelernt wurde, was offen ist, wie es weiterginge | Abschlussdokument |
 
 # Die Diagramme
 
-Was verlangt ist, und woher es kommt:
+Neun Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 
-| Diagramm | Zeigt | Sitzung | Grundlage |
-|---|---|---|---|
-| **Komponentendiagramm** | `gkv-core` und `gkv-ui`, die erzwungene Grenze | 2 | vorhanden, zu aktualisieren |
-| **Klassendiagramm** | Kern: Entitäten, Repository-Port, Prüfwerk | 3 | `Projektklassen.puml` vorhanden |
-| **Sequenzdiagramm** | Abrechnungslauf: erzeugen → prüfen → zustellen | 4 | neu |
-| **Sequenzdiagramm** | Empfängerauflösung über die Kostenträgerdatei | 11 | neu |
-| **Zustandsdiagramm** | Abrechnung: erzeugt → geprüft → zugestellt → beantwortet → bezahlt | 12 | neu |
-| **ER-Diagramm** | Datenmodell der Persistenz | 13 | neu |
-| **Aktivitätsdiagramm** | Fehlerkreislauf bei einer Zurückweisung | 17 | neu, Vorlage in `Umsetzungsplan.md` Teil 3 |
-| **Verteilungsdiagramm** | Rechner, Datenannahmestelle, Kasse | 17 | neu |
-| **Mockups** | die geplanten Masken | 15 | neu |
+| Diagramm | Teil |
+|---|---|
+| Komponentendiagramm | 05 |
+| Klassendiagramm der Domäne | 06 |
+| ER-Diagramm | 07 |
+| Aufbau der Nachricht | 11 |
+| Klassendiagramm des Prüfwerks | 14 |
+| Sequenzdiagramm des Abrechnungslaufs | 15 |
+| Mockups | 16 |
+| Verteilungsdiagramm | 19 |
+| Aktivitätsdiagramm der Fehlerbehandlung | 20 |
 
-Die Diagramme entstehen als **PlantUML** im Quelltext und werden gerendert —
-dann sind sie versioniert, änderbar und lassen sich in die Word-Fassung
-einbetten:
-
-```bash
-cd Information
-java -jar C:/Tools/plantuml/plantuml.jar -tpng -charset UTF-8 "*.puml"
-```
-
-> **Ein Diagramm, das nicht aus einer Quelle erzeugt wird, veraltet.** Das ist
-> derselbe Grund, aus dem die Word-Fassung aus der Markdown-Quelle entsteht und
-> nicht von Hand gepflegt wird.
+Alle als Quelltext, aus dem die Bilder erzeugt werden — **ein Diagramm, das man
+von Hand malt, veraltet.** Dasselbe gilt für die Bildschirmfotos: das Projekt
+zeichnet alle Masken ohne geöffnetes Fenster, in heller und dunkler Fassung.
 
 # Die architektonischen Mittel
 
-Ein eigenes Dokument (Sitzung 3), weil die Aufgabe ausdrücklich danach fragt.
-**Alle folgenden sind im Projekt tatsächlich umgesetzt** — es geht ums Benennen
-und Belegen, nicht ums Erfinden.
+Sie tauchen dort auf, wo sie eingesetzt wurden — nicht in einer Liste am Ende.
+Zur Übersicht, welcher Teil welches Mittel behandelt:
 
-| Mittel | Wo im Projekt | Wozu |
-|---|---|---|
-| **Ports und Adapter** | `DataRepository` (Port) ↔ `HibernateSqllite` (Adapter) | die Fachlichkeit kennt keine Datenbank |
-| **Modulgrenze im Build erzwungen** | `maven-enforcer-plugin` verbietet `org.openjfx` in `gkv-core` | die Regel ist nicht Vereinbarung, sondern Bauergebnis |
-| **Strategie** | `ValidationRule` mit acht Umsetzungen, gesammelt in `DtaValidationService` | eine neue Prüfregel ändert keinen bestehenden Code |
-| **Registry** | `BillingOfficeEndpointRegistry` aus JSON | eine neue Kasse ist ein Eintrag, kein Commit |
-| **Fabrikmethode** | `DtaFactory` | die Nachricht entsteht an einer Stelle |
-| **Anwendungsfall-Dienst** | `AbrechnungService` | die Oberfläche ruft einen Satz auf, keine Kette |
-| **Konstruktorinjektion ohne Rahmenwerk** | jede Maske bekommt alles übergeben | testbar ohne Behälter |
-| **Wertobjekte** | `Leistungsparameter`, `ValidationMessage` als `record` | unveränderlich, vergleichbar |
-| **Testdoubles statt Attrappen-Bibliothek** | `SpeicherRepository`, `AufzeichnendeMeldungen`, `AufzeichnenderRahmen` | lesbar, und sie können mehr als eine Attrappe |
-| **Rückruf statt blockierender Rückgabe** | `Meldungen.frageNach(frage, knopf, wennBejaht)` | kein Dialogfenster, kein angehaltener Faden |
-| **Konfiguration von außen** | `gkv.home`, `gkv.db.path` mit Umgebungsvariablen-Rückfall | derselbe Code in Test, Entwicklung und Auslieferung |
-| **Sichtbares Scheitern** | Prüfbericht mit Stufe, Code, Ort, Text | ein Fehler, den niemand sieht, ist der teuerste |
+| Mittel | Teil |
+|---|---|
+| Ports und Adapter | 05, 09 |
+| Modulgrenze im Bauvorgang erzwungen | 05 |
+| Schichtung | 05 |
+| Strategiemuster für die Prüfregeln | 14 |
+| Registry für die Empfänger | 19 |
+| Fabrikmethode für die Nachricht | 12 |
+| Anwendungsfall-Dienst | 15 |
+| Konstruktorinjektion ohne Rahmenwerk | 09, 17 |
+| Wertobjekte | 10, 14 |
+| Testdoubles statt Attrappenbibliothek | 21 |
+| Rückruf statt blockierender Rückgabe | 18 |
+| Konfiguration von außen | 22 |
 
-Dazu zwei Entscheidungen, die keine Muster sind, aber die Architektur prägen:
+Teil 23 fasst sie zusammen und beantwortet die Frage, welche sich bewährt haben
+und welche man beim nächsten Mal anders wählen würde.
 
-- **Erst alles prüfen, dann alles zustellen.** Würde je Abrechnung geprüft und
-  sofort zugestellt, läge bei einem Fehler in der Mitte eines Laufs bereits ein
-  Teil bei der Kasse — und müsste dort einzeln storniert werden.
-- **Die Prüfung liest die erzeugte Datei zurück** und arbeitet gegen die
-  Struktur, nicht gegen Zeichenketten im Erzeuger. Dadurch lässt sich auch eine
-  fremde Datei prüfen.
-
-# Die Abgabemappe
+# Ablage
 
 ```
-Information/
-├── Schulprojekt.md                 dieser Plan
-├── dokumentation/
-│   ├── 00-Gesamtdokumentation.md   am Ende zusammengeführt
-│   ├── 01-Projektauftrag.md
-│   ├── 02-Ist-Analyse.md
-│   ├── …                           ein Bericht je Sitzung
-│   └── bilder/                     Bildschirmfotos, Mockups
-├── *.puml / *.png                  alle Diagramme mit Quelle
-└── GKVTransmitter_Dokumentation.*  die fachliche Gesamtdokumentation
+Information/dokumentation/
+├── 01-Vision.md
+├── 02-Fachliche-Grundlagen.md
+├── …
+├── 23-Rueckblick.md
+└── bilder/
 ```
 
-Am Ende liegen vor: **rund fünfzehn Fortschrittsberichte**, ein zusammengeführtes
-Gesamtdokument, **neun Diagramme**, Mockups, Bildschirmfotos in zwei
-Darstellungen, ein Architekturdokument — und ein `git log`, der jeden Schritt mit
-Datum belegt.
-
-# Zwei Ratschläge
-
-**Schreib den Bericht in der Sitzung, nicht danach.** Die letzten zehn Minuten
-gehören dem Dokument. Wer sich vornimmt, es abends nachzuholen, hat nach drei
-Wochen sechs offene Berichte und erfindet sie am Ende — und man sieht es ihnen an.
-
-**Kürz nicht die Fehlschläge heraus.** Die Versuchung ist groß, weil eine Mappe
-ohne Fehler ordentlicher aussieht. Sie ist es nicht — sie sieht aus, als hätte
-niemand etwas Schwieriges versucht. Die drei Funde aus dem ersten Kapitel sind
-das Beste, was dieses Projekt vorzuweisen hat.
+Am Ende lässt sich die Reihe zu einem Dokument zusammenfügen — die einzelnen
+Teile bleiben trotzdem stehen, denn sie sind der Nachweis, dass der Weg
+schrittweise gegangen wurde.
