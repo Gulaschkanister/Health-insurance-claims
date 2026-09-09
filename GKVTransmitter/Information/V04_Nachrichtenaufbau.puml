@@ -1,0 +1,116 @@
+@startuml GKVTransmitter_Nachrichtenaufbau
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor #4A5A6A
+}
+skinparam ArrowColor #8A6A2A
+
+title Aufbau einer Lieferung — Rahmen, zwei Nachrichten, Zähler
+
+legend top left
+  Eine Lieferung an einen Empfänger. Die Bezeichner links sind die Segmentkennungen,
+  rechts steht, was das Segment trägt.
+  **Reihenfolge und Feldzahl sind vorgegeben** — ein weggelassenes Leerfeld verschiebt alles Folgende.
+endlegend
+
+rectangle "**Übertragung**" as uebertragung #FAFBFC {
+
+  rectangle "**UNB**  Nutzdatenkopf\n\nAbsender · Empfänger · Zeitpunkt\nlaufende Nummer der Lieferung\n**Leistungsbereich** · Dateiname\n**Testkennzeichen** 0 / 1 / 2" as unb #FFF8DC
+
+  rectangle "**Nachricht 1 — Gesamtaufstellung**" as slga #F4F7F9 {
+    rectangle "**UNH**  Nachrichtenkopf\nNummer · Art · Fassung" as unh1
+    rectangle "**FKT**  Beteiligte\nVerarbeitungskennzeichen\n**vier Kennzeichen** nebeneinander:\nErbringer · Kostenträger · Kasse · Rechnungssteller" as fkt1
+    rectangle "**REC**  Rechnung\nSammel:Einzel · Datum · Art" as rec1
+    rectangle "**UST**  Umsatzsteuersatz" as ust
+    rectangle "**GES**  Summen\n00 = über alle Status\n99 = laut Prüfvorgabe" as ges
+    rectangle "**NAM**  Name der Erbringerin" as nam
+    rectangle "**UNT**  Nachrichtenende\nAnzahl Segmente · Nummer" as unt1 #FFF0F0
+  }
+
+  rectangle "**Nachricht 2 — Leistungsaufstellung**" as slla #F4F7F9 {
+    rectangle "**UNH**  Nachrichtenkopf" as unh2
+    rectangle "**FKT**  Beteiligte\n— dieselben vier Kennzeichen" as fkt2
+    rectangle "**REC**  Rechnung" as rec2
+    rectangle "**INV**  Versicherte Person\nVersichertennummer · Status\n**Belegnummer**" as inv
+    rectangle "**NAD**  Anschrift\nName · Geburtsdatum · Straße · PLZ · Ort" as nad
+    rectangle "**ENF**  Leistungszeile\nAbrechnungscode : Tarifkennzeichen\nPositionsnummer · Menge · Einzelbetrag\nLeistungsdatum · Zuzahlung" as enf
+    rectangle "**BES**  Summe des Falls\nMenge × Einzelbetrag" as bes
+    rectangle "**UNT**  Nachrichtenende" as unt2 #FFF0F0
+  }
+
+  rectangle "**UNZ**  Ende der Übertragung\nAnzahl Nachrichten · Nummer" as unz #FFF0F0
+}
+
+unb -[hidden]down-> slga
+slga -[hidden]down-> slla
+slla -[hidden]down-> unz
+
+unh1 -[hidden]down-> fkt1
+fkt1 -[hidden]down-> rec1
+rec1 -[hidden]down-> ust
+ust -[hidden]down-> ges
+ges -[hidden]down-> nam
+nam -[hidden]down-> unt1
+
+unh2 -[hidden]down-> fkt2
+fkt2 -[hidden]down-> rec2
+rec2 -[hidden]down-> inv
+inv -[hidden]down-> nad
+nad -[hidden]down-> enf
+enf -[hidden]down-> bes
+bes -[hidden]down-> unt2
+
+note right of unt1
+  **Was die Zähler zählen**
+
+  UNT zählt die Segmente **seiner eigenen**
+  Nachricht, den Kopf und sich selbst
+  eingeschlossen — sechsstellig.
+
+  UNZ zählt die **Nachrichten** der
+  Übertragung, nicht die Segmente.
+
+  Beide sind eine verlässliche
+  Fehlerquelle: Wer ein Segment
+  ergänzt und den Zähler vergisst,
+  erzeugt einen Syntaxfehler.
+end note
+
+note right of enf
+  **Die Zeile, auf die es ankommt**
+
+  Hier stehen die Werte, die sich je
+  Leistungsbereich unterscheiden —
+  Abrechnungscode, Tarifkennzeichen,
+  Positionsnummer.
+
+  Und hier verschiebt sich am ehesten
+  etwas: Der Doppelpunkt trennt
+  **innerhalb** eines Feldes, das Pluszeichen
+  **zwischen** Feldern. Wer beides
+  verwechselt, verschiebt alles Folgende.
+end note
+
+note right of inv
+  **Entweder — oder**
+
+  Entweder INV trägt Versichertennummer
+  **und** Status,
+  oder NAD trägt die **vollständige**
+  Anschrift.
+
+  Fehlt beides, kann die Kasse die
+  Leistung keinem Versicherungs-
+  verhältnis zuordnen.
+end note
+
+note bottom of unb
+  Das **Testkennzeichen** an letzter Stelle entscheidet,
+  ob die Lieferung als Test, als Erprobung oder als
+  Echtbetrieb gilt. Ein falscher Wert hier bedeutet
+  entweder: nichts passiert — oder: es passiert im Ernst.
+end note
+
+@enduml
