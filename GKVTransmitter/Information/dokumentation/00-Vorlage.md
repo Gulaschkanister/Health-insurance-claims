@@ -1,4 +1,8 @@
-# Teil NN — <Titel>
+---
+title: "Teil NN — <Titel>"
+subtitle: "GKV-Abrechnung — Projektdokumentation"
+lang: de
+---
 
 ## Ausgangslage
 
@@ -32,3 +36,14 @@ Wo möglich mit Bild.
 
 Was in diesem Teil nicht beantwortet wurde — und in welchem späteren Teil es
 wieder auftaucht.
+
+<!--
+Hinweise zum Aufbau:
+
+- Der Titel steht im YAML-Kopf, nicht als Überschrift. Sonst erscheint er in
+  der Gesamtfassung doppelt.
+- Die Abschnitte beginnen bei "##". In der Gesamtfassung werden sie eine Ebene
+  tiefer gesetzt; die Teilüberschrift kommt aus dem Dateinamen und dem Titel.
+- Bilder relativ zum übergeordneten Ordner einbinden, etwa
+  ![Modell](../GKVTransmitter_Domaene.png) — das Erzeugungsskript sucht dort.
+-->

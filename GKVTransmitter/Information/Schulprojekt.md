@@ -207,6 +207,9 @@ und welche man beim nächsten Mal anders wählen würde.
 
 ```
 Information/dokumentation/
+├── erzeugen.sh                 erzeugt alle .docx
+├── 00-Vorlage.md               Muster für einen Teil
+├── 00-Gesamtdokumentation.md   zusammengefügt, abgeleitet
 ├── 01-Vision.md
 ├── 02-Fachliche-Grundlagen.md
 ├── …
@@ -214,6 +217,17 @@ Information/dokumentation/
 └── bilder/
 ```
 
-Am Ende lässt sich die Reihe zu einem Dokument zusammenfügen — die einzelnen
-Teile bleiben trotzdem stehen, denn sie sind der Nachweis, dass der Weg
-schrittweise gegangen wurde.
+Erzeugt werden die Word-Fassungen mit einem Aufruf:
+
+```bash
+cd Information/dokumentation
+bash erzeugen.sh
+```
+
+Daraus entstehen **je Teil eine `.docx`** und zusätzlich
+`00-Gesamtdokumentation.docx`, in der alle Teile als Kapitel stehen — mit
+Inhaltsverzeichnis. Die Markdown-Dateien sind die Quelle, die Word-Fassungen
+sind abgeleitet und nicht von Hand zu bearbeiten.
+
+Die einzelnen Teile bleiben neben der Gesamtfassung stehen: sie sind der
+Nachweis, dass der Weg schrittweise gegangen wurde.

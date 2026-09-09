@@ -1,8 +1,12 @@
 ---
-title: "Teil 01 — Vision"
-subtitle: "GKV-Abrechnung — Projektdokumentation"
+title: "GKV-Abrechnung — Projektdokumentation"
+subtitle: "Von der Vision bis zum Abschluss"
 lang: de
+toc-title: "Inhaltsverzeichnis"
 ---
+
+# Teil 01 — Vision
+
 
 ## Ausgangslage
 
@@ -143,3 +147,4 @@ Kursdaten          →  prüffähige Abrechnungsdatei  →  Krankenkasse
 - **Ob sich der eigene Weg wirtschaftlich lohnt** gegenüber einer
   Abrechnungsstelle. Diese Frage stellt sich am Ende noch einmal, mit Zahlen —
   siehe Teil 23.
+
