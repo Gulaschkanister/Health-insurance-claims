@@ -1,5 +1,4 @@
 @startuml GKVTransmitter_Uebersicht
-!pragma layout smetana
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false

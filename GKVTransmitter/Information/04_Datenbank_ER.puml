@@ -1,5 +1,4 @@
 @startuml GKVTransmitter_Datenbank_ER
-!pragma layout smetana
 hide empty members
 skinparam shadowing false
 skinparam linetype ortho

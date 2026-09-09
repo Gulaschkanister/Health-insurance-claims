@@ -1,5 +1,4 @@
 @startuml GKVTransmitter_DTA_und_Versand
-!pragma layout smetana
 hide empty members
 skinparam packageStyle rectangle
 skinparam shadowing false

@@ -50,13 +50,54 @@ Ausformuliert heißt das: am Ende kann das Programm dies.
 | 5 | **Die Antwort einordnen** — angenommen, fachlich zurückgewiesen, Syntaxfehler, technischer Fehler | Die Anwenderin weiß nach dem Lesen, ob sie korrigieren, neu erzeugen oder nur erneut senden muss |
 | 6 | **Eine Zurückweisung nachbearbeiten**, ohne alles neu zu erfassen | Die korrigierte Abrechnung geht als neue Lieferung hinaus, mit sauberer Nummer |
 | 7 | **Einen weiteren Leistungsbereich aufnehmen** — über Einträge, nicht über Umbau | Rehabilitationssport neben Hebammenhilfe, ohne dass eine Klasse sich ändert |
+| 8 | **Sich rechnen** — über die Jahre weniger kosten als der Anteil, den eine Abrechnungsstelle nimmt | Die Summe aus Gebühren und Pflegeaufwand bleibt unter diesem Anteil |
 
 Und das alles **auf einem einzelnen Rechner, ohne Installation und ohne dass
 Gesundheitsdaten das Haus verlassen.**
 
-Nicht jeder dieser Punkte ist am Ende dieses Teils entschieden, und nicht jeder
-ist allein durch Programmieren erreichbar — Punkt 4 hängt an Zulassungen, die
-niemand schreiben kann. Das ist Gegenstand von Teil 04.
+### Der finanzielle Punkt
+
+Punkt 8 ist kein Anhängsel, sondern die Bedingung, unter der das ganze Vorhaben
+steht. Ein Programm, das funktioniert und trotzdem teurer ist als der Weg über
+einen Dienstleister, hat sein Ziel verfehlt.
+
+Die beiden Wege haben **unterschiedlich geformte Kosten** — das ist der Kern der
+Sache:
+
+| | Abrechnungsstelle | Selbst abrechnen |
+|---|---|---|
+| **Art der Kosten** | ein Anteil am abgerechneten Betrag | ein fester Betrag im Jahr |
+| **Wächst mit** | dem Umsatz | nichts — der Betrag bleibt |
+| **Läuft weiter** | solange abgerechnet wird | solange abgerechnet wird |
+| **Zusätzlich** | — | die eigene Zeit für Pflege und Änderungen |
+
+Daraus folgt eine einfache Regel: **Prozentkosten wachsen mit, Festkosten nicht.**
+Unterhalb eines bestimmten Jahresumsatzes gewinnt der Dienstleister, oberhalb der
+eigene Weg. Wo dieser Punkt liegt, hängt an Zahlen, die hier noch nicht alle
+vorliegen.
+
+Zwei davon sind bereits bekannt und gehören in die Rechnung:
+
+| Posten | Was er kostet |
+|---|---|
+| Das Zertifikat für die Übermittlung | im ersten Jahr mehr als in den folgenden, **je Betriebsstätte und Jahr, nicht je Kasse** |
+| Die Betriebsnummer für den Abrechnungsverkehr | gebührenfrei |
+| Die laufende Pflege | keine Rechnung, aber Zeit — die Vorgaben ändern sich jährlich |
+
+Der letzte Posten ist der, den man beim Rechnen vergisst. **Ein Programm, das
+niemand pflegt, wird nicht billiger — es hört auf zu funktionieren**, weil ein
+Schlüsselverzeichnis wechselt oder eine Formatfassung abgelöst wird. Deshalb
+zählt Pflege in dieser Rechnung als Kosten, auch wenn keine Rechnung dafür kommt.
+
+Diese Gegenüberstellung wird in Teil 23 mit den dann bekannten Zahlen
+nachgerechnet — und zwar ergebnisoffen. Es ist ein zulässiges Ergebnis dieses
+Projekts, dass sich der eigene Weg nicht lohnt.
+
+### Was hier noch offen ist
+
+Nicht jeder Punkt ist am Ende dieses Teils entschieden, und nicht jeder ist
+allein durch Programmieren erreichbar — Punkt 4 hängt an Zulassungen, die niemand
+schreiben kann. Das ist Gegenstand von Teil 04.
 
 ## Ziel dieses Teils
 
@@ -202,8 +243,9 @@ wieder ein** — über `DtaDocument` und `DtaSegment`. Deshalb fällt ein Fehler
 auf, der erst beim Zusammensetzen entsteht, und deshalb lässt sich mit
 demselben Werkzeug auch eine fremde Datei prüfen.
 
-Das vollständige Klassenbild und das fachliche Übersichtsmodell folgen in Teil
-06, wenn genug entschieden ist, um sie zu verantworten.
+Das fachliche Übersichtsmodell — dieselbe Sache, aber vollständig und als
+Begriffe statt als Klassen — folgt in Teil 02. Das vollständige Klassenbild
+kommt in Teil 06, wenn genug entschieden ist, um es zu verantworten.
 
 ### Was dauerhaft festgehalten werden muss
 

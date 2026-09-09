@@ -1,5 +1,4 @@
 @startuml GKVTransmitter_Domaene
-!pragma layout smetana
 hide empty members
 skinparam packageStyle rectangle
 skinparam shadowing false

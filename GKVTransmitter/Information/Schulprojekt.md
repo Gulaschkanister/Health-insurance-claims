@@ -155,9 +155,9 @@ Zwölf Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 |---|---|
 | Klassendiagramm-Ausschnitt: Nachrichtenerzeugung | 01 |
 | Erstes Datenmodell, fachlich | 01 |
+| Fachliches Übersichtsmodell (Begriffe) | 02 |
 | Komponenten- und Abhängigkeitsdiagramm | 05 |
 | Klassendiagramm der Domäne | 06 |
-| Fachliches Übersichtsmodell | 06 |
 | ER-Diagramm aus dem echten Schema | 07 |
 | Aufbau der Nachricht | 11 |
 | Klassendiagramm des Prüfwerks | 14 |
@@ -168,7 +168,7 @@ Zwölf Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 
 **Neun Bilder liegen bereits vor.** In Teil 01 eingebettet sind
 `GKVTransmitter_Vision_Nachrichtenerzeugung` und `_Vision_ER`;
-`_Vision_Fachmodell` ist gezeichnet, gehört aber erst in Teil 06. In der
+`_Vision_Fachmodell` ist gezeichnet, gehört aber in Teil 02. In der
 Gesamtdokumentation stehen `_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
 `_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER`.
 
@@ -177,8 +177,8 @@ und 07. Die übrigen sechs entstehen dort, wo sie gebraucht werden.
 
 **Teil 01 zeigt bewusst nicht alles.** Das Klassenbild dort ist ein Ausschnitt
 von elf Klassen aus einem Bereich — genug, um darüber zu reden, zu wenig, um zu
-erschlagen. Ein Gesamtbild aller Klassen wäre an dieser Stelle weder besprechbar
-noch zu verantworten; es folgt in Teil 06.
+erschlagen. Ein Gesamtbild aller Klassen wäre an dieser Stelle weder besprechbar noch zu
+verantworten; es folgt in Teil 06, das Begriffsmodell in Teil 02.
 
 Das Datenmodell in Teil 01 ist dagegen vollständig, aber fachlich: die Schlüssel
 sind Gedanken, keine Spalten. Ein Datenmodell verträgt diese Breite, ein
