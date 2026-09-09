@@ -65,3 +65,43 @@ mv "$GESAMT" 00-Gesamtdokumentation.md
 
 echo
 echo "Gesamtfassung: 00-Gesamtdokumentation.docx ($(echo "$TEILE" | wc -l) Teile)"
+
+# --- PDF-Fassung -----------------------------------------------------------
+# Umgewandelt wird die .docx, nicht die Markdown-Quelle: so ist die PDF
+# garantiert dasselbe Dokument, das auch in Word aufgeht.
+#
+# Unter Windows steht LibreOffice in der WSL. Fehlt es, wird der Schritt
+# uebersprungen - die .docx sind das eigentliche Ergebnis, die PDF ist
+# Beiwerk fuer alle, die kein Word haben.
+
+WEG=""
+if command -v soffice >/dev/null 2>&1; then
+  WEG="lokal"
+elif command -v wsl >/dev/null 2>&1 && wsl -- bash -lc 'command -v soffice' >/dev/null 2>&1; then
+  WEG="wsl"
+  # soffice muss in der WSL im Zielordner stehen. Wird der Pfad nur als
+  # Argument uebergeben, meldet es "source file could not be loaded" -
+  # deshalb der Umweg ueber cd in einer Login-Shell.
+  ORDNER=$(wsl -- wslpath -a "$(pwd -W)")
+fi
+
+echo
+if [ -z "$WEG" ]; then
+  echo "Kein LibreOffice gefunden - PDF uebersprungen."
+else
+  echo "PDF-Fassungen:"
+  for d in [0-9][0-9]-*.docx; do
+    [ -e "$d" ] || continue
+    rm -f "${d%.docx}.pdf"
+    if [ "$WEG" = "lokal" ]; then
+      soffice --headless --convert-to pdf --outdir . "$d" >/dev/null 2>&1
+    else
+      wsl -- bash -lc "cd '$ORDNER' && soffice --headless --convert-to pdf --outdir . '$d'" >/dev/null 2>&1
+    fi
+    if [ -e "${d%.docx}.pdf" ]; then
+      echo "  ${d%.docx}.pdf"
+    else
+      echo "  ${d%.docx}.pdf FEHLGESCHLAGEN - ist die Datei gerade geoeffnet?"
+    fi
+  done
+fi
