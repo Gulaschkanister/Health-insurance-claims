@@ -382,6 +382,10 @@ Beides ist im Programm bisher nicht abgebildet und gehört zum Weg in den Echtbe
 
 Die Trennung ist im Build verankert: eine Enforcer-Regel lässt das Übersetzen fehlschlagen, sobald eine JavaFX-Abhängigkeit in den Kern gelangt. Nur ein oberflächenfreier Kern lässt sich ohne laufende Anwendung testen, und daran hängt die automatisierte Prüfung der gesamten Fachlogik.
 
+![Module und Abhängigkeiten](GKVTransmitter_Abhaengigkeiten.png)
+
+Entscheidend an diesem Bild ist die Richtung der Pfeile. Die Fachlichkeit kennt nur die **Schnittstellen** `DataRepository` und `BillingOfficeTransport`, nie deren Umsetzung; der Pfeil vom Anschluss zur Schnittstelle ist umgedreht. Deshalb lässt sich die Datenhaltung im Test durch einen Speicher ersetzen, ohne dass eine Zeile Fachlichkeit davon weiß.
+
 ## Fachliches Modell
 
 ![Fachliches Modell](GKVTransmitter_Domaene.png)
@@ -392,7 +396,17 @@ Die Trennung ist im Build verankert: eine Enforcer-Regel lässt das Übersetzen 
 
 ![DTA-Verarbeitung und Versand](GKVTransmitter_DTA_und_Versand.png)
 
-## Oberfläche und Datenhaltung
+## Datenbankstruktur
+
+![Datenbankstruktur](GKVTransmitter_Datenbank_ER.png)
+
+Acht Tabellen, aus dem tatsächlichen Schema ausgelesen. Zwei Eigenheiten sind erwähnenswert.
+
+**Es gibt keine Fremdschlüssel.** Das Schema wird beim Start um fehlende Tabellen und Spalten ergänzt, und SQLite lässt eine bestehende Tabelle nachträglich nicht um eine Fremdschlüsselbedingung erweitern. Die Verbindungen ergeben sich also aus dem Modell, nicht aus der Datenbank — das Aufräumen beim Löschen einer Teilnehmerin liegt beim Programm.
+
+**`Person` ist eine Oberklasse ohne eigene Tabelle.** Ihre Felder erscheinen doppelt, in `Patient` und in `ServiceProvider`. Das kostet Redundanz und spart einen Verbund bei jeder Abfrage; für zwei Untertypen mit wenigen hundert Zeilen ist das der bessere Handel. Es erklärt auch, warum es zwei getrennte Verknüpfungstabellen zur Gruppe gibt.
+
+## Oberfläche und Datenzugriff
 
 ![Oberfläche und Datenzugriff](GKVTransmitter_Praesentation_und_Persistenz.png)
 

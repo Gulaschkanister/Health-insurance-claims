@@ -1,0 +1,112 @@
+@startuml GKVTransmitter_Abhaengigkeiten
+hide empty members
+skinparam shadowing false
+skinparam componentStyle rectangle
+skinparam ranksep 45
+skinparam nodesep 25
+skinparam package {
+  BackgroundColor White
+  BorderColor #4A5A6A
+}
+skinparam class {
+  BackgroundColor White
+  BorderColor #4A5A6A
+}
+
+title Module und Abhängigkeiten — wohin die Pfeile zeigen dürfen
+
+legend top left
+  Ein Pfeil bedeutet „kennt" und damit „hängt ab von".
+  Durchgezogen = benutzt · gestrichelt = setzt um
+endlegend
+
+package "gkv-ui  (Oberfläche)" as ui {
+  class Masken
+  class Meldungen
+  class Feldbau
+}
+
+package "gkv-core  (Fachlichkeit)" as core {
+
+  package "Anwendungsfall" as anwendung {
+    class AbrechnungService
+  }
+
+  package "Fachlichkeit" as fach {
+    class DtaDispatchService <<Ablauf>>
+    class DtaFactory <<Erzeugung>>
+    class DtaValidationService <<Prüfwerk>>
+    class "Modell\nAbrechnung · Person · Blaupause" as Modell
+  }
+
+  package "Schnittstellen (Ports)" as ports {
+    class DataRepository <<interface>>
+    class BillingOfficeTransport <<interface>>
+  }
+
+  package "Anschlüsse (Adapter)" as adapter {
+    class HibernateSqllite
+    class "FileBillingOfficeTransport" as Dateiversand
+    class "SimulierterKassenTransport" as Simulation
+  }
+}
+
+Masken --> AbrechnungService
+Masken --> DataRepository
+Masken --> Meldungen
+Masken --> Feldbau
+
+AbrechnungService --> DtaDispatchService
+AbrechnungService --> DataRepository
+
+DtaDispatchService --> DtaFactory
+DtaDispatchService --> DtaValidationService
+DtaDispatchService --> BillingOfficeTransport
+
+DtaFactory --> Modell
+DtaValidationService --> Modell
+
+HibernateSqllite ..|> DataRepository
+Dateiversand ..|> BillingOfficeTransport
+Simulation ..|> BillingOfficeTransport
+Simulation --> Dateiversand
+
+note right of ports
+  **Ports und Adapter**
+
+  Die Fachlichkeit kennt nur die
+  Schnittstelle, nie die Umsetzung.
+  Der Pfeil zeigt vom Anschluss
+  **zur Schnittstelle** und nie
+  umgekehrt — die Abhängigkeit
+  ist gedreht.
+
+  Deshalb lässt sich die Datenhaltung
+  im Test durch einen Speicher ersetzen,
+  ohne dass eine Zeile Fachlichkeit
+  davon weiß.
+end note
+
+note right of ui
+  **gkv-ui kennt gkv-core. Umgekehrt nicht.**
+
+  Keine Vereinbarung, sondern im
+  Bauvorgang erzwungen: eine Regel
+  im Bauwerkzeug lässt den Bau
+  fehlschlagen, sobald eine
+  Oberflächenbibliothek in den Kern
+  gelangt.
+
+  Nur ein oberflächenfreier Kern
+  lässt sich ohne laufendes Fenster
+  prüfen.
+end note
+
+note bottom of Simulation
+  Umschließt einen anderen Anschluss
+  und lässt zusätzlich eine nachgestellte
+  Kasse antworten — dieselbe Schnittstelle,
+  zusätzliches Verhalten.
+end note
+
+@enduml

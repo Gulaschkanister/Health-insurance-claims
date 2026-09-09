@@ -153,7 +153,7 @@ Neun Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 
 | Diagramm | Teil |
 |---|---|
-| Komponentendiagramm | 05 |
+| Komponenten- und Abhängigkeitsdiagramm | 05 |
 | Klassendiagramm der Domäne | 06 |
 | ER-Diagramm | 07 |
 | Aufbau der Nachricht | 11 |
@@ -162,6 +162,16 @@ Neun Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 | Mockups | 16 |
 | Verteilungsdiagramm | 19 |
 | Aktivitätsdiagramm der Fehlerbehandlung | 20 |
+
+**Fünf davon liegen bereits vor** und sind in die Gesamtdokumentation eingebettet:
+`GKVTransmitter_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
+`_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER`.
+
+Das ER-Diagramm ist **aus dem tatsächlichen Datenbankschema ausgelesen**, nicht
+aus den Klassen abgeleitet. Der Unterschied ist keiner auf dem Papier: dabei kam
+heraus, dass das Schema **keine Fremdschlüssel** enthält und dass `Person` als
+Oberklasse ohne eigene Tabelle ihre Felder in zwei Tabellen dupliziert. Beides
+steht so in keiner Klasse.
 
 Alle als Quelltext, aus dem die Bilder erzeugt werden — **ein Diagramm, das man
 von Hand malt, veraltet.** Dasselbe gilt für die Bildschirmfotos: das Projekt

@@ -8,7 +8,7 @@ skinparam linetype ortho
 title Fachliches Modell
 
 package "entity" {
-  abstract class Person {
+  class Person <<MappedSuperclass>> {
     -int id
     -String firstname
     -String lastname
@@ -29,6 +29,14 @@ package "entity" {
     -String name
     -String templateName
     -String payload
+  }
+  class DtaCounter {
+    -Long id
+    -Long nextValue
+  }
+  class Einstellungswert {
+    -String schluessel
+    -String wert
   }
 }
 

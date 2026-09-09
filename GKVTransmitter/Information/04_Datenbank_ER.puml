@@ -1,0 +1,147 @@
+@startuml GKVTransmitter_Datenbank_ER
+!pragma layout smetana
+hide empty members
+skinparam shadowing false
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor White
+  BorderColor #4A5A6A
+  ArrowColor #4A5A6A
+}
+
+title Datenbankstruktur — SQLite, erzeugt aus den Entitäten
+
+legend top left
+  Aus dem tatsächlichen Schema ausgelesen, nicht aus den Klassen abgeleitet.
+  PK = Primärschlüssel · NN = nicht null
+endlegend
+
+package "Stammdaten" {
+
+  entity "Patient" as patient {
+    **id** : integer <<PK>>
+    --
+    firstname : varchar(255)
+    lastname : varchar(255)
+    birthDate : date
+    street : varchar(255)
+    housenumber : varchar(255)
+    plz : integer <<NN>>
+    country : varchar(255)
+    ik : integer <<NN>>
+    kassenIk : integer <<NN>>
+  }
+
+  entity "ServiceProvider" as provider {
+    **id** : integer <<PK>>
+    --
+    firstname : varchar(255)
+    lastname : varchar(255)
+    birthDate : date
+    street : varchar(255)
+    housenumber : varchar(255)
+    plz : integer <<NN>>
+    country : varchar(255)
+    ik : integer <<NN>>
+    kassenIk : integer <<NN>>
+  }
+
+  entity "PersonGroup" as gruppe {
+    **id** : integer <<PK>>
+    --
+    name : varchar(255)
+  }
+
+  entity "person_group_patient" as gp {
+    **group_id** : integer <<PK>>
+    **patient_id** : integer <<PK>>
+  }
+
+  entity "person_group_service_provider" as gs {
+    **group_id** : integer <<PK>>
+    **service_provider_id** : integer <<PK>>
+  }
+}
+
+package "Abrechnung" {
+
+  entity "blueprints" as blaupause {
+    **id** : integer <<PK>>
+    --
+    name : varchar(255) <<NN>>
+    templateName : varchar(255) <<NN>>
+    payload : varchar(255) <<NN>>
+    createdAt : timestamp <<NN>>
+  }
+
+  entity "dta_counter" as zaehler {
+    **id** : bigint <<PK>>
+    --
+    nextValue : bigint <<NN>>
+  }
+}
+
+package "Betrieb" {
+
+  entity "einstellung" as einstellung {
+    **schluessel** : varchar(255) <<PK>>
+    --
+    wert : varchar(255)
+  }
+}
+
+gruppe  ||--o{ gp : "group_id"
+patient ||--o{ gp : "patient_id"
+
+gruppe   ||--o{ gs : "group_id"
+provider ||--o{ gs : "service_provider_id"
+
+note bottom of gp
+  **Zwei getrennte Verknüpfungstabellen**, weil
+  Teilnehmerinnen und Dienstleister eigene
+  Tabellen sind — nicht eine Personentabelle
+  mit Merkmal. Der Grund steht am Modell:
+  //Person// ist eine gemeinsame Oberklasse
+  ohne eigene Tabelle.
+end note
+
+note right of blaupause
+  //payload// enthält die Angaben zur Leistung
+  als JSON — Preis, Abrechnungscode,
+  Positionsnummer.
+
+  **Die Länge 255 ist irreführend:** SQLite
+  hält sich nicht an Längenangaben und
+  speichert beliebig lange Zeichenketten.
+  Auf einer anderen Datenbank wäre das
+  ein Fehler, der erst beim Abschneiden
+  auffiele.
+end note
+
+note right of zaehler
+  Genau eine Zeile mit fester Kennung 1.
+  Hält die fortlaufende Nummer der
+  Datenlieferungen — sie muss über
+  Programmstarts hinweg eindeutig bleiben.
+end note
+
+note as keineFk
+  **Es gibt keine Fremdschlüssel im Schema.**
+
+  Die Verbindungen oben ergeben sich aus dem
+  Modell, nicht aus der Datenbank. Das Schema
+  wird beim Start ergänzt, und in SQLite lässt
+  sich eine bestehende Tabelle nachträglich
+  nicht um eine Fremdschlüsselbedingung
+  erweitern.
+
+  Folge: eine gelöschte Teilnehmerin kann eine
+  verwaiste Zeile in der Verknüpfungstabelle
+  hinterlassen. Das Programm räumt selbst auf —
+  die Datenbank hält es nicht auf.
+end note
+
+keineFk .. gp
+keineFk .. gs
+
+@enduml
