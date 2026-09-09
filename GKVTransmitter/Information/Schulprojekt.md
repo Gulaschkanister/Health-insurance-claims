@@ -163,9 +163,12 @@ Neun Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 | Verteilungsdiagramm | 19 |
 | Aktivitätsdiagramm der Fehlerbehandlung | 20 |
 
-**Fünf davon liegen bereits vor** und sind in die Gesamtdokumentation eingebettet:
-`GKVTransmitter_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
+**Sechs Bilder liegen bereits vor** und sind in die Gesamtdokumentation
+eingebettet: `GKVTransmitter_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
 `_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER`.
+
+Von den neun oben geforderten sind damit **drei erledigt** — die Teile 05, 06
+und 07. Die übrigen sechs entstehen dort, wo sie gebraucht werden.
 
 Das ER-Diagramm ist **aus dem tatsächlichen Datenbankschema ausgelesen**, nicht
 aus den Klassen abgeleitet. Der Unterschied ist keiner auf dem Papier: dabei kam
