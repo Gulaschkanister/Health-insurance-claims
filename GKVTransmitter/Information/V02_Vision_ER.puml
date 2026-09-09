@@ -1,0 +1,193 @@
+@startuml GKVTransmitter_Vision_ER
+hide circle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
+skinparam class {
+  BackgroundColor White
+  BorderColor #4A5A6A
+  ArrowColor #4A5A6A
+}
+skinparam package {
+  BackgroundColor #FAFBFC
+  BorderColor #8A99A8
+}
+
+title Erstes Datenmodell — was dauerhaft festgehalten werden muss
+
+legend top left
+  Entwurf zur Vision. **Fachliche Sicht**, keine Tabellen:
+  Schlüssel sind hier Gedanken, keine Spalten.
+  PK = woran sich ein Eintrag erkennen lässt · FK = worauf er verweist
+  Was daraus im Schema wurde, zeigt Teil 07.
+endlegend
+
+package "Stammdaten — werden gepflegt" {
+
+  entity "Leistungserbringerin" as LE {
+    **PK** Kennung
+    --
+    Name
+    Anschrift
+    Institutionskennzeichen
+    Steuernummer
+  }
+
+  entity "Teilnehmerin" as TN {
+    **PK** Kennung
+    --
+    Name
+    Geburtsdatum
+    Anschrift
+    --
+    Versichertennummer
+    Versichertenstatus
+    **FK** Kasse
+  }
+
+  entity "Krankenkasse" as KK {
+    **PK** Institutionskennzeichen
+    --
+    Name
+    **FK** Annahmestelle
+  }
+
+  entity "Annahmestelle" as AS {
+    **PK** Institutionskennzeichen
+    --
+    Bezeichnung
+    Zugangsweg
+  }
+
+  entity "Gruppe (Kurs)" as GR {
+    **PK** Kennung
+    --
+    Bezeichnung
+    Zeitraum
+    Anzahl der Termine
+    **FK** Leistungserbringerin
+    **FK** Leistungsbeschreibung
+  }
+
+  entity "Leistungsbeschreibung" as LB {
+    **PK** Kennung
+    --
+    Bezeichnung
+    Abrechnungsposition
+    Tarifkennzeichen
+    Betrag je Termin
+    Umsatzsteuersatz
+  }
+}
+
+package "Bewegungsdaten — entstehen im Betrieb" {
+
+  entity "Teilnahme" as TE {
+    **PK** Kennung
+    --
+    **FK** Gruppe
+    **FK** Teilnehmerin
+    wahrgenommene Termine
+  }
+
+  entity "Abrechnung" as AB {
+    **PK** Kennung
+    --
+    Belegnummer
+    Abrechnungszeitraum
+    Betrag
+    **FK** Teilnahme
+    **FK** Lieferung
+  }
+
+  entity "Lieferung" as LI {
+    **PK** Kennung
+    --
+    laufende Nummer
+    Art: Test · Erprobung · Echt
+    Dateiname
+    **FK** Annahmestelle
+  }
+
+  entity "Befund" as BE {
+    **PK** Kennung
+    --
+    **FK** Lieferung
+    Stufe
+    Fundstelle
+    Beschreibung
+  }
+
+  entity "Rückmeldung" as RM {
+    **PK** Kennung
+    --
+    **FK** Lieferung
+    Einstufung
+    Text
+  }
+}
+
+package "Betriebsdaten — einmal eingerichtet" {
+
+  entity "Einstellung" as EI {
+    **PK** Schlüssel
+    --
+    Wert
+  }
+  note bottom of EI
+    Ablageort, Testkennzeichen,
+    Voreinstellungen.
+
+    Ein **Schlüssel-Wert-Vorrat** statt
+    fester Spalten: eine neue Einstellung
+    soll keine Änderung am Datenmodell
+    verlangen.
+  end note
+
+  entity "Zähler" as ZA {
+    **PK** Bezeichnung
+    --
+    nächster Wert
+  }
+  note bottom of ZA
+    Die laufende Nummer einer Lieferung
+    darf sich **nie wiederholen** — auch
+    nicht nach einem Neustart oder einem
+    abgebrochenen Lauf.
+
+    Deshalb gehört sie in die Ablage und
+    nicht in den Arbeitsspeicher.
+  end note
+}
+
+LE ||--o{ GR
+LB ||--o{ GR
+GR ||--|{ TE
+TN ||--o{ TE
+KK ||--o{ TN
+AS ||--|{ KK
+
+TE ||--|| AB
+LI ||--|{ AB
+AS ||--o{ LI
+LI ||--o{ BE
+LI ||--o| RM
+
+note as regel #FFF8DC
+  **Zwei Festlegungen, die hier schon feststehen**
+
+  **Eine Abrechnung gehört immer zu genau einer Lieferung.**
+  Sonst ließe sich später nicht beantworten, was eigentlich
+  wohin gegangen ist — und genau das braucht man, wenn eine
+  Zurückweisung eintrifft.
+
+  **Ein Befund hängt an der Lieferung, nicht an der Abrechnung.**
+  Manche Beanstandungen betreffen die Lieferung als Ganzes:
+  Zähler, Summen, Rahmen. Sie hätten an keiner einzelnen
+  Abrechnung einen Platz.
+end note
+
+regel .. BE
+
+@enduml

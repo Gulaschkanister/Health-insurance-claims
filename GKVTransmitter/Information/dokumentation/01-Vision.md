@@ -32,6 +32,8 @@ liegen nur in Listen und Köpfen statt in einer Datei.**
 ## Ziel dieses Teils
 
 Festlegen, was das Programm können soll — und ebenso wichtig, was nicht.
+Dazu ein erstes Bild der Fachlichkeit: welche Begriffe es gibt, wie sie
+zusammenhängen und was von ihnen dauerhaft festgehalten werden muss.
 
 ## Überlegungen
 
@@ -124,6 +126,66 @@ Kursdaten          →  prüffähige Abrechnungsdatei  →  Krankenkasse
                        sie das Haus verlässt
 ```
 
+### Die Begriffe und ihre Beziehungen
+
+Bevor entschieden werden kann, wie etwas gebaut wird, muss feststehen, **wovon
+überhaupt die Rede ist**. Das folgende Übersichtsmodell hält die Begriffe der
+Fachlichkeit fest und wie sie zusammenhängen — noch nicht als Klassen eines
+Programms, sondern als Landkarte des Gegenstands.
+
+![Fachliches Übersichtsmodell](../GKVTransmitter_Vision_Fachmodell.png)
+
+Drei Beobachtungen aus diesem Bild prägen alles Weitere:
+
+**Die Teilnehmerin ist nicht die Zahlende.** Zwischen der erbrachten Leistung
+und dem Geld steht die Krankenkasse. Damit hängt an jeder Teilnehmerin ein
+zweiter Satz Angaben — Versichertennummer, Status, Kasse —, der mit dem Kurs
+nichts zu tun hat und ohne den trotzdem nichts geht.
+
+**Die Lieferung ist eine eigene Sache, nicht nur ein Versandvorgang.** Sie
+bündelt mehrere Abrechnungen an *einen* Empfänger und trägt eine laufende
+Nummer, die sich nie wiederholen darf. Etwas, das eine Nummer führt und einen
+Zustand hat, ist ein Gegenstand des Modells und keine Handlung.
+
+**Zwischen Erzeugen und Versenden steht ein Tor.** Der Prüfbericht ist kein
+Nebenprodukt, sondern die Bedingung dafür, dass die Lieferung das Haus
+verlässt. Er hängt deshalb an der Lieferung und nicht neben ihr.
+
+Auffällig ist außerdem, dass die Lieferung **nicht an die Krankenkasse** geht,
+sondern an eine Datenannahmestelle. Wie sich diese Unterscheidung auswirkt, war
+zu diesem Zeitpunkt noch nicht absehbar — sie wird in Teil 04 zum Problem.
+
+### Was dauerhaft festgehalten werden muss
+
+Aus denselben Begriffen ergibt sich ein erster Entwurf der Datenhaltung. Er ist
+bewusst noch fachlich gehalten: die Schlüssel sind Gedanken, keine Spalten.
+
+![Erstes Datenmodell](../GKVTransmitter_Vision_ER.png)
+
+Die Aufteilung in drei Bereiche ist die eigentliche Aussage des Bildes.
+**Stammdaten** werden gepflegt und ändern sich selten. **Bewegungsdaten**
+entstehen im Betrieb und wachsen mit jedem Lauf. **Betriebsdaten** werden
+einmal eingerichtet und dann kaum noch angefasst — gehören aber trotzdem in die
+Ablage und nicht in eine Datei daneben.
+
+Zwei Festlegungen fallen hier bereits, und beide haben einen Grund, der später
+gebraucht wird:
+
+| Festlegung | Warum sie so getroffen wird |
+|---|---|
+| Eine Abrechnung gehört zu genau einer Lieferung | Trifft eine Zurückweisung ein, muss beantwortbar sein, was eigentlich wohin gegangen ist. Ohne diesen Bezug ist die Antwort nicht rekonstruierbar. |
+| Ein Befund hängt an der Lieferung, nicht an der Abrechnung | Manche Beanstandungen betreffen die Lieferung als Ganzes — Zähler, Summen, Rahmen. Sie hätten an keiner einzelnen Abrechnung einen Platz. |
+
+Ebenso bewusst ist, dass der **Zähler** für die laufende Nummer eine eigene
+Ablage bekommt statt eines Werts im Arbeitsspeicher. Eine Nummer, die nach
+einem Neustart wieder von vorn zählt, erzeugt eine doppelte
+Datenaustauschreferenz — und die ist ein Zurückweisungsgrund, der sich nicht
+mehr aus der Datei heraus reparieren lässt.
+
+Die **Einstellungen** stehen als Schlüssel-Wert-Vorrat da und nicht als Tabelle
+mit festen Spalten. Eine neue Einstellung soll keine Änderung am Datenmodell
+verlangen.
+
 **Woran sich Erfolg messen lässt**, in dieser Reihenfolge:
 
 | Maßstab | Warum dieser |
@@ -143,3 +205,7 @@ Kursdaten          →  prüffähige Abrechnungsdatei  →  Krankenkasse
 - **Ob sich der eigene Weg wirtschaftlich lohnt** gegenüber einer
   Abrechnungsstelle. Diese Frage stellt sich am Ende noch einmal, mit Zahlen —
   siehe Teil 23.
+- **Wie aus den Begriffen Klassen werden** und aus dem Datenmodell ein Schema.
+  Beides ist hier absichtlich noch fachlich gehalten; die Umsetzung folgt in den
+  Teilen 06 und 07. Dass die beiden Bilder dort nicht mehr gleich aussehen
+  werden, ist zu erwarten — **wo sie abweichen, ist die interessante Stelle.**

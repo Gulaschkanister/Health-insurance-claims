@@ -1,0 +1,174 @@
+@startuml GKVTransmitter_Vision_Fachmodell
+hide empty members
+skinparam shadowing false
+skinparam ranksep 55
+skinparam nodesep 35
+skinparam class {
+  BackgroundColor White
+  BorderColor #4A5A6A
+  ArrowColor #4A5A6A
+}
+skinparam package {
+  BackgroundColor #FAFBFC
+  BorderColor #8A99A8
+}
+
+title Fachliches Übersichtsmodell — die Begriffe des Vorhabens
+
+legend top left
+  Erster Entwurf zur Vision: **Begriffe der Fachlichkeit**, nicht Klassen der Umsetzung.
+  Was daraus tatsächlich wurde, zeigt Teil 06.
+endlegend
+
+package "Wer beteiligt ist" {
+
+  class Leistungserbringerin {
+    Name
+    Anschrift
+    Institutionskennzeichen
+  }
+  note bottom
+    Die Hebamme. Sie erbringt die
+    Leistung und stellt die Forderung.
+    Ihr **Institutionskennzeichen** ist
+    die Kennung, unter der sie im
+    Abrechnungsverkehr auftritt.
+  end note
+
+  class Teilnehmerin {
+    Name
+    Geburtsdatum
+    Anschrift
+    Versichertennummer
+  }
+  note bottom
+    Die versicherte Person. Sie zahlt
+    nicht selbst — abgerechnet wird
+    mit ihrer Kasse.
+  end note
+
+  class Krankenkasse {
+    Name
+    Institutionskennzeichen
+  }
+
+  class Datenannahmestelle {
+    Institutionskennzeichen
+    Zugangsweg
+  }
+  note bottom
+    Nimmt die Lieferung entgegen —
+    **nicht die Kasse selbst.**
+    Zum Zeitpunkt der Vision noch
+    nicht durchdrungen, siehe Teil 04.
+  end note
+}
+
+package "Was geleistet wird" {
+
+  class Kurs {
+    Bezeichnung
+    Anzahl der Termine
+  }
+
+  class Leistungsbeschreibung {
+    Bezeichnung
+    Abrechnungsposition
+    Betrag je Termin
+    Umsatzsteuersatz
+  }
+  note right
+    Einmal festgelegt, für viele
+    Abrechnungen verwendet —
+    damit derselbe Kurs nicht
+    jedes Mal neu beschrieben
+    werden muss.
+  end note
+
+  class Teilnahme {
+    wahrgenommene Termine
+  }
+}
+
+package "Was daraus entsteht" {
+
+  class Abrechnung {
+    Belegnummer
+    Zeitraum
+    Betrag
+  }
+
+  class Lieferung {
+    laufende Nummer
+    {field} Art: Test · Erprobung · Echt
+  }
+  note right
+    Fasst alle Abrechnungen an
+    **einen** Empfänger zusammen.
+    Die laufende Nummer muss über
+    Programmstarts hinweg eindeutig
+    bleiben.
+  end note
+
+  class "Prüfbericht" as Pruefbericht {
+    Befunde
+  }
+
+  class Befund {
+    {field} Stufe: Fehler · Warnung · Hinweis
+    Fundstelle
+    Beschreibung
+  }
+  note bottom
+    **Der Kern des Vorhabens.**
+    Ein Fehler hält die gesamte
+    Lieferung auf — lieber gar nicht
+    versenden als falsch.
+  end note
+
+  class "Rückmeldung" as Rueckmeldung {
+    Einstufung
+    Text
+  }
+  note bottom
+    angenommen · fachlich zurückgewiesen ·
+    Syntaxfehler · technischer Fehler ·
+    **nicht einzuordnen**
+
+    Der letzte Fall gilt nie als Annahme.
+  end note
+}
+
+Leistungserbringerin "1" -- "0..*" Kurs : leitet >
+Kurs "1" -- "1..*" Teilnahme : umfasst >
+Teilnahme "*" -- "1" Teilnehmerin : von >
+Teilnehmerin "*" -- "1" Krankenkasse : versichert bei >
+Kurs "*" -- "1" Leistungsbeschreibung : wird abgerechnet nach >
+
+Teilnahme "1" -- "1" Abrechnung : ergibt >
+Abrechnung "1..*" -- "1" Lieferung : gebündelt in >
+Lieferung "*" -- "1" Datenannahmestelle : geht an >
+Datenannahmestelle "1" -- "*" Krankenkasse : nimmt entgegen für >
+
+Lieferung "1" -- "1" Pruefbericht : geprüft durch >
+Pruefbericht "1" -- "0..*" Befund : enthält >
+Lieferung "1" -- "0..1" Rueckmeldung : beantwortet mit >
+
+note as tor #FFF8DC
+  **Das Tor**
+
+  Zwischen „Lieferung erzeugt" und
+  „Lieferung versendet" liegt die Prüfung.
+  Enthält der Bericht einen **Fehler**,
+  geht **nichts** hinaus — auch nicht die
+  fehlerfreien Abrechnungen derselben
+  Lieferung.
+
+  Sonst läge bei einem Fehler in der Mitte
+  bereits ein Teil bei der Kasse und müsste
+  dort einzeln storniert werden.
+end note
+
+tor .. Pruefbericht
+
+@enduml

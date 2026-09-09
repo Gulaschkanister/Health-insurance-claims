@@ -149,10 +149,12 @@ und nicht anders*, ist eine Projektdokumentation.
 
 # Die Diagramme
 
-Neun Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
+Elf Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 
 | Diagramm | Teil |
 |---|---|
+| Fachliches Übersichtsmodell (Entwurf) | 01 |
+| Erstes Datenmodell (Entwurf) | 01 |
 | Komponenten- und Abhängigkeitsdiagramm | 05 |
 | Klassendiagramm der Domäne | 06 |
 | ER-Diagramm | 07 |
@@ -163,12 +165,19 @@ Neun Stück, verteilt über die Reihe — nicht am Ende in einem Schwung.
 | Verteilungsdiagramm | 19 |
 | Aktivitätsdiagramm der Fehlerbehandlung | 20 |
 
-**Sechs Bilder liegen bereits vor** und sind in die Gesamtdokumentation
-eingebettet: `GKVTransmitter_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
-`_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER`.
+**Acht Bilder liegen bereits vor**: `GKVTransmitter_Vision_Fachmodell` und
+`_Vision_ER` in Teil 01, dazu `_Uebersicht`, `_Domaene`, `_DTA_und_Versand`,
+`_Praesentation_und_Persistenz`, `_Abhaengigkeiten` und `_Datenbank_ER` in der
+Gesamtdokumentation.
 
-Von den neun oben geforderten sind damit **drei erledigt** — die Teile 05, 06
-und 07. Die übrigen sechs entstehen dort, wo sie gebraucht werden.
+Von den elf Zeilen oben sind damit **fünf abgedeckt** — die Teile 01, 05, 06 und
+07. Die übrigen sechs entstehen dort, wo sie gebraucht werden.
+
+Die beiden Bilder aus Teil 01 sind **absichtlich Entwürfe**. Sie zeigen die
+Begriffe, bevor entschieden war, wie sie umgesetzt werden. Ihre späteren
+Gegenstücke in den Teilen 06 und 07 weichen davon ab — und genau diese
+Abweichung ist ein eigener Gegenstand der Dokumentation: sie zeigt, was sich
+beim Bauen als anders herausgestellt hat.
 
 Das ER-Diagramm ist **aus dem tatsächlichen Datenbankschema ausgelesen**, nicht
 aus den Klassen abgeleitet. Der Unterschied ist keiner auf dem Papier: dabei kam
