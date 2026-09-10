@@ -1,0 +1,94 @@
+@startuml GKVTransmitter_Klassen_DtaErzeugung
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+title Klassendiagramm: DTA-Erzeugung und -Einlesen
+
+package "dta" {
+  class DtaFactory <<factory>> {
+    +{static} buildDtaFor(Abrechnung, long, String, String) : String
+    +{static} buildDtaFor(Abrechnung, long, String, String, Leistungsparameter, Uebermittlungsart) : String
+    +{static} writeDtaFile(String, Path, String) : Path
+    -{static} buildEnfSegment(Abrechnung, int, Leistungsparameter) : String
+    -{static} buildInvSegment(Patient, LocalDate) : String
+    -{static} buildNadSegment(Patient) : String
+  }
+
+  class DtaDocument {
+    -List<DtaSegment> segments
+    -String rohtext
+    +{static} parse(String) : DtaDocument
+    +mitTag(String) : List<DtaSegment>
+    +erstesMitTag(String) : Optional<DtaSegment>
+    +anzahlMitTag(String) : int
+  }
+
+  class DtaSegment <<record>> {
+    +String tag
+    +List<String> elements
+    +String raw
+    +int zeilennummer
+    +element(int) : String
+    +komponente(int, int) : String
+    +ort() : String
+  }
+
+  class Leistungsparameter <<record>> {
+    +BigDecimal einzelbetrag
+    +String abrechnungscode
+    +String tarifkennzeichen
+    +String positionsnummer
+    +BigDecimal zuzahlung
+    +String umsatzsteuersatz
+    +{static} ausBlueprint(Blueprint) : Leistungsparameter
+    +{static} VORBELEGUNG : Leistungsparameter
+  }
+
+  class Leistungsbereich <<utility>> {
+    +{static} UNBEKANNT : String
+    +{static} zuAbrechnungscode(String) : String
+  }
+
+  class LogischerDateiname <<utility>>
+
+  enum Uebermittlungsart {
+    TEST
+    ERPROBUNG
+    ECHT
+    +kennzeichen() : String
+    +{static} aus(String) : Uebermittlungsart
+  }
+}
+
+DtaFactory ..> Abrechnung : liest
+DtaFactory ..> Leistungsparameter : liest Leistungswerte aus
+DtaFactory ..> Uebermittlungsart : setzt Testkennzeichen aus
+DtaFactory ..> Leistungsbereich : leitet UNB-Feld 6 ab
+DtaFactory ..> DtaSegment : erzeugt Zeilen (indirekt über Text)
+DtaDocument o-- "0..*" DtaSegment
+Leistungsparameter ..> Blueprint : liest Felder aus
+
+note right of DtaFactory
+  Erzeugt reinen Text — dieselbe Nachricht wird über
+  DtaDocument.parse(...) zurückgelesen, damit die
+  Prüfung gegen Struktur arbeitet, nicht gegen die
+  Zeichenkette, die sie selbst erzeugt hat.
+end note
+
+note bottom of Leistungsparameter
+  VORBELEGUNG greift, wenn eine Blaupause eine
+  Angabe nicht führt — außer beim Einzelbetrag,
+  der dann auf null fällt. Null fällt in jeder
+  Summenprüfung auf, ein plausibler Ersatzwert nicht.
+end note
+
+note bottom of Leistungsbereich
+  Bildet den Sammelgruppenschlüssel (UNB, Feld 6)
+  aus dem Abrechnungscode der Leistungszeile ab,
+  vollständig nach Anlage 3 — siehe Teil 11 der
+  Projektdokumentation.
+end note
+
+@enduml

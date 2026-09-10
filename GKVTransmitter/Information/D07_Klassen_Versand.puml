@@ -1,0 +1,117 @@
+@startuml GKVTransmitter_Klassen_Versand
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+title Klassendiagramm: Versand
+
+package "dispatch" {
+  class DtaDispatchService {
+    -BillingOfficeEndpointRegistry endpointRegistry
+    -BillingOfficeTransport transport
+    -DtaValidationService validierung
+    -Datenaustauschreferenzen referenzen
+    -Uebermittlungsart art
+    +pruefe(List<Abrechnung>) : ValidationReport
+    +generateAndRoute(List<Abrechnung>, Path) : List<DispatchBatch>
+    +checkConfiguredEndpoints() : List<BillingOfficeEndpointCheck>
+    +parseResponse(String) : BillingOfficeResponse
+  }
+
+  interface "Datenaustauschreferenzen" as DAR {
+    +naechste() : long
+  }
+
+  interface BillingOfficeTransport {
+    +getType() : BillingOfficeTransportType
+    +send(Path, BillingOfficeEndpoint) : Path
+    +probe(BillingOfficeEndpoint) : BillingOfficeEndpointCheck
+  }
+
+  class FileBillingOfficeTransport
+  class SimulierterKassenTransport
+  class SimulierteKassenGegenstelle
+
+  class BillingOfficeEndpointRegistry {
+    -Map<Integer,BillingOfficeEndpoint> endpoints
+    +{static} loadDefault() : BillingOfficeEndpointRegistry
+    +resolve(int, Path) : BillingOfficeEndpoint
+  }
+
+  class BillingOfficeEndpoint <<record>> {
+    +int kassenIk
+    +String name
+    +BillingOfficeTransportType transportType
+    +Path destinationDirectory
+    +boolean enabled
+  }
+
+  class BillingOfficeEndpointCheck <<record>>
+
+  enum BillingOfficeTransportType {
+    FILE
+  }
+
+  class BillingOfficeResponseParser {
+    +parse(String) : BillingOfficeResponse
+  }
+
+  class BillingOfficeResponse {
+    -BillingOfficeResponseType type
+    -String message
+    -String rawContent
+  }
+
+  enum BillingOfficeResponseType {
+    ACCEPTED
+    REJECTED
+    TECHNICAL_ERROR
+    SYNTAX_ERROR
+    UNKNOWN
+  }
+
+  class DispatchBatch <<record-artig>> {
+    -int kassenIk
+    -List<Path> files
+  }
+
+  class DispatchException
+  class DtaValidierungsException {
+    -ValidationReport bericht
+  }
+
+  BillingOfficeEndpointCheck -[hidden]down-> BillingOfficeResponseParser
+  DAR -[hidden]down-> DispatchException
+}
+
+DtaDispatchService --> DAR
+DtaDispatchService --> BillingOfficeTransport
+DtaDispatchService --> BillingOfficeEndpointRegistry
+DtaDispatchService ..> DtaValidierungsException : wirft, wenn\nValidationReport.hatFehler()
+DtaDispatchService ..> DispatchException : wirft bei\nZustellungsfehler
+DtaDispatchService ..> DispatchBatch : liefert
+FileBillingOfficeTransport ..|> BillingOfficeTransport
+SimulierterKassenTransport ..|> BillingOfficeTransport
+SimulierterKassenTransport --> SimulierteKassenGegenstelle
+BillingOfficeEndpointRegistry o-- "0..*" BillingOfficeEndpoint
+BillingOfficeEndpoint --> BillingOfficeTransportType
+BillingOfficeTransport ..> BillingOfficeEndpointCheck : liefert
+DtaDispatchService --> BillingOfficeResponseParser
+BillingOfficeResponseParser ..> BillingOfficeResponse : liefert
+BillingOfficeResponse --> BillingOfficeResponseType
+
+note bottom of DAR
+  Als eigene, einmethodige Schnittstelle statt als
+  DataRepository entgegengenommen: der Dienst
+  braucht von der Datenbank genau eine Zahl und
+  bleibt so im Test ohne Datenbank aufsetzbar.
+end note
+
+note bottom of DtaValidierungsException
+  Trägt den vollständigen ValidationReport statt nur
+  eines Texts — die Oberfläche zeigt damit alle
+  Beanstandungen auf einmal, nicht nur die erste.
+end note
+
+@enduml

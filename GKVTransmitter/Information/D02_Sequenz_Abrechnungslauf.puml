@@ -1,0 +1,79 @@
+@startuml GKVTransmitter_Sequenz_Abrechnungslauf
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 130
+skinparam ArrowColor #4A5A6A
+skinparam participant {
+  BackgroundColor #FAFBFC
+  BorderColor #4A5A6A
+}
+
+title Ablauf eines Abrechnungslaufs
+
+actor "Anwenderin" as user
+participant "AbrechnungsMaske" as maske
+participant "Abrechnungslauf" as lauf
+participant "AbrechnungService" as service
+participant "DtaDispatchService" as dispatch
+participant "DtaFactory" as factory
+participant "DtaValidationService" as validierung
+participant "BillingOfficeTransport" as transport
+participant "Meldungen" as meldungen
+
+user -> maske : "Abrechnung starten" klicken
+activate maske
+
+maske -> lauf : starte(teilnehmer, gruppe, blaupause, termine, zielordner)
+activate lauf
+
+lauf -> service : createAndDispatch(...)
+activate service
+
+service -> service : je Teilnehmer\neine Abrechnung bilden
+
+service -> dispatch : generateAndRoute(abrechnungen, outDir)
+activate dispatch
+
+loop je Abrechnung
+  dispatch -> factory : buildDtaFor(abrechnung, referenz, ...)
+  activate factory
+  factory --> dispatch : DTA-Inhalt
+  deactivate factory
+end
+
+loop je erzeugte Nachricht
+  dispatch -> validierung : pruefe(inhalt)
+  activate validierung
+  validierung --> dispatch : ValidationReport
+  deactivate validierung
+end
+
+alt Bericht enthält einen Fehler
+  dispatch --> service : throw DtaValidierungsException(bericht)
+  service --> lauf : (weitergereicht)
+  lauf --> maske : (weitergereicht)
+  deactivate dispatch
+  deactivate service
+  deactivate lauf
+  maske -> meldungen : pruefbericht(bericht)
+  meldungen --> user : Beanstandungen anzeigen
+else Bericht fehlerfrei
+  loop je Nachricht, gruppiert nach Kasse
+    dispatch -> transport : send(datei, endpoint)
+    activate transport
+    transport --> dispatch : zugestellte Datei
+    deactivate transport
+  end
+  dispatch --> service : List<DispatchBatch>
+  deactivate dispatch
+  service --> lauf : List<DispatchBatch>
+  deactivate service
+  lauf --> maske : List<DispatchBatch>
+  deactivate lauf
+  maske -> meldungen : erfolg(zusammenfassung)
+  meldungen --> user : Bestätigung anzeigen
+end
+
+deactivate maske
+
+@enduml

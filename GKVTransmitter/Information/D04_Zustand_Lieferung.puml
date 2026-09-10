@@ -1,0 +1,48 @@
+@startuml GKVTransmitter_Zustand_Lieferung
+skinparam shadowing false
+skinparam ArrowColor #4A5A6A
+skinparam state {
+  BackgroundColor #FAFBFC
+  BorderColor #4A5A6A
+}
+
+title Zustandsdiagramm: Lebenszyklus einer Lieferung
+
+[*] --> Erzeugt : DtaFactory.buildDtaFor(...)
+
+Erzeugt --> Beanstandet : DtaValidationService.pruefe(...)\nhat einen Fehler gefunden
+Erzeugt --> Freigegeben : Prüfung ohne Fehler
+
+Beanstandet --> [*] : Lauf abgebrochen —\nnichts wurde zugestellt
+
+Freigegeben --> Zugestellt : BillingOfficeTransport.send(...)
+
+state "Antwort ausgewertet" as Ausgewertet {
+  state "Angenommen" as Angenommen
+  state "Abgelehnt" as Abgelehnt
+  state "Technischer Fehler" as TechnischerFehler
+  state "Syntaxfehler" as Syntaxfehler
+  state "Unbekannt" as Unbekannt
+}
+
+Zugestellt --> Ausgewertet : BillingOfficeResponseParser.parse(...)
+
+Angenommen --> [*]
+Abgelehnt --> [*]
+TechnischerFehler --> [*]
+Syntaxfehler --> [*]
+Unbekannt --> [*]
+
+note right of Beanstandet
+  Erst prüfen, dann zustellen: eine
+  einzige beanstandete Nachricht hält
+  den gesamten Lauf auf, nicht nur die
+  eine Zeile.
+end note
+
+note right of Ausgewertet
+  Die fünf Ausprägungen entsprechen
+  BillingOfficeResponseType.
+end note
+
+@enduml

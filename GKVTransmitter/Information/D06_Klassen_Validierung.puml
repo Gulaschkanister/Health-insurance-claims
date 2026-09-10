@@ -1,0 +1,103 @@
+@startuml GKVTransmitter_Klassen_Validierung
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+title Klassendiagramm: Validierung (Strategie-Muster)
+
+package "validator" {
+  class DtaValidationService {
+    -List<ValidationRule> regeln
+    +{static} standard() : DtaValidationService
+    +mitZusaetzlicherRegel(ValidationRule) : DtaValidationService
+    +pruefe(String) : ValidationReport
+  }
+
+  interface ValidationRule {
+    +getName() : String
+    +pruefe(DtaDocument, ValidationReport.Builder)
+  }
+
+  class ValidationReport {
+    -List<ValidationMessage> messages
+    +{static} leer() : ValidationReport
+    +{static} builder() : Builder
+    +hatFehler() : boolean
+    +istVersandfaehig() : boolean
+    +plus(ValidationReport) : ValidationReport
+    +kurzfassung() : String
+  }
+
+  class "ValidationReport.Builder" as Builder {
+    +error(String, String, String) : Builder
+    +warning(String, String, String) : Builder
+    +info(String, String, String) : Builder
+    +build() : ValidationReport
+  }
+
+  class ValidationMessage <<record>> {
+    +ValidationSeverity severity
+    +String code
+    +String ort
+    +String text
+  }
+
+  enum ValidationSeverity {
+    INFO
+    WARNING
+    ERROR
+  }
+}
+
+package "validator.rules — in dieser Reihenfolge geprüft" {
+  class "1. SegmentSyntaxRegel" as R1
+  class "2. NachrichtenRahmenRegel" as R2
+  class "3. NachrichtenAbschlussRegel" as R3
+  class "4. InstitutionskennzeichenRegel" as R4
+  class "5. VersichertenangabenRegel" as R5
+  class "6. LeistungspositionRegel" as R6
+  class "7. PositionsnummerRegel" as R7
+  class "8. BetragskonsistenzRegel" as R8
+
+  R1 -[hidden]down-> R2
+  R2 -[hidden]down-> R3
+  R3 -[hidden]down-> R4
+  R4 -[hidden]down-> R5
+  R5 -[hidden]down-> R6
+  R6 -[hidden]down-> R7
+  R7 -[hidden]down-> R8
+}
+
+DtaValidationService o-- "1..*" ValidationRule : hält in fester Reihenfolge
+R1 ..|> ValidationRule
+R2 ..|> ValidationRule
+R3 ..|> ValidationRule
+R4 ..|> ValidationRule
+R5 ..|> ValidationRule
+R6 ..|> ValidationRule
+R7 ..|> ValidationRule
+R8 ..|> ValidationRule
+
+ValidationRule ..> Builder : trägt Befunde ein
+ValidationReport *-- Builder
+ValidationReport o-- "0..*" ValidationMessage
+ValidationMessage --> ValidationSeverity
+DtaValidationService ..> ValidationReport : liefert
+
+note right of DtaValidationService
+  Reihenfolge der acht Standardregeln ist Absicht:
+  erst die formale Struktur (SegmentSyntax), dann
+  der Rahmen (Nachrichten...), dann die Inhalte.
+  So steht bei einer kaputten Datei die grundlegende
+  Ursache oben im Bericht.
+end note
+
+note bottom of ValidationRule
+  Jede Regel bekommt die eingelesene Nachricht
+  und trägt ihre Befunde ein — sie darf nicht
+  abbrechen, wenn sie nichts findet: eine fehlende
+  Angabe ist selbst ein Befund, kein Fehlerfall.
+end note
+
+@enduml

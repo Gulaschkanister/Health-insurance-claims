@@ -1,0 +1,66 @@
+@startuml GKVTransmitter_UseCase
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam ArrowColor #4A5A6A
+skinparam usecase {
+  BackgroundColor #FAFBFC
+  BorderColor #4A5A6A
+}
+
+title Anwendungsfälle — GKV-Abrechnung
+
+left to right direction
+
+actor "Leistungserbringerin\n(Anwenderin)" as anwenderin
+actor "Krankenkasse" as kasse
+
+rectangle "GKV-Abrechnung" {
+
+  package "Stammdaten" {
+    usecase "Teilnehmende verwalten" as uc_teilnehmer
+    usecase "Dienstleister verwalten" as uc_dienstleister
+    usecase "Gruppen verwalten" as uc_gruppen
+    usecase "Blaupausen verwalten" as uc_blaupausen
+  }
+
+  package "Abrechnung" {
+    usecase "Abrechnung durchführen" as uc_abrechnung
+    usecase "Nachricht erzeugen" as uc_erzeugen
+    usecase "Nachricht prüfen" as uc_pruefen
+    usecase "Nachricht zustellen" as uc_zustellen
+    usecase "Prüfbericht einsehen" as uc_bericht
+    usecase "Kassenantwort auswerten" as uc_antwort
+  }
+
+  package "Verwaltung" {
+    usecase "Einstellungen ändern" as uc_einstellungen
+    usecase "Versandwege prüfen" as uc_versandwege
+  }
+}
+
+anwenderin --> uc_teilnehmer
+anwenderin --> uc_dienstleister
+anwenderin --> uc_gruppen
+anwenderin --> uc_blaupausen
+anwenderin --> uc_abrechnung
+anwenderin --> uc_bericht
+anwenderin --> uc_einstellungen
+anwenderin --> uc_versandwege
+anwenderin --> uc_antwort
+
+uc_abrechnung .> uc_erzeugen : <<include>>
+uc_abrechnung .> uc_pruefen : <<include>>
+uc_pruefen .> uc_bericht : <<extend>>\n(bei Beanstandung)
+uc_abrechnung .> uc_zustellen : <<include>>\n(nur wenn Prüfung\nfehlerfrei bleibt)
+
+uc_zustellen --> kasse : Lieferung
+kasse --> uc_antwort : Rückmeldung
+
+note bottom of uc_pruefen
+  Die Prüfung ist ein Tor: eine
+  beanstandete Nachricht hält den
+  gesamten Lauf auf, bevor etwas
+  zugestellt wird.
+end note
+
+@enduml

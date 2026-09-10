@@ -1,0 +1,80 @@
+@startuml GKVTransmitter_Klassen_Persistenz
+hide empty members
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+
+title Klassendiagramm: Persistenz (Port und Adapter)
+
+package "repository (Port)" {
+  interface DataRepository {
+    +savePatient(Patient)
+    +getAllPatients() : List<Patient>
+    +deletePatient(Patient)
+    +saveServiceProvider(ServiceProvider)
+    +savePersonGroup(PersonGroup)
+    +saveBlueprint(Blueprint)
+    +deleteBlueprint(Blueprint)
+    +nextDtaInterchangeReference() : long
+    +ladeEinstellungen() : Map<String,String>
+    +speichereEinstellung(String, String)
+  }
+}
+
+package "hibernate.sqllite (Adapter)" {
+  class HibernateSqllite {
+    -SessionFactory sessionFactory
+    -TransactionRunner runner
+    -Lock referenzSperre
+    +{static} open(DatabaseSettings) : HibernateSqllite
+    +{static} open() : HibernateSqllite
+    +close()
+  }
+
+  class TransactionRunner {
+    -SessionFactory sessionFactory
+    +read(String, Function<Session,T>) : T
+    +write(String, Function<Session,T>) : T
+    +writeVoid(String, Consumer<Session>)
+    -rollbackStill(Transaction, RuntimeException)
+  }
+
+  class SessionFactoryProvider {
+    +{static} create(DatabaseSettings) : SessionFactory
+  }
+
+  class DatabaseSettings {
+    -Path pfad
+    -String schemaMode
+    +{static} fromEnvironment() : DatabaseSettings
+    +sicherstelleVerzeichnis()
+    +getJdbcUrl() : String
+    +getSchemaMode() : String
+  }
+
+  class PersistenceOperationException {
+    +PersistenceOperationException(String, Throwable)
+  }
+}
+
+HibernateSqllite ..|> DataRepository
+HibernateSqllite --> TransactionRunner : delegiert jeden Zugriff
+HibernateSqllite ..> SessionFactoryProvider : erzeugt SessionFactory über
+HibernateSqllite ..> DatabaseSettings : liest Konfiguration aus
+TransactionRunner ..> PersistenceOperationException : wirft bei Fehlschlag
+
+note right of DataRepository
+  Sprechende Methoden statt "speichere(Object)" —
+  die Schnittstelle ist zugleich eine Liste dessen,
+  was die Fachlichkeit von der Datenbank braucht.
+end note
+
+note bottom of TransactionRunner
+  Ein Muster für alle zwölf Zugriffe: Sitzung öffnen,
+  bei "write" eine Transaktion beginnen, committen,
+  im Fehlerfall zurückrollen ohne die Ursache zu
+  verdecken. Vorher stand dieser Block zwölfmal im
+  Code — mit einer vergessenen Rückrollung.
+end note
+
+@enduml

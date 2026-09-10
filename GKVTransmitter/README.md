@@ -43,6 +43,11 @@ mvn -pl gkv-ui javafx:run             # Anwendung starten
 Änderung am Kern muss deshalb `mvn install -DskipTests` gelaufen sein — sonst
 bricht der Start mit „Could not find artifact de.gkv:gkv-core" ab.
 
+Wer sich die Reihenfolge nicht merken will: `bash run.sh` macht beide Schritte
+in einem Aufruf. Unter WSL läuft die Oberfläche darüber unverändert über
+WSLg — vorausgesetzt, `DISPLAY` ist gesetzt, wie es bei einer laufenden WSLg-
+Sitzung automatisch der Fall ist.
+
 ## Debuggen
 
 Die Anwendung mit Debug-Anschluss starten:

@@ -1,0 +1,48 @@
+@startuml GKVTransmitter_Aktivitaet_Abrechnungslauf
+skinparam shadowing false
+skinparam ArrowColor #4A5A6A
+skinparam activity {
+  BackgroundColor #FAFBFC
+  BorderColor #4A5A6A
+  DiamondBackgroundColor #FFF8DC
+}
+
+title Aktivitätsdiagramm: Abrechnung erzeugen, prüfen, zustellen
+
+|Anwenderin|
+start
+:Gruppe, Blaupause,\nTeilnehmende und Termine wählen;
+:„Abrechnung starten" klicken;
+
+|Oberfläche|
+:Eingaben an den\nAbrechnungslauf übergeben;
+
+|Fachkern|
+:Für jede/n Teilnehmende/n\neine Abrechnung bilden;
+:Für jede Abrechnung eine\nDTA-Nachricht erzeugen;
+:Jede erzeugte Nachricht prüfen;
+
+if (Prüfung fehlerfrei?) then (nein)
+  :Prüfbericht sammeln;
+  :Lauf abbrechen —\nnichts wird zugestellt;
+  |Oberfläche|
+  :Prüfbericht anzeigen;
+  |Anwenderin|
+  :Beanstandungen beheben;
+  stop
+else (ja)
+  |Fachkern|
+  :Je Kasse eine Datei\nim Ausgabeordner ablegen;
+  |Kasse|
+  :Datei entgegennehmen;
+  :Rückmeldung erstellen;
+  |Fachkern|
+  :Rückmeldung auswerten,\nsobald sie vorliegt;
+  |Oberfläche|
+  :Erfolg melden;
+  |Anwenderin|
+  :Bestätigung sehen;
+  stop
+endif
+
+@enduml

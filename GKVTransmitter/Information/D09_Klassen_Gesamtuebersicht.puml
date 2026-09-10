@@ -1,0 +1,180 @@
+@startuml GKVTransmitter_Klassen_Gesamtuebersicht
+hide empty members
+hide circle
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #FAFBFC
+  BorderColor #4A5A6A
+}
+
+title Gesamtübersicht: alle Klassen von gkv-core, nach Paket
+
+package "application" #F2F6FA {
+  class AbrechnungService
+}
+
+package "bootstrap" #F2F6FA {
+  class ApplicationBootstrap
+}
+
+package "definition" #F2F6FA {
+  class GlobalDefinitions
+  enum InvoiceType
+}
+
+package "factory" #F2F6FA {
+  class Factory
+  class FactoryManager
+}
+
+package "parser + parser.json" #F2F6FA {
+  interface ParserFactory
+  class JsonParserFactory
+}
+
+package "entity" #FFF8DC {
+  class Person
+  class Patient
+  class ServiceProvider
+  class PersonGroup
+  class Blueprint
+  class DtaCounter
+  class Einstellungswert
+}
+
+package "model + model.segment(.field)" #FFF8DC {
+  class Abrechnung
+  class Invoice
+  class DtaMessage
+  class Segment
+  class SegmentDefinition
+  class SegmentInfo
+  class ValueFieldEntry
+  class FieldDefinition
+  class FieldValue
+  enum FieldType
+  enum PersonRole
+}
+
+package "einstellung" #FFF8DC {
+  enum Einstellung
+  class Einstellungen
+}
+
+package "repository" #E9F2EC {
+  interface DataRepository
+}
+
+package "hibernate.sqllite" #E9F2EC {
+  class HibernateSqllite
+  class TransactionRunner
+  class SessionFactoryProvider
+  class DatabaseSettings
+  class PersistenceOperationException
+}
+
+package "validator(.rules)" #FFF0F0 {
+  class DtaValidationService
+  interface ValidationRule
+  class ValidationReport
+  class ValidationMessage
+  enum ValidationSeverity
+  class SegmentSyntaxRegel
+  class NachrichtenRahmenRegel
+  class NachrichtenAbschlussRegel
+  class InstitutionskennzeichenRegel
+  class VersichertenangabenRegel
+  class LeistungspositionRegel
+  class PositionsnummerRegel
+  class BetragskonsistenzRegel
+}
+
+package "dta" #F4F0FA {
+  class DtaFactory
+  class DtaDocument
+  class DtaSegment
+  class Leistungsparameter
+  class Leistungsbereich
+  class LogischerDateiname
+  enum Uebermittlungsart
+}
+
+package "dispatch" #F4F0FA {
+  class DtaDispatchService
+  interface BillingOfficeTransport
+  class FileBillingOfficeTransport
+  class SimulierterKassenTransport
+  class SimulierteKassenGegenstelle
+  class BillingOfficeEndpointRegistry
+  class BillingOfficeEndpoint
+  class BillingOfficeEndpointCheck
+  enum BillingOfficeTransportType
+  class BillingOfficeResponseParser
+  class BillingOfficeResponse
+  enum BillingOfficeResponseType
+  class DispatchBatch
+  class DispatchException
+  class DtaValidierungsException
+}
+
+package "util(.modifiers) + enums" #EFEFEF {
+  class Anwendungsverzeichnis
+  class Betrag
+  class FieldValidator
+  class Institutionskennzeichen
+  class ModifierInstance
+  class TagConfigLoader
+  class TagList
+  enum InputOption
+  enum Modifier
+  class DecimalPlaceModifier
+  class MaxLengthModifier
+  class NoDecimalPlaceModifier
+  class NumberModifier
+  class SpecialCharModifier
+  class TextModifier
+}
+
+AbrechnungService --> DataRepository
+AbrechnungService --> DtaDispatchService
+AbrechnungService ..> Abrechnung : bildet je Teilnehmer eine
+
+DtaDispatchService --> DtaFactory
+DtaDispatchService --> DtaValidationService
+DtaDispatchService --> BillingOfficeTransport
+DtaDispatchService --> BillingOfficeEndpointRegistry
+
+DtaFactory ..> Leistungsparameter
+DtaFactory ..> Leistungsbereich
+DtaFactory ..> Uebermittlungsart
+DtaDocument o-- DtaSegment
+
+HibernateSqllite ..|> DataRepository
+HibernateSqllite --> TransactionRunner
+
+DtaValidationService o-- ValidationRule
+SegmentSyntaxRegel ..|> ValidationRule
+BetragskonsistenzRegel ..|> ValidationRule
+
+Patient --|> Person
+ServiceProvider --|> Person
+PersonGroup o-- Patient
+PersonGroup o-- ServiceProvider
+Abrechnung --> Patient
+Abrechnung --> ServiceProvider
+Abrechnung --> Blueprint
+
+JsonParserFactory ..|> ParserFactory
+JsonParserFactory ..> SegmentDefinition : baut aus JSON
+ApplicationBootstrap ..> GlobalDefinitions
+
+legend right
+  Vollständiges Klasseninventar von gkv-core, ohne gkv-ui.
+  Nur die wichtigsten Abhängigkeiten sind gezeichnet — die
+  vier Teil-Klassendiagramme und das Domänenmodell zeigen
+  die Beziehungen je Bereich im Detail.
+endlegend
+
+@enduml
