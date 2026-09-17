@@ -216,6 +216,13 @@ public class View {
                         meldungen, controller.getDatabase(),
                         de.gkvtransmitter.util.Anwendungsverzeichnis::basis).maske()));
 
+        // Veralten faellt nicht auf, solange nichts es zeigt: Die Anlagen
+        // unter Information/ waren am 07.09.2026 zwei Monate ueberholt.
+        hauptfenster.ergaenzeBereich(messages.get("nav.documents"),
+                () -> hauptfenster.zeige(new UnterlagenMaske(componentFactory, messages,
+                        de.gkvtransmitter.wartung.Unterlagenstand.lade(),
+                        java.time.LocalDate.now()).maske()));
+
         // Das Uebermittlungsprotokoll ist Pflicht (Anlage 1, Abschnitt 3
         // Absatz 2) und zeigt zugleich, worauf noch Geld aussteht.
         hauptfenster.ergaenzeBereich(messages.get("nav.log"),

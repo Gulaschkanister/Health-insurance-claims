@@ -1,0 +1,58 @@
+{
+  "_hinweis": "Die verbindlichen Unterlagen, die dem Projekt vorliegen. Jede Angabe stammt vom Deckblatt der jeweiligen PDF unter Information/ - nachgetragen am 17.09.2026. Wer eine neue Fassung ablegt, traegt sie hier nach; die Anwendung zeigt daraufhin den neuen Stand und den neuen Termin. Ohne diese Datei wuesste niemand, auf welchem Stand die Anwendung steht.",
+  "quelle": "https://www.gkv-datenaustausch.de/leistungserbringer/sonstige_leistungserbringer/sonstige_leistungserbringer.jsp",
+  "unterlagen": [
+    {
+      "kennung": "anlage-1-v21",
+      "titel": "Anlage 1 — Technische Anlage zu den Richtlinien nach § 302 SGB V",
+      "datei": "Anlage_1_TP5_V21_20260115.pdf",
+      "version": "21",
+      "stand": "2026-01-15",
+      "anzuwendenAb": "2025-10-01",
+      "gueltigBis": "2027-04-30",
+      "bemerkung": "Die Fassung, nach der die Anwendung heute sendet."
+    },
+    {
+      "kennung": "anlage-1-v22",
+      "titel": "Anlage 1 — Technische Anlage zu den Richtlinien nach § 302 SGB V",
+      "datei": "Anlage_1_TP5_V22_20260521.pdf",
+      "version": "22",
+      "stand": "2026-05-21",
+      "anzuwendenAb": "2027-02-01",
+      "bemerkung": "Liegt vor. Ab dem Anwendungsdatum gilt sie; Version 21 verliert am 30.04.2027 ihre Gueltigkeit."
+    },
+    {
+      "kennung": "anlage-3-v22",
+      "titel": "Anlage 3 — Schluesselverzeichnisse",
+      "datei": "Anlage_3_TP5_V22_20260521.pdf",
+      "version": "22",
+      "stand": "2026-05-21",
+      "anzuwendenAb": "2027-02-01",
+      "bemerkung": "Eine Fassung in Version 21 liegt dem Projekt nicht vor. Die Schluesselverzeichnisse, gegen die geprueft wird, stammen also aus der kuenftigen Fassung."
+    },
+    {
+      "kennung": "anhang-1",
+      "titel": "Anhang 1 — Datenuebermittlung (logischer Dateiname, Uebermittlungsprotokoll)",
+      "datei": "Anhang_1_Datenuebermittlung_20170831.pdf",
+      "version": "—",
+      "stand": "2017-08-31",
+      "anzuwendenAb": "2017-09-01"
+    },
+    {
+      "kennung": "anhang-2",
+      "titel": "Anhang 2 — Pruefverfahren",
+      "datei": "Anhang_2_Pruefverfahren.pdf",
+      "version": "—",
+      "stand": "2003-11-10",
+      "anzuwendenAb": "2003-11-10"
+    },
+    {
+      "kennung": "anhang-3",
+      "titel": "Anhang 3 — Kostentraegerdatei",
+      "datei": "Anhang_3_Kostentraegerdatei_V10_20260414.pdf",
+      "version": "10",
+      "stand": "2026-04-14",
+      "anzuwendenAb": "2027-02-01"
+    }
+  ]
+}

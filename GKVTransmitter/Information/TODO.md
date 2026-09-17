@@ -357,7 +357,7 @@ Jeder Punkt hier ist **S**, sofern nichts anderes steht.
 |---|---|---|---|
 | **D1** | **Trockenlauf als Menüpunkt.** `SimulierterKassenTransport` existiert, ist aber nur über Tests erreichbar. Ein Knopf „einmal durchspielen, ohne zu senden". | Die beste Übung vor der Erprobung — und sie kostet nichts, weil das Gegenstück schon gebaut ist. | — |
 | **D2** | **Zertifikats-Ablaufwarnung.** Die Anwendung kennt das Datum aus B1 und erinnert rechtzeitig. | Einer der drei Punkte, die die Wartungslast klein halten. | B1 |
-| **D3** | **Versionsangabe sichtbar machen.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
+| **D3** ✅ | ~~**Versionsangabe sichtbar machen.**~~ **Erledigt mit G1.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
 | **D4** | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
 | **D5** ✅ | ~~**Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment.~~ **Erledigt mit F3 — und die Frage war falsch gestellt:** das `UST`-Segment trägt keinen Satz, sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt 5.5.2). | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
 | **D6** | **Checkstyle: die zehn übrigen Warnungen.** Nachgemessen am 17.09.2026: fünf in `gkv-core`, fünf in `gkv-ui`. **ParameterNumber** in `FieldDefinition`, `Person`, `Patient`, `ServiceProvider` (je 9) und `EditFormController` (12); **CyclomaticComplexity** in `BetragskonsistenzRegel` (11), `Feldbau` (13 und 12) sowie beiden `FieldPopulator` (je 11). Größe **M**. | Eine Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte — Builder oder ein `record` für die Anschrift. Eingriff in die Entitäten, also bewusst und nicht nebenbei. | — |
@@ -661,25 +661,56 @@ Aufwand, den man einplant, sondern als **Veralten, das niemand bemerkt**.
 Dieser Block ist die Antwort darauf. Er ist der Grund, warum der eigene
 Übermittlungsweg überhaupt tragbar ist — ohne ihn ist er jedes Jahr Handarbeit.
 
-## G1. Die Anwendung weiß, auf welchem Stand sie steht
+## G1. Die Anwendung weiß, auf welchem Stand sie steht — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Größe** | S |
 | **Hängt an** | nichts |
+| **Stand** | **umgesetzt**: Menüpunkt „Stand der Unterlagen", gespeist aus `unterlagen/unterlagen.json` |
+
+Oben steht, womit die Anwendung **tatsächlich sendet** (aus
+`DtaFactory.NACHRICHTENVERSION`, nicht aus der gepflegten Liste — gingen die
+beiden auseinander, wäre genau das der Befund), darunter jede Unterlage mit
+Version, Stand, Anwendungsdatum und Zustand.
+
+### Die Deckblätter, nachgetragen am 17.09.2026
+
+| Unterlage | Version | Stand | anzuwenden ab | gültig bis |
+|---|---:|---|---|---|
+| Anlage 1 | 21 | 15.01.2026 | 01.10.2025 | **30.04.2027** |
+| Anlage 1 | 22 | 21.05.2026 | **01.02.2027** | — |
+| Anlage 3 | 22 | 21.05.2026 | **01.02.2027** | — |
+| Anhang 1 | — | 31.08.2017 | 01.09.2017 | — |
+| Anhang 2 | — | 10.11.2003 | 10.11.2003 | — |
+| Anhang 3 (Kostenträgerdatei) | 10 | 14.04.2026 | **01.02.2027** | — |
+
+**Zwei Befunde fallen dabei sofort an:**
+
+1. Der erwartete: Version 22 gilt ab **01.02.2027**, und — das stand bisher
+   nirgends — **Version 21 verliert am 30.04.2027 ihre Gültigkeit.** Das
+   Deckblatt der Version 22 sagt es. Drei Monate Überlappung, danach ein
+   harter Stichtag.
+2. Der unerwartete: **Eine Anlage 3 in Version 21 liegt dem Projekt gar nicht
+   vor.** Die Schlüsselverzeichnisse, gegen die `Leistungsbereich`,
+   `PositionsnummerRegel` und `Kostentraegerdatei` prüfen, stammen also aus der
+   künftigen Fassung, während gesendet wird nach Version 21. Das ist
+   vermutlich unschädlich — aber es war eine Annahme und ist jetzt eine
+   notierte.
+
+**Eine fehlende oder kaputte Liste hält nichts auf.** Der Stand ist eine
+Auskunft, keine Voraussetzung; sonst könnte eine unlesbare JSON-Datei die
+Abrechnung anhalten.
+
+**Damit ist auch D3 erledigt** (Versionsangabe sichtbar machen).
 
 Eine Übersicht im Programm: welche Anlage, welche Version, welcher Stand,
 welches Anwendungsdatum — gespeist aus einer gepflegten Liste zu den PDF unter
 `Information/`. Dazu die Version, mit der die Anwendung **tatsächlich sendet**
 (`SLGA:21:0:0`, heute `V21` in den Segmentbeschreibungen).
 
-**Der erste Befund fällt dabei sofort an:** `Anlage_3_TP5_V22_20260521.pdf`
-liegt vor und ist **ab 01.02.2027 anzuwenden** — das Projekt steht auf `V21`.
-Das ist kein Fehler, solange das Datum nicht erreicht ist, aber es ist ein
-Termin, den heute niemand kennt.
-
 **Fertig, wenn:** eine Seite zeigt, welche Fassung gilt, welche vorliegt und ab
-wann eine neue anzuwenden ist.
+wann eine neue anzuwenden ist. — ✅
 
 ## G2. Auf neue Fassungen prüfen — auf Knopfdruck
 
