@@ -414,7 +414,7 @@ dieselbe Person, in einer Praxis mit zwei Hebammen nicht.
 | **F2** ✅ | **Standardwerte für den Abrechnungslauf:** übliche Blaupause, übliche Terminzahl, übliche Gruppengröße. Die Abrechnungsmaske füllt damit vor. | Bei vierzig Kursterminen im Jahr ist das der Unterschied zwischen „vier Felder je Lauf" und „bestätigen". | S |
 | **F3** ✅ | **Umsatzsteuerpflicht als Kennzeichen am Dienstleister.** | Hängt an der Person, nicht am Kurs (§ 4 Nr. 14 UStG). Speist `D5` und das `UST`-Segment. **Die Rechtsfrage bleibt extern, das Feld nicht.** | S |
 | **F4** ✅ | **Ansprechpartner, Telefon, E-Mail, Steuernummer.** | Wird bei jeder Anmeldung wieder gebraucht. Zusammen mit B1 ergibt das den „Aktenordner", aus dem sich die Anträge ausfüllen lassen. | S |
-| **F5** | **Registrierungsblatt drucken** — alle Angaben aus B1 und F4 auf einer Seite, in der Form, die ARGE·IK, Trust Center und Annahmestelle abfragen. | Aus dem Aktenordner wird ein Formular, das nur noch zu unterschreiben ist. Der Punkt, an dem sich B1 zum ersten Mal auszahlt. | S–M |
+| **F5** ✅ | **Registrierungsblatt drucken** — alle Angaben aus B1 und F4 auf einer Seite, in der Form, die ARGE·IK, Trust Center und Annahmestelle abfragen. | Aus dem Aktenordner wird ein Formular, das nur noch zu unterschreiben ist. Der Punkt, an dem sich B1 zum ersten Mal auszahlt. | S–M |
 | **F6** ✅ | **Gültigkeitszeitraum am Dienstleister** (tätig seit/bis) und ein Kennzeichen „aktiv". | Ausgeschiedene Personen verschwinden aus den Auswahllisten, ohne dass ihre alten Abrechnungen ihren Bezug verlieren. | S |
 
 > **Nicht hierher gehört das Tarifkennzeichen.** Es ist der plausibelste
@@ -516,6 +516,53 @@ erreicht hätte. Genau der Fehler, den `BlaupausenfelderTest` seit dem
   Tiefe. **Das ist zugleich das ausgearbeitete Beispiel für D6**, wo dasselbe
   für `PatientFieldPopulator` noch aussteht.
 
+## F5. Registrierungsblatt — ✅ erledigt am 17.09.2026
+
+| | |
+|---|---|
+| **Größe** | S–M |
+| **Stand** | **umgesetzt**: Menüpunkt „Registrierungsblatt", Anzeige und Ablage als Textdatei |
+
+Alles, was bei der Anmeldung zum Datenaustausch zur Hand sein muss, auf einem
+Blatt: Absender (B1), Leistungserbringer (F1/F3/F4), das Verfahren, mit dem die
+Anwendung sendet — **und was noch fehlt.**
+
+### Es ist kein Antrag, und das ist eine Korrektur der Aufgabe
+
+Die Aufgabe sagte „in der Form, die ARGE·IK, Trust Center und Annahmestelle
+abfragen". **Diese Formen liegen dem Projekt nicht vor**, und Anlage 1 gibt
+keine vor. Abschnitt 2 Absatz 1 verlangt etwas anderes:
+
+> „Die Einzelheiten zur Durchführung der Datenübermittlung sind rechtzeitig vor
+> der erstmaligen Durchführung oder Änderung des Datenaustauschverfahrens
+> zwischen dem Absender und dem Empfänger der Daten abzustimmen."
+
+Das Blatt ist deshalb eine **Zusammenstellung für diese Abstimmung**, kein
+Formular. Ein Blatt, das sich als amtliches ausgäbe, wäre schlimmer als keines
+— dieselbe Regel wie bei der Positionsnummer: *was keine Fundstelle hat, ist
+eine Vermutung.*
+
+### Drei Entscheidungen
+
+- **Abgelegt statt gedruckt.** Ein Druckauftrag setzt einen eingerichteten
+  Drucker voraus und ließe sich weder unter WSL noch im CI-Läufer prüfen. Eine
+  Textdatei lässt sich öffnen, ausdrucken, anhängen — und ein Test kann sie
+  lesen.
+- **Fehlende Werte werden zur Linie, nicht zur Leerstelle.** Wer das Blatt vor
+  sich hat, soll sehen, *dass* dort etwas hingehört. Ein weggelassenes Feld
+  fällt niemandem auf.
+- **Die Zahl der Lücken steht über dem Blatt.** Abschnitt 4 ist die letzte
+  Zeile eines langen Textes; wer ablegt, ohne zu blättern, sieht ihn nie.
+
+### Nebenbei: `DtaFactory.NACHRICHTENVERSION`
+
+Die Version stand zweimal als Zeichenkette im Quelltext, einmal für `SLGA` und
+einmal für `SLLA`. Als Konstante ist sie ablesbar — das Blatt nennt sie, und
+**wer sieht, womit er sendet, merkt einen Wechsel.** Damit ist zugleich die
+Grundlage für **D3** und **G1** gelegt.
+
+> **Block F ist damit vollständig.**
+
 ## F2. Standardwerte für den Abrechnungslauf — ✅ erledigt am 17.09.2026
 
 | | |
@@ -564,7 +611,7 @@ Der Leistungsbereich `F` aus dem Abrechnungscode 50 (F1), das `UST` aus
 Steuernummer und Befreiung (F3), die acht Termine aus der üblichen Terminzahl
 (F2) — **drei Blockpunkte in einer Zeile nachweisbar.**
 
-**Damit ist Block F abgeschlossen bis auf F5** (Registrierungsblatt).
+**Damit ist Block F vollständig** — siehe F5 oben.
 
 ## F6. Tätigkeitszeitraum — ✅ erledigt am 17.09.2026
 

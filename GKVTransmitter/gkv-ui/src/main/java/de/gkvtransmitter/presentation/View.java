@@ -209,6 +209,13 @@ public class View {
                 () -> hauptfenster.zeige(new BetriebsdatenMaske(componentFactory, messages,
                         meldungen, controller.getDatabase()).maske()));
 
+        // Direkt hinter den Betriebsdaten: Das Blatt ist der Punkt, an dem
+        // sich deren Erfassung zum ersten Mal auszahlt.
+        hauptfenster.ergaenzeBereich(messages.get("nav.registration"),
+                () -> hauptfenster.zeige(new RegistrierungsblattMaske(componentFactory, messages,
+                        meldungen, controller.getDatabase(),
+                        de.gkvtransmitter.util.Anwendungsverzeichnis::basis).maske()));
+
         // Das Uebermittlungsprotokoll ist Pflicht (Anlage 1, Abschnitt 3
         // Absatz 2) und zeigt zugleich, worauf noch Geld aussteht.
         hauptfenster.ergaenzeBereich(messages.get("nav.log"),

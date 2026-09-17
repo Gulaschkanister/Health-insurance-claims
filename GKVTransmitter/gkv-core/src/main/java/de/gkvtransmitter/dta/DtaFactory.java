@@ -82,6 +82,20 @@ public final class DtaFactory {
     }
 
     /**
+     * Die Version, mit der die Anwendung ihre Nachrichten erzeugt.
+     *
+     * <p>Sie stand zweimal als Zeichenkette im Quelltext, einmal fuer
+     * {@code SLGA} und einmal fuer {@code SLLA}. Als Konstante ist sie
+     * ablesbar - das Registrierungsblatt nennt sie, und wer sieht, womit er
+     * sendet, merkt einen Wechsel. <b>Anlage 3 in der Fassung V22 ist ab dem
+     * 01.02.2027 anzuwenden</b>; bis dahin ist 21 richtig, danach nicht mehr.</p>
+     */
+    public static final String NACHRICHTENVERSION = "21:0:0";
+
+    /** Der Zeichensatz im {@code UNB}, Anlage 1 Abschnitt 5.4. */
+    public static final String ZEICHENSATZ = "UNOC:3";
+
+    /**
      * Erzeugt die Nachricht mit einem eigenen Absender.
      *
      * <p>Der Unterschied zwischen {@code senderIk} und {@code absender} ist der
@@ -121,7 +135,7 @@ public final class DtaFactory {
         List<String> lines = new ArrayList<>();
         // Die letzte Stelle sagt, wofuer sich die Datei ausgibt: 0 Test,
         // 1 Erprobung, 2 Echt. Sie stand bis zum 07.09.2026 fest auf 1.
-        lines.add(String.format("UNB+UNOC:3+%s+%s+%s+%s+%s+%s+%s'",
+        lines.add(String.format("UNB+" + ZEICHENSATZ + "+%s+%s+%s+%s+%s+%s+%s'",
                 absender.ik(),
                 receiverIk,
                 now.format(HEADER_TIME),
@@ -132,7 +146,7 @@ public final class DtaFactory {
 
         String slgaRef = "00001";
         List<String> slga = new ArrayList<>();
-        slga.add(String.format("UNH+%s+SLGA:21:0:0'", slgaRef));
+        slga.add(String.format("UNH+%s+SLGA:%s'", slgaRef, NACHRICHTENVERSION));
         slga.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
         slga.add(String.format("REC+00000000:0+%s+1'", serviceDate.minusDays(1).format(BASIC_DATE)));
         umsatzsteuersegment(a.getProvider()).ifPresent(slga::add);
@@ -146,7 +160,7 @@ public final class DtaFactory {
 
         String sllaRef = "00002";
         List<String> slla = new ArrayList<>();
-        slla.add(String.format("UNH+%s+SLLA:21:0:0'", sllaRef));
+        slla.add(String.format("UNH+%s+SLLA:%s'", sllaRef, NACHRICHTENVERSION));
         slla.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
         slla.add(String.format("REC+00000000:0+%s+1'", serviceDate.minusDays(1).format(BASIC_DATE)));
         slla.add(buildInvSegment(a.getPatient(), serviceDate));
