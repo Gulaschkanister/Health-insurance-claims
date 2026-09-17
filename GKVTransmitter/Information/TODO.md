@@ -224,26 +224,35 @@ Liste. `DtaDocument` trägt das Segmentformat bereits.
 Annahmestelle samt Adresse ermittelt wird und eine fehlende Zuordnung sich
 **meldet**, statt still auf einen Sammelordner auszuweichen.
 
-## B3. Auftragsdatei und physikalischer Dateiname
+## B3. Auftragsdatei und physikalischer Dateiname — ⛔ zurückgestellt (17.09.2026)
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.6 |
-| **Größe** | M |
-| **Hängt an** | B1, B2 |
+| **Stand** | **nicht machbar ohne zusätzliches Element** — dieser Eintrag war in der ersten Fassung dieser Liste falsch eingeordnet |
 
-Zu jeder Nutzdatendatei gehört eine unverschlüsselte Auftragsdatei mit den
-Transportangaben — Prüfstufe 1 prüft ausdrücklich, ob die Dateien **paarweise**
-ankommen. Beschreibung: `GGT_Anlage_2_Auftragsdatei.pdf`, vorhanden.
+**Was beim Nachlesen herauskam.** `GGT_Anlage_2_Auftragsdatei.pdf` liegt vor,
+reicht aber nicht: Der Auftragssatz ist ein Satz **fester Länge** (348 Byte,
+Version 01), und zwei seiner **Mussfelder** lassen sich hier nicht füllen.
 
-Der physikalische Dateiname ist vorgeschrieben (Anhang 1, Abschnitt 4.3):
-`E`/`T` + `SOL` + `0` + dreistellige Transfernummer, also `ESOL0001` oder
-`TSOL0001`. **Auch eine Erprobungsdatei trägt den Namen einer Testdatei** —
-Testindikator `1` und `TSOL` gehören zusammen.
+| Mussfeld | Woher der Wert käme | Steht er zur Verfügung? |
+|---|---|---|
+| `VERFAHREN_KENNUNG` (Stellen 20–24) | „Anlage 4 zu den Gemeinsamen Grundsätzen Technik" — so verweist Anlage 2 selbst | **nein**, unter `Information/` liegen nur GGT 2, 7 und 20 |
+| `EMPFÄNGER_NUTZER` (Stellen 63–77) | „die Datenannahmestelle mit Entschlüsselungsbefugnis **gemäß Kostenträgerdatei**" | Leser steht (B2), die **echte Datei** fehlt |
+| `ABSENDER_EIGNER` (Stellen 33–47) | eigenes IK | ja, seit B1 |
 
-**Fertig, wenn:** zu jeder Nutzdatei eine Auftragsdatei entsteht, beide
-denselben logischen Dateinamen tragen und der physikalische Name zur
-eingestellten `Uebermittlungsart` passt.
+Der **physikalische Dateiname** dagegen ist vollständig beschrieben (Anhang 1,
+Abschnitt 4.3): `E`/`T` + `SOL` + `0` + dreistellige Transfernummer. Er ist
+aber **nur in der Auftragsdatei** anzugeben — ohne sie hätte eine Klasse dafür
+keinen Abnehmer und wäre toter Quelltext.
+
+> **Deshalb bleibt B3 ungebaut, statt halb gebaut.** Eine Auftragsdatei mit
+> erfundener Verfahrenskennung wäre genau das, was der Umsetzungsplan verbietet:
+> *„Was keine Fundstelle hat, ist eine Vermutung."* Prüfstufe 1 prüft das Paar
+> aus Nutzdaten- und Auftragsdatei — eine falsche Kennung fiele dort auf.
+
+**Was es bräuchte:** GGT Anlage 4 herunterladen (frei verfügbar, wie die
+übrigen) und die echte Kostenträgerdatei dazu. Dann ist B3 eine Größe **M**.
 
 ---
 
@@ -271,13 +280,35 @@ Sicherungskopien unter `staging/` weg dürfen (Absatz 4).
 **Fertig, wenn:** jede erzeugte und jede zugestellte Datei einen
 Protokolleintrag hat und eine Übersicht zeigt, was noch auf Zahlung wartet.
 
-## C2. Verarbeitungskennzeichen: Korrektur und Nachforderung
+## C2. Verarbeitungskennzeichen: Korrektur und Nachforderung — 🟡 zur Hälfte (17.09.2026)
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.4 |
 | **Größe** | S |
 | **Hängt an** | nichts |
+| **Stand** | **Prüfung gebaut**: `VerarbeitungskennzeichenRegel` hält den Wert gegen Anlage 3 § 8.1.7 und Anlage 1 § 7.3. **Das Erzeugen einer Korrekturrechnung fehlt** — Grund unten |
+
+**Was die Regel prüft** (alles nachgelesen, nicht angenommen):
+
+| Befund | Fundstelle |
+|---|---|
+| `FKT_KENNZEICHEN_UNBEKANNT` — nur `01`, `02`, `03`, `04`, `10` | Anlage 3, Abschnitt 8.1.7 |
+| `FKT_KENNZEICHEN_UNEINHEITLICH` — „Innerhalb einer Datei dürfen nicht verschiedene Verarbeitungskennzeichen genutzt werden" | Anlage 1, Abschnitt 7.3 |
+| `URI_FEHLT` — bei Kennzeichen ≠ `01` sind die Ursprungsangaben zu übermitteln | Anlage 1, Abschnitt 7.3 |
+
+> **Warum das Erzeugen noch nicht geht.** Eine Korrekturrechnung braucht das
+> `URI`-Segment mit **Leistungserbringer-IK, Sammel- und
+> Einzelrechnungsnummer, Rechnungsdatum und Belegnummer der
+> Ursprungsrechnung**. Das Programm hält davon nichts fest: `DtaFactory`
+> schreibt `REC+00000000:0` als Konstante, und **was versendet wurde, wird
+> nirgends protokolliert**. Eine Korrektur, die auf `00000000` verweist, wäre
+> keine.
+>
+> **Es hängt also an C1** (Übermittlungsprotokoll) und an der offenen Frage D.4
+> der Übergabe (echte Rechnungs- und Belegnummern). Die Regel steht schon
+> heute — sie greift in dem Moment, in dem jemand ein anderes Kennzeichen
+> setzt, und sie prüft auch eine fremde Datei.
 
 Das Programm kennt nur `FKT+01`. Anlage 3, § 8.1.7 (vorhanden, nachgesehen)
 führt fünf Werte:

@@ -434,6 +434,73 @@ class DtaValidationServiceTest {
     }
 
     /**
+     * Das Verarbeitungskennzeichen und was daran haengt.
+     *
+     * <p>Die Referenz fuehrt zweimal {@code FKT+01} und kein URI-Segment -
+     * der Regelfall, und deshalb bleibt sie unbeanstandet.</p>
+     */
+    @Nested
+    @DisplayName("Verarbeitungskennzeichen")
+    class Verarbeitungskennzeichen {
+
+        @Test
+        @DisplayName("Ein unbekannter Wert wird als Fehler gemeldet")
+        void unbekannterWert() {
+            ValidationReport bericht = service.pruefe(REFERENZ.replace("FKT+01+", "FKT+07+"));
+
+            assertTrue(enthaeltCode(bericht, "FKT_KENNZEICHEN_UNBEKANNT"), bericht.alsText());
+            assertFalse(bericht.istVersandfaehig(),
+                    "Eine unbekannte Schluesselauspraegung faellt bei der Kasse in Pruefstufe 3");
+        }
+
+        /**
+         * Anlage 1, Abschnitt 7.3: „Innerhalb einer Datei duerfen nicht
+         * verschiedene Verarbeitungskennzeichen genutzt werden."
+         */
+        @Test
+        @DisplayName("Zwei verschiedene Kennzeichen in einer Datei werden gemeldet")
+        void uneinheitlicheKennzeichen() {
+            // Nur das FKT der zweiten Nachricht (SLLA) aendern.
+            int zweites = REFERENZ.lastIndexOf("FKT+01+");
+            String verdreht = REFERENZ.substring(0, zweites) + "FKT+04+" + REFERENZ.substring(zweites + 7);
+
+            ValidationReport bericht = service.pruefe(verdreht);
+
+            assertTrue(enthaeltCode(bericht, "FKT_KENNZEICHEN_UNEINHEITLICH"), bericht.alsText());
+        }
+
+        @Test
+        @DisplayName("Eine Korrektur ohne URI-Segment wird gemeldet")
+        void korrekturOhneUrsprungsangaben() {
+            ValidationReport bericht = service.pruefe(REFERENZ.replace("FKT+01+", "FKT+04+"));
+
+            assertTrue(enthaeltCode(bericht, "URI_FEHLT"), bericht.alsText());
+            assertFalse(bericht.istVersandfaehig(),
+                    "Ohne die Ursprungsangaben kann die Kasse die Korrektur nicht zuordnen");
+        }
+
+        @Test
+        @DisplayName("Mit URI-Segment ist die Korrektur nicht mehr zu beanstanden")
+        void korrekturMitUrsprungsangaben() {
+            String korrektur = REFERENZ.replace("FKT+01+", "FKT+04+")
+                    .replace("REC+00000000:0+", "URI+123456780+00000000+0+20260307+HEB2403001'\nREC+00000000:0+");
+
+            ValidationReport bericht = service.pruefe(korrektur);
+
+            assertFalse(enthaeltCode(bericht, "URI_FEHLT"), bericht.alsText());
+        }
+
+        @Test
+        @DisplayName("Der Regelfall 01 verlangt kein URI-Segment")
+        void regelfallOhneUri() {
+            ValidationReport bericht = service.pruefe(REFERENZ);
+
+            assertFalse(enthaeltCode(bericht, "URI_FEHLT"), bericht.alsText());
+            assertFalse(enthaeltCode(bericht, "FKT_KENNZEICHEN_UNEINHEITLICH"), bericht.alsText());
+        }
+    }
+
+    /**
      * Die Positionsnummer und der Abrechnungscode gehoeren zusammen.
      *
      * <p>Die Referenz fuehrt den Abrechnungscode 61 (Rehabilitationssport) und
