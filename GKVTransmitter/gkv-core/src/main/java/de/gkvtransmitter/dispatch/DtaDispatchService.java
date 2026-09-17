@@ -226,7 +226,9 @@ public class DtaDispatchService {
 
         // Erst pruefen, dann zustellen. Eine einzige beanstandete Nachricht
         // haelt den gesamten Lauf auf.
-        ValidationReport bericht = betriebsdatenHinweis().plus(unbekannteEmpfaenger(nachrichten));
+        ValidationReport bericht = betriebsdatenHinweis()
+                .plus(unbekannteEmpfaenger(nachrichten))
+                .plus(abweichendeAbrechnungscodes(abrechnungen));
         for (ErzeugteNachricht nachricht : nachrichten) {
             bericht = bericht.plus(validierung.pruefe(nachricht.inhalt()));
         }
@@ -252,8 +254,7 @@ public class DtaDispatchService {
             // wieder bei 1 begann. Siehe LaufenderZaehler.
             long sequence = referenzen.naechste();
             String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk,
-                    de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(abrechnung.getBlueprint()), art,
-                    absender(senderIk));
+                    leistungsparameter(abrechnung), art, absender(senderIk));
             String filename = String.format("patient_%d_%s.dta",
                     patient.getId(), LocalDateTime.now().format(FILE_TIME));
 
@@ -261,6 +262,64 @@ public class DtaDispatchService {
                     absender(senderIk).ik(), receiverIk));
         }
         return erzeugt;
+    }
+
+    /**
+     * Die Leistungsangaben einer Abrechnung.
+     *
+     * <p>Aus der Blaupause - bis auf den <b>Abrechnungscode</b>, den der
+     * Leistungserbringer vorgibt, sobald einer an ihm hinterlegt ist. Der Code
+     * gehoert zum Beruf und nicht zur Kursart; siehe
+     * {@link de.gkvtransmitter.dta.Leistungsparameter#mitAbrechnungscode}.</p>
+     */
+    private static de.gkvtransmitter.dta.Leistungsparameter leistungsparameter(Abrechnung abrechnung) {
+        de.gkvtransmitter.dta.Leistungsparameter ausBlaupause =
+                de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(abrechnung.getBlueprint());
+        de.gkvtransmitter.entity.ServiceProvider erbringer = abrechnung.getProvider();
+        if (erbringer == null || !erbringer.hatAbrechnungscode()) {
+            return ausBlaupause;
+        }
+        return ausBlaupause.mitAbrechnungscode(erbringer.getAbrechnungscode());
+    }
+
+    /**
+     * Meldet, wenn Profil und Blaupause verschiedene Abrechnungscodes nennen.
+     *
+     * <p>Das Profil gewinnt - aber <b>still gewinnen darf es nicht</b>. Aus dem
+     * Code ergibt sich der Leistungsbereich im {@code UNB}, und ein falscher
+     * kommt aus Pruefstufe 3 als Zurueckweisung zurueck. Wer eine Blaupause
+     * gepflegt hat und etwas anderes gesendet bekommt, soll das erfahren,
+     * bevor es die Kasse tut.</p>
+     *
+     * <p>Ein Hinweis und keine Warnung: Die Lage ist nicht falsch, sie ist nur
+     * nicht selbstverstaendlich. Genau dafuer gibt es INFO.</p>
+     */
+    private ValidationReport abweichendeAbrechnungscodes(List<Abrechnung> abrechnungen) {
+        ValidationReport.Builder bericht = ValidationReport.builder();
+        boolean etwasGemeldet = false;
+        for (String paar : abrechnungen.stream().map(DtaDispatchService::codeabweichung)
+                .filter(Objects::nonNull).distinct().toList()) {
+            String[] teile = paar.split(" ");
+            bericht.info("ABRECHNUNGSCODE_AUS_PROFIL", "ENF",
+                    "Die Blaupause nennt den Abrechnungscode " + teile[1] + ", der Dienstleister "
+                            + teile[0] + ". Gesendet wird " + teile[0] + ", weil der Code zum Beruf"
+                            + " gehoert und nicht zur Kursart. Stimmt das nicht, gehoert er im"
+                            + " Dienstleisterprofil geaendert.");
+            etwasGemeldet = true;
+        }
+        return etwasGemeldet ? bericht.build() : ValidationReport.leer();
+    }
+
+    /** "Profilcode Blaupausencode", oder {@code null}, wenn beide gleich sind. */
+    private static String codeabweichung(Abrechnung abrechnung) {
+        de.gkvtransmitter.entity.ServiceProvider erbringer = abrechnung.getProvider();
+        if (erbringer == null || !erbringer.hatAbrechnungscode()) {
+            return null;
+        }
+        String ausProfil = erbringer.getAbrechnungscode().trim();
+        String ausBlaupause = de.gkvtransmitter.dta.Leistungsparameter
+                .ausBlueprint(abrechnung.getBlueprint()).abrechnungscode();
+        return ausProfil.equals(ausBlaupause) ? null : ausProfil + " " + ausBlaupause;
     }
 
     /**

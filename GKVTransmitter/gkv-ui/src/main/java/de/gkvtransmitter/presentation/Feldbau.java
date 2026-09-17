@@ -181,7 +181,11 @@ public class Feldbau {
     private static final List<String> STETS_ERKLAERT = List.of(
             "ik", "kassenIk",
             "Abrechnungspositionsnummer", "Tarifkennzeichen",
-            "Durchschnittlicher Einzelbetrag", "Zuzahlung pro Position");
+            "Durchschnittlicher Einzelbetrag", "Zuzahlung pro Position",
+            // Aus demselben Grund wie das Tarifkennzeichen: der Wert steht in
+            // Anlage 3 und nirgends sonst, und ein falscher laesst die Kasse
+            // die Lieferung in Pruefstufe 3 zurueckweisen.
+            "abrechnungscode");
 
     private static boolean stetsSichtbar(String feldname) {
         return STETS_ERKLAERT.stream().anyMatch(name -> name.equalsIgnoreCase(feldname));

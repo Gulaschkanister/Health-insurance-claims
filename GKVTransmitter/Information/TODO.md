@@ -410,7 +410,7 @@ dieselbe Person, in einer Praxis mit zwei Hebammen nicht.
 
 | | Was | Was es spart | Größe |
 |---|---|---|---|
-| **F1** | **Abrechnungscode je Dienstleister** (`50` Hebamme, `61` Rehabilitationssport) statt je Blaupause. | Der Code gehört zum Beruf, nicht zur Kursart. Nebenbei wird der **Leistungsbereich** im `UNB` richtig abgeleitet, ohne dass eine Blaupause ihn tragen muss. | S |
+| **F1** ✅ | **Abrechnungscode je Dienstleister** (`50` Hebamme, `61` Rehabilitationssport) statt je Blaupause. | Der Code gehört zum Beruf, nicht zur Kursart. Nebenbei wird der **Leistungsbereich** im `UNB` richtig abgeleitet, ohne dass eine Blaupause ihn tragen muss. | S |
 | **F2** | **Standardwerte für den Abrechnungslauf:** übliche Blaupause, übliche Terminzahl, übliche Gruppengröße. Die Abrechnungsmaske füllt damit vor. | Bei vierzig Kursterminen im Jahr ist das der Unterschied zwischen „vier Felder je Lauf" und „bestätigen". | S |
 | **F3** | **Umsatzsteuerpflicht als Kennzeichen am Dienstleister.** | Hängt an der Person, nicht am Kurs (§ 4 Nr. 14 UStG). Speist `D5` und das `UST`-Segment. **Die Rechtsfrage bleibt extern, das Feld nicht.** | S |
 | **F4** | **Ansprechpartner, Telefon, E-Mail, Steuernummer.** | Wird bei jeder Anmeldung wieder gebraucht. Zusammen mit B1 ergibt das den „Aktenordner", aus dem sich die Anträge ausfüllen lassen. | S |
@@ -426,6 +426,40 @@ dieselbe Person, in einer Praxis mit zwei Hebammen nicht.
 **Fertig, wenn:** ein Abrechnungslauf für einen eingerichteten Dienstleister
 ohne eine einzige Eingabe außer der Terminzahl startbar ist und die erzeugte
 Datei dieselbe ist wie bei vollständiger Handeingabe.
+
+## F1. Abrechnungscode je Dienstleister — ✅ erledigt am 17.09.2026
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Stand** | **umgesetzt**: Feld am `ServiceProvider`, Vorrang vor der Blaupause, Hinweis bei Abweichung |
+
+Der Code stand in der Blaupause, also bei der **Leistung**. Nach Anlage 3,
+Abschnitt 8.1.5 hängt er am **Beruf**: `50` ist Hebamme/Entbindungspfleger,
+`61` Leistungserbringer von Rehabilitationssport. Wer zwei Kursarten anbot,
+pflegte denselben Wert zweimal — und aus ihm leitet sich der Leistungsbereich
+im `UNB` ab, in dem das Projekt am 07.09.2026 schon einmal falsch lag (`H`
+statt `F`).
+
+Trägt der Dienstleister einen Code, gewinnt seiner. **Ein leeres Profilfeld
+überschreibt nichts** — sonst hätte das Einführen des Feldes jeden bestehenden
+Dienstleister auf einen leeren Code gesetzt.
+
+> **Der Vorrang meldet sich.** Weichen Profil und Blaupause voneinander ab,
+> steht das als Hinweis (`ABRECHNUNGSCODE_AUS_PROFIL`) im Prüfbericht. Ein
+> stiller Wechsel des Abrechnungscodes ist genau der Fall, der in Prüfstufe 3
+> als Zurückweisung zurückkommt: Die Datei ist in sich stimmig und nennt
+> trotzdem den falschen Beruf.
+
+**Nebenbei zwei Dinge, die vorher nicht gingen:**
+
+- Das Personenformular kann jetzt **Felder je Rolle** zeigen
+  (`Personenfelder`, `EntityFieldPopulator.zusatzfelder()`). Teilnehmer und
+  Dienstleister teilten sich bis dahin nicht nur das Formular, sondern
+  zwangsläufig auch jedes Feld.
+- Das Formular zum **Bearbeiten** beschriftet die Felder jetzt wie das zum
+  Anlegen. Dort stand `kassenIk` und `birthDate`, wo dieselben Felder beim
+  Anlegen „IK der Krankenkasse" und „Geburtsdatum" heißen.
 
 ---
 

@@ -11,7 +11,6 @@ import de.gkvtransmitter.presentation.UiFactory;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.EntityFieldPopulator;
 import de.gkvtransmitter.util.AppMessages;
-import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -157,7 +156,12 @@ public class EditFormController<T> {
     private void populateEditForm(T entity) {
         formContainer.getChildren().clear();
 
-        Map<String, TagList> tagConfig = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
+        // Welche Felder, sagt der Populator: er allein kennt den
+        // Entitaetstyp. Hier stand fest die Personendatei, und damit
+        // liess sich am Dienstleister nur bearbeiten, was er mit einer
+        // Teilnehmerin gemeinsam hat.
+        Map<String, TagList> tagConfig =
+                de.gkvtransmitter.presentation.Personenfelder.mit(populator.zusatzfelder());
         Map<String, Node> inputFields = new HashMap<>();
 
         List<Node> fieldNodes = new java.util.ArrayList<>();
@@ -169,8 +173,12 @@ public class EditFormController<T> {
             populator.populateField(inputField, fieldName, entity);
             inputFields.put(fieldName, inputField);
 
+            // Die Beschriftung aus den Texten, nicht der Feldname selbst.
+            // Ueber dem Formular zum Bearbeiten stand "kassenIk" und
+            // "birthDate", waehrend dasselbe Feld beim Anlegen "IK der
+            // Krankenkasse" und "Geburtsdatum" hiess.
             fieldNodes.add(componentFactory.createBorderPane(
-                    componentFactory.createLabel(fieldName),
+                    componentFactory.createLabel(messages.get("field." + fieldName, fieldName)),
                     inputField,
                     null, null, null));
         }

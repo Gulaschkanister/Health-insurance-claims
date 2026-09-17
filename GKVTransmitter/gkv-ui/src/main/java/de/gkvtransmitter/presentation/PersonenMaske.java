@@ -18,7 +18,6 @@ import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
-import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -56,9 +55,6 @@ public class PersonenMaske {
     public static final String AKTION_BEARBEITEN = "bearbeiten";
     /** Nachsatz der Kennung einer Loeschen-Schaltflaeche. */
     public static final String AKTION_LOESCHEN = "loeschen";
-
-    /** Woher die Feldbeschreibungen einer Person stammen. */
-    private static final String TAGS = "/tags/person-tags.json";
 
     private final UiFactory bausteine;
     private final AppMessages texte;
@@ -228,7 +224,8 @@ public class PersonenMaske {
      * @param alsDienstleister ob ein Dienstleister statt eines Teilnehmers entsteht
      */
     Region formular(String ueberschriftText, boolean alsDienstleister) {
-        Map<String, TagList> beschreibungen = TagConfigLoader.loadTagConfig(TAGS);
+        Map<String, TagList> beschreibungen = Personenfelder.mit(alsDienstleister
+                ? dienstleisterFelder.zusatzfelder() : teilnehmerFelder.zusatzfelder());
         Map<String, Node> felder = new LinkedHashMap<>();
         List<Node> zeilen = new ArrayList<>();
 
@@ -299,8 +296,10 @@ public class PersonenMaske {
 
         try {
             if (alsDienstleister) {
-                datenbank.saveServiceProvider(new ServiceProvider(vorname, nachname, strasse, land,
-                        hausnummer, plz, ik, kassenIk, geburtstag));
+                ServiceProvider dienstleister = new ServiceProvider(vorname, nachname, strasse, land,
+                        hausnummer, plz, ik, kassenIk, geburtstag);
+                uebernimmZusatzfelder(felder, dienstleister);
+                datenbank.saveServiceProvider(dienstleister);
             } else {
                 datenbank.savePatient(new Patient(vorname, nachname, strasse, land,
                         hausnummer, plz, ik, kassenIk, geburtstag));
@@ -416,11 +415,42 @@ public class PersonenMaske {
                 .map(befund -> texte.get(beschriftung) + ": " + befund);
     }
 
+    /**
+     * Uebertraegt die Felder, die nur der Dienstleister hat.
+     *
+     * <p>Der Konstruktor traegt sie nicht: er hat bereits neun Parameter und
+     * steht deswegen als Checkstyle-Befund in der Liste (D6). Was danach
+     * dazukommt, kommt ueber die Setzer - denselben Weg, den das Formular zum
+     * Bearbeiten ohnehin geht.</p>
+     */
+    private void uebernimmZusatzfelder(Map<String, Node> felder, ServiceProvider dienstleister) {
+        for (String feldname : Personenfelder.mit(dienstleisterFelder.zusatzfelder()).keySet()) {
+            Node feld = felder.get(feldname);
+            if (feld != null) {
+                dienstleisterFelder.extractToEntity(feld, feldname, dienstleister);
+            }
+        }
+    }
+
     private String text(Map<String, Node> felder, String feldname) {
         return feldbau.textVon(felder.get(feldname));
     }
 
+    /**
+     * Die Beschreibung eines Feldes, ueber beide Rollen hinweg.
+     *
+     * <p>Gefragt wird aus dem Formular zum <em>Bearbeiten</em> heraus, und das
+     * weiss hier nicht, welche Rolle es gerade bearbeitet. Ein
+     * Teilnehmerformular fragt nie nach einem Dienstleisterfeld, weil
+     * {@code EditFormController} nur ueber die Felder laeuft, die der
+     * Populator nennt.</p>
+     *
+     * <p>Bei jedem Aufruf frisch gelesen und nicht als {@code static final}:
+     * Ein statisches Feld haette die Dateien beim Laden der Klasse geoeffnet,
+     * und ein Fehlschlag dabei nimmt die ganze Maske mit - aus einem fehlenden
+     * Feld wuerde eine Anwendung, die sich nicht mehr bedienen laesst.</p>
+     */
     private TagList feldbeschreibung(String feldname) {
-        return TagConfigLoader.loadTagConfig(TAGS).get(feldname);
+        return Personenfelder.mit(Personenfelder.DIENSTLEISTER).get(feldname);
     }
 }

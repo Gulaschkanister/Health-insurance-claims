@@ -58,6 +58,19 @@ public abstract class EntityFieldPopulator<T> {
     }
 
     /**
+     * Zusaetzliche Felder, die nur diese Art von Person hat.
+     *
+     * <p>Ein Dienstleister fuehrt einen Abrechnungscode, eine Teilnehmerin
+     * nicht. Die Antwort gehoert an den Populator, weil er als Einziger den
+     * Entitaetstyp kennt - das Formular kennt nur {@code T}.</p>
+     *
+     * @return Pfad einer weiteren Tag-Datei, oder {@code null}
+     */
+    public String zusatzfelder() {
+        return null;
+    }
+
+    /**
      * Gibt den Wert eines Entity-Feldes als String zurück.
      *
      * @param fieldName Der Feldname

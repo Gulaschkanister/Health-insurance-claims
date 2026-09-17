@@ -1,0 +1,11 @@
+{
+  "abrechnungscode": {
+    "inputOption": "CODE",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "2"
+      }
+    ]
+  }
+}

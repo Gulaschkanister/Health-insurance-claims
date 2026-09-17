@@ -11,6 +11,13 @@ import de.gkvtransmitter.entity.ServiceProvider;
  */
 public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceProvider> {
 
+    /** Der Dienstleister fuehrt Felder, die eine Teilnehmerin nicht hat. */
+    @Override
+    public String zusatzfelder() {
+        return de.gkvtransmitter.presentation.Personenfelder.DIENSTLEISTER;
+    }
+
+
     @Override
     protected String getFieldValue(String fieldName, ServiceProvider serviceProvider) {
         return switch (fieldName) {
@@ -22,6 +29,7 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
             case "plz" -> String.valueOf(serviceProvider.getPlz());
             case "ik" -> String.valueOf(serviceProvider.getIk());
             case "kassenIk" -> String.valueOf(serviceProvider.getKassenIk());
+            case "abrechnungscode" -> serviceProvider.getAbrechnungscode();
             default -> "";
         };
     }
@@ -47,6 +55,7 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
             case "ik" -> serviceProvider.setIk(zahl(text, serviceProvider.getIk()));
             case "kassenIk" -> serviceProvider.setKassenIk(zahl(text, serviceProvider.getKassenIk()));
             case "birthDate" -> serviceProvider.setBirthDate(datum(text));
+            case "abrechnungscode" -> serviceProvider.setAbrechnungscode(text);
             default -> { }
         }
     }

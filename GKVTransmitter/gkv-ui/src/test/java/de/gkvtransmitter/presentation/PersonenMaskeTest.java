@@ -99,6 +99,61 @@ class PersonenMaskeTest {
             });
         }
 
+        /**
+         * Der Abrechnungscode gehoert zum Beruf und damit nur zum
+         * Dienstleister.
+         *
+         * <p>Beide Rollen teilen sich das Formular. Bis zum 17.09.2026 hiess
+         * das auch: dieselben Felder. Ein Feld, das eine Teilnehmerin nicht
+         * ausfuellen kann, darf ihr auch nicht angeboten werden - und
+         * umgekehrt fehlte dem Dienstleister jede Stelle fuer eine Angabe,
+         * die an ihm haengt.</p>
+         */
+        @Test
+        @DisplayName("Der Abrechnungscode steht nur im Dienstleisterformular")
+        void abrechnungscodeNurBeimDienstleister() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                assertNotNull(formular(true).lookup("#" + PersonenMaske.ID_FELD + "abrechnungscode"),
+                        "Der Dienstleister fuehrt einen Abrechnungscode");
+                assertNull(formular(false).lookup("#" + PersonenMaske.ID_FELD + "abrechnungscode"),
+                        "Eine Teilnehmerin erbringt keine Leistung und hat keinen Code");
+            });
+        }
+
+        @Test
+        @DisplayName("Der eingetragene Abrechnungscode wird gespeichert")
+        void abrechnungscodeGespeichert() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = formular(true);
+                fuelleAus(formular);
+                text(formular, "abrechnungscode").setText("50");
+                speichern(formular).fire();
+
+                assertEquals("50", datenbank.getAllServiceProviders().get(0).getAbrechnungscode());
+            });
+        }
+
+        /**
+         * Ohne Eintrag bleibt das Feld leer - und nicht etwa auf einem
+         * plausiblen Wert.
+         *
+         * <p>Eine stille 50 waere fuer eine Hebamme richtig und fuer jeden
+         * anderen Beruf falsch, ohne dass es jemand saehe. Leer heisst: es
+         * gilt weiter die Blaupause, und das meldet der Versand.</p>
+         */
+        @Test
+        @DisplayName("Ohne Eintrag bleibt der Abrechnungscode leer")
+        void abrechnungscodeBleibtLeer() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = formular(true);
+                fuelleAus(formular);
+                speichern(formular).fire();
+
+                assertTrue(datenbank.getAllServiceProviders().get(0).getAbrechnungscode().isBlank(),
+                        "Ein ungefuelltes Feld darf sich nichts ausdenken");
+            });
+        }
+
         @Test
         @DisplayName("Ein Teilnehmer wird als Teilnehmer gemeldet")
         void teilnehmerGemeldet() {

@@ -205,6 +205,27 @@ public record Leistungsparameter(
         return String.format(Locale.GERMAN, "%.2f", zuzahlung);
     }
 
+    /**
+     * Dieselben Angaben mit einem anderen Abrechnungscode.
+     *
+     * <p><b>Der Code gehoert zum Beruf, nicht zur Kursart.</b> Er steht in der
+     * Blaupause, weil er als Feld des {@code ENF} dort hingeriet; fachlich
+     * haengt er am Leistungserbringer - eine Hebamme rechnet Geburtsvorbereitung
+     * und Rueckbildung unter derselben 50 ab. Traegt der Dienstleister einen,
+     * gilt seiner; siehe {@code ServiceProvider.getAbrechnungscode}.</p>
+     *
+     * <p>Ein leerer oder fehlender Wert aendert nichts: Es waere die
+     * schlechteste aller Moeglichkeiten, eine gepflegte Blaupause durch ein
+     * ungefuelltes Profilfeld zu ueberschreiben.</p>
+     */
+    public Leistungsparameter mitAbrechnungscode(String code) {
+        if (code == null || code.isBlank()) {
+            return this;
+        }
+        return new Leistungsparameter(einzelbetrag, code.trim(), tarifkennzeichen,
+                positionsnummer, zuzahlung, umsatzsteuersatz);
+    }
+
     /** Das Kompositfeld aus Abrechnungscode und Tarifkennzeichen. */
     public String leistungserbringergruppe() {
         return abrechnungscode + ":" + tarifkennzeichen;
