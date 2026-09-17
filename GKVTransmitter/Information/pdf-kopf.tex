@@ -1,0 +1,44 @@
+% LaTeX-Kopf fuer die PDF-Fassung der Technischen Dokumentation.
+%
+% Wird von technische-doku-erzeugen.sh ueber "pandoc -H" eingebunden. Jede
+% Zeile hier loest ein Problem, das beim Setzen tatsaechlich aufgetreten ist -
+% wer eine entfernt, bekommt das Problem zurueck.
+
+% --- Bilder bleiben, wo sie im Text stehen ---------------------------------
+% Ohne float/[H] verschiebt LaTeX ein Diagramm an den naechsten Seitenanfang,
+% an dem es passt. Bei zwoelf Diagrammen wandern sie damit reihenweise ans
+% Kapitelende, weg von dem Absatz, der sie erklaert.
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2]{\origfigure[H]}{\endorigfigure}
+
+% --- Eine Querformatseite fuer die Gesamtuebersicht ------------------------
+% Die Gesamtuebersicht aller Klassen ist rund 3500 Pixel breit. Auf einer
+% Hochformatseite schrumpft sie auf Unlesbarkeit. In der Markdown-Quelle
+% steht das Bild deshalb zwischen zwei Rohblocks:
+%
+%     ```{=latex}
+%     \begin{landscape}
+%     ```
+%
+% Wichtig: als abgesetzte ```{=latex}-Bloecke, nicht als blanke
+% \begin{landscape}-Zeilen. Pandoc zieht sonst alles zwischen \begin und \end
+% als eine einzige Roh-LaTeX-Passage zusammen - die Bildsyntax dazwischen
+% bleibt unuebersetzt stehen, und die Unterstriche im Dateinamen brechen den
+% Lauf mit "Missing $ inserted".
+\usepackage{pdflscape}
+
+% --- Lange Bezeichner brechen statt ueber den Rand zu laufen ---------------
+% Inline-Quelltext wie SimulierteKassenGegenstelle ist ein einziges Wort ohne
+% Trennstelle. LaTeX kann es nicht umbrechen und schiebt es in den Rand, wo es
+% abgeschnitten wird - im Satz fehlte genau so das Ende eines Klassennamens.
+% seqsplit erlaubt den Umbruch an jeder Stelle; gebrochen wird trotzdem nur
+% dort, wo es die Zeile verlangt.
+%
+% Das \ttfamily muss mit: \seqsplit allein setzt das Argument in der
+% Grundschrift, und der Unterschied zwischen Fliesstext und Quelltext ginge
+% verloren.
+\usepackage{seqsplit}
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{{\ttfamily\seqsplit{#1}}}

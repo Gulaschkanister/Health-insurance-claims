@@ -83,6 +83,7 @@ Grundsatzentscheidung gelten:
 - **Selbst übermitteln oder über eine Abrechnungsstelle?** Bei drei Kursen im
   Jahr rechnet sich der eigene Weg nicht — die Pflege kostet mehr als die
   Gebühr. Siehe „Was der eigene Weg wirklich kostet" in der Dokumentation.
+  Wenn man davon ausgeht, dass man quasi möchtentlich 1 Kurs macht würde es sich rechnen
 - **Vier Branches auf `origin`** (`dev`, `restart`, `refactor`, `ai`) warten auf
   ein Wort, bevor sie gelöscht werden.
 - **98 Testdateien** liegen noch im echten Ausgangsordner unter
