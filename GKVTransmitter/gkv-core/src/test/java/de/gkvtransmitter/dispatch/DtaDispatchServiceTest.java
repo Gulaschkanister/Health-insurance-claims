@@ -114,6 +114,30 @@ class DtaDispatchServiceTest {
                 "Ein Hinweis, kein Fehler - sonst waere es eine Sperre ohne Ausgang");
     }
 
+    /**
+     * Eine Kasse ohne hinterlegtes Ziel faellt auf.
+     *
+     * <p>Die Zustellung weicht dann auf einen Sammelordner aus und meldet
+     * Erfolg. <b>Die Datei liegt aber nur da</b> - wer das nicht erfaehrt,
+     * wartet auf eine Zahlung, die nie kommt.</p>
+     */
+    @Test
+    @DisplayName("Eine Kasse ohne hinterlegtes Ziel wird gemeldet")
+    void meldetUnbekanntenEmpfaenger() {
+        DtaDispatchService dienst = new DtaDispatchService(
+                new BillingOfficeEndpointRegistry(new LinkedHashMap<>(), tempDir.resolve("sammel")),
+                new FileBillingOfficeTransport());
+
+        Versandergebnis ergebnis = dienst.generateAndRoute(zweiAbrechnungen(), tempDir);
+
+        assertTrue(ergebnis.bericht().getWarnings().stream()
+                        .anyMatch(befund -> "ANNAHMESTELLE_UNBEKANNT".equals(befund.code())),
+                "Der Sammelordner darf nicht stillschweigend einspringen: "
+                        + ergebnis.bericht().alsText());
+        assertTrue(ergebnis.bericht().istVersandfaehig(),
+                "Ein Hinweis - die Datei ist ja erzeugt und abgelegt");
+    }
+
     /** Die erste Zeile der zuerst gefundenen Datei im Ordner. */
     private static String ersteZeile(Path ordner) throws Exception {
         try (var dateien = Files.list(ordner)) {

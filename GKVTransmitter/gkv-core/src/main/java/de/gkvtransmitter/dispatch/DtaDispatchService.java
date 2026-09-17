@@ -195,7 +195,7 @@ public class DtaDispatchService {
 
         // Erst pruefen, dann zustellen. Eine einzige beanstandete Nachricht
         // haelt den gesamten Lauf auf.
-        ValidationReport bericht = betriebsdatenHinweis();
+        ValidationReport bericht = betriebsdatenHinweis().plus(unbekannteEmpfaenger(nachrichten));
         for (ErzeugteNachricht nachricht : nachrichten) {
             bericht = bericht.plus(validierung.pruefe(nachricht.inhalt()));
         }
@@ -256,6 +256,32 @@ public class DtaDispatchService {
      * Rueckfallebene richtig. Gesehen werden soll es aber, denn fuer jeden
      * anderen Fall ist der Absender falsch.</p>
      */
+    /**
+     * Meldet jede Kasse, fuer die kein Ziel hinterlegt ist.
+     *
+     * <p>Die Zustellung weicht dann auf einen Sammelordner aus und meldet
+     * Erfolg - die Datei liegt aber nur da. Solange die Zuordnung von Hand in
+     * {@code billing-office-endpoints.json} gepflegt wird, ist diese Luecke der
+     * Normalfall und nicht die Ausnahme; sie gehoert deshalb auf den
+     * Bildschirm. Die dauerhafte Loesung liest die Zuordnung aus der
+     * Kostentraegerdatei, siehe {@link Kostentraegerdatei}.</p>
+     */
+    private ValidationReport unbekannteEmpfaenger(List<ErzeugteNachricht> nachrichten) {
+        ValidationReport.Builder bericht = ValidationReport.builder();
+        boolean etwasGemeldet = false;
+        for (int kassenIk : nachrichten.stream().map(ErzeugteNachricht::kassenIk).distinct().toList()) {
+            if (!endpointRegistry.kenntKasse(kassenIk)) {
+                bericht.warning("ANNAHMESTELLE_UNBEKANNT", "Kasse " + kassenIk,
+                        "Fuer die Kasse " + kassenIk + " ist kein Ziel hinterlegt. Die Datei landet"
+                                + " im Sammelordner und ist damit nicht zugestellt. Zustaendig ist"
+                                + " die Datenannahmestelle mit Entschluesselungsbefugnis aus der"
+                                + " Kostentraegerdatei.");
+                etwasGemeldet = true;
+            }
+        }
+        return etwasGemeldet ? bericht.build() : ValidationReport.leer();
+    }
+
     private ValidationReport betriebsdatenHinweis() {
         Betriebsdaten betrieb = betriebsangaben.aktuelle();
         if (betrieb != null && betrieb.sindVersandtauglich()) {

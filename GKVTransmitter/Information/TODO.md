@@ -180,13 +180,26 @@ gegen die Prüfziffer geprüft wird, der logische Dateiname Rolle und IK **von
 dort** nimmt statt aus dem Dienstleister, und fehlende Pflichtangaben den
 Abrechnungslauf mit verständlicher Meldung anhalten.
 
-## B2. Kostenträgerdatei einlesen
+## B2. Kostenträgerdatei einlesen — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.3 |
 | **Größe** | M |
 | **Hängt an** | nichts |
+| **Stand** | **umgesetzt**: `Kostentraegerdatei` löst Kassen-IK + Abrechnungscode auf die Annahmestelle **mit** Entschlüsselungsbefugnis auf, samt Übertragungsweg aus dem `DFU`. Eine fehlende Zuordnung meldet sich als `ANNAHMESTELLE_UNBEKANNT` |
+
+> **Noch nicht verdrahtet:** Der Leser steht und ist geprüft, aber
+> `billing-office-endpoints.json` bleibt vorerst die Quelle für den Versand.
+> Das Umstellen braucht die **echte** Kostenträgerdatei — ein freier Download,
+> aber eben ein zusätzliches Element, und danach gehört sie in den
+> Wartungskalender (G3, vierteljährlich). Bis dahin sagt die Warnung
+> wenigstens, wenn eine Kasse kein Ziel hat.
+
+> **Zwei Festlegungen aus der Beschreibung, nicht geraten:** Ein **leeres**
+> Abrechnungscode-Feld gilt *nicht* als „für alles" — Fußnote 4 nennt den Code
+> für Teilprojekt 5 zwingend. Und der **Sonderschlüssel 99** wird nicht
+> stillschweigend benutzt: Er gilt für *nicht aufgeführte* Gruppen.
 
 Heute wird `billing-office-endpoints.json` von Hand gepflegt — mit 23 einzelnen
 Kassen und damit dem **falschen Empfänger**: zu liefern ist an die

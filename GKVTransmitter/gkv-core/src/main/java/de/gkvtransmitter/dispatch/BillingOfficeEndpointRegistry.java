@@ -63,6 +63,19 @@ public class BillingOfficeEndpointRegistry {
                 destinationRoot.resolve(String.valueOf(kassenIk)));
     }
 
+    /**
+     * Ob fuer diese Kasse ueberhaupt ein Ziel hinterlegt ist.
+     *
+     * <p>{@link #resolve(int, Path)} weicht andernfalls auf einen Sammelordner
+     * aus und liefert trotzdem einen Endpunkt zurueck - von aussen ist beides
+     * nicht zu unterscheiden. <b>Eine Datei, die in einem Sammelordner
+     * liegenbleibt, ist aber nicht zugestellt</b>, und wer das nicht erfaehrt,
+     * wartet auf eine Zahlung, die nie kommt.</p>
+     */
+    public boolean kenntKasse(int kassenIk) {
+        return endpoints.containsKey(kassenIk);
+    }
+
     public Map<Integer, BillingOfficeEndpoint> getEndpoints() {
         return endpoints;
     }
