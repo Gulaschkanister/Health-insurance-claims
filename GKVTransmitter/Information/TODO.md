@@ -258,13 +258,31 @@ keinen Abnehmer und wäre toter Quelltext.
 
 # Block C — Was nach dem Versand bleibt
 
-## C1. Übermittlungsprotokoll und Sicherungskopie
+## C1. Übermittlungsprotokoll und Sicherungskopie — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.5 |
 | **Größe** | M |
 | **Hängt an** | A1 |
+| **Stand** | **umgesetzt**: Entität `Protokolleintrag` mit einem Feld je Pflichtinhalt, geschrieben beim Versand, Übersicht unter „Übermittlungen" mit Vermerk „Bezahlt" |
+
+Die zehn Mindestinhalte aus **Anhang 1, Abschnitt 4.5** sind einzeln
+abgebildet — physikalischer Dateiname, Erstellungsdatum, laufende Nummer,
+Kommunikationspartner, Beginn und Ende, Dateigröße, Verarbeitungshinweise,
+Senden/Empfangen, fehlerfrei/fehlerhaft und im Fehlerfall der Fehlerstatus.
+**Auch ein Fehlschlag wird protokolliert**: Ein Protokoll, das nur die
+gelungenen Fälle kennt, belegt nichts.
+
+Dazu der Zustand **bezahlt** aus Abschnitt 3 Absatz 4 („Eine Sicherungskopie
+der Daten ist durch den Absender bis zur Bezahlung vorzuhalten"). Ohne einen
+Zeitpunkt dafür wüsste niemand, wann die Kopien unter `staging/` weg dürfen —
+und niemand sähe, worauf noch Geld aussteht.
+
+> **Damit ist auch die andere Hälfte von C2 nicht mehr blockiert**, jedenfalls
+> nicht mehr am Protokoll: Was versendet wurde, steht jetzt fest. Es fehlen
+> weiterhin echte Rechnungs- und Belegnummern (D.4 der Übergabe), ohne die ein
+> `URI`-Segment auf `00000000` zeigen würde.
 
 Anlage 1, Abschnitt 3 Absatz 2 verlangt eine Dokumentation des Datenaustauschs,
 **mindestens zwei Jahre aufzubewahren**; die Mindestinhalte nennt Anhang 1,

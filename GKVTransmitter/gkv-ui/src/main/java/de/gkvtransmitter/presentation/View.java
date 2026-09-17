@@ -209,6 +209,12 @@ public class View {
                 () -> hauptfenster.zeige(new BetriebsdatenMaske(componentFactory, messages,
                         meldungen, controller.getDatabase()).maske()));
 
+        // Das Uebermittlungsprotokoll ist Pflicht (Anlage 1, Abschnitt 3
+        // Absatz 2) und zeigt zugleich, worauf noch Geld aussteht.
+        hauptfenster.ergaenzeBereich(messages.get("nav.log"),
+                () -> hauptfenster.zeige(new ProtokollMaske(componentFactory, messages,
+                        meldungen, controller.getDatabase(), hauptfenster).liste()));
+
         // Die Vorlagen stehen weiter einzeln in der Leiste: sie sind der Weg zu
         // einer neuen Blaupause. Zuvor waren sie der einzige Weg ueberhaupt -
         // was einmal gespeichert war, tauchte nur noch als Name im Auswahlfeld
@@ -249,6 +255,7 @@ public class View {
         hauptfenster.erklaereBereich(messages.get("menu.groups"), messages.get("intro.groups"));
         hauptfenster.erklaereBereich(messages.get("menu.blueprints"), messages.get("intro.blueprints"));
         hauptfenster.erklaereBereich(messages.get("nav.company"), messages.get("intro.company"));
+        hauptfenster.erklaereBereich(messages.get("nav.log"), messages.get("intro.log"));
         hauptfenster.erklaereBereich(messages.get("menu.settings"), messages.get("intro.settings"));
         hauptfenster.erklaereBereich(messages.get("nav.testdata"), messages.get("intro.testdata"));
     }

@@ -330,6 +330,62 @@ class HibernateSqlliteTest {
         assertFalse(geladen.istSelbstabrechner());
     }
 
+    // --- Uebermittlungsprotokoll ------------------------------------------
+
+    private static de.gkvtransmitter.entity.Protokolleintrag eintrag(String dateiname, long nummer) {
+        de.gkvtransmitter.entity.Protokolleintrag eintrag =
+                new de.gkvtransmitter.entity.Protokolleintrag();
+        eintrag.setDateiname(dateiname);
+        eintrag.setErstelltAm(OffsetDateTime.now());
+        eintrag.setLaufendeNummer(nummer);
+        eintrag.setAbsenderIk("108310400");
+        eintrag.setEmpfaengerIk("104940005");
+        eintrag.setGroesseBytes(512);
+        return eintrag;
+    }
+
+    @Test
+    @DisplayName("Ein Protokolleintrag ueberlebt und traegt seine Pflichtangaben")
+    void protokollUeberlebt() {
+        repository.protokolliere(eintrag("patient_1.dta", 7));
+
+        List<de.gkvtransmitter.entity.Protokolleintrag> protokoll = repository.ladeProtokoll();
+
+        assertEquals(1, protokoll.size());
+        assertEquals("patient_1.dta", protokoll.get(0).getDateiname());
+        assertEquals(7, protokoll.get(0).getLaufendeNummer());
+        assertEquals("108310400", protokoll.get(0).getAbsenderIk());
+        assertTrue(protokoll.get(0).istFehlerfrei());
+    }
+
+    /**
+     * Anlage 1, Abschnitt 3 Absatz 4: Die Sicherungskopie ist bis zur
+     * Bezahlung vorzuhalten. Ohne einen Zeitpunkt dafuer weiss niemand, wann
+     * sie weg darf.
+     */
+    @Test
+    @DisplayName("Eine Lieferung wartet auf Zahlung, bis sie als bezahlt vermerkt ist")
+    void wartetAufZahlung() {
+        repository.protokolliere(eintrag("patient_1.dta", 1));
+        de.gkvtransmitter.entity.Protokolleintrag gespeichert = repository.ladeProtokoll().get(0);
+        assertTrue(gespeichert.wartetAufZahlung());
+
+        repository.markiereBezahlt(gespeichert.getId());
+
+        de.gkvtransmitter.entity.Protokolleintrag danach = repository.ladeProtokoll().get(0);
+        assertNotNull(danach.getBezahltAm());
+        assertFalse(danach.wartetAufZahlung());
+    }
+
+    @Test
+    @DisplayName("Das Protokoll zeigt die neueste Lieferung zuerst")
+    void neuesteZuerst() {
+        repository.protokolliere(eintrag("erste.dta", 1));
+        repository.protokolliere(eintrag("zweite.dta", 2));
+
+        assertEquals("zweite.dta", repository.ladeProtokoll().get(0).getDateiname());
+    }
+
     // --- Datenaustauschreferenz ------------------------------------------
 
     @Test

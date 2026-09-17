@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,6 +17,7 @@ import de.gkvtransmitter.dta.DtaFactory;
 import de.gkvtransmitter.dta.Uebermittlungsart;
 import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.Patient;
+import de.gkvtransmitter.entity.Protokolleintrag;
 import de.gkvtransmitter.model.Abrechnung;
 import de.gkvtransmitter.validator.DtaValidationService;
 import de.gkvtransmitter.validator.ValidationReport;
@@ -41,6 +43,8 @@ public class DtaDispatchService {
     private final Uebermittlungsart art;
     /** Woher die absendende Stelle kommt, siehe {@link Betriebsangaben}. */
     private final Betriebsangaben betriebsangaben;
+    /** Wohin das Uebermittlungsprotokoll geht, siehe {@link Protokollfuehrung}. */
+    private final Protokollfuehrung protokoll;
     private final BillingOfficeResponseParser antwortAuswertung = new BillingOfficeResponseParser();
 
     /**
@@ -68,6 +72,21 @@ public class DtaDispatchService {
     public interface Betriebsangaben {
         /** Die erfassten Betriebsdaten, oder {@code null}, wenn es keine gibt. */
         Betriebsdaten aktuelle();
+    }
+
+    /**
+     * Wohin das Uebermittlungsprotokoll geschrieben wird.
+     *
+     * <p>Pflicht nach Anlage 1, Abschnitt 3 Absatz 2. Wie bei
+     * {@link Datenaustauschreferenzen} als einmethodige Schnittstelle und
+     * nicht als {@code DataRepository}: Der Dienst schreibt Eintraege und
+     * liest keine, und ohne das ganze Repository bleibt er im Test ohne
+     * Datenbank aufsetzbar.</p>
+     */
+    @FunctionalInterface
+    public interface Protokollfuehrung {
+        /** Nimmt einen Eintrag auf. */
+        void vermerke(Protokolleintrag eintrag);
     }
 
     public DtaDispatchService() {
@@ -104,6 +123,17 @@ public class DtaDispatchService {
     public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
             DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art,
             Betriebsangaben betriebsangaben) {
+        this(endpointRegistry, transport, validierung, referenzen, art, betriebsangaben, eintrag -> { });
+    }
+
+    /**
+     * @param protokoll wohin die Pflichtdokumentation geht; ohne Angabe wird
+     *        nichts festgehalten - fuer Tests, nicht fuer den Betrieb
+     */
+    public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
+            DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art,
+            Betriebsangaben betriebsangaben, Protokollfuehrung protokoll) {
+        this.protokoll = Objects.requireNonNull(protokoll, "protokoll must not be null");
         this.endpointRegistry = Objects.requireNonNull(endpointRegistry, "endpointRegistry must not be null");
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
         this.validierung = Objects.requireNonNull(validierung, "validierung must not be null");
@@ -149,7 +179,8 @@ public class DtaDispatchService {
      * @param inhalt     die erzeugte DTA-Nachricht
      * @param dateiname  der vorgesehene Dateiname
      */
-    private record ErzeugteNachricht(Abrechnung abrechnung, String inhalt, String dateiname) {
+    private record ErzeugteNachricht(Abrechnung abrechnung, String inhalt, String dateiname,
+            long referenz, String absenderIk, String empfaengerIk) {
 
         int kassenIk() {
             return abrechnung.getPatient().getKassenIk();
@@ -226,7 +257,8 @@ public class DtaDispatchService {
             String filename = String.format("patient_%d_%s.dta",
                     patient.getId(), LocalDateTime.now().format(FILE_TIME));
 
-            erzeugt.add(new ErzeugteNachricht(abrechnung, content, filename));
+            erzeugt.add(new ErzeugteNachricht(abrechnung, content, filename, sequence,
+                    absender(senderIk).ik(), receiverIk));
         }
         return erzeugt;
     }
@@ -307,10 +339,17 @@ public class DtaDispatchService {
                 if (!Files.exists(stagingFolder)) {
                     Files.createDirectories(stagingFolder);
                 }
+                OffsetDateTime beginn = OffsetDateTime.now();
                 Path stagedFile = DtaFactory.writeDtaFile(nachricht.inhalt(), stagingFolder, nachricht.dateiname());
                 Path deliveredFile = transport.send(stagedFile, endpoint);
                 filesByKassenIk.computeIfAbsent(kassenIk, key -> new ArrayList<>()).add(deliveredFile);
+                vermerke(nachricht, stagedFile, deliveredFile, beginn, null);
             } catch (IOException e) {
+                // Auch der Fehlschlag gehoert ins Protokoll: Anhang 1,
+                // Abschnitt 4.5 verlangt "fehlerfrei/fehlerhaft" und im
+                // Fehlerfall den Status. Ein Protokoll, das nur die
+                // gelungenen Faelle kennt, belegt nichts.
+                vermerke(nachricht, null, null, OffsetDateTime.now(), e.getMessage());
                 throw new DispatchException("Zustellung an Kasse " + kassenIk + " fehlgeschlagen", e);
             }
         }
@@ -320,6 +359,46 @@ public class DtaDispatchService {
             batches.add(new DispatchBatch(entry.getKey(), entry.getValue()));
         }
         return batches;
+    }
+
+    /**
+     * Schreibt einen Eintrag ins Uebermittlungsprotokoll.
+     *
+     * <p>Die Felder folgen Anhang 1, Abschnitt 4.5 - siehe
+     * {@link Protokolleintrag}. Die Sicherungskopie ist die Datei unter
+     * {@code staging/}: Sie ist nach Abschnitt 3 Absatz 4 bis zur Bezahlung
+     * vorzuhalten, und ohne den Vermerk wuesste niemand, welche das ist.</p>
+     */
+    private void vermerke(ErzeugteNachricht nachricht, Path kopie, Path zugestellt,
+            OffsetDateTime beginn, String fehler) {
+        Protokolleintrag eintrag = new Protokolleintrag();
+        eintrag.setDateiname(zugestellt != null
+                ? zugestellt.getFileName().toString() : nachricht.dateiname());
+        eintrag.setErstelltAm(OffsetDateTime.now());
+        eintrag.setLaufendeNummer(nachricht.referenz());
+        eintrag.setAbsenderIk(nachricht.absenderIk());
+        eintrag.setEmpfaengerIk(nachricht.empfaengerIk());
+        eintrag.setBeginn(beginn);
+        eintrag.setEnde(OffsetDateTime.now());
+        eintrag.setGroesseBytes(groesse(zugestellt != null ? zugestellt : kopie));
+        eintrag.setHinweise("Uebermittlungsart " + art.name().toLowerCase(java.util.Locale.GERMAN));
+        eintrag.setRichtung(Protokolleintrag.Richtung.SENDEN);
+        eintrag.setFehlerfrei(fehler == null);
+        eintrag.setFehlerstatus(fehler);
+        eintrag.setSicherungskopie(kopie == null ? null : kopie.toString());
+        protokoll.vermerke(eintrag);
+    }
+
+    /** Die Dateigroesse, oder 0, wenn sich die Datei nicht befragen laesst. */
+    private static long groesse(Path datei) {
+        if (datei == null) {
+            return 0L;
+        }
+        try {
+            return Files.size(datei);
+        } catch (IOException nichtLesbar) {
+            return 0L;
+        }
     }
 
     public List<BillingOfficeEndpointCheck> checkConfiguredEndpoints() {

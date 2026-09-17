@@ -255,6 +255,21 @@ class EinstellungenTest {
         }
 
         @Override
+        public void protokolliere(de.gkvtransmitter.entity.Protokolleintrag eintrag) {
+            // Diese Attrappe prueft die Einstellungen, nicht das Protokoll.
+        }
+
+        @Override
+        public List<de.gkvtransmitter.entity.Protokolleintrag> ladeProtokoll() {
+            return List.of();
+        }
+
+        @Override
+        public void markiereBezahlt(Long eintragId) {
+            // Siehe oben.
+        }
+
+        @Override
         public Map<String, String> ladeEinstellungen() {
             return new LinkedHashMap<>();
         }

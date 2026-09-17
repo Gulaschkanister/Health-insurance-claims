@@ -171,5 +171,18 @@
   "company.saved": "Betriebsdaten gespeichert",
   "company.ikInvalid": "Das Institutionskennzeichen stimmt nicht: neun Ziffern mit gültiger Prüfziffer.",
   "company.noAccount": "Eine Bankverbindung steht bewusst nicht hier: Sie geht in keine Nachricht ein, sondern wird bei der Anmeldung hinterlegt — und diese Datenbank ist unverschlüsselt.",
-  "intro.company": "Das eigene Institutionskennzeichen und die Rolle stehen in jeder erzeugten Datei. Die übrigen Angaben brauchen die Anmeldungen bei ARGE·IK, Trust Center und Datenannahmestelle."
+  "intro.company": "Das eigene Institutionskennzeichen und die Rolle stehen in jeder erzeugten Datei. Die übrigen Angaben brauchen die Anmeldungen bei ARGE·IK, Trust Center und Datenannahmestelle.",
+  "nav.log": "Übermittlungen",
+  "log.title": "Übermittlungsprotokoll",
+  "log.subtitle": "Pflicht nach Anlage 1, Abschnitt 3: Über den Datenaustausch ist eine Dokumentation zu führen und mindestens zwei Jahre aufzubewahren.",
+  "log.empty": "Es wurde noch nichts übermittelt.",
+  "log.open": "%d Lieferungen warten auf Zahlung. Bis dahin ist die Sicherungskopie vorzuhalten.",
+  "log.allPaid": "Alle Lieferungen sind bezahlt. Die Sicherungskopien dürfen weg.",
+  "log.markPaid": "Bezahlt",
+  "log.paid": "bezahlt am %s",
+  "log.waiting": "wartet auf Zahlung",
+  "log.failed": "fehlerhaft",
+  "log.markedPaid": "Als bezahlt vermerkt",
+  "intro.log": "Was wann an wen ging — und worauf noch Geld aussteht.",
+  "log.openOne": "Eine Lieferung wartet auf Zahlung. Bis dahin ist die Sicherungskopie vorzuhalten."
 }

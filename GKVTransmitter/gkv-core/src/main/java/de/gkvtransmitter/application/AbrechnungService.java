@@ -66,7 +66,9 @@ public final class AbrechnungService {
                                 .get(de.gkvtransmitter.einstellung.Einstellung.UEBERMITTLUNGSART)),
                 // Bei jedem Lauf frisch gelesen: wer die Betriebsdaten aendert
                 // und danach abrechnet, soll die geaenderten benutzen.
-                datenbank::ladeBetriebsdaten));
+                datenbank::ladeBetriebsdaten,
+                // Pflichtdokumentation nach Anlage 1, Abschnitt 3 Absatz 2.
+                datenbank::protokolliere));
     }
 
     public AbrechnungService(DtaDispatchService dispatchService) {

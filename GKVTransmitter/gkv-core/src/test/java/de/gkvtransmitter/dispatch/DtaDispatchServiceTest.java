@@ -138,6 +138,46 @@ class DtaDispatchServiceTest {
                 "Ein Hinweis - die Datei ist ja erzeugt und abgelegt");
     }
 
+    /**
+     * Jede zugestellte Datei hinterlaesst einen Protokolleintrag.
+     *
+     * <p>Pflicht nach Anlage 1, Abschnitt 3 Absatz 2; die Mindestinhalte
+     * zaehlt Anhang 1, Abschnitt 4.5 auf. Geprueft wird hier, dass die
+     * Angaben, die nur der Versanddienst kennt, auch wirklich ankommen -
+     * laufende Nummer, Kommunikationspartner, Dateigroesse und die
+     * Sicherungskopie.</p>
+     */
+    @Test
+    @DisplayName("Jede Zustellung wird protokolliert")
+    void protokolliertJedeZustellung() throws Exception {
+        List<de.gkvtransmitter.entity.Protokolleintrag> protokoll = new java.util.ArrayList<>();
+        Map<Integer, BillingOfficeEndpoint> endpunkte = new LinkedHashMap<>();
+        endpunkte.put(108310400,
+                BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse", tempDir.resolve("ziel")));
+        DtaDispatchService dienst = new DtaDispatchService(
+                new BillingOfficeEndpointRegistry(endpunkte, tempDir.resolve("fallback")),
+                new FileBillingOfficeTransport(), DtaValidationService.standard(),
+                new DtaDispatchService.LaufenderZaehler(),
+                de.gkvtransmitter.dta.Uebermittlungsart.ERPROBUNG,
+                () -> null,
+                protokoll::add);
+
+        dienst.generateAndRoute(zweiAbrechnungen(), tempDir);
+
+        assertEquals(2, protokoll.size(), "Zwei Abrechnungen, zwei Eintraege");
+        de.gkvtransmitter.entity.Protokolleintrag erster = protokoll.get(0);
+        assertNotNull(erster.getDateiname());
+        assertNotNull(erster.getErstelltAm());
+        assertNotNull(erster.getBeginn());
+        assertNotNull(erster.getEnde());
+        assertTrue(erster.getLaufendeNummer() > 0, "Die Datenaustauschreferenz gehoert hinein");
+        assertTrue(erster.getGroesseBytes() > 0, "Die Dateigroesse ist ein Pflichtinhalt");
+        assertTrue(erster.istFehlerfrei());
+        assertNotNull(erster.getSicherungskopie(),
+                "Die Kopie unter staging/ ist bis zur Bezahlung vorzuhalten");
+        assertTrue(erster.wartetAufZahlung());
+    }
+
     /** Die erste Zeile der zuerst gefundenen Datei im Ordner. */
     private static String ersteZeile(Path ordner) throws Exception {
         try (var dateien = Files.list(ordner)) {

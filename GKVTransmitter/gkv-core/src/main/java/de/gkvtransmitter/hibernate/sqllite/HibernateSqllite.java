@@ -16,6 +16,7 @@ import de.gkvtransmitter.entity.DtaCounter;
 import de.gkvtransmitter.entity.Einstellungswert;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
+import de.gkvtransmitter.entity.Protokolleintrag;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.repository.DataRepository;
 
@@ -222,6 +223,39 @@ public final class HibernateSqllite implements DataRepository, AutoCloseable {
         Objects.requireNonNull(betriebsdaten, "betriebsdaten must not be null");
         betriebsdaten.setId(1L);
         runner.writeVoid("Betriebsdaten speichern", session -> session.merge(betriebsdaten));
+    }
+
+    @Override
+    public void protokolliere(Protokolleintrag eintrag) {
+        Objects.requireNonNull(eintrag, "eintrag must not be null");
+        runner.writeVoid("Uebermittlung protokollieren", session -> session.persist(eintrag));
+    }
+
+    /**
+     * Das Protokoll, neueste Lieferung zuerst.
+     *
+     * <p>Sortiert wird nach Erstellungszeitpunkt und bei Gleichstand nach
+     * Kennung: Zwei Lieferungen desselben Laufs tragen denselben Zeitstempel
+     * bis auf die Sekunde, und eine Uebersicht, deren Reihenfolge zwischen
+     * zwei Aufrufen wechselt, ist keine.</p>
+     */
+    @Override
+    public List<Protokolleintrag> ladeProtokoll() {
+        return runner.read("Uebermittlungsprotokoll laden", session -> session.createQuery(
+                "FROM Protokolleintrag ORDER BY erstelltAm DESC, id DESC", Protokolleintrag.class)
+                .getResultList());
+    }
+
+    @Override
+    public void markiereBezahlt(Long eintragId) {
+        Objects.requireNonNull(eintragId, "eintragId must not be null");
+        runner.writeVoid("Lieferung als bezahlt vermerken", session -> {
+            Protokolleintrag eintrag = session.get(Protokolleintrag.class, eintragId);
+            if (eintrag != null) {
+                eintrag.setBezahltAm(java.time.OffsetDateTime.now());
+                session.merge(eintrag);
+            }
+        });
     }
 
     /**

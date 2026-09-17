@@ -15,6 +15,7 @@ import de.gkvtransmitter.entity.DtaCounter;
 import de.gkvtransmitter.entity.Einstellungswert;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
+import de.gkvtransmitter.entity.Protokolleintrag;
 import de.gkvtransmitter.entity.ServiceProvider;
 
 /**
@@ -66,6 +67,7 @@ public final class SessionFactoryProvider {
                     .addAnnotatedClass(DtaCounter.class)
                     .addAnnotatedClass(Einstellungswert.class)
                     .addAnnotatedClass(Betriebsdaten.class)
+                    .addAnnotatedClass(Protokolleintrag.class)
                     .getMetadataBuilder()
                     .build();
             return metadata.getSessionFactoryBuilder().build();

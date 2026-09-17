@@ -7,6 +7,7 @@ import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
+import de.gkvtransmitter.entity.Protokolleintrag;
 import de.gkvtransmitter.entity.ServiceProvider;
 
 public interface DataRepository {
@@ -57,6 +58,25 @@ public interface DataRepository {
 
     /** Legt die Betriebsdaten an oder aendert die vorhandenen. */
     void speichereBetriebsdaten(Betriebsdaten betriebsdaten);
+
+    /**
+     * Nimmt einen Eintrag ins Uebermittlungsprotokoll auf.
+     *
+     * <p>Pflicht nach Anlage 1, Abschnitt 3 Absatz 2 - die Dokumentation ist
+     * mindestens zwei Jahre aufzubewahren.</p>
+     */
+    void protokolliere(Protokolleintrag eintrag);
+
+    /** Das Uebermittlungsprotokoll, neueste Lieferung zuerst. */
+    List<Protokolleintrag> ladeProtokoll();
+
+    /**
+     * Haelt fest, dass eine Lieferung bezahlt wurde.
+     *
+     * <p>Erst danach darf die Sicherungskopie weg - Anlage 1, Abschnitt 3
+     * Absatz 4.</p>
+     */
+    void markiereBezahlt(Long eintragId);
 
     /**
      * Alle gespeicherten Einstellungen, Schluessel auf Wert.

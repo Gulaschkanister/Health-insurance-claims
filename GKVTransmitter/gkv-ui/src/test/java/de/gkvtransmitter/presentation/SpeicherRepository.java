@@ -192,6 +192,34 @@ class SpeicherRepository implements DataRepository {
         this.betriebsdaten = neue;
     }
 
+    /** Das Uebermittlungsprotokoll, neueste zuerst. */
+    private final java.util.List<de.gkvtransmitter.entity.Protokolleintrag> protokoll =
+            new java.util.ArrayList<>();
+
+    @Override
+    public void protokolliere(de.gkvtransmitter.entity.Protokolleintrag eintrag) {
+        protokoll.add(0, eintrag);
+    }
+
+    @Override
+    public java.util.List<de.gkvtransmitter.entity.Protokolleintrag> ladeProtokoll() {
+        return java.util.List.copyOf(protokoll);
+    }
+
+    @Override
+    public void markiereBezahlt(Long eintragId) {
+        protokoll.stream()
+                .filter(eintrag -> java.util.Objects.equals(eintrag.getId(), eintragId))
+                .findFirst()
+                .ifPresent(eintrag -> eintrag.setBezahltAm(java.time.OffsetDateTime.now()));
+    }
+
+    /** Legt einen Protokolleintrag vor, wie ihn ein Versand hinterlassen haette. */
+    SpeicherRepository mitProtokolleintrag(de.gkvtransmitter.entity.Protokolleintrag eintrag) {
+        protokoll.add(0, eintrag);
+        return this;
+    }
+
     /** Legt Betriebsdaten vor, wie sie ein eingerichteter Betrieb haette. */
     SpeicherRepository mitBetriebsdaten(de.gkvtransmitter.entity.Betriebsdaten neue) {
         this.betriebsdaten = neue;
