@@ -7,5 +7,48 @@
         "value": "2"
       }
     ]
+  },
+  "steuernummer": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "20"
+      }
+    ]
+  },
+  "umsatzsteuerbefreit": {
+    "inputOption": "BOOLEAN",
+    "modifiers": []
+  },
+  "ansprechpartner": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "TEXT"
+      },
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
+    ]
+  },
+  "telefon": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "30"
+      }
+    ]
+  },
+  "email": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
+    ]
   }
 }

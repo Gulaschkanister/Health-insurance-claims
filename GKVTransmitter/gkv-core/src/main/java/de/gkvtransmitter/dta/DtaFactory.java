@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -134,7 +135,7 @@ public final class DtaFactory {
         slga.add(String.format("UNH+%s+SLGA:21:0:0'", slgaRef));
         slga.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
         slga.add(String.format("REC+00000000:0+%s+1'", serviceDate.minusDays(1).format(BASIC_DATE)));
-        slga.add(String.format("UST+%s'", leistung.umsatzsteuersatz()));
+        umsatzsteuersegment(a.getProvider()).ifPresent(slga::add);
         slga.add(String.format("GES+00+%s+%s'", sum, sum));
         slga.add(String.format("GES+99+%s+%s'", sum, sum));
         slga.add(buildProviderNameSegment(a.getProvider()));
@@ -161,6 +162,42 @@ public final class DtaFactory {
         lines.add(String.format("UNZ+%06d+%s'", nachrichten, interchangeRef));
 
         return String.join("\n", lines) + "\n";
+    }
+
+    /**
+     * Das {@code UST}-Segment - oder keines.
+     *
+     * <p><b>Hier stand bis zum 17.09.2026 {@code UST+19'}</b>, also ein
+     * Umsatzsteuersatz. Das Segment traegt keinen Satz. Nach Anlage 1,
+     * Abschnitt 5.5.2 (gleichlautend in Version 21 und 22) besteht es aus:</p>
+     *
+     * <ol>
+     *   <li>dem Segmentkennzeichen {@code UST},</li>
+     *   <li>der <b>Steuernummer</b> nach § 14 Abs. 1a UStG oder der
+     *       Umsatzsteuer-Identifikationsnummer, hoechstens 20 Stellen,
+     *       innerhalb des Segments Pflicht,</li>
+     *   <li>der Kennung der UST-Befreiung: <b>{@code J}, wenn befreit gem. § 4
+     *       UStG</b>, sonst leer.</li>
+     * </ol>
+     *
+     * <p>Die 19 landete damit im Feld der Steuernummer. Sie stammt aus
+     * {@code Information/Valide.DTA}, das an derselben Stelle {@code UST+19}
+     * fuehrt - dieselbe Referenzdatei, die dem Projekt schon den
+     * Abrechnungscode 61 und den Leistungsbereich H eingetragen hat. <b>Sie ist
+     * in sich stimmig und in der Sache dennoch nicht massgeblich.</b></p>
+     *
+     * <p>Ohne Steuernummer bleibt das Segment weg. Es ist konditional
+     * (Segmentart {@code K}, Wiederholungsfaktor 0-1), das Weglassen also
+     * erlaubt - eine erfundene Nummer waere es nicht. Dass sie fehlt, meldet
+     * {@code DtaDispatchService}.</p>
+     */
+    static Optional<String> umsatzsteuersegment(ServiceProvider provider) {
+        if (provider == null || !provider.hatSteuerangaben()) {
+            return Optional.empty();
+        }
+        return Optional.of(String.format("UST+%s+%s'",
+                provider.getSteuernummer().trim(),
+                provider.istUmsatzsteuerbefreit() ? "J" : ""));
     }
 
     private static String buildProviderNameSegment(ServiceProvider provider) {

@@ -39,6 +39,8 @@ public abstract class EntityFieldPopulator<T> {
         switch (target) {
             case TextInputControl textInput -> textInput.setText(value);
             case Spinner<?> spinner -> populateSpinner(spinner, value);
+            case javafx.scene.control.CheckBox kaestchen ->
+                    kaestchen.setSelected(Boolean.parseBoolean(value));
             default -> {
             }
         }
@@ -208,6 +210,9 @@ public abstract class EntityFieldPopulator<T> {
             case DatePicker dp -> {
                 var value = dp.getValue();
                 return value != null ? value.toString() : "";
+            }
+            case javafx.scene.control.CheckBox kaestchen -> {
+                return String.valueOf(kaestchen.isSelected());
             }
             default -> {
             }

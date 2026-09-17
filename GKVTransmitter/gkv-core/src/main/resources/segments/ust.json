@@ -2,24 +2,40 @@
   "schemaVersion": "1.0",
   "version": "V21",
   "segmentType": "UST",
-  "description": "Umsatzsteuer-Informationen (optional, nur für SLGA)",
-  "note": "Konditional - wird nur gebraucht wenn Umsatzsteuer relevant für die Abrechnung",
+  "description": "Umsatzsteuer-Informationen (konditional, nur für SLGA, höchstens einmal je Nachricht)",
+  "note": "Anlage 1, Abschnitt 5.5.2 (gleichlautend in Version 21 und 22): Das Segment trägt KEINEN Umsatzsteuersatz, sondern die Steuernummer und ein Kennzeichen der Befreiung. Bis zum 17.09.2026 stand hier ein Feld 'Umsatzsteuersatz' und die Anwendung schrieb UST+19 - die 19 landete damit im Feld der Steuernummer. Beide Felder kommen aus dem Dienstleisterprofil und nicht aus der Blaupause, deshalb internal.",
   "fields": [
     {
       "position": 1,
-      "name": "Umsatzsteuersatz",
-      "type": "INTEGER",
-      "maxLength": 3,
-      "mandatory": false,
-      "example": "19",
-      "description": "Umsatzsteuersatz in Prozent als ganze Zahl, etwa 19 für 19 %. Leer lassen, wenn keine Umsatzsteuer anfällt.",
+      "name": "Steuernummer",
+      "type": "STRING",
+      "maxLength": 20,
+      "mandatory": true,
+      "example": "12/345/67890",
+      "description": "Steuernummer gemäß § 14 Abs. 1a UStG oder Umsatzsteuer-Identifikationsnummer. Innerhalb des Segments Pflicht; fehlt sie, bleibt das ganze Segment weg.",
       "validation": {
-        "pattern": "^[0-9]{1,3}$",
-        "description": "Prozentsatz als Zahl (z.B. 19 für 19%)"
+        "pattern": "^.{1,20}$",
+        "description": "Höchstens 20 Stellen, alphanumerisch"
+      },
+      "fieldArt": "M",
+      "inputType": "STRING",
+      "internal": true
+    },
+    {
+      "position": 2,
+      "name": "Kennung UST-Befreiung",
+      "type": "STRING",
+      "maxLength": 1,
+      "mandatory": false,
+      "example": "J",
+      "description": "\"J\", wenn die Leistung gemäß § 4 UStG von der Umsatzsteuer befreit ist, sonst leer.",
+      "validation": {
+        "pattern": "^J?$",
+        "description": "Leer oder J"
       },
       "fieldArt": "K",
-      "inputType": "PERCENT",
-      "internal": false
+      "inputType": "STRING",
+      "internal": true
     }
   ]
 }

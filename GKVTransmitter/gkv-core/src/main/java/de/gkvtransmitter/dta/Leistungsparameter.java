@@ -42,8 +42,7 @@ public record Leistungsparameter(
         String abrechnungscode,
         String tarifkennzeichen,
         String positionsnummer,
-        BigDecimal zuzahlung,
-        String umsatzsteuersatz) {
+        BigDecimal zuzahlung) {
 
     /** Feldname des Einzelbetrags in enf.json. */
     private static final String FELD_EINZELBETRAG = "Durchschnittlicher Einzelbetrag";
@@ -51,8 +50,6 @@ public record Leistungsparameter(
     private static final String FELD_TARIFKENNZEICHEN = "Tarifkennzeichen";
     private static final String FELD_POSITIONSNUMMER = "Abrechnungspositionsnummer";
     private static final String FELD_ZUZAHLUNG = "Zuzahlung pro Position";
-    /** Feldname in ust.json - anders als die uebrigen kein enf-Feld. */
-    private static final String FELD_UMSATZSTEUERSATZ = "Umsatzsteuersatz";
 
     /**
      * Alle Feldnamen, die diese Klasse aus einer Blaupause liest.
@@ -67,8 +64,7 @@ public record Leistungsparameter(
             FELD_ABRECHNUNGSCODE,
             FELD_TARIFKENNZEICHEN,
             FELD_POSITIONSNUMMER,
-            FELD_ZUZAHLUNG,
-            FELD_UMSATZSTEUERSATZ);
+            FELD_ZUZAHLUNG);
 
     /**
      * Vorbelegung, falls die Blaupause nichts angibt.
@@ -109,7 +105,7 @@ public record Leistungsparameter(
      * verdecken.</p>
      */
     public static final Leistungsparameter VORBELEGUNG = new Leistungsparameter(
-            BigDecimal.ZERO, "50", "00000", "306050601", BigDecimal.ZERO, "19");
+            BigDecimal.ZERO, "50", "00000", "306050601", BigDecimal.ZERO);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -136,8 +132,7 @@ public record Leistungsparameter(
                     text(felder, FELD_ABRECHNUNGSCODE, VORBELEGUNG.abrechnungscode()),
                     text(felder, FELD_TARIFKENNZEICHEN, VORBELEGUNG.tarifkennzeichen()),
                     text(felder, FELD_POSITIONSNUMMER, VORBELEGUNG.positionsnummer()),
-                    betrag(felder, FELD_ZUZAHLUNG, VORBELEGUNG.zuzahlung()),
-                    text(felder, FELD_UMSATZSTEUERSATZ, VORBELEGUNG.umsatzsteuersatz()));
+                    betrag(felder, FELD_ZUZAHLUNG, VORBELEGUNG.zuzahlung()));
         } catch (RuntimeException | com.fasterxml.jackson.core.JsonProcessingException e) {
             return VORBELEGUNG;
         }
@@ -153,8 +148,7 @@ public record Leistungsparameter(
                 leseText(felder.get(FELD_ABRECHNUNGSCODE)).orElse(VORBELEGUNG.abrechnungscode()),
                 leseText(felder.get(FELD_TARIFKENNZEICHEN)).orElse(VORBELEGUNG.tarifkennzeichen()),
                 leseText(felder.get(FELD_POSITIONSNUMMER)).orElse(VORBELEGUNG.positionsnummer()),
-                leseBetrag(felder.get(FELD_ZUZAHLUNG)).orElse(VORBELEGUNG.zuzahlung()),
-                leseText(felder.get(FELD_UMSATZSTEUERSATZ)).orElse(VORBELEGUNG.umsatzsteuersatz()));
+                leseBetrag(felder.get(FELD_ZUZAHLUNG)).orElse(VORBELEGUNG.zuzahlung()));
     }
 
     private static String text(JsonNode felder, String name, String vorbelegung) {
@@ -223,7 +217,7 @@ public record Leistungsparameter(
             return this;
         }
         return new Leistungsparameter(einzelbetrag, code.trim(), tarifkennzeichen,
-                positionsnummer, zuzahlung, umsatzsteuersatz);
+                positionsnummer, zuzahlung);
     }
 
     /** Das Kompositfeld aus Abrechnungscode und Tarifkennzeichen. */

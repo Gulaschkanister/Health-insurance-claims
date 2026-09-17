@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +33,11 @@ class DtaFactoryTest {
         assertTrue(dta.contains("+00001+F+SL494000S"), dta);
         assertTrue(dta.contains("UNH+00001+SLGA:21:0:0'"));
         assertTrue(dta.contains("UNH+00002+SLLA:21:0:0'"));
-        assertTrue(dta.contains("UST+19'"));
+        // Kein UST-Segment: Dieser Dienstleister fuehrt keine Steuernummer,
+        // und die ist innerhalb des Segments Pflicht. Hier stand "UST+19'" -
+        // ein Umsatzsteuersatz in einem Segment, das keinen traegt. Siehe
+        // DtaFactory.umsatzsteuersegment.
+        assertFalse(dta.contains("UST+"), "Ohne Steuernummer bleibt das Segment weg:\n" + dta);
         assertTrue(dta.contains("GES+00+45000,00+45000,00'"));
         assertTrue(dta.contains("GES+99+45000,00+45000,00'"));
         assertTrue(dta.contains("INV+000000000001"));
@@ -92,14 +97,6 @@ class DtaFactoryTest {
         }
 
         @Test
-        @org.junit.jupiter.api.DisplayName("bestimmt den Umsatzsteuersatz")
-        void bestimmtDenUmsatzsteuersatz() {
-            String dta = dtaMitBlaupause("\"Umsatzsteuersatz\":\"7\"", 1);
-
-            assertTrue(dta.contains("UST+7'"), "Umsatzsteuersatz falsch:\n" + dta);
-        }
-
-        @Test
         @org.junit.jupiter.api.DisplayName("bestimmt die Abrechnungspositionsnummer")
         void bestimmtDiePositionsnummer() {
             String dta = dtaMitBlaupause("\"Abrechnungspositionsnummer\":\"306050699\"", 1);
@@ -110,7 +107,7 @@ class DtaFactoryTest {
         @Test
         @org.junit.jupiter.api.DisplayName("laesst die Vorbelegung greifen, wo sie nichts angibt")
         void laesstDieVorbelegungGreifen() {
-            String dta = dtaMitBlaupause("\"Umsatzsteuersatz\":\"7\"", 1);
+            String dta = dtaMitBlaupause("\"Tarifkennzeichen\":\"00000\"", 1);
 
             assertTrue(dta.contains("ENF+01+50:00000+306050601+"),
                     "Vorbelegung greift nicht mehr:\n" + dta);

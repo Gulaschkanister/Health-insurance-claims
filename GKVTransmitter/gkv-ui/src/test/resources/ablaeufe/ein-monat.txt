@@ -37,6 +37,17 @@ setze person-feld-plz 28203
 setze person-feld-country DE
 setze person-feld-ik 108310400
 setze person-feld-kassenIk 108310400
+# Das Dienstleisterprofil: Angaben, die sich fast nie aendern und deshalb
+# nicht bei jeder Abrechnung erneut zu tippen sind. Der Abrechnungscode 50
+# steht fuer Hebamme/Entbindungspfleger (Anlage 3, Abschnitt 8.1.5) und hat
+# Vorrang vor der Blaupause; Steuernummer und Befreiungskennzeichen bilden
+# das UST-Segment.
+setze person-feld-abrechnungscode 50
+setze person-feld-steuernummer 60/123/45678
+setze person-feld-umsatzsteuerbefreit ja
+setze person-feld-ansprechpartner Maria Hebamme
+setze person-feld-telefon 0421 123456
+setze person-feld-email praxis@example.de
 klick person-speichern
 erwarte Maria Hebamme
 

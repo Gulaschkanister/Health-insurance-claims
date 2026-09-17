@@ -19,6 +19,7 @@ import de.gkvtransmitter.util.modifiers.MaxLengthModifier;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -388,6 +389,9 @@ public class Feldbau {
             }
             case ComboBox<?> auswahl -> zeichenkette(auswahl.getValue());
             case DatePicker kalender -> zeichenkette(kalender.getValue());
+            // "true"/"false" und nicht "Ja"/"Nein": Was hier herauskommt,
+            // liest der Populator und nicht ein Mensch.
+            case CheckBox kaestchen -> String.valueOf(kaestchen.isSelected());
             default -> "";
         };
     }
@@ -440,6 +444,10 @@ public class Feldbau {
             // liesse sich aufklappen und enthielte nichts. Das Tarifkennzeichen
             // ist vertraglich vereinbart, es gibt dafuer keine Codeliste.
             case CODE, NUMBER_SUGGESTION -> textfeld(grenze);
+            // BOOLEAN stand seit je im Enum und wurde nie gebaut: bis zum
+            // 17.09.2026 fiel es auf den Zweig darunter und wurde zum
+            // Textfeld, in das man "vielleicht" schreiben konnte.
+            case BOOLEAN -> bausteine.createCheckBox("");
             case DATE, TIME -> datumsfeld(feldname);
             default -> bausteine.createTextField();
         };

@@ -154,6 +154,50 @@ class PersonenMaskeTest {
             });
         }
 
+        /**
+         * Die Angaben zur Umsatzsteuer haengen an der Person.
+         *
+         * <p>Das {@code UST}-Segment traegt die Steuernummer und ein
+         * Kennzeichen der Befreiung nach § 4 UStG - beides Eigenschaften des
+         * Leistungserbringers und nicht des Kurses. Ob § 4 Nr. 14 UStG greift,
+         * entscheidet nicht das Programm; dass das Feld dafuer da sein muss,
+         * schon.</p>
+         */
+        @Test
+        @DisplayName("Steuernummer und Befreiungskennzeichen werden gespeichert")
+        void steuerangabenGespeichert() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = formular(true);
+                fuelleAus(formular);
+                text(formular, "steuernummer").setText("12/345/67890");
+                ((javafx.scene.control.CheckBox) bedienelement(formular, "umsatzsteuerbefreit"))
+                        .setSelected(true);
+                speichern(formular).fire();
+
+                ServiceProvider angelegt = datenbank.getAllServiceProviders().get(0);
+                assertEquals("12/345/67890", angelegt.getSteuernummer());
+                assertTrue(angelegt.istUmsatzsteuerbefreit());
+            });
+        }
+
+        @Test
+        @DisplayName("Ansprechpartner, Telefon und E-Mail werden gespeichert")
+        void kontaktangabenGespeichert() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = formular(true);
+                fuelleAus(formular);
+                text(formular, "ansprechpartner").setText("Maria Hebamme");
+                text(formular, "telefon").setText("0421 123456");
+                text(formular, "email").setText("praxis@example.de");
+                speichern(formular).fire();
+
+                ServiceProvider angelegt = datenbank.getAllServiceProviders().get(0);
+                assertEquals("Maria Hebamme", angelegt.getAnsprechpartner());
+                assertEquals("0421 123456", angelegt.getTelefon());
+                assertEquals("praxis@example.de", angelegt.getEmail());
+            });
+        }
+
         @Test
         @DisplayName("Ein Teilnehmer wird als Teilnehmer gemeldet")
         void teilnehmerGemeldet() {

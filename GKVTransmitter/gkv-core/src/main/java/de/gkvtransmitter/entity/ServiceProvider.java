@@ -38,6 +38,41 @@ public class ServiceProvider extends Person {
     @Column(name = "abrechnungscode")
     private String abrechnungscode;
 
+    /**
+     * Steuernummer oder Umsatzsteuer-Identifikationsnummer.
+     *
+     * <p>Das erste Datenelement des {@code UST}-Segments, Pflicht <em>innerhalb
+     * des Segments</em>: "Steuernummer gemaess § 14 Abs. 1a UStG oder
+     * Umsatzsteuer-Identifikationsnummer" (Anlage 1, Abschnitt 5.5.2, hoechstens
+     * 20 Stellen). Das Segment selbst ist konditional und darf je Nachricht
+     * einmal vorkommen - ohne Steuernummer bleibt es also weg, statt eine
+     * erfundene zu tragen.</p>
+     */
+    @Column(name = "steuernummer", length = 20)
+    private String steuernummer;
+
+    /**
+     * Ob die Leistung von der Umsatzsteuer befreit ist.
+     *
+     * <p>Das dritte Datenelement des {@code UST}: <b>"J" wenn befreit gem. § 4
+     * UStG</b>. Fuer Hebammenhilfe kommt § 4 Nr. 14 UStG in Betracht - ob er
+     * greift, ist eine Frage an einen Menschen, aber sie haengt an der Person
+     * und nicht am Kurs. Deshalb steht das Kennzeichen hier und nicht in der
+     * Blaupause.</p>
+     */
+    @Column(name = "umsatzsteuerbefreit")
+    private boolean umsatzsteuerbefreit;
+
+    /** Wer Rueckfragen beantwortet - fuer Antraege und Anmeldungen. */
+    @Column(name = "ansprechpartner")
+    private String ansprechpartner;
+
+    @Column(name = "telefon")
+    private String telefon;
+
+    @Column(name = "email")
+    private String email;
+
     public ServiceProvider() {
         super();
     }
@@ -54,6 +89,56 @@ public class ServiceProvider extends Person {
 
     public void setAbrechnungscode(String abrechnungscode) {
         this.abrechnungscode = abrechnungscode;
+    }
+
+    public String getSteuernummer() {
+        return steuernummer;
+    }
+
+    public void setSteuernummer(String steuernummer) {
+        this.steuernummer = steuernummer;
+    }
+
+    public boolean istUmsatzsteuerbefreit() {
+        return umsatzsteuerbefreit;
+    }
+
+    public void setUmsatzsteuerbefreit(boolean umsatzsteuerbefreit) {
+        this.umsatzsteuerbefreit = umsatzsteuerbefreit;
+    }
+
+    public String getAnsprechpartner() {
+        return ansprechpartner;
+    }
+
+    public void setAnsprechpartner(String ansprechpartner) {
+        this.ansprechpartner = ansprechpartner;
+    }
+
+    public String getTelefon() {
+        return telefon;
+    }
+
+    public void setTelefon(String telefon) {
+        this.telefon = telefon;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * Ob sich ein {@code UST}-Segment bilden laesst.
+     *
+     * <p>Ohne Steuernummer nicht: Sie ist innerhalb des Segments Pflicht, und
+     * das Segment ist konditional. Weglassen ist erlaubt, erfinden nicht.</p>
+     */
+    public boolean hatSteuerangaben() {
+        return steuernummer != null && !steuernummer.isBlank();
     }
 
     /**

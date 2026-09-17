@@ -344,27 +344,17 @@ public class View {
             public List<String> auswahlFuer(String feldname) {
                 return switch (feldname) {
                     case "Abrechnungscode" -> abrechnungscodes;
-                    case "Umsatzsteuersatz" -> UMSATZSTEUERSAETZE;
                     default -> List.of();
                 };
             }
         };
     }
 
-    /**
-     * Die Umsatzsteuersaetze, die in Frage kommen.
-     *
-     * <p>19 ist der Regelsatz, 7 der ermaessigte, 0 der Fall ohne
-     * Umsatzsteuer - bei einer Hebamme der haeufigste, weil
-     * Heilbehandlungen nach &sect;&nbsp;4 Nr. 14 UStG steuerfrei sind. Kurse
-     * werden nicht durchweg gleich behandelt; welcher Satz gilt, sagt die
-     * Steuerberatung und nicht dieses Programm. Deshalb sind es Vorschlaege
-     * und keine Auswahl: das Feld bleibt beschreibbar.</p>
-     *
-     * <p>Steht hier und nicht in einer JSON-Datei, weil es keine Codeliste
-     * aus Anlage 3 ist, sondern allgemeines Steuerrecht.</p>
-     */
-    private static final List<String> UMSATZSTEUERSAETZE = List.of("19", "7", "0");
+    // Hier standen bis zum 17.09.2026 die Vorschlaege "19", "7", "0" fuer ein
+    // Blaupausenfeld "Umsatzsteuersatz". Das UST-Segment traegt keinen Satz,
+    // sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt
+    // 5.5.2), und beides haengt am Dienstleister. Die Vorschlaege hatten damit
+    // kein Feld mehr, in dem sie erscheinen konnten.
 
     /**
      * Die hinterlegten Abrechnungscodes.

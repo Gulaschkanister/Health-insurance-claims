@@ -233,6 +233,12 @@ public final class Bedienung {
             case DatePicker kalender -> kalender.setValue(java.time.LocalDate.parse(wert));
             case ComboBox<?> auswahl -> auswahlSetzen(auswahl, wert);
             case Spinner<?> zaehler -> zaehler.getEditor().setText(wert);
+            // "ja" und "nein" stehen in einem Ablauf lesbarer da als true und
+            // false; beides geht. Ohne diesen Zweig liess sich das erste
+            // Ja-Nein-Feld der Anwendung - die Umsatzsteuerbefreiung am
+            // Dienstleister - aus keinem Ablauf heraus setzen.
+            case javafx.scene.control.CheckBox kaestchen -> kaestchen.setSelected(
+                    "ja".equalsIgnoreCase(wert) || Boolean.parseBoolean(wert));
             default -> throw new AssertionError(
                     "Weiss nicht, wie man " + bedienelement.getClass().getSimpleName() + " setzt");
         }

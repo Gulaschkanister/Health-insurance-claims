@@ -22,6 +22,7 @@ import de.gkvtransmitter.util.TagConfigLoader;
 import de.gkvtransmitter.util.TagList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -154,6 +155,44 @@ class FeldbauTest {
         void langeGenug() {
             assertEquals(Optional.empty(),
                     feldbau.pruefe("firstname", beschreibung("firstname"), "x".repeat(100)));
+        }
+    }
+
+    /**
+     * Ein Ja-Nein-Feld wird ein Kaestchen.
+     *
+     * <p>{@code BOOLEAN} stand seit je in {@code InputOption} und wurde nie
+     * gebaut: Bis zum 17.09.2026 fiel es durch auf den Vorgabezweig und wurde
+     * ein Textfeld, in das sich "vielleicht" tippen liess. Aufgefallen ist es
+     * beim ersten Feld, das es braucht - dem Kennzeichen der
+     * Umsatzsteuerbefreiung am Dienstleister.</p>
+     */
+    @Nested
+    @DisplayName("Ja-Nein-Felder")
+    class JaNeinFelder {
+
+        private TagList jaNein() {
+            return new TagList(de.gkvtransmitter.enums.InputOption.BOOLEAN, List.of());
+        }
+
+        @Test
+        @DisplayName("werden ein Kaestchen und kein Textfeld")
+        void werdenEinKaestchen() {
+            JavaFxLaufzeit.aufFxFaden(() -> assertInstanceOf(CheckBox.class,
+                    Feldbau.bedienelement(feldbau.erzeugeFeld("umsatzsteuerbefreit", jaNein()))));
+        }
+
+        @Test
+        @DisplayName("werden als true und false ausgelesen")
+        void werdenAusgelesen() {
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Node feld = feldbau.erzeugeFeld("umsatzsteuerbefreit", jaNein());
+
+                assertEquals("false", feldbau.textVon(feld),
+                        "Ungehakt heisst nein und nicht der leere Text");
+                ((CheckBox) Feldbau.bedienelement(feld)).setSelected(true);
+                assertEquals("true", feldbau.textVon(feld));
+            });
         }
     }
 

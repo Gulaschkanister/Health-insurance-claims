@@ -135,7 +135,7 @@ public final class Testdaten {
                 + "\"" + BlaupausenMaske.FELD_EINZELBETRAG + "\":\"" + preis + "\","
                 + "\"Abrechnungscode\":\"61\",\"Tarifkennzeichen\":\"00000\","
                 + "\"Abrechnungspositionsnummer\":\"306050601\","
-                + "\"Umsatzsteuersatz\":\"\",\"Zuzahlung pro Position\":\"0,00\"}}";
+                + "\"Zuzahlung pro Position\":\"0,00\"}}";
         return new Blueprint(name, vorlage, inhalt, OffsetDateTime.now());
     }
 }

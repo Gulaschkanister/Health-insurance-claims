@@ -359,7 +359,7 @@ Jeder Punkt hier ist **S**, sofern nichts anderes steht.
 | **D2** | **Zertifikats-Ablaufwarnung.** Die Anwendung kennt das Datum aus B1 und erinnert rechtzeitig. | Einer der drei Punkte, die die Wartungslast klein halten. | B1 |
 | **D3** | **Versionsangabe sichtbar machen.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
 | **D4** | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
-| **D5** | **Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment. | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
+| **D5** ✅ | ~~**Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment.~~ **Erledigt mit F3 — und die Frage war falsch gestellt:** das `UST`-Segment trägt keinen Satz, sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt 5.5.2). | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
 | **D6** | **Checkstyle: die zehn übrigen Warnungen.** Nachgemessen am 17.09.2026: fünf in `gkv-core`, fünf in `gkv-ui`. **ParameterNumber** in `FieldDefinition`, `Person`, `Patient`, `ServiceProvider` (je 9) und `EditFormController` (12); **CyclomaticComplexity** in `BetragskonsistenzRegel` (11), `Feldbau` (13 und 12) sowie beiden `FieldPopulator` (je 11). Größe **M**. | Eine Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte — Builder oder ein `record` für die Anschrift. Eingriff in die Entitäten, also bewusst und nicht nebenbei. | — |
 
 ---
@@ -412,8 +412,8 @@ dieselbe Person, in einer Praxis mit zwei Hebammen nicht.
 |---|---|---|---|
 | **F1** ✅ | **Abrechnungscode je Dienstleister** (`50` Hebamme, `61` Rehabilitationssport) statt je Blaupause. | Der Code gehört zum Beruf, nicht zur Kursart. Nebenbei wird der **Leistungsbereich** im `UNB` richtig abgeleitet, ohne dass eine Blaupause ihn tragen muss. | S |
 | **F2** | **Standardwerte für den Abrechnungslauf:** übliche Blaupause, übliche Terminzahl, übliche Gruppengröße. Die Abrechnungsmaske füllt damit vor. | Bei vierzig Kursterminen im Jahr ist das der Unterschied zwischen „vier Felder je Lauf" und „bestätigen". | S |
-| **F3** | **Umsatzsteuerpflicht als Kennzeichen am Dienstleister.** | Hängt an der Person, nicht am Kurs (§ 4 Nr. 14 UStG). Speist `D5` und das `UST`-Segment. **Die Rechtsfrage bleibt extern, das Feld nicht.** | S |
-| **F4** | **Ansprechpartner, Telefon, E-Mail, Steuernummer.** | Wird bei jeder Anmeldung wieder gebraucht. Zusammen mit B1 ergibt das den „Aktenordner", aus dem sich die Anträge ausfüllen lassen. | S |
+| **F3** ✅ | **Umsatzsteuerpflicht als Kennzeichen am Dienstleister.** | Hängt an der Person, nicht am Kurs (§ 4 Nr. 14 UStG). Speist `D5` und das `UST`-Segment. **Die Rechtsfrage bleibt extern, das Feld nicht.** | S |
+| **F4** ✅ | **Ansprechpartner, Telefon, E-Mail, Steuernummer.** | Wird bei jeder Anmeldung wieder gebraucht. Zusammen mit B1 ergibt das den „Aktenordner", aus dem sich die Anträge ausfüllen lassen. | S |
 | **F5** | **Registrierungsblatt drucken** — alle Angaben aus B1 und F4 auf einer Seite, in der Form, die ARGE·IK, Trust Center und Annahmestelle abfragen. | Aus dem Aktenordner wird ein Formular, das nur noch zu unterschreiben ist. Der Punkt, an dem sich B1 zum ersten Mal auszahlt. | S–M |
 | **F6** | **Gültigkeitszeitraum am Dienstleister** (tätig seit/bis) und ein Kennzeichen „aktiv". | Ausgeschiedene Personen verschwinden aus den Auswahllisten, ohne dass ihre alten Abrechnungen ihren Bezug verlieren. | S |
 
@@ -460,6 +460,61 @@ Dienstleister auf einen leeren Code gesetzt.
 - Das Formular zum **Bearbeiten** beschriftet die Felder jetzt wie das zum
   Anlegen. Dort stand `kassenIk` und `birthDate`, wo dieselben Felder beim
   Anlegen „IK der Krankenkasse" und „Geburtsdatum" heißen.
+
+## F3 + F4. Steuerangaben und Erreichbarkeit — ✅ erledigt am 17.09.2026
+
+| | |
+|---|---|
+| **Größe** | S (beide zusammen) |
+| **Stand** | **umgesetzt**: Steuernummer, Befreiungskennzeichen, Ansprechpartner, Telefon, E-Mail am Dienstleister — und ein `UST`-Segment, das der Anlage entspricht |
+
+Beide Punkte gehören zusammen, weil sie sich die **Steuernummer** teilen. Beim
+Nachschlagen dafür kam ein Befund heraus, der größer ist als der TODO-Eintrag:
+
+> ### Das `UST`-Segment trägt keinen Umsatzsteuersatz
+>
+> Die Anwendung schrieb `UST+19'`. Nach **Anlage 1, Abschnitt 5.5.2** —
+> gleichlautend in Version 21 und Version 22 — besteht das Segment aus:
+>
+> | Feld | Stellen | Art | Inhalt |
+> |---|---|---|---|
+> | Umsatzsteuer-Kennzeichen | 3 | M | `UST` |
+> | Steuernummer / USt-IdNr. | ..20 | M | „Steuernummer gemäß § 14 Abs. 1a UStG oder Umsatzsteuer-Identifikationsnummer" |
+> | Kennung UST-Befreiung | 1 | K | „`J`" wenn befreit gem. § 4 UStG |
+>
+> **Die 19 landete damit im Feld der Steuernummer.** Sie stammt aus
+> `Information/Valide.DTA`, das an derselben Stelle `UST+19` führt — dieselbe
+> Referenzdatei, die dem Projekt schon den Abrechnungscode 61 und den
+> Leistungsbereich H eingetragen hat. **Sie ist in sich stimmig und in der
+> Sache dennoch nicht maßgeblich.**
+>
+> Richtig ist jetzt `UST+60/123/45678+J'`. Ohne Steuernummer bleibt das
+> Segment **ganz weg**: Sie ist innerhalb des Segments Pflicht, das Segment
+> selbst ist konditional (Art `K`, Wiederholungsfaktor 0–1). Weglassen ist
+> erlaubt, erfinden nicht — dieselbe Entscheidung wie beim fehlenden
+> Geburtsdatum im `NAD`. Dass sie fehlt, meldet `STEUERNUMMER_FEHLT`.
+
+**Damit ist D5 erledigt, aber anders als dort angenommen.** D5 wollte den
+Umsatzsteuer*satz* einstellbar machen. Einen Satz gibt es an dieser Stelle
+nicht; einstellbar sein müssen Steuernummer und Befreiungskennzeichen, und
+beide hängen an der Person. Das Feld `Umsatzsteuersatz` ist aus
+`Leistungsparameter`, `ust.json` und dem Blaupausenformular entfernt — es war
+nach dieser Korrektur ein Feld, das sich ausfüllen ließ und die Nachricht nie
+erreicht hätte. Genau der Fehler, den `BlaupausenfelderTest` seit dem
+05.09.2026 abfängt.
+
+**Zwei Nebenbefunde:**
+
+- **`InputOption.BOOLEAN` wurde nie gebaut.** Der Wert stand seit jeher im
+  Enum; `Feldbau` fiel damit auf den Vorgabezweig und machte ein Textfeld
+  daraus, in das sich „vielleicht" tippen ließ. Aufgefallen beim ersten Feld,
+  das es braucht. Auch `Bedienung` kannte keine Kästchen — das erste
+  Ja-Nein-Feld wäre aus keinem Ablauf heraus zu setzen gewesen.
+- **`ServiceProviderFieldPopulator`** ist von zwei `switch` auf zwei Tabellen
+  umgestellt. Mit vierzehn Feldern meldete Checkstyle Komplexität 15 und 17
+  gegen eine Obergrenze von 10. Eine Tabelle wächst in der Breite statt in der
+  Tiefe. **Das ist zugleich das ausgearbeitete Beispiel für D6**, wo dasselbe
+  für `PatientFieldPopulator` noch aussteht.
 
 ---
 

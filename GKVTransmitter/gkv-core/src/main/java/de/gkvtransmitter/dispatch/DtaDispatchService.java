@@ -228,7 +228,8 @@ public class DtaDispatchService {
         // haelt den gesamten Lauf auf.
         ValidationReport bericht = betriebsdatenHinweis()
                 .plus(unbekannteEmpfaenger(nachrichten))
-                .plus(abweichendeAbrechnungscodes(abrechnungen));
+                .plus(abweichendeAbrechnungscodes(abrechnungen))
+                .plus(fehlendeSteuernummer(abrechnungen));
         for (ErzeugteNachricht nachricht : nachrichten) {
             bericht = bericht.plus(validierung.pruefe(nachricht.inhalt()));
         }
@@ -320,6 +321,32 @@ public class DtaDispatchService {
         String ausBlaupause = de.gkvtransmitter.dta.Leistungsparameter
                 .ausBlueprint(abrechnung.getBlueprint()).abrechnungscode();
         return ausProfil.equals(ausBlaupause) ? null : ausProfil + " " + ausBlaupause;
+    }
+
+    /**
+     * Meldet jeden Leistungserbringer ohne Steuernummer.
+     *
+     * <p>Ohne sie bleibt das {@code UST}-Segment weg - erlaubt, weil es
+     * konditional ist, aber nicht selbstverstaendlich: § 14 Abs. 1a UStG
+     * verlangt die Steuernummer auf einer Rechnung. Eine erfundene waere die
+     * schlechtere Antwort, ein stilles Weglassen die zweitschlechteste.</p>
+     */
+    private ValidationReport fehlendeSteuernummer(List<Abrechnung> abrechnungen) {
+        ValidationReport.Builder bericht = ValidationReport.builder();
+        boolean etwasGemeldet = false;
+        for (String name : abrechnungen.stream().map(Abrechnung::getProvider)
+                .filter(Objects::nonNull)
+                .filter(erbringer -> !erbringer.hatSteuerangaben())
+                .map(erbringer -> (erbringer.getFirstname() + " " + erbringer.getLastname()).strip())
+                .distinct().toList()) {
+            bericht.warning("STEUERNUMMER_FEHLT", "UST",
+                    "Fuer " + name + " ist keine Steuernummer hinterlegt. Das UST-Segment bleibt"
+                            + " deshalb weg. Es ist konditional, die Datei ist also gueltig - aber"
+                            + " § 14 Abs. 1a UStG verlangt die Steuernummer auf der Rechnung. Sie"
+                            + " gehoert ins Dienstleisterprofil.");
+            etwasGemeldet = true;
+        }
+        return etwasGemeldet ? bericht.build() : ValidationReport.leer();
     }
 
     /**
