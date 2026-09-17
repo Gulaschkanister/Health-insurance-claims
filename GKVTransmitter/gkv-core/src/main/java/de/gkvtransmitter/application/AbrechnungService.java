@@ -63,7 +63,10 @@ public final class AbrechnungService {
                 // Echtbetrieb, weil eine Zeile fehlt.
                 de.gkvtransmitter.dta.Uebermittlungsart.aus(
                         de.gkvtransmitter.einstellung.Einstellungen.aus(datenbank)
-                                .get(de.gkvtransmitter.einstellung.Einstellung.UEBERMITTLUNGSART))));
+                                .get(de.gkvtransmitter.einstellung.Einstellung.UEBERMITTLUNGSART)),
+                // Bei jedem Lauf frisch gelesen: wer die Betriebsdaten aendert
+                // und danach abrechnet, soll die geaenderten benutzen.
+                datenbank::ladeBetriebsdaten));
     }
 
     public AbrechnungService(DtaDispatchService dispatchService) {

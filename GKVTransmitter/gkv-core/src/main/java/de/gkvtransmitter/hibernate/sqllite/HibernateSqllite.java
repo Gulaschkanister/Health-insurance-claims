@@ -10,6 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.hibernate.LockMode;
 import org.hibernate.SessionFactory;
 
+import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.DtaCounter;
 import de.gkvtransmitter.entity.Einstellungswert;
@@ -202,6 +203,25 @@ public final class HibernateSqllite implements DataRepository, AutoCloseable {
         } finally {
             referenzSperre.unlock();
         }
+    }
+
+    @Override
+    public Betriebsdaten ladeBetriebsdaten() {
+        return runner.read("Betriebsdaten laden", session -> session.get(Betriebsdaten.class, 1L));
+    }
+
+    /**
+     * Speichert die Betriebsdaten.
+     *
+     * <p>Die Kennung steht fest auf 1: Es gibt genau einen Betrieb je Ablage.
+     * Ohne das Setzen legte ein zweites Speichern eine zweite Zeile an, und
+     * welche davon gilt, waere dann Zufall.</p>
+     */
+    @Override
+    public void speichereBetriebsdaten(Betriebsdaten betriebsdaten) {
+        Objects.requireNonNull(betriebsdaten, "betriebsdaten must not be null");
+        betriebsdaten.setId(1L);
+        runner.writeVoid("Betriebsdaten speichern", session -> session.merge(betriebsdaten));
     }
 
     /**

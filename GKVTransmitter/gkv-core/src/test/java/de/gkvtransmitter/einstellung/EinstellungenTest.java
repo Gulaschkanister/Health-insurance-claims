@@ -245,6 +245,16 @@ class EinstellungenTest {
         }
 
         @Override
+        public de.gkvtransmitter.entity.Betriebsdaten ladeBetriebsdaten() {
+            return null;
+        }
+
+        @Override
+        public void speichereBetriebsdaten(de.gkvtransmitter.entity.Betriebsdaten betriebsdaten) {
+            // Diese Attrappe prueft die Einstellungen, nicht die Betriebsdaten.
+        }
+
+        @Override
         public Map<String, String> ladeEinstellungen() {
             return new LinkedHashMap<>();
         }

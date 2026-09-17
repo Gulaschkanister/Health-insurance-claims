@@ -9,6 +9,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
 
+import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.DtaCounter;
 import de.gkvtransmitter.entity.Einstellungswert;
@@ -64,6 +65,7 @@ public final class SessionFactoryProvider {
                     .addAnnotatedClass(Blueprint.class)
                     .addAnnotatedClass(DtaCounter.class)
                     .addAnnotatedClass(Einstellungswert.class)
+                    .addAnnotatedClass(Betriebsdaten.class)
                     .getMetadataBuilder()
                     .build();
             return metadata.getSessionFactoryBuilder().build();

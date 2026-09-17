@@ -76,12 +76,30 @@ public final class DtaFactory {
      */
     public static String buildDtaFor(Abrechnung a, long interchangeRefValue, String senderIk, String receiverIk,
             Leistungsparameter leistung, Uebermittlungsart art) {
+        return buildDtaFor(a, interchangeRefValue, senderIk, receiverIk, leistung, art,
+                Absender.ausLeistungserbringer(senderIk));
+    }
+
+    /**
+     * Erzeugt die Nachricht mit einem eigenen Absender.
+     *
+     * <p>Der Unterschied zwischen {@code senderIk} und {@code absender} ist der
+     * zwischen <b>wer geleistet hat</b> und <b>wer schickt</b>. Das erste steht
+     * im {@code FKT}, das zweite im {@code UNB} und im logischen Dateinamen.
+     * Sie fallen nur zusammen, solange der Leistungserbringer selbst
+     * abrechnet - siehe {@link Absender}.</p>
+     *
+     * @param senderIk IK des Leistungserbringers, fuer das {@code FKT}
+     * @param absender die absendende Stelle, fuer {@code UNB} und Dateinamen
+     */
+    public static String buildDtaFor(Abrechnung a, long interchangeRefValue, String senderIk, String receiverIk,
+            Leistungsparameter leistung, Uebermittlungsart art, Absender absender) {
         LocalDateTime now = a.getCreatedAt();
         LocalDate serviceDate = now.toLocalDate();
         String interchangeRef = String.format("%05d", interchangeRefValue);
         // Elf Stellen nach Anhang 1 zur Anlage 1, Abschnitt 4.2 - keine
         // freie Bildung, siehe LogischerDateiname.
-        String applicationRef = LogischerDateiname.bilde(senderIk, true, serviceDate);
+        String applicationRef = LogischerDateiname.bilde(absender.ik(), absender.selbstabrechner(), serviceDate);
         // Der Leistungsbereich folgt dem Abrechnungscode der Leistungszeile,
         // er stand bis zum 07.09.2026 fest auf H (Rehabilitationssport).
         String leistungsbereich = Leistungsbereich.zuAbrechnungscode(leistung.abrechnungscode());
@@ -103,7 +121,7 @@ public final class DtaFactory {
         // Die letzte Stelle sagt, wofuer sich die Datei ausgibt: 0 Test,
         // 1 Erprobung, 2 Echt. Sie stand bis zum 07.09.2026 fest auf 1.
         lines.add(String.format("UNB+UNOC:3+%s+%s+%s+%s+%s+%s+%s'",
-                senderIk,
+                absender.ik(),
                 receiverIk,
                 now.format(HEADER_TIME),
                 interchangeRef,

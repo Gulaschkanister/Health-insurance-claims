@@ -179,6 +179,25 @@ class SpeicherRepository implements DataRepository {
         einstellungSchreibenScheitert = true;
     }
 
+    /** Die Betriebsdaten, wie sie in der Tabelle {@code betriebsdaten} laegen. */
+    private de.gkvtransmitter.entity.Betriebsdaten betriebsdaten;
+
+    @Override
+    public de.gkvtransmitter.entity.Betriebsdaten ladeBetriebsdaten() {
+        return betriebsdaten;
+    }
+
+    @Override
+    public void speichereBetriebsdaten(de.gkvtransmitter.entity.Betriebsdaten neue) {
+        this.betriebsdaten = neue;
+    }
+
+    /** Legt Betriebsdaten vor, wie sie ein eingerichteter Betrieb haette. */
+    SpeicherRepository mitBetriebsdaten(de.gkvtransmitter.entity.Betriebsdaten neue) {
+        this.betriebsdaten = neue;
+        return this;
+    }
+
     @Override
     public java.util.Map<String, String> ladeEinstellungen() {
         return java.util.Map.copyOf(einstellungen);

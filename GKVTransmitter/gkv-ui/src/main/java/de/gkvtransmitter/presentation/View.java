@@ -202,6 +202,13 @@ public class View {
         hauptfenster.ergaenzeBereich(messages.get("menu.blueprints"),
                 () -> hauptfenster.zeige(blaupausenMaske().liste()));
 
+        // Unter Stammdaten und nicht unter "Dev": Die Betriebsdaten sind
+        // Stammdaten mit Pruefregeln, keine Wahlmoeglichkeit. Zwei davon gehen
+        // in jede Datei - siehe BetriebsdatenMaske.
+        hauptfenster.ergaenzeBereich(messages.get("nav.company"),
+                () -> hauptfenster.zeige(new BetriebsdatenMaske(componentFactory, messages,
+                        meldungen, controller.getDatabase()).maske()));
+
         // Die Vorlagen stehen weiter einzeln in der Leiste: sie sind der Weg zu
         // einer neuen Blaupause. Zuvor waren sie der einzige Weg ueberhaupt -
         // was einmal gespeichert war, tauchte nur noch als Name im Auswahlfeld
@@ -241,6 +248,7 @@ public class View {
         hauptfenster.erklaereBereich(messages.get("menu.self"), messages.get("intro.self"));
         hauptfenster.erklaereBereich(messages.get("menu.groups"), messages.get("intro.groups"));
         hauptfenster.erklaereBereich(messages.get("menu.blueprints"), messages.get("intro.blueprints"));
+        hauptfenster.erklaereBereich(messages.get("nav.company"), messages.get("intro.company"));
         hauptfenster.erklaereBereich(messages.get("menu.settings"), messages.get("intro.settings"));
         hauptfenster.erklaereBereich(messages.get("nav.testdata"), messages.get("intro.testdata"));
     }

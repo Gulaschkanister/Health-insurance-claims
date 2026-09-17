@@ -1,6 +1,7 @@
 package de.gkvtransmitter.hibernate.sqllite;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -277,6 +278,56 @@ class HibernateSqlliteTest {
             assertEquals(1, frisch.getAllPatients().size());
         }
         assertTrue(Files.exists(nochNichtVorhanden), "erwartete Datenbankdatei unter " + nochNichtVorhanden);
+    }
+
+    // --- Betriebsdaten ----------------------------------------------------
+
+    @Test
+    @DisplayName("Ohne Erfassung gibt es keine Betriebsdaten")
+    void ohneErfassungKeineBetriebsdaten() {
+        assertNull(repository.ladeBetriebsdaten(),
+                "Eine frische Ablage kennt den Betrieb noch nicht");
+    }
+
+    @Test
+    @DisplayName("Betriebsdaten lassen sich speichern und wieder laden")
+    void betriebsdatenUeberleben() {
+        de.gkvtransmitter.entity.Betriebsdaten betrieb = new de.gkvtransmitter.entity.Betriebsdaten();
+        betrieb.setPraxisname("Hebammenpraxis Muster");
+        betrieb.setIk("108310400");
+        betrieb.setSelbstabrechner(true);
+        betrieb.setAnsprechpartner("Maria Muster");
+
+        repository.speichereBetriebsdaten(betrieb);
+
+        de.gkvtransmitter.entity.Betriebsdaten geladen = repository.ladeBetriebsdaten();
+        assertNotNull(geladen);
+        assertEquals("Hebammenpraxis Muster", geladen.getPraxisname());
+        assertEquals("108310400", geladen.getIk());
+        assertTrue(geladen.istSelbstabrechner());
+    }
+
+    /**
+     * Es gibt genau einen Betrieb je Ablage.
+     *
+     * <p>Ohne die feste Kennung legte jedes Speichern eine weitere Zeile an,
+     * und welche davon den Absender bestimmt, waere Zufall.</p>
+     */
+    @Test
+    @DisplayName("Ein zweites Speichern aendert die Betriebsdaten, statt neue anzulegen")
+    void betriebsdatenBleibenEinzeln() {
+        de.gkvtransmitter.entity.Betriebsdaten erste = new de.gkvtransmitter.entity.Betriebsdaten();
+        erste.setIk("108310400");
+        repository.speichereBetriebsdaten(erste);
+
+        de.gkvtransmitter.entity.Betriebsdaten zweite = new de.gkvtransmitter.entity.Betriebsdaten();
+        zweite.setIk("104940005");
+        zweite.setSelbstabrechner(false);
+        repository.speichereBetriebsdaten(zweite);
+
+        de.gkvtransmitter.entity.Betriebsdaten geladen = repository.ladeBetriebsdaten();
+        assertEquals("104940005", geladen.getIk());
+        assertFalse(geladen.istSelbstabrechner());
     }
 
     // --- Datenaustauschreferenz ------------------------------------------

@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import de.gkvtransmitter.dta.Absender;
 import de.gkvtransmitter.dta.DtaFactory;
 import de.gkvtransmitter.dta.Uebermittlungsart;
+import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.model.Abrechnung;
 import de.gkvtransmitter.validator.DtaValidationService;
@@ -37,6 +39,8 @@ public class DtaDispatchService {
     private final Datenaustauschreferenzen referenzen;
     /** Wofuer sich die erzeugten Dateien ausgeben, siehe {@link Uebermittlungsart}. */
     private final Uebermittlungsart art;
+    /** Woher die absendende Stelle kommt, siehe {@link Betriebsangaben}. */
+    private final Betriebsangaben betriebsangaben;
     private final BillingOfficeResponseParser antwortAuswertung = new BillingOfficeResponseParser();
 
     /**
@@ -51,6 +55,19 @@ public class DtaDispatchService {
     public interface Datenaustauschreferenzen {
         /** Die naechste Referenz; jede darf nur einmal vergeben werden. */
         long naechste();
+    }
+
+    /**
+     * Woher die Angaben zur absendenden Stelle kommen.
+     *
+     * <p>Als Abfrage und nicht als fester Wert im Konstruktor: Wer die
+     * Betriebsdaten in der Maske aendert und danach abrechnet, soll die
+     * geaenderten benutzen und nicht die vom Programmstart.</p>
+     */
+    @FunctionalInterface
+    public interface Betriebsangaben {
+        /** Die erfassten Betriebsdaten, oder {@code null}, wenn es keine gibt. */
+        Betriebsdaten aktuelle();
     }
 
     public DtaDispatchService() {
@@ -77,11 +94,22 @@ public class DtaDispatchService {
      */
     public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
             DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art) {
+        this(endpointRegistry, transport, validierung, referenzen, art, () -> null);
+    }
+
+    /**
+     * @param betriebsangaben woher die absendende Stelle kommt; liefert
+     *        {@code null}, solange keine Betriebsdaten erfasst sind
+     */
+    public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
+            DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art,
+            Betriebsangaben betriebsangaben) {
         this.endpointRegistry = Objects.requireNonNull(endpointRegistry, "endpointRegistry must not be null");
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
         this.validierung = Objects.requireNonNull(validierung, "validierung must not be null");
         this.referenzen = Objects.requireNonNull(referenzen, "referenzen must not be null");
         this.art = Objects.requireNonNull(art, "art must not be null");
+        this.betriebsangaben = Objects.requireNonNull(betriebsangaben, "betriebsangaben must not be null");
     }
 
     /**
@@ -167,7 +195,7 @@ public class DtaDispatchService {
 
         // Erst pruefen, dann zustellen. Eine einzige beanstandete Nachricht
         // haelt den gesamten Lauf auf.
-        ValidationReport bericht = ValidationReport.leer();
+        ValidationReport bericht = betriebsdatenHinweis();
         for (ErzeugteNachricht nachricht : nachrichten) {
             bericht = bericht.plus(validierung.pruefe(nachricht.inhalt()));
         }
@@ -193,13 +221,53 @@ public class DtaDispatchService {
             // wieder bei 1 begann. Siehe LaufenderZaehler.
             long sequence = referenzen.naechste();
             String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk,
-                    de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(abrechnung.getBlueprint()), art);
+                    de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(abrechnung.getBlueprint()), art,
+                    absender(senderIk));
             String filename = String.format("patient_%d_%s.dta",
                     patient.getId(), LocalDateTime.now().format(FILE_TIME));
 
             erzeugt.add(new ErzeugteNachricht(abrechnung, content, filename));
         }
         return erzeugt;
+    }
+
+    /**
+     * Die absendende Stelle fuer eine Nachricht.
+     *
+     * <p>Aus den Betriebsdaten, solange sie ein IK fuehren - sonst aus dem
+     * Leistungserbringer, wie es bis zum 17.09.2026 immer war. Die
+     * Rueckfallebene ist fuer eine allein arbeitende Hebamme richtig; dass sie
+     * benutzt wurde, meldet {@link #betriebsdatenHinweis()} trotzdem.</p>
+     */
+    private Absender absender(String leistungserbringerIk) {
+        Betriebsdaten betrieb = betriebsangaben.aktuelle();
+        if (betrieb == null || !betrieb.sindVersandtauglich()) {
+            return Absender.ausLeistungserbringer(leistungserbringerIk);
+        }
+        return new Absender(betrieb.getIk().trim(), betrieb.istSelbstabrechner());
+    }
+
+    /**
+     * Ein Hinweis, solange die absendende Stelle nicht erfasst ist.
+     *
+     * <p>Bewusst kein Fehler: Eine Sperre haette jeden Lauf angehalten, bevor
+     * die Maske ueberhaupt einmal geoeffnet werden konnte - und fuer den
+     * haeufigsten Fall, eine Hebamme, die fuer sich selbst abrechnet, ist die
+     * Rueckfallebene richtig. Gesehen werden soll es aber, denn fuer jeden
+     * anderen Fall ist der Absender falsch.</p>
+     */
+    private ValidationReport betriebsdatenHinweis() {
+        Betriebsdaten betrieb = betriebsangaben.aktuelle();
+        if (betrieb != null && betrieb.sindVersandtauglich()) {
+            return ValidationReport.leer();
+        }
+        return ValidationReport.builder()
+                .warning("BETRIEBSDATEN_FEHLEN", "UNB",
+                        "Es sind keine Betriebsdaten erfasst. Als Absender steht deshalb das IK des"
+                                + " Leistungserbringers in der Datei. Das stimmt, solange die"
+                                + " Leistungserbringerin selbst abrechnet - sonst gehoert unter"
+                                + " \"Betriebsdaten\" das eigene Institutionskennzeichen hinterlegt.")
+                .build();
     }
 
     private List<DispatchBatch> stelleZu(List<ErzeugteNachricht> nachrichten, Path outDir) {

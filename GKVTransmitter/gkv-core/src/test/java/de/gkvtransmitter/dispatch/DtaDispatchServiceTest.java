@@ -59,6 +59,72 @@ class DtaDispatchServiceTest {
     }
 
     /**
+     * Der Absender im UNB kommt aus den Betriebsdaten, nicht aus dem
+     * Dienstleister.
+     *
+     * <p>Bis zum 17.09.2026 stand im UNB immer das IK des
+     * Leistungserbringers, und die neunte Stelle des logischen Dateinamens
+     * fest auf {@code S}. Fuer eine allein arbeitende Hebamme stimmte das;
+     * sobald eine Abrechnungsstelle absendet, nicht mehr.</p>
+     */
+    @Test
+    @DisplayName("Absender und Dateiname kommen aus den Betriebsdaten")
+    void absenderAusBetriebsdaten() throws Exception {
+        de.gkvtransmitter.entity.Betriebsdaten betrieb = new de.gkvtransmitter.entity.Betriebsdaten();
+        betrieb.setIk("101560000");
+        betrieb.setSelbstabrechner(false);
+
+        Map<Integer, BillingOfficeEndpoint> endpunkte = new LinkedHashMap<>();
+        endpunkte.put(108310400,
+                BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse", tempDir.resolve("ziel")));
+        DtaDispatchService dienst = new DtaDispatchService(
+                new BillingOfficeEndpointRegistry(endpunkte, tempDir.resolve("fallback")),
+                new FileBillingOfficeTransport(), DtaValidationService.standard(),
+                new DtaDispatchService.LaufenderZaehler(),
+                de.gkvtransmitter.dta.Uebermittlungsart.ERPROBUNG,
+                () -> betrieb);
+
+        dienst.generateAndRoute(zweiAbrechnungen(), tempDir);
+
+        String unb = ersteZeile(tempDir.resolve("ziel"));
+        assertEquals("101560000", unb.split("\\+")[2],
+                "Im UNB muss das IK des Betriebs stehen, nicht das des Leistungserbringers");
+        // Stellen 3 bis 8 des Betriebs-IK, dann 'A' fuer Abrechnungsstelle.
+        assertTrue(unb.contains("+SL156000A"), "Logischer Dateiname falsch gebildet: " + unb);
+    }
+
+    @Test
+    @DisplayName("Ohne Betriebsdaten bleibt es beim Leistungserbringer - mit Hinweis")
+    void ohneBetriebsdatenRueckfallUndHinweis() throws Exception {
+        Map<Integer, BillingOfficeEndpoint> endpunkte = new LinkedHashMap<>();
+        endpunkte.put(108310400,
+                BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse", tempDir.resolve("ziel")));
+        DtaDispatchService dienst = new DtaDispatchService(
+                new BillingOfficeEndpointRegistry(endpunkte, tempDir.resolve("fallback")),
+                new FileBillingOfficeTransport());
+
+        Versandergebnis ergebnis = dienst.generateAndRoute(zweiAbrechnungen(), tempDir);
+
+        assertEquals("104940005", ersteZeile(tempDir.resolve("ziel")).split("\\+")[2],
+                "Ohne Betriebsdaten gilt weiterhin das IK des Leistungserbringers");
+        assertTrue(ergebnis.bericht().getWarnings().stream()
+                        .anyMatch(befund -> "BETRIEBSDATEN_FEHLEN".equals(befund.code())),
+                "Die Rueckfallebene soll auffallen: " + ergebnis.bericht().alsText());
+        assertTrue(ergebnis.bericht().istVersandfaehig(),
+                "Ein Hinweis, kein Fehler - sonst waere es eine Sperre ohne Ausgang");
+    }
+
+    /** Die erste Zeile der zuerst gefundenen Datei im Ordner. */
+    private static String ersteZeile(Path ordner) throws Exception {
+        try (var dateien = Files.list(ordner)) {
+            Path datei = dateien.sorted().findFirst()
+                    .orElseThrow(() -> new AssertionError("Keine Datei in " + ordner));
+            return Files.readString(datei).lines().findFirst()
+                    .orElseThrow(() -> new AssertionError("Datei ist leer: " + datei));
+        }
+    }
+
+    /**
      * Keine Datenaustauschreferenz zweimal — auch nicht ueber Laeufe hinweg.
      *
      * <p>Bis zum 06.09.2026 zaehlte {@code erzeuge} mit einer lokalen

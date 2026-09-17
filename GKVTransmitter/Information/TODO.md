@@ -139,13 +139,30 @@ beurteilt wird, und jede Meldung ihre Fundstelle nennt.
 
 Der kritische Pfad des Umsetzungsplans. Beide Punkte hängen an nichts.
 
-## B1. Betriebsdaten — die eigenen Angaben an einem Ort
+## B1. Betriebsdaten — die eigenen Angaben an einem Ort — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.7 |
 | **Größe** | M |
 | **Hängt an** | nichts — **B3 hängt daran** |
+| **Stand** | **umgesetzt**: Entität `Betriebsdaten`, Maske unter „Stammdaten", IK gegen die Prüfziffer. `UNB` und logischer Dateiname nehmen IK und Rolle von dort — mit Rückfall auf den Dienstleister und sichtbarem Hinweis, siehe Abweichung unten |
+
+> **Eine Abweichung von „Fertig, wenn", bewusst:** Fehlende Betriebsdaten
+> **halten den Lauf nicht an**, sondern melden `BETRIEBSDATEN_FEHLEN` als
+> Hinweis, und es gilt weiter das IK des Leistungserbringers. Eine Sperre
+> hätte jeden Lauf angehalten, **bevor die Maske überhaupt einmal geöffnet
+> werden konnte** — dieselbe „Sperre ohne Ausgang", die schon bei der
+> Positionsnummer gegen einen Fehler sprach. Für den häufigsten Fall, eine
+> Hebamme, die für sich selbst abrechnet, ist die Rückfallebene richtig.
+> **Ob daraus später ein harter Stopp wird, ist deine Entscheidung** — seit A1
+> wird der Hinweis wenigstens gesehen.
+
+> **Keine Bankverbindung angelegt**, anders als unten beschrieben. Der
+> Umsetzungsplan sagt, die Festplattenverschlüsselung solle stehen, **bevor**
+> hier eine Kontoverbindung eingetragen wird — ein Feld anzulegen, das dazu
+> einlädt, wäre der falsche Weg herum. Ein Hinweistext in der Maske sagt, warum
+> es fehlt.
 
 Die Anwendung weiß heute nicht, wer sie betreibt: Der Absender stammt aus dem
 je Abrechnung gewählten Dienstleister. Eine eigene Entität mit Praxisname,

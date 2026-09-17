@@ -3,6 +3,7 @@ package de.gkvtransmitter.repository;
 import java.util.List;
 import java.util.Map;
 
+import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -45,6 +46,17 @@ public interface DataRepository {
     List<Blueprint> getAllBlueprints();
 
     long nextDtaInterchangeReference();
+
+    /**
+     * Die Angaben zur absendenden Stelle, oder {@code null}, solange keine
+     * erfasst sind.
+     *
+     * <p>Es gibt hoechstens eine Zeile - siehe {@link Betriebsdaten}.</p>
+     */
+    Betriebsdaten ladeBetriebsdaten();
+
+    /** Legt die Betriebsdaten an oder aendert die vorhandenen. */
+    void speichereBetriebsdaten(Betriebsdaten betriebsdaten);
 
     /**
      * Alle gespeicherten Einstellungen, Schluessel auf Wert.
