@@ -73,6 +73,14 @@ public class ServiceProvider extends Person {
     @Column(name = "email")
     private String email;
 
+    /** Seit wann diese Person Leistungen erbringt; {@code null}, wenn unbekannt. */
+    @Column(name = "taetig_seit")
+    private LocalDate taetigSeit;
+
+    /** Bis wann; {@code null}, solange sie weiter taetig ist. */
+    @Column(name = "taetig_bis")
+    private LocalDate taetigBis;
+
     public ServiceProvider() {
         super();
     }
@@ -129,6 +137,53 @@ public class ServiceProvider extends Person {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public LocalDate getTaetigSeit() {
+        return taetigSeit;
+    }
+
+    public void setTaetigSeit(LocalDate taetigSeit) {
+        this.taetigSeit = taetigSeit;
+    }
+
+    public LocalDate getTaetigBis() {
+        return taetigBis;
+    }
+
+    public void setTaetigBis(LocalDate taetigBis) {
+        this.taetigBis = taetigBis;
+    }
+
+    /**
+     * Ob diese Person an einem bestimmten Tag anzubieten ist.
+     *
+     * <p>Abgeleitet und nicht gespeichert. <b>Hier stand ein eigenes Feld
+     * {@code aktiv}</b>, wie es die Aufgabenliste vorsah - und es war die
+     * falsche Antwort: Ein Kaestchen im Formular beginnt ungehakt, das Feld
+     * stand auf {@code true}, und jeder neu angelegte Dienstleister waere
+     * damit sofort inaktiv gewesen. Der Ablauf {@code ein-monat.txt} hat es in
+     * der ersten Minute gefunden - eine Gruppe liess sich nicht mehr bilden,
+     * weil in der Auswahl niemand stand.</p>
+     *
+     * <p>Zwei Quellen fuer dieselbe Tatsache waren ohnehin eine zu viel.
+     * "Nicht mehr anbieten" heisst "taetig bis heute", und das ist ein Datum,
+     * das jeder hat. Ein unbekanntes Ende heisst "weiterhin taetig", ein
+     * unbekannter Beginn "schon immer" - beides richtig fuer die Bestaende,
+     * die diese Felder noch nicht fuehren.</p>
+     *
+     * <p><b>Das gilt fuer Auswahllisten, nicht fuer Abrechnungen.</b> Wer
+     * ausgeschieden ist, verschwindet aus den Listen; seine alten Abrechnungen
+     * und Gruppen behalten ihren Bezug auf ihn. Ein Protokolleintrag, dessen
+     * Leistungserbringer verschwindet, waere kein Protokoll mehr.</p>
+     */
+    public boolean istAktivAm(LocalDate tag) {
+        if (tag == null) {
+            return true;
+        }
+        boolean begonnen = taetigSeit == null || !tag.isBefore(taetigSeit);
+        boolean nochNichtBeendet = taetigBis == null || !tag.isAfter(taetigBis);
+        return begonnen && nochNichtBeendet;
     }
 
     /**

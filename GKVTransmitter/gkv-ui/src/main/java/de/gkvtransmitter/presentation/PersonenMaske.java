@@ -126,8 +126,9 @@ public class PersonenMaske {
                 this::neuerDienstleister,
                 new Listenbau<ServiceProvider>(bausteine, KENNUNG_DIENSTLEISTER)
                         .spalten(texte.get("label.name"), texte.get("field.plz"),
-                                texte.get("field.ik"), texte.get("field.kassenIk"))
-                        .zellen(PersonenMaske::spaltenwerte)
+                                texte.get("field.ik"), texte.get("field.kassenIk"),
+                                texte.get("label.status"))
+                        .zellen(this::dienstleisterzeile)
                         .kennnummer(person -> String.valueOf(person.getId()))
                         .durchsuchbar(texte.get("label.searchPerson"), PersonenMaske::suchtext)
                         .hinweisWennLeer(texte.get("msg.noServiceProviders"))
@@ -150,6 +151,21 @@ public class PersonenMaske {
                 String.valueOf(person.getPlz()),
                 String.valueOf(person.getIk()),
                 String.valueOf(person.getKassenIk()));
+    }
+
+    /**
+     * Die Zeile eines Dienstleisters - mit einer Spalte mehr.
+     *
+     * <p>Ausgeschiedene verschwinden aus den <em>Auswahllisten</em>, nicht aus
+     * dieser Uebersicht: Wer sie hier nicht mehr faende, koennte ein falsch
+     * gesetztes Enddatum nicht mehr zuruecknehmen. Deshalb steht hier, was in
+     * der Auswahl dazu fuehrt, dass jemand fehlt.</p>
+     */
+    private List<String> dienstleisterzeile(ServiceProvider person) {
+        List<String> zellen = new java.util.ArrayList<>(spaltenwerte(person));
+        zellen.add(texte.get(person.istAktivAm(LocalDate.now())
+                ? "label.active" : "label.inactive"));
+        return zellen;
     }
 
     private static String suchtext(Person person) {

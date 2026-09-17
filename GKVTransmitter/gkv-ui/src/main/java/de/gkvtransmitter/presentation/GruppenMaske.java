@@ -1,5 +1,6 @@
 package de.gkvtransmitter.presentation;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -152,7 +153,8 @@ public class GruppenMaske {
         boolean bearbeitet = vorhandene != null;
 
         List<Patient> patienten = sicher(datenbank.getAllPatients());
-        List<ServiceProvider> dienstleister = sicher(datenbank.getAllServiceProviders());
+        List<ServiceProvider> dienstleister =
+                anzubieten(sicher(datenbank.getAllServiceProviders()), gruppe);
 
         VBox wurzel = new VBox(14);
         wurzel.getStyleClass().add("maske");
@@ -194,6 +196,25 @@ public class GruppenMaske {
         wurzel.getChildren().addAll(ueberschrift, namenszeile, teilnehmerauswahl.ansicht(),
                 dienstleisterauswahl.ansicht(), new HBox(10, speichern, abbrechen));
         return wurzel;
+    }
+
+    /**
+     * Wer zur Auswahl steht: die heute Taetigen - und jeder, der bereits in
+     * dieser Gruppe ist.
+     *
+     * <p><b>Der zweite Teil ist der wichtigere.</b> Ohne ihn wuerde das
+     * Bearbeiten einer alten Gruppe den ausgeschiedenen Dienstleister still
+     * herauswerfen: Er stuende in keiner Liste, koennte also nicht angehakt
+     * sein, und beim Speichern waere er weg. Aus "verschwindet aus den
+     * Auswahllisten" waere "verschwindet aus den Daten" geworden - und eine
+     * Gruppe ohne Leistungserbringer laesst sich nicht abrechnen.</p>
+     */
+    private static List<ServiceProvider> anzubieten(List<ServiceProvider> alle, PersonGroup gruppe) {
+        LocalDate heute = LocalDate.now();
+        return alle.stream()
+                .filter(person -> person.istAktivAm(heute)
+                        || enthaelt(gruppe.getServiceProviders(), person.getId()))
+                .toList();
     }
 
     private void speichere(PersonGroup gruppe, boolean bearbeitet, TextField namensfeld,
@@ -354,7 +375,7 @@ public class GruppenMaske {
         }
     }
 
-    private boolean enthaelt(Set<? extends Person> personen, int id) {
+    private static boolean enthaelt(Set<? extends Person> personen, int id) {
         if (personen == null) {
             return false;
         }

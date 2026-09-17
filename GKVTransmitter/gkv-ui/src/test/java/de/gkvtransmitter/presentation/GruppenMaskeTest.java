@@ -537,6 +537,61 @@ class GruppenMaskeTest {
         return new GruppenMaske(new JavaFxUiFactory(), texte, meldungen, datenbank, rahmen);
     }
 
+    /**
+     * Ausgeschiedene Dienstleister.
+     *
+     * <p>Sie verschwinden aus den Auswahllisten - aber nur dort. Wer schon in
+     * einer Gruppe steht, bleibt dort waehlbar, sonst wuerde das Bearbeiten
+     * einer alten Gruppe ihn still herauswerfen, und eine Gruppe ohne
+     * Leistungserbringer laesst sich nicht abrechnen.</p>
+     */
+    @Nested
+    @DisplayName("Ausgeschiedene Dienstleister")
+    class Ausgeschiedene {
+
+        private ServiceProvider ausgeschieden(int id, String vorname) {
+            ServiceProvider person = dienstleister(id, vorname);
+            person.setTaetigBis(java.time.LocalDate.now().minusDays(1));
+            return person;
+        }
+
+        @Test
+        @DisplayName("stehen in einer neuen Gruppe nicht mehr zur Auswahl")
+        void nichtInNeuerGruppe() {
+            datenbank.mitDienstleister(dienstleister(1, "Maria"))
+                    .mitDienstleister(ausgeschieden(2, "Petra"));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = neuesFormular();
+
+                assertNotNull(formular.lookup("#" + GruppenMaske.ID_DIENSTLEISTER + "1"),
+                        "Die taetige Hebamme gehoert in die Auswahl");
+                assertNull(formular.lookup("#" + GruppenMaske.ID_DIENSTLEISTER + "2"),
+                        "Wer nicht mehr taetig ist, gehoert nicht in eine neue Gruppe");
+            });
+        }
+
+        @Test
+        @DisplayName("bleiben waehlbar, wo sie bereits eingetragen sind")
+        void bleibenInBestehenderGruppe() {
+            ServiceProvider petra = ausgeschieden(2, "Petra");
+            PersonGroup gruppe = new PersonGroup();
+            gruppe.setId(7);
+            gruppe.setName("Kurs Maerz");
+            gruppe.setServiceProviders(new LinkedHashSet<>(Set.of(petra)));
+            datenbank.mitDienstleister(petra).mitGruppe(gruppe);
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region formular = maske().formular(gruppe);
+
+                assertNotNull(formular.lookup("#" + GruppenMaske.ID_DIENSTLEISTER + "2"),
+                        "Sonst wirft das Bearbeiten sie still aus ihrer eigenen Gruppe");
+                assertTrue(kaestchen(formular, GruppenMaske.ID_DIENSTLEISTER + "2").isSelected(),
+                        "Und zwar angehakt - sie ist ja drin");
+            });
+        }
+    }
+
     private Region neuesFormular() {
         return maske().formular(null);
     }

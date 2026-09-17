@@ -67,7 +67,9 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
                     (person, text) -> person.setUmsatzsteuerbefreit(Boolean.parseBoolean(text))),
             Map.entry("ansprechpartner", ServiceProvider::setAnsprechpartner),
             Map.entry("telefon", ServiceProvider::setTelefon),
-            Map.entry("email", ServiceProvider::setEmail));
+            Map.entry("email", ServiceProvider::setEmail),
+            Map.entry("taetigSeit", (person, text) -> person.setTaetigSeit(datum(text))),
+            Map.entry("taetigBis", (person, text) -> person.setTaetigBis(datum(text))));
 
     /** Der Dienstleister fuehrt Felder, die eine Teilnehmerin nicht hat. */
     @Override
@@ -101,8 +103,26 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
         return serviceProvider.getId();
     }
 
+    /**
+     * Auch der Taetigkeitszeitraum sind Datumsfelder.
+     *
+     * <p>Ohne diese Ergaenzung liefe der Wert am Kalender vorbei: Die Basis
+     * behandelt nur Felder, die {@link #isDateField} nennt, als Datum, und
+     * ein {@code DatePicker} ist weder ein Textfeld noch ein Zaehler - der
+     * Wert kaeme schlicht nicht an.</p>
+     */
+    @Override
+    protected boolean isDateField(String fieldName) {
+        return super.isDateField(fieldName)
+                || "taetigSeit".equals(fieldName) || "taetigBis".equals(fieldName);
+    }
+
     @Override
     protected LocalDate getDateFieldValue(String fieldName, ServiceProvider serviceProvider) {
-        return isDateField(fieldName) ? serviceProvider.getBirthDate() : null;
+        return switch (fieldName) {
+            case "taetigSeit" -> serviceProvider.getTaetigSeit();
+            case "taetigBis" -> serviceProvider.getTaetigBis();
+            default -> isDateField(fieldName) ? serviceProvider.getBirthDate() : null;
+        };
     }
 }

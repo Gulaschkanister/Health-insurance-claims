@@ -415,7 +415,7 @@ dieselbe Person, in einer Praxis mit zwei Hebammen nicht.
 | **F3** ✅ | **Umsatzsteuerpflicht als Kennzeichen am Dienstleister.** | Hängt an der Person, nicht am Kurs (§ 4 Nr. 14 UStG). Speist `D5` und das `UST`-Segment. **Die Rechtsfrage bleibt extern, das Feld nicht.** | S |
 | **F4** ✅ | **Ansprechpartner, Telefon, E-Mail, Steuernummer.** | Wird bei jeder Anmeldung wieder gebraucht. Zusammen mit B1 ergibt das den „Aktenordner", aus dem sich die Anträge ausfüllen lassen. | S |
 | **F5** | **Registrierungsblatt drucken** — alle Angaben aus B1 und F4 auf einer Seite, in der Form, die ARGE·IK, Trust Center und Annahmestelle abfragen. | Aus dem Aktenordner wird ein Formular, das nur noch zu unterschreiben ist. Der Punkt, an dem sich B1 zum ersten Mal auszahlt. | S–M |
-| **F6** | **Gültigkeitszeitraum am Dienstleister** (tätig seit/bis) und ein Kennzeichen „aktiv". | Ausgeschiedene Personen verschwinden aus den Auswahllisten, ohne dass ihre alten Abrechnungen ihren Bezug verlieren. | S |
+| **F6** ✅ | **Gültigkeitszeitraum am Dienstleister** (tätig seit/bis) und ein Kennzeichen „aktiv". | Ausgeschiedene Personen verschwinden aus den Auswahllisten, ohne dass ihre alten Abrechnungen ihren Bezug verlieren. | S |
 
 > **Nicht hierher gehört das Tarifkennzeichen.** Es ist der plausibelste
 > Kandidat für dieses Profil — aber solange der Vertrag nicht gelesen ist,
@@ -515,6 +515,42 @@ erreicht hätte. Genau der Fehler, den `BlaupausenfelderTest` seit dem
   gegen eine Obergrenze von 10. Eine Tabelle wächst in der Breite statt in der
   Tiefe. **Das ist zugleich das ausgearbeitete Beispiel für D6**, wo dasselbe
   für `PatientFieldPopulator` noch aussteht.
+
+## F6. Tätigkeitszeitraum — ✅ erledigt am 17.09.2026
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Stand** | **umgesetzt**: `tätig seit` / `tätig bis` am Dienstleister, „aktiv" daraus abgeleitet |
+
+Ausgeschiedene Personen verschwinden aus den **Auswahllisten**. Nur dort: Ihre
+Gruppen, Abrechnungen und Protokolleinträge behalten den Bezug auf sie — ein
+Protokolleintrag, dessen Leistungserbringer verschwindet, wäre kein Protokoll
+mehr.
+
+> **Wer schon in einer Gruppe steht, bleibt dort wählbar.** Ohne diese
+> Ausnahme würde das Bearbeiten einer alten Gruppe den ausgeschiedenen
+> Dienstleister still herauswerfen: Er stünde in keiner Liste, könnte also
+> nicht angehakt sein, und beim Speichern wäre er weg — mit einer Gruppe, die
+> sich danach nicht mehr abrechnen lässt.
+
+### Das Kennzeichen „aktiv" ist kein Feld geworden
+
+Die Aufgabe nannte den Zeitraum **und** ein Kennzeichen. Als Feld gebaut, hielt
+es nicht eine Minute: Ein Kästchen im Formular beginnt ungehakt, das Feld stand
+auf `true` — **jeder neu angelegte Dienstleister wäre sofort inaktiv gewesen.**
+Der Ablauf `ein-monat.txt` blieb an Zeile 59 stehen, `klick
+gruppe-dienstleister-1`: In der Auswahl stand niemand mehr.
+
+Zwei Quellen für dieselbe Tatsache waren ohnehin eine zu viel. „Nicht mehr
+anbieten" heißt „tätig bis heute", und das ist ein Datum, das jeder hat. Der
+Status wird jetzt abgeleitet (`istAktivAm`) und in der Dienstleisterübersicht
+als eigene Spalte angezeigt — sichtbar bleiben sie dort, sonst ließe sich ein
+falsch gesetztes Enddatum nicht mehr zurücknehmen.
+
+**Ein leeres Feld heißt jeweils das Unschädliche:** kein Beginn „schon immer",
+kein Ende „weiterhin tätig". Sonst wäre mit dem Einbau des Zeitraums der ganze
+Bestand aus den Listen verschwunden.
 
 ---
 
