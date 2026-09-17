@@ -16,11 +16,24 @@ import de.gkvtransmitter.validator.ValidationReport;
  */
 public final class Pruefbefunde {
 
-    /** Ueberschrift der Meldung. */
-    public static final String TITEL = "Prüfung nicht bestanden";
+    /**
+     * Ueberschrift der Meldung.
+     *
+     * <p>Ein Bericht kann auf zwei Weisen zustande kommen: als Grund, warum
+     * nichts hinausging - oder als Anmerkung zu etwas, das hinausgegangen ist.
+     * Beides mit „Prüfung nicht bestanden" zu ueberschreiben waere im zweiten
+     * Fall schlicht falsch.</p>
+     */
+    public static String titel(ValidationReport bericht) {
+        return bericht.hatFehler() ? "Prüfung nicht bestanden" : "Hinweise zur Abrechnung";
+    }
 
     /** Was unter der Ueberschrift steht, bevor die Liste beginnt. */
-    public static final String EINLEITUNG = "Die Abrechnung wurde nicht versendet.";
+    public static String einleitung(ValidationReport bericht) {
+        return bericht.hatFehler()
+                ? "Die Abrechnung wurde nicht versendet."
+                : "Die Abrechnung wurde versendet.";
+    }
 
     /**
      * Eine Zeile der Liste.

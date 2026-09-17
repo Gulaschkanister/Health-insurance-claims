@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaValidierungsException;
+import de.gkvtransmitter.dispatch.Versandergebnis;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -196,9 +197,9 @@ public class AbrechnungsMaske {
             return;
         }
 
-        List<DispatchBatch> lieferungen;
+        Versandergebnis ergebnis;
         try {
-            lieferungen = abrechnungslauf.starte(gewaehlte, gruppeAuswahl.getValue(),
+            ergebnis = abrechnungslauf.starte(gewaehlte, gruppeAuswahl.getValue(),
                     blaupauseAuswahl.getValue(), liste.termine(), versandordner.get());
         } catch (DtaValidierungsException e) {
             // Beanstandungen vollstaendig anzeigen: die Anwenderin soll alle
@@ -210,7 +211,13 @@ public class AbrechnungsMaske {
             return;
         }
 
-        meldungen.erfolg(fasseZusammen(lieferungen));
+        // Auch ein bestandener Lauf kann etwas zu sagen haben. Der Bericht
+        // kommt vor der Erfolgsmeldung, damit diese als Letztes stehenbleibt -
+        // sie ist das Ergebnis, die Hinweise sind die Randbemerkung.
+        if (ergebnis.hatBefunde()) {
+            meldungen.pruefbericht(ergebnis.bericht());
+        }
+        meldungen.erfolg(fasseZusammen(ergebnis.lieferungen()));
     }
 
     /** Listet die erzeugten Dateien je Krankenkasse auf. */

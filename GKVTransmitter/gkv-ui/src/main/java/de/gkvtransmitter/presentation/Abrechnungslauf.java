@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import de.gkvtransmitter.dispatch.DispatchBatch;
+import de.gkvtransmitter.dispatch.Versandergebnis;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -24,9 +24,13 @@ public interface Abrechnungslauf {
     /**
      * Erzeugt und versendet die Abrechnungen.
      *
+     * @return Lieferungen <b>und</b> Pruefbericht. Der Bericht traegt die
+     *         Warnungen und Hinweise eines bestandenen Laufs - sie erreichten
+     *         den Bildschirm frueher nie, weil nur die Ausnahme einen Bericht
+     *         mitbrachte.
      * @throws de.gkvtransmitter.dispatch.DtaValidierungsException wenn die
      *         Pruefung nicht bestanden wurde; dann wurde nichts versendet
      */
-    List<DispatchBatch> starte(List<Patient> teilnehmer, PersonGroup gruppe, Blueprint blaupause,
+    Versandergebnis starte(List<Patient> teilnehmer, PersonGroup gruppe, Blueprint blaupause,
             Map<Integer, Integer> termine, Path zielordner);
 }

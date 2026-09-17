@@ -46,7 +46,7 @@ class AbrechnungServiceTest {
                 new DtaDispatchService(registry, new FileBillingOfficeTransport()));
 
         List<DispatchBatch> batches = service.createAndDispatch(
-                List.of(patient), group, blueprint, Map.of(1, 2), tempDirectory);
+                List.of(patient), group, blueprint, Map.of(1, 2), tempDirectory).lieferungen();
 
         assertEquals(1, batches.size());
         assertTrue(Files.list(tempDirectory.resolve("endpoint")).findAny().isPresent());

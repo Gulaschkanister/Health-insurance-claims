@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,36 @@ class DtaDispatchServiceTest {
 
     @TempDir
     Path tempDir;
+
+    /**
+     * Der Pruefbericht verlaesst den Dienst auch dann, wenn nichts zu
+     * beanstanden war.
+     *
+     * <p>Bis zum 17.09.2026 lieferte {@code generateAndRoute} nur die
+     * Lieferungen. Der Bericht entstand, wurde geprueft und danach fallen
+     * gelassen — Warnungen und Hinweise konnten die Oberflaeche also gar nicht
+     * erreichen, weil nur die Ausnahme einen Bericht mitbrachte. Dieser Test
+     * haelt fest, dass der Rueckgabewert beides traegt.</p>
+     */
+    @Test
+    @DisplayName("Ein gelungener Lauf gibt Lieferungen und Bericht zurueck")
+    void ergebnisTraegtBeides() throws Exception {
+        Map<Integer, BillingOfficeEndpoint> endpunkte = new LinkedHashMap<>();
+        endpunkte.put(108310400,
+                BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse", tempDir.resolve("ziel")));
+        DtaDispatchService dienst = new DtaDispatchService(
+                new BillingOfficeEndpointRegistry(endpunkte, tempDir.resolve("fallback")),
+                new FileBillingOfficeTransport());
+
+        Versandergebnis ergebnis = dienst.generateAndRoute(zweiAbrechnungen(), tempDir);
+
+        assertFalse(ergebnis.lieferungen().isEmpty(), "Es sollte zugestellt worden sein");
+        assertNotNull(ergebnis.bericht(), "Der Bericht gehoert zum Ergebnis, auch wenn er leer ist");
+        // Ein Fehler haette den Lauf beendet; was hier ankommt, sind hoechstens
+        // Warnungen.
+        assertFalse(ergebnis.bericht().hatFehler(),
+                "Ein Ergebnis mit Fehlern darf es nicht geben - das waere eine Ausnahme gewesen");
+    }
 
     /**
      * Keine Datenaustauschreferenz zweimal — auch nicht ueber Laeufe hinweg.
@@ -55,7 +86,7 @@ class DtaDispatchServiceTest {
             DtaDispatchService dienst = new DtaDispatchService(registry,
                     new FileBillingOfficeTransport(), DtaValidationService.standard(),
                     dauerhaft::getAndIncrement);
-            for (DispatchBatch lieferung : dienst.generateAndRoute(zweiAbrechnungen(), tempDir)) {
+            for (DispatchBatch lieferung : dienst.generateAndRoute(zweiAbrechnungen(), tempDir).lieferungen()) {
                 for (Path datei : lieferung.getFiles()) {
                     assertTrue(gesehen.add(referenzAus(Files.readString(datei))),
                             "Diese Referenz wurde schon einmal vergeben");
@@ -108,7 +139,7 @@ class DtaDispatchServiceTest {
         BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(endpoints, tempDir.resolve("fallback"));
 
         DtaDispatchService service = new DtaDispatchService(registry, new FileBillingOfficeTransport());
-        List<DispatchBatch> batches = service.generateAndRoute(abrechnungen, tempDir);
+        List<DispatchBatch> batches = service.generateAndRoute(abrechnungen, tempDir).lieferungen();
 
         assertEquals(2, batches.size());
         assertTrue(Files.exists(tempDir.resolve("send-a")));
@@ -135,7 +166,7 @@ class DtaDispatchServiceTest {
         BillingOfficeEndpointRegistry registry = new BillingOfficeEndpointRegistry(endpoints, tempDir.resolve("fallback"));
 
         DtaDispatchService service = new DtaDispatchService(registry, new FileBillingOfficeTransport());
-        List<DispatchBatch> batches = service.generateAndRoute(abrechnungen, tempDir);
+        List<DispatchBatch> batches = service.generateAndRoute(abrechnungen, tempDir).lieferungen();
 
         assertEquals(1, batches.size());
         Path deliveredFile = batches.get(0).getFiles().get(0);

@@ -23,6 +23,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaValidierungsException;
+import de.gkvtransmitter.dispatch.Versandergebnis;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -60,7 +61,8 @@ class AbrechnungsMaskeTest {
     private final List<Lauf> laeufe = new ArrayList<>();
 
     /** Was der Fachdienst auf einen Lauf hin tut. Standard: nichts zu melden. */
-    private Function<Lauf, List<DispatchBatch>> antwort = lauf -> List.of();
+    private Function<Lauf, Versandergebnis> antwort =
+            lauf -> new Versandergebnis(List.of(), ValidationReport.leer());
 
     /** Ein aufgezeichneter Aufruf des Fachdienstes. */
     private record Lauf(List<Patient> teilnehmer, PersonGroup gruppe, Blueprint blaupause,
@@ -78,7 +80,7 @@ class AbrechnungsMaskeTest {
         meldungen = new AufzeichnendeMeldungen();
         texte = new AppMessages("/messages/ui-messages.json");
         laeufe.clear();
-        antwort = lauf -> List.of();
+        antwort = lauf -> new Versandergebnis(List.of(), ValidationReport.leer());
     }
 
     @Nested
@@ -292,7 +294,8 @@ class AbrechnungsMaskeTest {
         @DisplayName("Nach einem gelungenen Lauf nennt die Meldung Kasse und erzeugte Dateien")
         void gelungenerLauf() {
             Path datei = zielordner.resolve("108310400_1.DTA");
-            antwort = lauf -> List.of(new DispatchBatch(KASSEN_IK, List.of(datei)));
+            antwort = lauf -> new Versandergebnis(
+                    List.of(new DispatchBatch(KASSEN_IK, List.of(datei))), ValidationReport.leer());
             datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Gruppe", patient(1, "Anna")));
 
             JavaFxLaufzeit.aufFxFaden(() -> {
@@ -305,6 +308,56 @@ class AbrechnungsMaskeTest {
                 assertEquals(AufzeichnendeMeldungen.Art.ERFOLG, meldung.art());
                 assertTrue(meldung.text().contains(String.valueOf(KASSEN_IK)), meldung.text());
                 assertTrue(meldung.text().contains(datei.toString()), meldung.text());
+            });
+        }
+
+        @Test
+        @DisplayName("Eine Warnung aus einem gelungenen Lauf erreicht den Bildschirm")
+        void warnungWirdGezeigt() {
+            Path datei = zielordner.resolve("108310400_1.DTA");
+            antwort = lauf -> new Versandergebnis(
+                    List.of(new DispatchBatch(KASSEN_IK, List.of(datei))),
+                    ValidationReport.builder()
+                            .warning("POSITION_HEBAMME_LAENGE", "ENF (Zeile 15)",
+                                    "Die Abrechnungspositionsnummer hat neun Stellen.")
+                            .build());
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Gruppe", patient(1, "Anna")));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                teilnehmerAnhaken(maske, 1);
+                start(maske).fire();
+
+                // Beides muss kommen: der Lauf ist gelungen, und trotzdem gibt
+                // es etwas zu wissen. Bis zum 17.09.2026 fiel der Bericht hier
+                // stillschweigend weg.
+                assertEquals(
+                        List.of(AufzeichnendeMeldungen.Art.PRUEFBERICHT, AufzeichnendeMeldungen.Art.ERFOLG),
+                        meldungen.alle().stream().map(AufzeichnendeMeldungen.Meldung::art).toList());
+                assertEquals(
+                        List.of("Die Abrechnungspositionsnummer hat neun Stellen."),
+                        Pruefbefunde.zeilen(meldungen.letzterPruefbericht()).stream()
+                                .map(Pruefbefunde.Zeile::text).toList());
+            });
+        }
+
+        @Test
+        @DisplayName("Ein Lauf ohne Beanstandung zeigt ausser der Erfolgsmeldung nichts")
+        void ohneBeanstandungNurErfolg() {
+            antwort = lauf -> new Versandergebnis(
+                    List.of(new DispatchBatch(KASSEN_IK, List.of(zielordner.resolve("a.DTA")))),
+                    ValidationReport.leer());
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Gruppe", patient(1, "Anna")));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                teilnehmerAnhaken(maske, 1);
+                start(maske).fire();
+
+                assertEquals(AufzeichnendeMeldungen.Art.ERFOLG, meldungen.einzige().art());
+                assertNull(meldungen.letzterPruefbericht());
             });
         }
     }

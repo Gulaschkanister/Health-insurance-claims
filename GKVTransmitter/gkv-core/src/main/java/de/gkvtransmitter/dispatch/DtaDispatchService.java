@@ -152,10 +152,14 @@ public class DtaDispatchService {
     /**
      * Erzeugt, prueft und verteilt die Abrechnungen.
      *
+     * <p>Der Rueckgabewert traegt <b>beides</b>: die Lieferungen und den
+     * Pruefbericht. Der Bericht entsteht ohnehin und wurde frueher bei
+     * fehlerfreiem Lauf verworfen - siehe {@link Versandergebnis}.</p>
+     *
      * @throws DtaValidierungsException wenn eine der Nachrichten beanstandet
      *                                  wird - in dem Fall wurde nichts versendet
      */
-    public List<DispatchBatch> generateAndRoute(List<Abrechnung> abrechnungen, Path outDir) {
+    public Versandergebnis generateAndRoute(List<Abrechnung> abrechnungen, Path outDir) {
         Objects.requireNonNull(abrechnungen, "abrechnungen must not be null");
         Objects.requireNonNull(outDir, "outDir must not be null");
 
@@ -171,7 +175,10 @@ public class DtaDispatchService {
             throw new DtaValidierungsException(bericht);
         }
 
-        return stelleZu(nachrichten, outDir);
+        // Der Bericht wird mitgegeben, auch wenn er leer ist: was hier
+        // uebrigbleibt, sind Warnungen und Hinweise, und die sollen die
+        // Anwenderin erreichen.
+        return new Versandergebnis(stelleZu(nachrichten, outDir), bericht);
     }
 
     private List<ErzeugteNachricht> erzeuge(List<Abrechnung> abrechnungen) {

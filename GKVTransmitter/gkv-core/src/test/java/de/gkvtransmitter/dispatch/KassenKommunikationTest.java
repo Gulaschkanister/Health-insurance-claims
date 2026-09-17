@@ -134,7 +134,7 @@ class KassenKommunikationTest {
                     registry(KASSEN_IK, ziel), new FileBillingOfficeTransport());
 
             List<DispatchBatch> batches = service.generateAndRoute(
-                    List.of(abrechnung(1, KASSEN_IK, 2)), tempDir);
+                    List.of(abrechnung(1, KASSEN_IK, 2)), tempDir).lieferungen();
 
             assertEquals(1, batches.size());
             try (var dateien = Files.list(ziel)) {

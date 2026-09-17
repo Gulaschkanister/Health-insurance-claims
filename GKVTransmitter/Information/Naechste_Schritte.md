@@ -209,25 +209,27 @@ done
 
 Nach Nutzen geordnet:
 
-0. **Warnungen erreichen den Bildschirm nicht.** *Gefunden am 07.09.2026, noch
-   offen — und die dringendste Lücke in dieser Liste.* Die Dokumentation sagt:
-   „Nur Fehler halten den Versand auf, Hinweise werden gemeldet, verhindern
-   aber nichts." **Der zweite Halbsatz stimmt nicht.**
-   `DtaDispatchService.generateAndRoute` sammelt den Prüfbericht, wirft bei
-   `hatFehler()` eine `DtaValidierungsException` — und lässt den Bericht sonst
-   fallen. Die Oberfläche zeigt ihn nur im Fehlerfall
-   (`AbrechnungsMaske`, `catch (DtaValidierungsException)`). **Eine Warnung,
-   die niemand sieht, ist keine Warnung.** Betroffen sind alle Warnungen und
-   Hinweise, nicht nur die neue `PositionsnummerRegel`.
+0. ~~**Warnungen erreichen den Bildschirm nicht.**~~ **Behoben am 17.09.2026.**
+   `DtaDispatchService.generateAndRoute` sammelte den Prüfbericht, warf bei
+   `hatFehler()` eine `DtaValidierungsException` — und ließ ihn sonst fallen.
+   Die Oberfläche zeigte ihn nur im Fehlerfall. **Eine Warnung, die niemand
+   sieht, ist keine Warnung.**
 
-   Der Weg dahin ist klar, aber nicht klein: `generateAndRoute` müsste statt
-   `List<DispatchBatch>` ein Ergebnis mit Lieferungen **und** Bericht liefern.
-   Das zieht `AbrechnungService.createAndDispatch`, die Schnittstelle
-   `Abrechnungslauf` und `AbrechnungsMaske` nach sich, dazu rund fünfzehn
-   Teststellen. **Nicht heimlich nebenbei zu machen** — deshalb steht es hier
-   und nicht im letzten Commit.
+   Der Weg war der hier beschriebene: `generateAndRoute` liefert jetzt
+   `Versandergebnis` mit Lieferungen **und** Bericht; `createAndDispatch`,
+   die Schnittstelle `Abrechnungslauf` und `AbrechnungsMaske` sind
+   mitgezogen. Die Maske zeigt den Bericht nach einem gelungenen Lauf, wenn er
+   nicht leer ist, und danach die Erfolgsmeldung.
 
-   Zwei Umwege sind geprüft und verworfen: eine zweite Prüfung in der Maske
+   Dazu eine Folgeänderung, die vorher niemand auf dem Zettel hatte:
+   `Bildschirmmeldungen.pruefbericht` färbte jeden Bericht rot und
+   überschrieb ihn mit „Prüfung nicht bestanden". Für einen Bericht aus
+   reinen Hinweisen wäre das die Unwahrheit — die Abrechnung *ist* ja
+   hinausgegangen. Titel, Einleitung und Farbe richten sich jetzt nach
+   `bericht.hatFehler()`; stehen bleibt beides, denn eine Warnung, die nach
+   sechs Sekunden verschwindet, ist auch keine.
+
+   Zwei Umwege waren geprüft und verworfen: eine zweite Prüfung in der Maske
    würde `referenzen.naechste()` ein zweites Mal ziehen und
    Datenaustauschreferenzen verbrennen; ein Rückrufe entgegennehmender
    Konstruktorparameter am Versanddienst erreicht die Oberfläche nicht, weil
@@ -239,7 +241,12 @@ Nach Nutzen geordnet:
    Hebammenhilfe sind vier oder fünf Stellen vorgesehen (Anlage 3, Abschnitt
    8.2.6), die Vorbelegung führt neun. Es fehlt das bundeseinheitliche
    Positionsnummernverzeichnis der Hebammenhilfe-Vergütungsvereinbarung.
-   `PositionsnummerRegel` warnt — siehe aber Punkt 0.
+   `PositionsnummerRegel` warnt — und seit dem 17.09.2026 nicht mehr nur über
+   die Länge: Sie prüft auch die **vierte Stelle** (Zuschlag, nur `0` oder `1`)
+   und hält eine vierstellige Nummer gegen das **Leistungsdatum**, weil vier
+   Stellen seit dem 01.11.2025 nur noch bei Betriebskostenpauschalen gelten.
+   Beides steht in Anlage 3 und war ohne das Verzeichnis prüfbar; **welche
+   Nummer gültig ist, bleibt offen.**
 3. **Positionsnummern und Tarifkennzeichen** werden auf Form, nicht auf
    fachliche Zulässigkeit geprüft. Dafür bräuchte es die Schlüsseltabellen aus
    Anlage 3 als JSON — dann wäre es eine weitere `ValidationRule`.

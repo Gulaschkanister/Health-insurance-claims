@@ -48,8 +48,12 @@ public class Bildschirmmeldungen implements Meldungen {
         for (Pruefbefunde.Zeile zeile : Pruefbefunde.zeilen(bericht)) {
             liste.getChildren().add(befund(zeile));
         }
-        ecke.zeigeBleibend(Art.FEHLER, Pruefbefunde.TITEL,
-                Pruefbefunde.EINLEITUNG + " " + Pruefbefunde.kurzfassung(bericht), liste);
+        // Rot nur, wenn der Lauf tatsaechlich aufgehalten wurde. Ein Bericht
+        // aus reinen Hinweisen ist kein Fehler - er bleibt aber stehen, denn
+        // eine Warnung, die nach sechs Sekunden verschwindet, ist keine.
+        Art art = bericht.hatFehler() ? Art.FEHLER : Art.HINWEIS;
+        ecke.zeigeBleibend(art, Pruefbefunde.titel(bericht),
+                Pruefbefunde.einleitung(bericht) + " " + Pruefbefunde.kurzfassung(bericht), liste);
     }
 
     @Override

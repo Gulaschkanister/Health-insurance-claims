@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import de.gkvtransmitter.dispatch.BillingOfficeEndpointRegistry;
-import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.dispatch.FileBillingOfficeTransport;
+import de.gkvtransmitter.dispatch.Versandergebnis;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -70,7 +70,14 @@ public final class AbrechnungService {
         this.dispatchService = Objects.requireNonNull(dispatchService, "dispatchService must not be null");
     }
 
-    public List<DispatchBatch> createAndDispatch(List<Patient> selectedPatients,
+    /**
+     * Erzeugt, prueft und versendet die Abrechnungen der gewaehlten Personen.
+     *
+     * @return Lieferungen und Pruefbericht; siehe {@link Versandergebnis}
+     * @throws de.gkvtransmitter.dispatch.DtaValidierungsException wenn die
+     *         Pruefung nicht bestanden wurde - dann wurde nichts versendet
+     */
+    public Versandergebnis createAndDispatch(List<Patient> selectedPatients,
             PersonGroup group, Blueprint blueprint, Map<Integer, Integer> appointments, Path outputDirectory) {
         Objects.requireNonNull(selectedPatients, "selectedPatients must not be null");
         Objects.requireNonNull(group, "group must not be null");

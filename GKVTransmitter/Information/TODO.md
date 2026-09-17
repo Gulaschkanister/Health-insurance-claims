@@ -36,13 +36,14 @@ Liste".
 
 Der wichtigste Block, weil ohne ihn jede weitere Prüfregel ins Leere warnt.
 
-## A1. Warnungen sichtbar machen
+## A1. Warnungen sichtbar machen — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.1 |
 | **Größe** | M (ein bis drei Tage) |
 | **Hängt an** | nichts |
+| **Stand** | **umgesetzt** — `Versandergebnis` trägt Lieferungen und Bericht; `Bildschirmmeldungen` färbt nur noch rot, wenn wirklich ein Fehler vorlag |
 
 `DtaDispatchService.generateAndRoute` sammelt den Prüfbericht und **wirft ihn
 bei fehlerfreiem Lauf weg**; die Oberfläche zeigt ihn nur im `catch`-Zweig für
@@ -77,13 +78,14 @@ Jede Beanstandung bekommt eine **Fundstelle** (Anlage, Abschnitt) und eine
 **Fertig, wenn:** kein Fehlercode ohne Fundstelle existiert, durchgesetzt von
 einem Test, der über alle Regeln läuft.
 
-## A3. Positionsnummer gegen Anlage 3 § 8.2.6 prüfen
+## A3. Positionsnummer gegen Anlage 3 § 8.2.6 prüfen — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Umsetzungsplan** | neu — Teil von D.2 / B4, siehe unten |
 | **Größe** | S bis M |
 | **Hängt an** | A1 (sinnvoll erst, wenn Warnungen ankommen) |
+| **Stand** | **umgesetzt** als Warnung: `POSITION_HEBAMME_ZUSCHLAG` und `POSITION_HEBAMME_VIERSTELLIG`. Die Abstufungsfrage unten bleibt offen und ist deine |
 
 **Das ist der Punkt, der bisher als blockiert galt und es nur halb ist.**
 `Anlage_3_TP5_V22_20260521.pdf` liegt vor und beschreibt in § 8.2.6 den

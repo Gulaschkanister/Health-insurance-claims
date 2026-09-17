@@ -482,5 +482,58 @@ class DtaValidationServiceTest {
             assertFalse(enthaeltCode(bericht, "POSITION_HEBAMME_LAENGE"),
                     "Die Referenz fuehrt den Code 61 - dafuer gilt eine andere Laenge");
         }
+
+        /**
+         * Die vierte Stelle traegt den Zuschlag und kennt nur 0 und 1.
+         *
+         * <p>Das laesst sich ohne das Positionsnummernverzeichnis pruefen: Der
+         * Aufbau steht in Anlage 3, Abschnitt 8.2.6, nur die Belegung der
+         * laufenden Nummer nicht.</p>
+         */
+        @Test
+        @DisplayName("Eine unzulaessige vierte Stelle wird gemeldet")
+        void zuschlagstelleFalsch() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+", "ENF+01+50:00000+30675+"));
+
+            assertTrue(enthaeltCode(bericht, "POSITION_HEBAMME_ZUSCHLAG"), bericht.alsText());
+            assertTrue(bericht.istVersandfaehig(), "Auch das haelt den Versand nicht auf");
+        }
+
+        @Test
+        @DisplayName("Eine zulaessige vierte Stelle bleibt unbeanstandet")
+        void zuschlagstelleRichtig() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+", "ENF+01+50:00000+30615+"));
+
+            assertFalse(enthaeltCode(bericht, "POSITION_HEBAMME_ZUSCHLAG"), bericht.alsText());
+        }
+
+        /**
+         * Vier Stellen sind seit dem 01.11.2025 die Ausnahme.
+         *
+         * <p>Die Referenz traegt das Leistungsdatum 20240301 - davor galt das
+         * alte, vierstellige Verzeichnis. Erst mit einem spaeteren Datum wird
+         * die Vierstelligkeit auffaellig.</p>
+         */
+        @Test
+        @DisplayName("Vier Stellen nach dem 31.10.2025 werden gemeldet")
+        void vierstelligNachDemUebergang() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+08,00+15000,00+20240301+",
+                            "ENF+01+50:00000+3060+08,00+15000,00+20260301+"));
+
+            assertTrue(enthaeltCode(bericht, "POSITION_HEBAMME_VIERSTELLIG"), bericht.alsText());
+        }
+
+        @Test
+        @DisplayName("Vier Stellen vor dem Uebergang bleiben unbeanstandet")
+        void vierstelligVorDemUebergang() {
+            ValidationReport bericht = service.pruefe(
+                    ersetze("ENF+01+61:00000+306050601+08,00+15000,00+20240301+",
+                            "ENF+01+50:00000+3060+08,00+15000,00+20240301+"));
+
+            assertFalse(enthaeltCode(bericht, "POSITION_HEBAMME_VIERSTELLIG"), bericht.alsText());
+        }
     }
 }
