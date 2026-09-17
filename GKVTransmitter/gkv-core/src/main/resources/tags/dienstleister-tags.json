@@ -58,5 +58,32 @@
   "taetigBis": {
     "inputOption": "DATE",
     "modifiers": []
+  },
+  "standardBlaupause": {
+    "inputOption": "STRING",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "100"
+      }
+    ]
+  },
+  "standardTermine": {
+    "inputOption": "NUMBER",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "2"
+      }
+    ]
+  },
+  "standardGruppengroesse": {
+    "inputOption": "NUMBER",
+    "modifiers": [
+      {
+        "type": "MAX_LENGTH",
+        "value": "2"
+      }
+    ]
   }
 }

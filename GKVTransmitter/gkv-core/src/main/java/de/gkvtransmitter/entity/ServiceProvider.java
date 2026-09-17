@@ -81,6 +81,41 @@ public class ServiceProvider extends Person {
     @Column(name = "taetig_bis")
     private LocalDate taetigBis;
 
+    /**
+     * Die Blaupause, mit der ueblicherweise abgerechnet wird - ueber ihren
+     * Namen.
+     *
+     * <p>Ueber den Namen und nicht ueber die Kennnummer: Der Name ist das,
+     * was im Auswahlfeld steht, und was hier steht, muss jemand wiedererkennen
+     * koennen. Wird die Blaupause geloescht und neu angelegt, passt der Name
+     * wieder - eine Kennnummer nicht. Findet sich nichts, wird eben nichts
+     * vorbelegt; ein ins Leere zeigender Verweis richtet keinen Schaden an.</p>
+     */
+    @Column(name = "standard_blaupause")
+    private String standardBlaupause;
+
+    /**
+     * Die uebliche Zahl der Termine je Teilnehmerin.
+     *
+     * <p>Bei rund vierzig Kursterminen im Jahr ist das der Unterschied
+     * zwischen "vier Felder je Lauf" und "bestaetigen". {@code 0} heisst keine
+     * Vorgabe.</p>
+     */
+    @Column(name = "standard_termine")
+    private int standardTermine;
+
+    /**
+     * Die uebliche Gruppengroesse.
+     *
+     * <p>Keine Vorbelegung - die Teilnehmer stehen in der Gruppe. Sondern eine
+     * <b>Gegenprobe</b>: Weicht die Zahl der angehakten Teilnehmerinnen davon
+     * ab, sagt das die Zeile unter der Liste. Ein vergessener Haken ist eine
+     * nicht gestellte Forderung, und die faellt niemandem auf. {@code 0} heisst
+     * keine Vorgabe.</p>
+     */
+    @Column(name = "standard_gruppengroesse")
+    private int standardGruppengroesse;
+
     public ServiceProvider() {
         super();
     }
@@ -153,6 +188,40 @@ public class ServiceProvider extends Person {
 
     public void setTaetigBis(LocalDate taetigBis) {
         this.taetigBis = taetigBis;
+    }
+
+    public String getStandardBlaupause() {
+        return standardBlaupause;
+    }
+
+    public void setStandardBlaupause(String standardBlaupause) {
+        this.standardBlaupause = standardBlaupause;
+    }
+
+    public int getStandardTermine() {
+        return standardTermine;
+    }
+
+    public void setStandardTermine(int standardTermine) {
+        this.standardTermine = standardTermine;
+    }
+
+    public int getStandardGruppengroesse() {
+        return standardGruppengroesse;
+    }
+
+    public void setStandardGruppengroesse(int standardGruppengroesse) {
+        this.standardGruppengroesse = standardGruppengroesse;
+    }
+
+    /**
+     * Die Terminzahl, mit der ein Lauf vorbelegt wird.
+     *
+     * <p>Ohne Vorgabe eine - dasselbe wie zuvor. Eine Null oder eine negative
+     * Zahl waere keine Erleichterung, sondern eine Rechnung ueber nichts.</p>
+     */
+    public int vorbelegteTermine() {
+        return standardTermine > 0 ? standardTermine : 1;
     }
 
     /**

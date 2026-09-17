@@ -118,7 +118,11 @@ public class AbrechnungsMaske {
         liste.baueAuf(gruppeAuswahl.getValue());
         // Am Wert haengen, nicht am Bedienereignis: entscheidend ist, welche
         // Gruppe gewaehlt ist, nicht auf welchem Weg sie gewaehlt wurde.
-        gruppeAuswahl.valueProperty().addListener((wert, alt, neu) -> liste.baueAuf(neu));
+        gruppeAuswahl.valueProperty().addListener((wert, alt, neu) -> {
+            liste.baueAuf(neu);
+            waehleUeblicheBlaupause(blaupauseAuswahl, neu);
+        });
+        waehleUeblicheBlaupause(blaupauseAuswahl, gruppeAuswahl.getValue());
 
         Button start = bausteine.createButton(texte.get("button.startSettlement"));
         start.setId(ID_START);
@@ -128,6 +132,46 @@ public class AbrechnungsMaske {
         wurzel.getChildren().addAll(blaupauseBeschriftung, blaupauseAuswahl,
                 gruppeBeschriftung, gruppeAuswahl, teilnehmerBeschriftung, liste.bereich(), start);
         return wurzel;
+    }
+
+    /**
+     * Waehlt die uebliche Blaupause des Dienstleisters vor.
+     *
+     * <p>Erst nach der Gruppe, weil erst sie den Dienstleister nennt - und
+     * <b>nur, solange nichts gewaehlt ist</b>. Eine getroffene Wahl wieder zu
+     * ueberschreiben, weil jemand die Gruppe korrigiert, waere eine
+     * Bevormundung; und wer zweimal hintereinander die Gruppe wechselt, haette
+     * seine Blaupause zweimal verloren.</p>
+     *
+     * <p>Gesucht wird ueber den Namen. Findet sich keiner, bleibt das Feld
+     * leer: {@link #starteAbrechnung} verlangt ohnehin eine bewusste Wahl,
+     * bevor etwas losgeht.</p>
+     */
+    private void waehleUeblicheBlaupause(ComboBox<Blueprint> auswahl, PersonGroup gruppe) {
+        if (auswahl.getValue() != null) {
+            return;
+        }
+        String ueblich = dienstleisterVon(gruppe)
+                .map(ServiceProvider::getStandardBlaupause).orElse(null);
+        if (ueblich == null || ueblich.isBlank()) {
+            return;
+        }
+        auswahl.getItems().stream()
+                .filter(blaupause -> ueblich.trim().equalsIgnoreCase(blaupause.getName()))
+                .findFirst()
+                .ifPresent(auswahl::setValue);
+    }
+
+    /**
+     * Der Dienstleister einer Gruppe - derselbe, den {@code AbrechnungService}
+     * nimmt: der erste.
+     */
+    private static java.util.Optional<ServiceProvider> dienstleisterVon(PersonGroup gruppe) {
+        if (gruppe == null || gruppe.getServiceProviders() == null
+                || gruppe.getServiceProviders().isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(gruppe.getServiceProviders().iterator().next());
     }
 
     /** Eine Beschriftung ueber einem Eingabefeld. */
@@ -270,6 +314,8 @@ public class AbrechnungsMaske {
         private final GridPane gitter = neuesGitter();
         private final Label zusammenfassung = bausteine.createLabel("");
         private final List<Zeile> zeilen = new ArrayList<>();
+        /** Der Dienstleister der gewaehlten Gruppe; er traegt die Standardwerte. */
+        private ServiceProvider erbringer;
 
         private Teilnehmerliste() {
             bereich.setId(ID_TEILNEHMERLISTE);
@@ -288,6 +334,7 @@ public class AbrechnungsMaske {
             List<Patient> teilnehmer = mitglieder(gruppe == null ? null : gruppe.getPatients());
             List<ServiceProvider> dienstleister =
                     mitglieder(gruppe == null ? null : gruppe.getServiceProviders());
+            erbringer = dienstleisterVon(gruppe).orElse(null);
 
             if (teilnehmer.isEmpty() && dienstleister.isEmpty()) {
                 // Zwei verschiedene Lagen, die frueher denselben Satz bekamen:
@@ -351,7 +398,7 @@ public class AbrechnungsMaske {
             Spinner<Integer> fuerAlle = bausteine.createSpinner(Integer.class);
             fuerAlle.setId(ID_TERMINE_ALLE);
             fuerAlle.setPrefWidth(90);
-            fuerAlle.getValueFactory().setValue(1);
+            fuerAlle.getValueFactory().setValue(vorbelegteTermine());
 
             Button setzen = bausteine.createButton(texte.get("button.apply"));
             setzen.setId(ID_TERMINE_SETZEN);
@@ -377,7 +424,7 @@ public class AbrechnungsMaske {
                 Spinner<Integer> termine = bausteine.createSpinner(Integer.class);
                 termine.setId(ID_TERMINE + person.getId());
                 termine.setPrefWidth(100);
-                termine.getValueFactory().setValue(1);
+                termine.getValueFactory().setValue(vorbelegteTermine());
                 termine.valueProperty().addListener((wert, alt, neu) -> aktualisiereZusammenfassung());
 
                 gitter.add(kaestchen, 0, zeilennummer);
@@ -405,6 +452,17 @@ public class AbrechnungsMaske {
         }
 
         /** Setzt bei allen Zeilen den Haken. */
+        /**
+         * Die Terminzahl, mit der die Zaehler starten.
+         *
+         * <p>Aus dem Dienstleisterprofil, sonst eine - wie bisher. Bei rund
+         * vierzig Kursterminen im Jahr ist das der Unterschied zwischen "vier
+         * Felder je Lauf" und "bestaetigen".</p>
+         */
+        private int vorbelegteTermine() {
+            return erbringer == null ? 1 : erbringer.vorbelegteTermine();
+        }
+
         private void haken(boolean gesetzt) {
             zeilen.forEach(zeile -> zeile.kaestchen().setSelected(gesetzt));
         }
@@ -437,7 +495,28 @@ public class AbrechnungsMaske {
             int summe = gewaehlt.stream().mapToInt(zeile -> wert(zeile.termine())).sum();
             String schluessel = summe == 1 ? "msg.selectionSummaryOne" : "msg.selectionSummary";
             zusammenfassung.setText(String.format(texte.get(schluessel),
-                    gewaehlt.size(), zeilen.size(), summe));
+                    gewaehlt.size(), zeilen.size(), summe) + abweichungVonUeblich(gewaehlt.size()));
+        }
+
+        /**
+         * Ein Nachsatz, wenn die Zahl der Angehakten von der ueblichen abweicht.
+         *
+         * <p><b>Ein vergessener Haken ist eine nicht gestellte Forderung</b>,
+         * und die faellt niemandem auf: Die Abrechnung geht durch, die Datei
+         * ist gueltig, die Kasse zahlt, was dasteht. Deshalb keine Sperre und
+         * keine Warnung, sondern ein Nachsatz genau an der Zeile, an der man
+         * vor dem Versand ohnehin abliest, ob die Zahlen stimmen.</p>
+         *
+         * <p>Schweigt, solange keine uebliche Groesse hinterlegt ist oder die
+         * Zahl passt. Ein Hinweis, der bei jedem Lauf erscheint, wird nicht
+         * mehr gelesen.</p>
+         */
+        private String abweichungVonUeblich(int angehakt) {
+            int ueblich = erbringer == null ? 0 : erbringer.getStandardGruppengroesse();
+            if (ueblich <= 0 || ueblich == angehakt) {
+                return "";
+            }
+            return " · " + String.format(texte.get("msg.unusualGroupSize"), ueblich);
         }
 
         private List<Patient> gewaehlteTeilnehmer() {

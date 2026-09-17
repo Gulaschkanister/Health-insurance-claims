@@ -40,7 +40,11 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
                     person -> String.valueOf(person.istUmsatzsteuerbefreit())),
             Map.entry("ansprechpartner", ServiceProvider::getAnsprechpartner),
             Map.entry("telefon", ServiceProvider::getTelefon),
-            Map.entry("email", ServiceProvider::getEmail));
+            Map.entry("email", ServiceProvider::getEmail),
+            Map.entry("standardBlaupause", ServiceProvider::getStandardBlaupause),
+            Map.entry("standardTermine", person -> String.valueOf(person.getStandardTermine())),
+            Map.entry("standardGruppengroesse",
+                    person -> String.valueOf(person.getStandardGruppengroesse())));
 
     /**
      * Wohin der Wert eines Feldes geht.
@@ -69,7 +73,12 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
             Map.entry("telefon", ServiceProvider::setTelefon),
             Map.entry("email", ServiceProvider::setEmail),
             Map.entry("taetigSeit", (person, text) -> person.setTaetigSeit(datum(text))),
-            Map.entry("taetigBis", (person, text) -> person.setTaetigBis(datum(text))));
+            Map.entry("taetigBis", (person, text) -> person.setTaetigBis(datum(text))),
+            Map.entry("standardBlaupause", ServiceProvider::setStandardBlaupause),
+            Map.entry("standardTermine",
+                    (person, text) -> person.setStandardTermine(zahl(text, person.getStandardTermine()))),
+            Map.entry("standardGruppengroesse", (person, text) ->
+                    person.setStandardGruppengroesse(zahl(text, person.getStandardGruppengroesse()))));
 
     /** Der Dienstleister fuehrt Felder, die eine Teilnehmerin nicht hat. */
     @Override

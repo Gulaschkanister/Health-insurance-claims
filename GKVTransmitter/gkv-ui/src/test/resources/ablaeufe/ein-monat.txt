@@ -48,6 +48,12 @@ setze person-feld-umsatzsteuerbefreit ja
 setze person-feld-ansprechpartner Maria Hebamme
 setze person-feld-telefon 0421 123456
 setze person-feld-email praxis@example.de
+# Standardwerte fuer den Abrechnungslauf: Bei rund vierzig Kursterminen im
+# Jahr entscheidet sich hier, ob ein Lauf vier Eingaben kostet oder eine
+# Bestaetigung.
+setze person-feld-standardBlaupause Geburtsvorbereitungskurs
+setze person-feld-standardTermine 8
+setze person-feld-standardGruppengroesse 1
 klick person-speichern
 erwarte Maria Hebamme
 
@@ -71,12 +77,13 @@ erwarte Geburtsvorbereitungskurs
 
 # --- 5. Abrechnen --------------------------------------------------------
 oeffne Abrechnung
-setze abrechnung-blaupause Geburtsvorbereitungskurs
+# Kein "setze abrechnung-blaupause" und kein "setze abrechnung-termine-alle":
+# Beides kommt jetzt aus dem Dienstleisterprofil, sobald die Gruppe gewaehlt
+# ist. Bliebe eines davon leer, kaeme die Maske nicht bis zum Start.
 setze abrechnung-gruppe Kurs Maerz
 erwarte Anna Berger
+erwarte Geburtsvorbereitungskurs
 klick abrechnung-alle
-setze abrechnung-termine-alle 8
-klick abrechnung-termine-setzen
 bild vor-der-abrechnung
 klick abrechnung-start
 erwarte-nicht Prüfung nicht bestanden

@@ -411,7 +411,7 @@ dieselbe Person, in einer Praxis mit zwei Hebammen nicht.
 | | Was | Was es spart | Größe |
 |---|---|---|---|
 | **F1** ✅ | **Abrechnungscode je Dienstleister** (`50` Hebamme, `61` Rehabilitationssport) statt je Blaupause. | Der Code gehört zum Beruf, nicht zur Kursart. Nebenbei wird der **Leistungsbereich** im `UNB` richtig abgeleitet, ohne dass eine Blaupause ihn tragen muss. | S |
-| **F2** | **Standardwerte für den Abrechnungslauf:** übliche Blaupause, übliche Terminzahl, übliche Gruppengröße. Die Abrechnungsmaske füllt damit vor. | Bei vierzig Kursterminen im Jahr ist das der Unterschied zwischen „vier Felder je Lauf" und „bestätigen". | S |
+| **F2** ✅ | **Standardwerte für den Abrechnungslauf:** übliche Blaupause, übliche Terminzahl, übliche Gruppengröße. Die Abrechnungsmaske füllt damit vor. | Bei vierzig Kursterminen im Jahr ist das der Unterschied zwischen „vier Felder je Lauf" und „bestätigen". | S |
 | **F3** ✅ | **Umsatzsteuerpflicht als Kennzeichen am Dienstleister.** | Hängt an der Person, nicht am Kurs (§ 4 Nr. 14 UStG). Speist `D5` und das `UST`-Segment. **Die Rechtsfrage bleibt extern, das Feld nicht.** | S |
 | **F4** ✅ | **Ansprechpartner, Telefon, E-Mail, Steuernummer.** | Wird bei jeder Anmeldung wieder gebraucht. Zusammen mit B1 ergibt das den „Aktenordner", aus dem sich die Anträge ausfüllen lassen. | S |
 | **F5** | **Registrierungsblatt drucken** — alle Angaben aus B1 und F4 auf einer Seite, in der Form, die ARGE·IK, Trust Center und Annahmestelle abfragen. | Aus dem Aktenordner wird ein Formular, das nur noch zu unterschreiben ist. Der Punkt, an dem sich B1 zum ersten Mal auszahlt. | S–M |
@@ -515,6 +515,56 @@ erreicht hätte. Genau der Fehler, den `BlaupausenfelderTest` seit dem
   gegen eine Obergrenze von 10. Eine Tabelle wächst in der Breite statt in der
   Tiefe. **Das ist zugleich das ausgearbeitete Beispiel für D6**, wo dasselbe
   für `PatientFieldPopulator` noch aussteht.
+
+## F2. Standardwerte für den Abrechnungslauf — ✅ erledigt am 17.09.2026
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Stand** | **umgesetzt**: übliche Blaupause, übliche Terminzahl, übliche Gruppengröße am Dienstleister |
+
+Drei Felder am Profil, die die Abrechnungsmaske ausliest, sobald eine Gruppe
+gewählt ist — erst sie nennt den Dienstleister:
+
+| Feld | Wirkung |
+|---|---|
+| **Übliche Blaupause** | wird vorgewählt, **solange nichts gewählt ist** |
+| **Übliche Terminzahl** | steht in jedem Zähler, auch in dem der Werkzeugleiste |
+| **Übliche Gruppengröße** | wird *nicht* vorbelegt, sondern gegengeprüft |
+
+> **Eine getroffene Wahl wird nicht überschrieben.** Wer die Gruppe korrigiert,
+> hat seine Blaupause nicht zur Disposition gestellt — sonst verlöre er sie bei
+> jedem Wechsel erneut. Passt der hinterlegte Name auf keine vorhandene
+> Blaupause, wird nichts vorgewählt; die Maske verlangt ohnehin eine bewusste
+> Wahl, bevor etwas losgeht.
+
+### Die Gruppengröße belegt nichts vor, sie prüft gegen
+
+Ein Vorbelegen wäre sinnlos — wer teilnimmt, steht in der Gruppe. Der Nutzen
+liegt woanders: **Ein vergessener Haken ist eine nicht gestellte Forderung, und
+die fällt niemandem auf.** Die Datei ist gültig, die Kasse zahlt, was dasteht.
+Weicht die Zahl der Angehakten von der üblichen ab, steht das deshalb als
+Nachsatz genau an der Zeile, an der man vor dem Versand ohnehin abliest, ob die
+Zahlen stimmen — und schweigt, wenn sie passt. Ein Hinweis bei jedem Lauf wird
+nicht mehr gelesen.
+
+### Nachgeprüft am Ablauf, nicht nur im Test
+
+`ein-monat.txt` setzt weder `abrechnung-blaupause` noch
+`abrechnung-termine-alle`. Die erzeugte Datei ist dieselbe wie bei
+vollständiger Handeingabe:
+
+```
+UNB+UNOC:3+108310400+102137985+20260917:1508+00001+F+SL831040S09+1'
+UST+60/123/45678+J'
+ENF+01+50:00000+306050601+8,00+13,25+20260917+0,00'
+```
+
+Der Leistungsbereich `F` aus dem Abrechnungscode 50 (F1), das `UST` aus
+Steuernummer und Befreiung (F3), die acht Termine aus der üblichen Terminzahl
+(F2) — **drei Blockpunkte in einer Zeile nachweisbar.**
+
+**Damit ist Block F abgeschlossen bis auf F5** (Registrierungsblatt).
 
 ## F6. Tätigkeitszeitraum — ✅ erledigt am 17.09.2026
 

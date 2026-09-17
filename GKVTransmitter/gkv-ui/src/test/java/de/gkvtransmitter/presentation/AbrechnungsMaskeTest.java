@@ -2,6 +2,7 @@ package de.gkvtransmitter.presentation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -533,6 +534,165 @@ class AbrechnungsMaskeTest {
     }
 
     // --- Aufbau und Bedienung -------------------------------------------
+
+    /**
+     * Die Standardwerte aus dem Dienstleisterprofil.
+     *
+     * <p>Bei rund vierzig Kursterminen im Jahr entscheidet sich hier, ob ein
+     * Lauf vier Eingaben kostet oder eine Bestaetigung. Die Werte haengen am
+     * Dienstleister, sind also erst bekannt, wenn die Gruppe gewaehlt ist.</p>
+     */
+    @Nested
+    @DisplayName("Standardwerte aus dem Dienstleisterprofil")
+    class Standardwerte {
+
+        /** Eine Gruppe, deren Dienstleister ein gefuelltes Profil hat. */
+        private PersonGroup gruppeMitProfil(java.util.function.Consumer<ServiceProvider> profil) {
+            PersonGroup gruppe = gruppe("Kurs", patient(1, "Anna"), patient(2, "Bernd"));
+            profil.accept(gruppe.getServiceProviders().iterator().next());
+            return gruppe;
+        }
+
+        @Test
+        @DisplayName("Die uebliche Terminzahl steht in den Zaehlern")
+        void termineVorbelegt() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppeMitProfil(person -> person.setStandardTermine(8)));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+
+                assertEquals(8, zaehlerstand(maske, AbrechnungsMaske.ID_TERMINE + "1"));
+                assertEquals(8, zaehlerstand(maske, AbrechnungsMaske.ID_TERMINE_ALLE));
+            });
+        }
+
+        @Test
+        @DisplayName("Ohne Vorgabe bleibt es bei einem Termin")
+        void ohneVorgabeEiner() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+
+                assertEquals(1, zaehlerstand(maske, AbrechnungsMaske.ID_TERMINE + "1"));
+            });
+        }
+
+        @Test
+        @DisplayName("Die uebliche Blaupause wird vorgewaehlt")
+        void blaupauseVorgewaehlt() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppeMitProfil(person ->
+                            person.setStandardBlaupause("Testblaupause")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeAuswahl(maske).setValue(gruppeAuswahl(maske).getItems().get(0));
+
+                assertEquals("Testblaupause", blaupauseAuswahl(maske).getValue().getName());
+            });
+        }
+
+        /**
+         * Ein Name, auf den keine Blaupause passt, waehlt nichts vor.
+         *
+         * <p>Er richtet keinen Schaden an: Die Maske verlangt ohnehin eine
+         * bewusste Wahl, bevor etwas losgeht.</p>
+         */
+        @Test
+        @DisplayName("Ein unbekannter Name waehlt nichts vor")
+        void unbekannterNameWaehltNichts() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppeMitProfil(person -> person.setStandardBlaupause("Gibt es nicht")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeAuswahl(maske).setValue(gruppeAuswahl(maske).getItems().get(0));
+
+                assertNull(blaupauseAuswahl(maske).getValue());
+            });
+        }
+
+        /**
+         * Eine schon getroffene Wahl bleibt stehen.
+         *
+         * <p>Wer die Gruppe korrigiert, hat seine Blaupause nicht zur
+         * Disposition gestellt - sonst verloere er sie bei jedem Wechsel
+         * erneut.</p>
+         */
+        @Test
+        @DisplayName("Eine getroffene Wahl wird nicht ueberschrieben")
+        void getroffeneWahlBleibt() {
+            Blueprint andere = new Blueprint("Andere", "test-template",
+                    "{\"fields\":{}}", OffsetDateTime.now());
+            datenbank.mitBlaupause(andere).mitBlaupause(blaupause())
+                    .mitGruppe(gruppeMitProfil(person ->
+                            person.setStandardBlaupause("Testblaupause")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                blaupauseAuswahl(maske).setValue(andere);
+
+                gruppeAuswahl(maske).setValue(gruppeAuswahl(maske).getItems().get(0));
+
+                assertEquals("Andere", blaupauseAuswahl(maske).getValue().getName());
+            });
+        }
+
+        /**
+         * Die Gegenprobe zur Gruppengroesse.
+         *
+         * <p>Ein vergessener Haken ist eine nicht gestellte Forderung, und die
+         * faellt niemandem auf - die Datei ist gueltig, die Kasse zahlt, was
+         * dasteht.</p>
+         */
+        @Test
+        @DisplayName("Eine ungewoehnliche Teilnehmerzahl steht in der Zusammenfassung")
+        void abweichendeGruppengroesse() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppeMitProfil(person -> person.setStandardGruppengroesse(2)));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                teilnehmerAnhaken(maske, 1);
+
+                assertTrue(zusammenfassung(maske)
+                                .contains(String.format(texte.get("msg.unusualGroupSize"), 2)),
+                        zusammenfassung(maske));
+            });
+        }
+
+        @Test
+        @DisplayName("Bei der ueblichen Zahl schweigt sie")
+        void ueblicheGruppengroesse() {
+            datenbank.mitBlaupause(blaupause())
+                    .mitGruppe(gruppeMitProfil(person -> person.setStandardGruppengroesse(2)));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeAufbauen();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                assertFalse(zusammenfassung(maske).contains("üblich"),
+                        "Ein Hinweis bei jedem Lauf wird nicht mehr gelesen: "
+                                + zusammenfassung(maske));
+            });
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private ComboBox<PersonGroup> gruppeAuswahl(Region maske) {
+        return (ComboBox<PersonGroup>) maske.lookup("#" + AbrechnungsMaske.ID_GRUPPE);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ComboBox<Blueprint> blaupauseAuswahl(Region maske) {
+        return (ComboBox<Blueprint>) maske.lookup("#" + AbrechnungsMaske.ID_BLAUPAUSE);
+    }
+
+    @SuppressWarnings("unchecked")
+    private int zaehlerstand(Region maske, String kennung) {
+        Spinner<Integer> zaehler = (Spinner<Integer>) maske.lookup("#" + kennung);
+        assertNotNull(zaehler, "Kein Zaehler mit der Kennung " + kennung);
+        return zaehler.getValue();
+    }
 
     private Region maskeAufbauen() {
         AbrechnungsMaske maske = new AbrechnungsMaske(new JavaFxUiFactory(), texte, meldungen, datenbank,
