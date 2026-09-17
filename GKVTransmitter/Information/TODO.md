@@ -32,6 +32,65 @@ Liste".
 
 ---
 
+# Stand am 17.09.2026
+
+**Block F und Block G sind vollständig.** Was daran hing, ist mit erledigt:
+D2 (Zertifikatswarnung), D3 (Versionsangabe) und D5 (Umsatzsteuer, wenn auch
+anders als dort angenommen).
+
+| | Punkt | Stand |
+|---|---|---|
+| **A1** | Warnungen sichtbar machen | ✅ |
+| **A2** | Beanstandungen erklären statt nur benennen | ⬜ offen |
+| **A3** | Positionsnummer gegen Anlage 3 § 8.2.6 | ✅ |
+| **B1** | Betriebsdaten | ✅ |
+| **B2** | Kostenträgerdatei einlesen | ✅ (ohne Aufrufer, siehe unten) |
+| **B3** | Auftragsdatei und physikalischer Dateiname | ⛔ zurückgestellt, GGT Anlage 4 fehlt |
+| **C1** | Übermittlungsprotokoll und Sicherungskopie | ✅ |
+| **C2** | Verarbeitungskennzeichen | 🟡 zur Hälfte — Prüfen ja, Korrekturrechnung erzeugen nein |
+| **D1** | Trockenlauf als Menüpunkt | ⬜ offen |
+| **D2** | Zertifikats-Ablaufwarnung | ✅ mit G3 |
+| **D3** | Versionsangabe sichtbar machen | ✅ mit G1 |
+| **D4** | Belegnummer gegen Doppelvergabe | ⬜ offen |
+| **D5** | Umsatzsteuer | ✅ mit F3 |
+| **D6** | Checkstyle: die übrigen Warnungen | 🟡 von 10 auf 9, Beispiel in `ServiceProviderFieldPopulator` |
+| **E1–E3** | Dokumentation | ⬜ offen |
+| **F1–F6** | Dienstleisterprofil | ✅ vollständig |
+| **G1–G3** | Wartung | ✅ vollständig |
+
+Gemessen am 17.09.2026: **549 Tests grün** (264 Kern, 285 Oberfläche),
+Checkstyle **9** Warnungen.
+
+## Drei Befunde, die beim Abarbeiten dazugekommen sind
+
+Sie sind keine Aufgaben, sondern Feststellungen — notiert, damit sie nicht
+wieder als Annahme durchgehen:
+
+1. **Das `UST`-Segment trug nie einen Umsatzsteuersatz.** Die Anwendung schrieb
+   `UST+19'`; die 19 lag im Feld der Steuernummer. Siehe F3 — die Quelle war
+   wieder `Valide.DTA`, dieselbe Datei, die schon den Abrechnungscode 61 und
+   den Leistungsbereich H eingetragen hatte.
+2. **Eine Anlage 3 in Version 21 liegt dem Projekt nicht vor.** Geprüft wird
+   also gegen Schlüsselverzeichnisse aus der künftigen Fassung, während nach
+   Version 21 gesendet wird. Vermutlich unschädlich — aber es war eine Annahme.
+3. **`Kostentraegerdatei` hat in der Anwendung keinen Aufrufer.** Die Klasse
+   kann seit B2 lesen, niemand ruft sie. Dasselbe Muster wie bei
+   `nextDtaInterchangeReference`. Deshalb steht die Kostenträgerdatei im
+   Wartungskalender ohne Datum.
+
+## Zwei Termine, die jetzt feststehen
+
+| Was | Wann |
+|---|---|
+| Anlage 1 und Anlage 3 **Version 22 anwenden** | **01.02.2027** |
+| Anlage 1 **Version 21 verliert Gültigkeit** | **30.04.2027** |
+
+Beide stehen auf dem Deckblatt der Version 22 und waren vor G1 nirgends
+notiert. Die Anwendung zeigt sie jetzt unter „Wartung" und meldet sie sechs
+Wochen vorher beim Start.
+
+---
+
 # Block A — Der Prüfbericht erreicht die Anwenderin
 
 Der wichtigste Block, weil ohne ihn jede weitere Prüfregel ins Leere warnt.
@@ -874,18 +933,25 @@ C2 Verarbeitungskennzeichen    (unabhängig)
 D1 Trockenlauf · D3 Version · D4 Belegnummer · D6 Checkstyle    (unabhängig)
 ```
 
-**Anfangen mit A1.** Nicht weil es das größte ist, sondern weil A2, A3 und C1
-daran hängen und weil es heute ein echter Fehler ist: Eine Warnung, die
-niemand sieht, ist keine Warnung.
+Der Baum oben ist der ursprüngliche Plan; abgearbeitet wurde in der Reihenfolge
+A1 · A3 · B1 · B2 · C2 · C1 · F1 · F3+F4 · F6 · F2 · F5 · G1 · G2 · G3.
 
-**Danach B1**, weil daran der halbe Rest hängt — B3, F1 bis F6, D2 und über
-das Zertifikatsdatum auch G3.
+## Was jetzt noch dran wäre
 
-**G1 lässt sich jederzeit dazwischenschieben**, es hängt an nichts und
-beantwortet eine Frage, die sonst niemand stellt: auf welchem Stand stehen wir
-eigentlich.
+| Nächstes | Warum | Größe |
+|---|---|---|
+| **D1 Trockenlauf** | Hängt an nichts, das Gegenstück (`SimulierterKassenTransport`) ist gebaut und nur über Tests erreichbar. Die beste Übung vor der Erprobung. | S |
+| **D4 Belegnummer** | Vor dem Echtbetrieb ohnehin fällig, `DtaCounter` liegt vor — **und sie ist die verbliebene Sperre für die zweite Hälfte von C2.** | S |
+| **A2 Beanstandungen erklären** | Der größte verbleibende Gewinn für die Anwenderin, aber sorgfältige PDF-Arbeit: Fundstelle und Handlungsanweisung für rund 45 Codes. | M–L |
+| **D6 Checkstyle** | Noch 9 Warnungen. `ServiceProviderFieldPopulator` zeigt, wie es geht; `PatientFieldPopulator` und `Feldbau` fehlen. Eingriff in die Entitäten, also bewusst. | M |
+| **Block E Dokumentation** | E1 und E2 gehen hier; **E3 braucht LibreOffice und damit Windows.** | M |
 
-Größenordnung des Ganzen: **etwa sechzehn bis vierzig Arbeitstage** — Block A
-bis E rund elf bis dreißig, Block F etwa drei bis sechs, Block G etwa zwei bis
-vier. Danach ist das Programm technisch vollständig, meldet seine Wartung
-selbst und wartet nur noch auf Zertifikat, IK und die Zulassung der Kasse.
+**Nicht mehr machbar ohne etwas von außen:** B3 (GGT Anlage 4 fehlt) und die
+Korrekturrechnung in C2, solange es keine echten Rechnungs- und Belegnummern
+gibt — letzteres löst D4.
+
+Verbrauchte Größenordnung: Block F etwa drei bis sechs Tage, Block G zwei bis
+vier — beide sind erledigt. Es bleiben rund **sechs bis fünfzehn Arbeitstage**
+für A2, D1, D4, D6 und Block E. Danach ist das Programm technisch vollständig,
+meldet seine Wartung selbst und wartet nur noch auf Zertifikat, IK und die
+Zulassung der Kasse.
