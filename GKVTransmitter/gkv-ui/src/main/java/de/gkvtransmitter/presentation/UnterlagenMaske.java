@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.Objects;
 
 import de.gkvtransmitter.dta.DtaFactory;
+import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.wartung.Unterlage;
+import de.gkvtransmitter.wartung.Unterlagenpruefung;
 import de.gkvtransmitter.wartung.Unterlagenstand;
 import de.gkvtransmitter.util.AppMessages;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -35,6 +38,8 @@ public class UnterlagenMaske {
     public static final String ID_TERMIN = "unterlagen-termin";
     /** Kennung der Liste. */
     public static final String ID_LISTE = "unterlagen-liste";
+    /** Kennung der Schaltflaeche, die im Netz nachsieht. */
+    public static final String ID_PRUEFEN = "unterlagen-pruefen";
 
     private static final DateTimeFormatter TAG = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
@@ -42,19 +47,34 @@ public class UnterlagenMaske {
     private final AppMessages texte;
     private final Unterlagenstand stand;
     private final LocalDate heute;
+    private final Meldungen meldungen;
+    /**
+     * Woher der Seiteninhalt kommt.
+     *
+     * <p>Als Wert im Konstruktor und nicht fest verdrahtet: Ein Test, der eine
+     * Webseite braucht, prueft das Netz und nicht den Quelltext.</p>
+     */
+    private final Unterlagenpruefung.Seitenabruf abruf;
 
     public UnterlagenMaske(UiFactory bausteine, AppMessages texte, Unterlagenstand stand, LocalDate heute) {
+        this(bausteine, texte, stand, heute, null, new de.gkvtransmitter.wartung.Netzabruf());
+    }
+
+    public UnterlagenMaske(UiFactory bausteine, AppMessages texte, Unterlagenstand stand, LocalDate heute,
+            Meldungen meldungen, Unterlagenpruefung.Seitenabruf abruf) {
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
         this.stand = Objects.requireNonNull(stand, "stand must not be null");
         this.heute = Objects.requireNonNull(heute, "heute must not be null");
+        this.meldungen = meldungen;
+        this.abruf = Objects.requireNonNull(abruf, "abruf must not be null");
     }
 
     /** Die Uebersicht. */
     public Region maske() {
         VBox wurzel = new VBox(16);
         wurzel.getStyleClass().add("maske");
-        wurzel.getChildren().addAll(kopf(), sendeversion(), termin(), liste());
+        wurzel.getChildren().addAll(kopf(), sendeversion(), termin(), pruefleiste(), liste());
         if (stand.quelle() != null) {
             Label quelle = bausteine.createLabel(
                     String.format(texte.get("documents.source"), stand.quelle()));
@@ -63,6 +83,85 @@ public class UnterlagenMaske {
             wurzel.getChildren().add(quelle);
         }
         return wurzel;
+    }
+
+    /**
+     * Der Knopf, der im Netz nachsieht - und die Zeile mit dem Ergebnis.
+     *
+     * <p><b>Auf Knopfdruck, nicht im Hintergrund.</b> Eine Anwendung, die
+     * Patientendaten haelt, ruft nicht unaufgefordert im Netz an.</p>
+     */
+    private Region pruefleiste() {
+        Button pruefen = bausteine.createButton(texte.get("documents.check"));
+        pruefen.setId(ID_PRUEFEN);
+        pruefen.getStyleClass().add("schaltflaeche-still");
+
+        Label ergebnis = bausteine.createLabel("");
+        ergebnis.setId(ID_ERGEBNIS);
+        ergebnis.getStyleClass().add("feld-hinweis");
+        ergebnis.setWrapText(true);
+
+        pruefen.setOnAction(handlung -> pruefeImNetz(pruefen, ergebnis));
+
+        HBox leiste = new HBox(10, pruefen, ergebnis);
+        leiste.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        return leiste;
+    }
+
+    /** Kennung der Zeile mit dem Ergebnis der Pruefung. */
+    public static final String ID_ERGEBNIS = "unterlagen-ergebnis";
+
+    /**
+     * Sieht nach - auf einem eigenen Faden.
+     *
+     * <p>Der Abruf hat zwei Zeitgrenzen von je zehn Sekunden. Liefe er auf dem
+     * Zeichenfaden, waere die Oberflaeche so lange eingefroren, und das ist
+     * von einem Absturz nicht zu unterscheiden. Der Knopf wird derweil
+     * abgeschaltet, damit nicht zehnmal hintereinander angefragt wird.</p>
+     */
+    private void pruefeImNetz(Button knopf, Label ergebnis) {
+        knopf.setDisable(true);
+        ergebnis.setText(texte.get("documents.checking"));
+        Thread faden = new Thread(() -> {
+            Unterlagenpruefung.Ergebnis befund =
+                    new Unterlagenpruefung(stand, abruf).pruefe();
+            javafx.application.Platform.runLater(() -> {
+                knopf.setDisable(false);
+                zeigeBefund(befund, ergebnis);
+            });
+        }, "unterlagen-pruefung");
+        faden.setDaemon(true);
+        faden.start();
+    }
+
+    /**
+     * Was die Pruefung ergeben hat.
+     *
+     * <p>Drei Lagen, drei Saetze - und <b>"nichts erkannt" ist nicht "alles
+     * aktuell"</b>. Wer die beiden gleich behandelt, meldet Aktualitaet, weil
+     * eine Webseite umgebaut wurde.</p>
+     */
+    void zeigeBefund(Unterlagenpruefung.Ergebnis befund, Label ergebnis) {
+        String text;
+        if (!befund.erreichbar()) {
+            text = texte.get("documents.checkFailed")
+                    + (befund.hinweis() == null ? "" : " " + befund.hinweis());
+        } else if (befund.nichtsErkannt()) {
+            text = texte.get("documents.checkUnrecognised");
+        } else if (befund.gibtNeueres()) {
+            text = String.format(texte.get("documents.checkNewer"), befund.neuere().size())
+                    + befund.neuere().stream()
+                            .map(datei -> System.lineSeparator() + "· " + datei.dateiname())
+                            .reduce("", String::concat);
+        } else {
+            text = texte.get("documents.checkCurrent");
+        }
+        ergebnis.setText(text);
+        // Nur melden, wenn es etwas zu melden gibt: Eine Erfolgsmeldung nach
+        // jedem Klick auf "nachsehen" wird nicht mehr gelesen.
+        if (meldungen != null && befund.gibtNeueres()) {
+            meldungen.hinweis(text);
+        }
     }
 
     private Region kopf() {

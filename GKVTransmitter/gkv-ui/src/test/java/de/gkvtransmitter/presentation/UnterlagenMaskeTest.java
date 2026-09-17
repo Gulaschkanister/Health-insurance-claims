@@ -1,6 +1,7 @@
 package de.gkvtransmitter.presentation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import de.gkvtransmitter.dta.DtaFactory;
 import de.gkvtransmitter.util.AppMessages;
+import de.gkvtransmitter.wartung.Unterlagenpruefung;
 import de.gkvtransmitter.wartung.Unterlagenstand;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
@@ -95,6 +97,78 @@ class UnterlagenMaskeTest {
 
             assertTrue(termin.contains("30.04.2027"), termin);
             assertTrue(termin.contains("Gültigkeit"), termin);
+        });
+    }
+
+    /**
+     * Die Pruefung im Netz - ohne Netz.
+     *
+     * <p>Der Seitenabruf ist ein Konstruktorwert; die Auswertung wird hier
+     * unmittelbar aufgerufen, damit kein Faden und keine Wartezeit im Spiel
+     * ist. Geprueft wird, was auf dem Schirm landet.</p>
+     */
+    private Label befundzeile(Unterlagenpruefung.Ergebnis befund) {
+        UnterlagenMaske maske = new UnterlagenMaske(new JavaFxUiFactory(), texte,
+                Unterlagenstand.lade(), HEUTE, null, adresse -> "");
+        Region wurzel = maske.maske();
+        Label zeile = (Label) wurzel.lookup("#" + UnterlagenMaske.ID_ERGEBNIS);
+        assertNotNull(zeile, "Keine Zeile fuer das Ergebnis");
+        maske.zeigeBefund(befund, zeile);
+        return zeile;
+    }
+
+    @Test
+    @DisplayName("meldet bei unveraendertem Stand, dass alles aktuell ist")
+    void meldetAktuell() {
+        JavaFxLaufzeit.aufFxFaden(() -> assertEquals(texte.get("documents.checkCurrent"),
+                befundzeile(new Unterlagenpruefung.Ergebnis(true, java.util.List.of(), 4, null))
+                        .getText()));
+    }
+
+    @Test
+    @DisplayName("nennt eine neuere Fassung beim Dateinamen")
+    void nenntNeuereFassung() {
+        Unterlagenpruefung.Gefunden neu = new Unterlagenpruefung.Gefunden(
+                "Anlage_1_TP5_V23_20280101.pdf", "23", LocalDate.of(2028, 1, 1));
+
+        JavaFxLaufzeit.aufFxFaden(() -> assertTrue(
+                befundzeile(new Unterlagenpruefung.Ergebnis(true, java.util.List.of(neu), 5, null))
+                        .getText().contains("Anlage_1_TP5_V23_20280101.pdf")));
+    }
+
+    /**
+     * Ein Fehlschlag haelt nichts auf - und sagt das auch.
+     *
+     * <p>Sonst stuende die Abrechnung still, weil eine Webseite sich geaendert
+     * hat.</p>
+     */
+    @Test
+    @DisplayName("meldet einen Fehlschlag als Hinweis, nicht als Fehler")
+    void meldetFehlschlag() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            String text = befundzeile(new Unterlagenpruefung.Ergebnis(
+                    false, java.util.List.of(), 0, "Kein Netz")).getText();
+
+            assertTrue(text.contains("hält nichts auf"), text);
+            assertTrue(text.contains("Kein Netz"), text);
+        });
+    }
+
+    /**
+     * Eine umgebaute Seite ist nicht dasselbe wie ein aktueller Stand.
+     *
+     * <p>Wer die beiden gleich behandelt, meldet Aktualitaet, weil eine
+     * Webseite umgebaut wurde.</p>
+     */
+    @Test
+    @DisplayName("unterscheidet eine umgebaute Seite von \"alles aktuell\"")
+    void umgebauteSeiteIstNichtAktuell() {
+        JavaFxLaufzeit.aufFxFaden(() -> {
+            String text = befundzeile(new Unterlagenpruefung.Ergebnis(
+                    true, java.util.List.of(), 0, null)).getText();
+
+            assertTrue(text.contains("von Hand"), text);
+            assertFalse(text.equals(texte.get("documents.checkCurrent")));
         });
     }
 

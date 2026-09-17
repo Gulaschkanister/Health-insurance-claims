@@ -65,7 +65,8 @@ public final class Unterlagenstand {
                     datum(eintrag, "stand"),
                     datum(eintrag, "anzuwendenAb"),
                     datum(eintrag, "gueltigBis"),
-                    text(eintrag, "bemerkung"))));
+                    text(eintrag, "bemerkung"),
+                    text(eintrag, "quellname"))));
             return new Unterlagenstand(gelesen, text(wurzel, "quelle"));
         } catch (Exception unlesbar) {
             return new Unterlagenstand(List.of(), null);

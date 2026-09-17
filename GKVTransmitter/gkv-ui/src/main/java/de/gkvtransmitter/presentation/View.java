@@ -221,7 +221,8 @@ public class View {
         hauptfenster.ergaenzeBereich(messages.get("nav.documents"),
                 () -> hauptfenster.zeige(new UnterlagenMaske(componentFactory, messages,
                         de.gkvtransmitter.wartung.Unterlagenstand.lade(),
-                        java.time.LocalDate.now()).maske()));
+                        java.time.LocalDate.now(), meldungen,
+                        new de.gkvtransmitter.wartung.Netzabruf()).maske()));
 
         // Das Uebermittlungsprotokoll ist Pflicht (Anlage 1, Abschnitt 3
         // Absatz 2) und zeigt zugleich, worauf noch Geld aussteht.

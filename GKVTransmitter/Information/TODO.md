@@ -712,12 +712,52 @@ welches Anwendungsdatum — gespeist aus einer gepflegten Liste zu den PDF unter
 **Fertig, wenn:** eine Seite zeigt, welche Fassung gilt, welche vorliegt und ab
 wann eine neue anzuwenden ist. — ✅
 
-## G2. Auf neue Fassungen prüfen — auf Knopfdruck
+## G2. Auf neue Fassungen prüfen — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Größe** | M |
 | **Hängt an** | G1 |
+| **Stand** | **umgesetzt**: Knopf „Auf neue Unterlagen prüfen" auf derselben Seite, `java.net.http.HttpClient`, keine neue Bibliothek |
+
+Alle drei Festlegungen sind so umgesetzt, wie sie unten stehen. Dazu kommt
+eine vierte, die sich beim Bauen ergab: **der Abruf läuft auf einem eigenen
+Faden.** Er hat zwei Zeitgrenzen von je zehn Sekunden; auf dem Zeichenfaden
+wäre die Oberfläche so lange eingefroren, und das ist von einem Absturz nicht
+zu unterscheiden.
+
+### Der erste Lauf gegen die echte Seite hat die Umsetzung widerlegt
+
+Die Prüfung war fertig, sieben Tests grün — und meldete gegen
+`gkv-datenaustausch.de` **achtzehn neuere Fassungen**, darunter
+`Anhang_03_Anlage_1_TP5_20120912.pdf`. Vierzehn Jahre alt.
+
+Zwei Dinge waren angenommen und beide falsch:
+
+| Annahme | Wirklichkeit |
+|---|---|
+| Die Seite listet die aktuellen Fassungen | Sie ist ein **Archiv** und führt jede Fassung seit 2008, von `Anlage_1_TP5_V7_20110610.pdf` an |
+| Die Dateinamen dort sind unsere | `Anhang_3_Kostentraegerdatei_V10_20260414.pdf` heißt dort `Anhang_03_Anlage_1_TP5_V10_20260414.pdf` |
+
+Verglichen wird jetzt **je Unterlage** statt gegen „alles Hinterlegte", über
+einen neuen Eintrag `quellname` in `unterlagen.json` — den Namensanfang, unter
+dem dieselbe Unterlage an der Quelle steht. **Ohne `quellname` wird eine
+Unterlage nicht geprüft**, statt falsch verglichen zu werden; `Anhang 2` führt
+kein Datum im Dateinamen und ist deshalb ausgenommen.
+
+Unbekannte Namen werden übergangen, nicht gemeldet: Auf der Seite stehen
+achtundneunzig Dateien, die meisten gehen diese Anwendung nichts an.
+
+> **Nachgeprüft am 17.09.2026 gegen die echte Seite:** erreichbar, 98 Dateien
+> erkannt, **nichts Neueres.** Das Projekt hält von allem, was es verfolgt, den
+> jüngsten Stand.
+
+### „Nichts erkannt" ist nicht „alles aktuell"
+
+Der dritte Zustand neben *aktuell* und *neuer*: Die Seite war erreichbar, aber
+kein Dateiname passte auf das Muster. Wer die beiden gleich behandelt, **meldet
+Aktualität, weil eine Webseite umgebaut wurde** — und der Unterschied
+entscheidet darüber, ob jemand nachsieht.
 
 Die Anlagen stehen frei auf `gkv-datenaustausch.de`. Ein Abgleich „gibt es
 dort etwas Neueres als das, was hier liegt?" ist machbar — **ohne neue
@@ -738,7 +778,7 @@ Sprachumfang.
 
 **Fertig, wenn:** der Knopf bei unverändertem Stand „alles aktuell" meldet, bei
 einer neueren Fassung deren Datum nennt, und bei fehlendem Netz einen Hinweis
-gibt, der nichts blockiert.
+gibt, der nichts blockiert. — ✅
 
 ## G3. Wartungskalender in der Anwendung
 

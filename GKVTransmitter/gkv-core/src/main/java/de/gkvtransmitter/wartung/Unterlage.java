@@ -17,9 +17,25 @@ import java.time.LocalDate;
  * @param anzuwendenAb ab wann sie anzuwenden ist
  * @param gueltigBis   bis wann sie gilt, oder {@code null}
  * @param bemerkung    was dazu zu wissen ist, oder {@code null}
+ * @param quellname    Namensanfang derselben Unterlage auf der Bezugsquelle,
+ *                     oder {@code null} - dann wird sie nicht geprueft
  */
 public record Unterlage(String kennung, String titel, String datei, String version,
-        LocalDate stand, LocalDate anzuwendenAb, LocalDate gueltigBis, String bemerkung) {
+        LocalDate stand, LocalDate anzuwendenAb, LocalDate gueltigBis, String bemerkung,
+        String quellname) {
+
+    /**
+     * Ob sich diese Unterlage auf der Bezugsquelle wiederfinden laesst.
+     *
+     * <p>Die Namen dort weichen von den unseren ab:
+     * {@code Anhang_3_Kostentraegerdatei_V10_20260414.pdf} heisst auf
+     * {@code gkv-datenaustausch.de} {@code Anhang_03_Anlage_1_TP5_V10_...}.
+     * Ohne diesen Namen bleibt die Unterlage von der Pruefung ausgenommen -
+     * <b>lieber gar nicht geprueft als falsch verglichen.</b></p>
+     */
+    public boolean istPruefbar() {
+        return quellname != null && !quellname.isBlank();
+    }
 
     /** Ob diese Fassung an einem Tag bereits anzuwenden ist. */
     public boolean giltAm(LocalDate tag) {

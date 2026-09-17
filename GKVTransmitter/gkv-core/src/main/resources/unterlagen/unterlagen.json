@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Die verbindlichen Unterlagen, die dem Projekt vorliegen. Jede Angabe stammt vom Deckblatt der jeweiligen PDF unter Information/ - nachgetragen am 17.09.2026. Wer eine neue Fassung ablegt, traegt sie hier nach; die Anwendung zeigt daraufhin den neuen Stand und den neuen Termin. Ohne diese Datei wuesste niemand, auf welchem Stand die Anwendung steht.",
+  "_hinweis": "Die verbindlichen Unterlagen, die dem Projekt vorliegen. Jede Angabe stammt vom Deckblatt der jeweiligen PDF unter Information/ - nachgetragen am 17.09.2026. Wer eine neue Fassung ablegt, traegt sie hier nach; die Anwendung zeigt daraufhin den neuen Stand und den neuen Termin. 'quellname' ist der Namensanfang, unter dem dieselbe Unterlage auf gkv-datenaustausch.de steht - er weicht von unserem Dateinamen ab und ist noetig, damit die Pruefung auf neue Fassungen die richtigen Dateien vergleicht. Ohne quellname wird eine Unterlage nicht geprueft.",
   "quelle": "https://www.gkv-datenaustausch.de/leistungserbringer/sonstige_leistungserbringer/sonstige_leistungserbringer.jsp",
   "unterlagen": [
     {
@@ -10,7 +10,8 @@
       "stand": "2026-01-15",
       "anzuwendenAb": "2025-10-01",
       "gueltigBis": "2027-04-30",
-      "bemerkung": "Die Fassung, nach der die Anwendung heute sendet."
+      "bemerkung": "Die Fassung, nach der die Anwendung heute sendet.",
+      "quellname": "Anlage_1_TP5"
     },
     {
       "kennung": "anlage-1-v22",
@@ -19,7 +20,8 @@
       "version": "22",
       "stand": "2026-05-21",
       "anzuwendenAb": "2027-02-01",
-      "bemerkung": "Liegt vor. Ab dem Anwendungsdatum gilt sie; Version 21 verliert am 30.04.2027 ihre Gueltigkeit."
+      "bemerkung": "Liegt vor. Ab dem Anwendungsdatum gilt sie; Version 21 verliert am 30.04.2027 ihre Gueltigkeit.",
+      "quellname": "Anlage_1_TP5"
     },
     {
       "kennung": "anlage-3-v22",
@@ -28,7 +30,8 @@
       "version": "22",
       "stand": "2026-05-21",
       "anzuwendenAb": "2027-02-01",
-      "bemerkung": "Eine Fassung in Version 21 liegt dem Projekt nicht vor. Die Schluesselverzeichnisse, gegen die geprueft wird, stammen also aus der kuenftigen Fassung."
+      "bemerkung": "Eine Fassung in Version 21 liegt dem Projekt nicht vor. Die Schluesselverzeichnisse, gegen die geprueft wird, stammen also aus der kuenftigen Fassung.",
+      "quellname": "Anlage_3_TP5"
     },
     {
       "kennung": "anhang-1",
@@ -36,7 +39,8 @@
       "datei": "Anhang_1_Datenuebermittlung_20170831.pdf",
       "version": "—",
       "stand": "2017-08-31",
-      "anzuwendenAb": "2017-09-01"
+      "anzuwendenAb": "2017-09-01",
+      "quellname": "Anhang_1_Anlage_1_TP5"
     },
     {
       "kennung": "anhang-2",
@@ -44,7 +48,8 @@
       "datei": "Anhang_2_Pruefverfahren.pdf",
       "version": "—",
       "stand": "2003-11-10",
-      "anzuwendenAb": "2003-11-10"
+      "anzuwendenAb": "2003-11-10",
+      "bemerkung": "Ohne Datum im Dateinamen der Bezugsquelle - die Pruefung auf neue Fassungen laesst ihn deshalb aus und meldet ihn nicht faelschlich als aktuell."
     },
     {
       "kennung": "anhang-3",
@@ -52,7 +57,8 @@
       "datei": "Anhang_3_Kostentraegerdatei_V10_20260414.pdf",
       "version": "10",
       "stand": "2026-04-14",
-      "anzuwendenAb": "2027-02-01"
+      "anzuwendenAb": "2027-02-01",
+      "quellname": "Anhang_03_Anlage_1_TP5"
     }
   ]
 }
