@@ -66,10 +66,35 @@ class AblaufTest {
                         + String.join("\n", protokoll));
     }
 
+    /**
+     * Die Wartungsseiten, an einem Betrieb mit ablaufendem Zertifikat.
+     *
+     * <p>Block G ist die Bedingung, unter der der eigene Uebermittlungsweg
+     * ueberhaupt sinnvoll ist - und seine drei Seiten haengen an Daten aus
+     * drei Quellen: den Betriebsdaten, dem Stand der Unterlagen und dem
+     * Dienstleisterprofil. Ob die zusammenkommen, sagt kein Maskentest.</p>
+     */
+    @Test
+    @DisplayName("Betriebsdaten erfassen, Wartung und Unterlagenstand ansehen")
+    void wartung() throws Exception {
+        Bedienung bedienung = Bedienung.aufbauen(Path.of("target", "wartung").toAbsolutePath(), false);
+
+        bedienung.fuehreAus(zeilen("/ablaeufe/wartung.txt"));
+
+        assertTrue(bedienung.protokoll().stream()
+                        .anyMatch(zeile -> zeile.startsWith("oeffne Registrierungsblatt")),
+                "Der Ablauf ist nicht bis zum Registrierungsblatt gekommen:\n"
+                        + String.join("\n", bedienung.protokoll()));
+    }
+
     private static List<String> zeilen() throws Exception {
-        try (var quelle = AblaufTest.class.getResourceAsStream(ABLAUF)) {
+        return zeilen(ABLAUF);
+    }
+
+    private static List<String> zeilen(String ablauf) throws Exception {
+        try (var quelle = AblaufTest.class.getResourceAsStream(ablauf)) {
             if (quelle == null) {
-                throw new AssertionError("Kein Ablauf unter " + ABLAUF);
+                throw new AssertionError("Kein Ablauf unter " + ablauf);
             }
             return new String(quelle.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
                     .lines().toList();

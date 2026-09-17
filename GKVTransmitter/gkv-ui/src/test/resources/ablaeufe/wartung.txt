@@ -1,0 +1,18 @@
+# Die beiden Seiten aus Block G, mit einem Zertifikat, das bald ablaeuft.
+oeffne Betriebsdaten
+setze betrieb-name Hebammenpraxis Bremen
+setze betrieb-ik 261914007
+setze betrieb-zertifikat 2026-10-15
+klick betrieb-speichern
+
+oeffne Wartung
+bild 01-wartung
+erwarte Zertifikat erneuern
+
+oeffne Stand der Unterlagen
+bild 02-unterlagen
+erwarte 01.02.2027
+
+oeffne Registrierungsblatt
+bild 03-registrierungsblatt
+erwarte Registrierungsblatt

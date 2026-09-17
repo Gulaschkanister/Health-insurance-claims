@@ -137,6 +137,7 @@ public class View {
         Scene scene = componentFactory.createScene(hauptfenster.wurzel(), width, height);
         scene.getStylesheets().add(getClass().getResource(STYLESHEET).toExternalForm());
         Platform.runLater(this::seedIfEmpty);
+        Platform.runLater(this::meldeFaelligkeiten);
         return scene;
     }
 
@@ -180,6 +181,35 @@ public class View {
     }
 
     /**
+     * Meldet beim Start, was innerhalb von sechs Wochen ansteht.
+     *
+     * <p><b>Und schweigt sonst.</b> Eine Meldung, die bei jedem Start
+     * erscheint, wird nach der dritten Woche nicht mehr gelesen - dann meldet
+     * sich auch das Zertifikat vergeblich, und genau darum geht es hier.</p>
+     *
+     * <p>Ueber {@code Platform.runLater} wie das Anlegen der Testdaten: Die
+     * Meldungsecke haengt erst im Knotenbaum, wenn die Szene steht.</p>
+     */
+    private void meldeFaelligkeiten() {
+        java.util.List<de.gkvtransmitter.wartung.Faelligkeit> anstehend =
+                new WartungsMaske(componentFactory, messages, controller.getDatabase(),
+                        java.time.LocalDate.now()).kalender()
+                        .anstehende(java.time.LocalDate.now());
+        if (anstehend.isEmpty()) {
+            return;
+        }
+        StringBuilder text = new StringBuilder(messages.get("maintenance.startupNotice"));
+        for (de.gkvtransmitter.wartung.Faelligkeit faelligkeit : anstehend) {
+            text.append(System.lineSeparator()).append("· ").append(faelligkeit.was());
+            if (faelligkeit.hatDatum()) {
+                text.append(" (").append(faelligkeit.faelligAm()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"))).append(')');
+            }
+        }
+        meldungen.hinweis(text.toString());
+    }
+
+    /**
      * Fuellt die Seitenleiste.
      *
      * <p>Die Reihenfolge ist die des Arbeitsablaufs: zuerst das, wozu das
@@ -215,6 +245,12 @@ public class View {
                 () -> hauptfenster.zeige(new RegistrierungsblattMaske(componentFactory, messages,
                         meldungen, controller.getDatabase(),
                         de.gkvtransmitter.util.Anwendungsverzeichnis::basis).maske()));
+
+        // Die Wartung schrumpft damit auf eine Aufgabe im Jahr - das
+        // Zertifikat. Alles andere meldet sich hier von selbst.
+        hauptfenster.ergaenzeBereich(messages.get("nav.maintenance"),
+                () -> hauptfenster.zeige(new WartungsMaske(componentFactory, messages,
+                        controller.getDatabase(), java.time.LocalDate.now()).maske()));
 
         // Veralten faellt nicht auf, solange nichts es zeigt: Die Anlagen
         // unter Information/ waren am 07.09.2026 zwei Monate ueberholt.

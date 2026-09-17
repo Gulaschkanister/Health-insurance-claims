@@ -356,7 +356,7 @@ Jeder Punkt hier ist **S**, sofern nichts anderes steht.
 | | Was | Warum jetzt | Hängt an |
 |---|---|---|---|
 | **D1** | **Trockenlauf als Menüpunkt.** `SimulierterKassenTransport` existiert, ist aber nur über Tests erreichbar. Ein Knopf „einmal durchspielen, ohne zu senden". | Die beste Übung vor der Erprobung — und sie kostet nichts, weil das Gegenstück schon gebaut ist. | — |
-| **D2** | **Zertifikats-Ablaufwarnung.** Die Anwendung kennt das Datum aus B1 und erinnert rechtzeitig. | Einer der drei Punkte, die die Wartungslast klein halten. | B1 |
+| **D2** ✅ | ~~**Zertifikats-Ablaufwarnung.**~~ **Erledigt mit G3.** Die Anwendung kennt das Datum aus B1 und erinnert rechtzeitig. | Einer der drei Punkte, die die Wartungslast klein halten. | B1 |
 | **D3** ✅ | ~~**Versionsangabe sichtbar machen.**~~ **Erledigt mit G1.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
 | **D4** | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
 | **D5** ✅ | ~~**Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment.~~ **Erledigt mit F3 — und die Frage war falsch gestellt:** das `UST`-Segment trägt keinen Satz, sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt 5.5.2). | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
@@ -780,12 +780,45 @@ Sprachumfang.
 einer neueren Fassung deren Datum nennt, und bei fehlendem Netz einen Hinweis
 gibt, der nichts blockiert. — ✅
 
-## G3. Wartungskalender in der Anwendung
+## G3. Wartungskalender in der Anwendung — ✅ erledigt am 17.09.2026
 
 | | |
 |---|---|
 | **Größe** | S |
 | **Hängt an** | G1, B1 (Zertifikatsdatum), B2 (Kostenträgerdatei) |
+| **Stand** | **umgesetzt**: Menüpunkt „Wartung" und eine Meldung beim Start, sobald etwas innerhalb von sechs Wochen ansteht |
+
+Vier Einträge, aus drei Quellen — und **die beiden ohne Datum stehen mit
+drauf**:
+
+| Was | Rhythmus | Woher das Datum kommt |
+|---|---|---|
+| Zertifikat erneuern | jährlich, Antrag 1–2 Wochen vorher | Betriebsdaten (B1) |
+| Anlage 1 / Anlage 3 / Anhang 3 anwenden | bei neuer Fassung | Deckblatt, über G1 |
+| Kostenträgerdatei erneuern | vierteljährlich | **kein Datum** — die Anwendung liest die Datei noch nicht ein |
+| Positionsnummernverzeichnis | bei Vertragsänderung | **kein Datum** — das Verzeichnis liegt dem Projekt nicht vor |
+
+> **Ein Kalender, der nur zeigt, was er weiß, sieht vollständig aus und ist es
+> nicht.** Deshalb stehen die undatierten Punkte in der Liste, jeder mit dem
+> Grund, warum kein Datum dasteht. Der erste davon ist selbst ein Befund:
+> `Kostentraegerdatei` kann die Datei seit B2 lesen und **hat in der Anwendung
+> keinen Aufrufer** — dasselbe Muster wie bei `nextDtaInterchangeReference`,
+> das die geprüfte Methode hatte und niemand rief.
+
+**Die Seite schweigt**, solange nichts innerhalb von sechs Wochen ansteht.
+Eine Meldung, die bei jedem Start erscheint, wird nach der dritten Woche nicht
+mehr gelesen — dann meldet sich auch das Zertifikat vergeblich. **Ein
+überschrittener Termin bleibt dagegen stehen**: Er ist dringender als einer,
+der bevorsteht, und verschwände sonst still, genau dann, wenn er zählt.
+
+**Damit ist auch D2 erledigt** (Zertifikats-Ablaufwarnung).
+
+### Am Bild aufgefallen
+
+Der erste Durchlauf zeigte rechts „kein Dat…" — die linke Spalte wächst mit
+dem Text und hatte sich den Platz genommen. Ein abgeschnittener Termin ist
+schlimmer als eine schmalere Zeile. Kein Test hätte das gefunden; nur das
+Hinsehen.
 
 Eine Seite, die zeigt, **was wann fällig ist** — gespeist aus dem, was das
 Programm ohnehin weiß:
@@ -798,7 +831,7 @@ Programm ohnehin weiß:
 | Positionsnummernverzeichnis | bei Vertragsänderung | nur als Merkposten — kein Datum bekannt |
 
 **Fertig, wenn:** die Seite beim Start eine Fälligkeit anzeigt, sobald eine
-innerhalb der nächsten sechs Wochen ansteht, und sonst schweigt.
+innerhalb der nächsten sechs Wochen ansteht, und sonst schweigt. — ✅
 
 > **Damit schrumpft die Wartung auf eine Aufgabe im Jahr** — das Zertifikat
 > erneuern. Alles andere meldet sich selbst. Genau das ist die Bedingung,

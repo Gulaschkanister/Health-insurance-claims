@@ -249,6 +249,9 @@ public class UnterlagenMaske {
 
         Label zustand = bausteine.createLabel(zustandVon(unterlage));
         zustand.getStyleClass().add(unterlage.abgelaufen(heute) ? "feld-fehler" : "feld-hinweis");
+        // Nicht abschneiden: Im ersten Bild stand neben Anhang 2 nur "..." -
+        // die linke Spalte hatte sich den Platz genommen.
+        zustand.setMinWidth(Region.USE_PREF_SIZE);
 
         HBox zeile = new HBox(8, texteZeile, zustand);
         zeile.getStyleClass().add("karte");
