@@ -1,0 +1,389 @@
+{
+  "_hinweis": "Zu jedem Pruefcode die Fundstelle und eine Handlungsanweisung. 'quelle': 'anlage' heisst, die Angabe steht in den Unterlagen unter Information/; 'anwendung' heisst, der Hinweis stammt von dieser Anwendung und hat dort keine Fundstelle - das ist ausdruecklich vermerkt und nicht verschwiegen. BefundkatalogTest haelt die Liste mit dem Quelltext zusammen: Ein Code ohne Eintrag und ein Eintrag ohne Code lassen den Bau fehlschlagen.",
+  "befunde": {
+    "ABRECHNUNGSCODE_AUS_PROFIL": {
+      "fundstelle": "Anlage 3, Abschnitt 8.1.5 (Schlüssel Abrechnungscode)",
+      "handlung": "Der Code gehört zum Beruf und nicht zur Kursart; er hat deshalb Vorrang vor der Blaupause. Stimmt er nicht, im Dienstleisterprofil ändern.",
+      "quelle": "anlage"
+    },
+    "ANNAHMESTELLE_UNBEKANNT": {
+      "fundstelle": "Anhang 3 zur Anlage 1 (Kostenträgerdatei)",
+      "handlung": "Zuständig ist die Datenannahmestelle mit Entschlüsselungsbefugnis aus der Kostenträgerdatei. Solange kein Ziel hinterlegt ist, landet die Datei im Sammelordner und ist nicht zugestellt.",
+      "quelle": "anlage"
+    },
+    "BELEGNUMMER_DOPPELT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2",
+      "handlung": "Jeder Abrechnungsfall braucht eine eigene Belegnummer innerhalb der Rechnung.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "BELEGNUMMER_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2 (Segment INV: Belegnummer)",
+      "handlung": "Die Belegnummer ist Pflicht und innerhalb der Gesamtrechnung eindeutig.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "BELEGNUMMER_ZU_LANG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2",
+      "handlung": "Höchstens 10 Stellen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "BES_BETRAG_UNGUELTIG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segmente BES und GES: Rechnungssummen)",
+      "handlung": "Der Betrag im BES ist keine Zahl in DTA-Schreibweise. Beträge stehen mit Komma und zwei Nachkommastellen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "BETRAG_ENF_BES": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segmente BES und GES: Rechnungssummen)",
+      "handlung": "Die Fallsumme im BES muss die Summe der Leistungspositionen sein. Weicht sie ab, ist gerundet worden, wo nicht gerundet werden darf.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "BETRAG_GES99_ABWEICHUNG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segmente BES und GES: Rechnungssummen)",
+      "handlung": "Die Summe im GES 99 weicht von der Summe der Rechnungen ab. Das ist zulässig, wenn ein Teil keinem Status zuzuordnen ist — sonst ein Rechenfehler.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "BETRAG_GES_BES": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segmente BES und GES: Rechnungssummen)",
+      "handlung": "Die Gesamtsumme im GES 00 muss die Summe aller Fallsummen sein.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "BETRIEBSDATEN_FEHLEN": {
+      "fundstelle": "keine — Hinweis dieser Anwendung",
+      "handlung": "Unter „Betriebsdaten“ das eigene Institutionskennzeichen hinterlegen. Ohne es steht das IK des Leistungserbringers als Absender in der Datei; das stimmt nur, solange sie selbst abrechnet.",
+      "quelle": "anwendung"
+    },
+    "ENF_BETRAG_NULL": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Segment ENF: Einzelfallnachweis Hebammen)",
+      "handlung": "Der Einzelbetrag ist 0,00. Der Preis je Termin steht in der Blaupause — dort eintragen und erneut abrechnen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 4"
+    },
+    "ENF_BETRAG_UNGUELTIG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Segment ENF: Einzelfallnachweis Hebammen)",
+      "handlung": "Der Einzelbetrag ist keine Zahl in DTA-Schreibweise. In der Blaupause steht er mit Komma und zwei Nachkommastellen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "ENF_MENGE_NULL": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Segment ENF: Einzelfallnachweis Hebammen)",
+      "handlung": "Die Menge ist 0,00. In der Abrechnungsmaske ist die Zahl der wahrgenommenen Termine einzutragen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 4"
+    },
+    "ENF_MENGE_UNGUELTIG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Segment ENF: Einzelfallnachweis Hebammen)",
+      "handlung": "Die Menge ist keine Zahl in DTA-Schreibweise.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "FKT_KENNZEICHEN_FEHLT": {
+      "fundstelle": "Anlage 3, Abschnitt 8.1.7 (Schlüssel Verarbeitungskennzeichen)",
+      "handlung": "Das Verarbeitungskennzeichen ist Pflicht. Für eine gewöhnliche Abrechnung ist es 01.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "FKT_KENNZEICHEN_LEISTUNGSBEREICH": {
+      "fundstelle": "Anlage 1, Abschnitt 7.1 (Übersicht Leistungsbereiche)",
+      "handlung": "Im Leistungsbereich Hebammen sind nur 02 (Nachforderung) und 04 (Korrekturrechnung) zulässig.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "FKT_KENNZEICHEN_UNBEKANNT": {
+      "fundstelle": "Anlage 3, Abschnitt 8.1.7",
+      "handlung": "Zulässig sind 01, 02, 03, 04 und 10.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "FKT_KENNZEICHEN_UNEINHEITLICH": {
+      "fundstelle": "Anlage 1, Abschnitt 7.3",
+      "handlung": "Je Verarbeitungskennzeichen ist eine eigene Datei zu übermitteln.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "GEBURTSDATUM_ALT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment NAD: Name und Adresse Versicherter)",
+      "handlung": "Ein Alter jenseits des Möglichen deutet auf einen Vertipper in der Jahreszahl.",
+      "quelle": "anwendung",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "GEBURTSDATUM_FORMAT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment NAD: Name und Adresse Versicherter)",
+      "handlung": "Das Geburtsdatum ist achtstellig als JJJJMMTT anzugeben.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "GEBURTSDATUM_ZUKUNFT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment NAD: Name und Adresse Versicherter)",
+      "handlung": "Ein Geburtsdatum in der Zukunft ist ein Vertipper in der Jahreszahl.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "GES_BETRAG_UNGUELTIG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segmente BES und GES: Rechnungssummen)",
+      "handlung": "Der Betrag im GES ist keine Zahl in DTA-Schreibweise. Beträge stehen mit Komma und zwei Nachkommastellen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "IK_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Institutionskennzeichen, 9 Stellen, numerisch, Pflicht)",
+      "handlung": "Das Institutionskennzeichen fehlt. Es steht auf der Versichertenkarte beziehungsweise im Zulassungsbescheid und ist unter „Teilnehmer“ oder „Dienstleister“ nachzutragen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "IK_LAENGE": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Institutionskennzeichen, 9 Stellen, numerisch, Pflicht)",
+      "handlung": "Ein IK hat genau neun Stellen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "IK_PRUEFZIFFER": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Institutionskennzeichen, 9 Stellen, numerisch, Pflicht); das Prüfziffernverfahren selbst ist in den vorliegenden Unterlagen nicht beschrieben — es stammt aus dem IK-Verzeichnis der ARGE·IK",
+      "handlung": "Die neunte Stelle ergibt sich aus den Stellen 3 bis 8. Stimmt sie nicht, ist das IK falsch abgeschrieben — nicht korrigieren, sondern nachschlagen.",
+      "quelle": "anwendung",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "IK_ZIFFERN": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.7 (Institutionskennzeichen, 9 Stellen, numerisch, Pflicht)",
+      "handlung": "Ein IK besteht nur aus Ziffern.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "NACHRICHT_NICHT_GESCHLOSSEN": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Jede mit UNH begonnene Nachricht ist mit UNT abzuschließen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "NACHRICHT_NUMMER": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Die Nachrichtennummer im UNT muss die des zugehörigen UNH wiederholen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "POSITION_HEBAMME_LAENGE": {
+      "fundstelle": "Anlage 3, Abschnitt 8.2.6 (Positionsnummern Hebammenhilfe)",
+      "handlung": "Für Hebammenhilfe sind vier oder fünf Stellen vorgesehen. Die richtige Nummer steht im Positionsnummernverzeichnis der Hebammenhilfe-Vergütungsvereinbarung — sie lässt sich nicht herleiten.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "POSITION_HEBAMME_VIERSTELLIG": {
+      "fundstelle": "Anlage 3, Abschnitt 8.2.6 (Positionsnummern Hebammenhilfe)",
+      "handlung": "Vier Stellen gelten nur für Betriebskostenpauschalen von Hebammen geleiteter Einrichtungen und für Leistungsdaten bis 31.10.2025.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "POSITION_HEBAMME_ZUSCHLAG": {
+      "fundstelle": "Anlage 3, Abschnitt 8.2.6 (Positionsnummern Hebammenhilfe)",
+      "handlung": "Die vierte Stelle sagt, ob der Zuschlag nach § 3 Anlage 1.1 zum Vertrag nach § 134a SGB V gilt: 0 ohne, 1 mit.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "RAHMEN_REFERENZ": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Die Datenaustauschreferenz im UNZ muss die des UNB wiederholen. Weichen sie ab, lässt sich die Datei nicht zuordnen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RAHMEN_UNB_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Die Datei beginnt nicht mit einem UNB. Sie wurde vermutlich abgeschnitten oder nachträglich bearbeitet — neu erzeugen statt reparieren.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RAHMEN_UNB_MEHRFACH": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Je Datenannahmestelle und Kassenart gehört genau eine Nutzdatendatei mit einem UNB. Mehrere Lieferungen sind einzeln zu übermitteln.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RAHMEN_UNB_NICHT_ZUERST": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Das UNB ist das erste Segment der Datei. Steht etwas davor, weist die Annahmestelle die ganze Datei ab.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RAHMEN_UNZ_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Die Datei endet nicht mit einem UNZ. Ohne Endesegment gilt sie als unvollständig übertragen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RAHMEN_UNZ_MEHRFACH": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Das UNZ schließt die Datei genau einmal ab.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RAHMEN_UNZ_NICHT_ZULETZT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Das UNZ ist das letzte Segment. Steht etwas dahinter, ist die Datei nicht sauber abgeschlossen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "RECHNUNGSDATUM_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2 (Segment REC: Rechnungsnummer und Rechnungsdatum)",
+      "handlung": "Das Rechnungsdatum ist Pflicht und gehört zu den Angaben, auf die eine Korrektur verweist.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "RECHNUNGSNUMMER_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2 (Segment REC: Rechnungsnummer und Rechnungsdatum)",
+      "handlung": "Die Sammel-Rechnungsnummer ist Pflicht. Die Anwendung zieht sie aus dem Nummernkreis der Datenbank.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "RECHNUNGSNUMMER_NULL": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2 (Segment REC: Rechnungsnummer und Rechnungsdatum)",
+      "handlung": "Eine Rechnungsnummer aus lauter Nullen wurde nicht vergeben. Jede Rechnung trüge dieselbe Nummer, und eine Korrektur ließe sich keiner davon zuordnen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "RECHNUNGSNUMMER_ZU_LANG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.2 (Segment REC: Rechnungsnummer und Rechnungsdatum)",
+      "handlung": "Höchstens 14 Stellen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "REGEL_ABGEBROCHEN": {
+      "fundstelle": "keine — Hinweis dieser Anwendung",
+      "handlung": "Eine Prüfregel ist selbst abgestürzt. Die übrigen liefen weiter, dieser Teil der Prüfung fand aber nicht statt — die Abrechnung ist deshalb nicht als geprüft zu behandeln. Der Befund gehört gemeldet, nicht umgangen.",
+      "quelle": "anwendung"
+    },
+    "STEUERNUMMER_FEHLT": {
+      "fundstelle": "§ 14 Abs. 1a UStG; Segment UST in Anlage 1, Abschnitt 5.5.2",
+      "handlung": "Die Steuernummer gehört ins Dienstleisterprofil. Ohne sie bleibt das UST-Segment weg — das ist zulässig, aber die Rechnung trägt dann keine Steuernummer.",
+      "quelle": "anlage"
+    },
+    "SYNTAX_ABSCHLUSS": {
+      "fundstelle": "Anlage 1, Abschnitt 5.2 (Trennzeichen und Segmentaufbau)",
+      "handlung": "Jedes Segment endet mit einem Hochkomma. Fehlt es, lässt sich die Datei nicht zerlegen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "SYNTAX_BEZEICHNER": {
+      "fundstelle": "Anlage 1, Abschnitt 5.2 (Trennzeichen und Segmentaufbau)",
+      "handlung": "Ein Segment beginnt mit seinem dreistelligen Bezeichner, etwa UNB oder ENF.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "SYNTAX_LEER": {
+      "fundstelle": "Anlage 1, Abschnitt 5.2 (Trennzeichen und Segmentaufbau)",
+      "handlung": "Die Datei enthält keine Segmente. Die Abrechnung ist neu zu erzeugen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "SYNTAX_OHNE_INHALT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.2 (Trennzeichen und Segmentaufbau)",
+      "handlung": "Das Segment trägt keinen Inhalt außer seinem Bezeichner.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "SYNTAX_UNBEKANNT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.2 (Trennzeichen und Segmentaufbau)",
+      "handlung": "Diesen Segmentbezeichner kennt die Anlage nicht. Prüfen, ob die Datei von einer anderen Anwendung stammt.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "TROCKENLAUF_ORDNER": {
+      "fundstelle": "keine — Hinweis dieser Anwendung",
+      "handlung": "Der Übungsordner ließ sich nicht beschreiben. Das betrifft nur den Trockenlauf; ein echter Versand ist davon nicht berührt.",
+      "quelle": "anwendung"
+    },
+    "UNB_REFERENZ_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Die Datenaustauschreferenz ist Pflicht und je Absender fortlaufend zu vergeben — die Anwendung zieht sie aus dem Nummernkreis der Datenbank.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "UNH_OHNE_UNT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Zu diesem UNH fehlt das abschließende UNT.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "UNT_ANZAHL": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Die Zahl im UNT muss die Segmente der Nachricht zählen, sich selbst eingeschlossen. Fällt ein Segment weg oder kommt eines hinzu, muss die Zahl mitgehen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "UNT_ANZAHL_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Im UNT fehlt die Zahl der Segmente. Sie ist Pflichtangabe.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "UNT_ANZAHL_UNGUELTIG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Die Zahl der Segmente im UNT ist keine Zahl.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "UNT_OHNE_UNH": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5 (Nachrichtenaufbau: UNH bis UNT)",
+      "handlung": "Dieses UNT schließt keine begonnene Nachricht ab.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "UNZ_ANZAHL": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Die Zahl im UNZ muss die der übermittelten Nachrichten sein. Stimmt sie nicht, gilt die Datei als unvollständig.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "UNZ_ANZAHL_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Im UNZ fehlt die Zahl der Nachrichten. Sie ist Pflichtangabe.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 1"
+    },
+    "UNZ_ANZAHL_UNGUELTIG": {
+      "fundstelle": "Anlage 1, Abschnitt 5.4 (Nutzdaten-Kopf- und -Endesegment)",
+      "handlung": "Die Zahl der Nachrichten im UNZ ist keine Zahl. Numerisch definierte Datenelemente mit alphanumerischem Inhalt führen zur Abweisung der ganzen Datei.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 2"
+    },
+    "URI_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 7.3 (Rahmenbedingungen des Korrekturverfahrens)",
+      "handlung": "Bei einem Kennzeichen ungleich 01 ist das URI mit den Ursprungsangaben zu übermitteln. In der Abrechnungsmaske ist unter „Bezieht sich auf“ die Ursprungslieferung zu wählen.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "VERSICHERTENNUMMER_FEHLT": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment INV: Versichertendaten eines Abrechnungsfalles)",
+      "handlung": "Die Versichertennummer ist Pflicht und steht auf der Versichertenkarte.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "VERSICHERTENNUMMER_NULL": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment INV: Versichertendaten eines Abrechnungsfalles)",
+      "handlung": "Eine Versichertennummer aus lauter Nullen wurde nicht vergeben. Die Teilnehmerin ist vermutlich ohne gespeicherte Kennnummer abgerechnet worden.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "VERSICHERTER_GEBURTSDATUM": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment NAD: Name und Adresse Versicherter)",
+      "handlung": "Das Geburtsdatum ist Pflicht. Die Anwendung setzt hier bewusst keinen Ersatzwert — ein erfundenes Datum ginge an die Kasse.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "VERSICHERTER_NACHNAME": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment NAD: Name und Adresse Versicherter)",
+      "handlung": "Der Nachname ist Pflicht und wie auf der Versichertenkarte anzugeben.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    },
+    "VERSICHERTER_VORNAME": {
+      "fundstelle": "Anlage 1, Abschnitt 5.5.3.1 (Segment NAD: Name und Adresse Versicherter)",
+      "handlung": "Der Vorname ist Pflicht und wie auf der Versichertenkarte anzugeben.",
+      "quelle": "anlage",
+      "pruefstufe": "Prüfstufe 3"
+    }
+  }
+}

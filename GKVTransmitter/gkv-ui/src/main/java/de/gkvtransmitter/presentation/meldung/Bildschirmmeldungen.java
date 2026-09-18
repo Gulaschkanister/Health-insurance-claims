@@ -84,15 +84,50 @@ public class Bildschirmmeldungen implements Meldungen {
 
     /** Eine Zeile des Pruefberichts: Beanstandung, darunter die Fundstelle. */
     private Node befund(Pruefbefunde.Zeile zeile) {
-        Label text = new Label((zeile.istFehler() ? "• " : "– ") + zeile.text());
-        text.getStyleClass().add("befund");
-        text.setWrapText(true);
-        text.setMaxWidth(310);
-        if (zeile.ort().isEmpty()) {
-            return text;
+        VBox eintrag = new VBox(1, zeilentext((zeile.istFehler() ? "• " : "– ") + zeile.text(),
+                "befund"));
+        // Was zu tun ist, vor der Fundstelle: Wer eine Beanstandung liest,
+        // sucht zuerst die Handlung und erst danach den Beleg dafuer.
+        if (!zeile.handlung().isBlank()) {
+            eintrag.getChildren().add(zeilentext("→ " + zeile.handlung(), "befund-handlung"));
         }
-        Label ort = new Label(zeile.ort());
-        ort.getStyleClass().add("befund-ort");
-        return new VBox(1, text, ort);
+        String herkunft = herkunft(zeile);
+        if (!herkunft.isBlank()) {
+            eintrag.getChildren().add(zeilentext(herkunft, "befund-ort"));
+        }
+        return eintrag;
+    }
+
+    /** Stelle in der Datei und Fundstelle in der Anlage, in einer Zeile. */
+    private static String herkunft(Pruefbefunde.Zeile zeile) {
+        if (zeile.fundstelle().isBlank()) {
+            return zeile.ort();
+        }
+        return zeile.ort().isBlank()
+                ? zeile.fundstelle() : zeile.ort() + "  ·  " + zeile.fundstelle();
+    }
+
+    /**
+     * Eine Textzeile eines Befunds.
+     *
+     * <p><b>{@code setMinHeight} ist das Entscheidende hier</b>, und es fehlte.
+     * Seit jeder Befund drei Zeilen traegt - Beanstandung, Handlung,
+     * Fundstelle -, passt eine lange Liste nicht mehr ins Fenster. Eine
+     * {@code VBox} staucht dann ihre Kinder, und ein gestauchtes
+     * {@code Label} kuerzt mit Auslassungspunkten: <b>Der Bericht wurde durch
+     * die Zugabe unvollstaendiger als vorher.</b> Aufgefallen am
+     * Bildschirmfoto, nicht in einem Test.</p>
+     *
+     * <p>Mit der Mindesthoehe behaelt jeder Befund seine volle Hoehe. Ist die
+     * Liste laenger als das Fenster, wird sie unten abgeschnitten - das ist
+     * sichtbar, waehrend drei Punkte mitten im Satz wie das Ende aussehen.</p>
+     */
+    private static Label zeilentext(String text, String stilklasse) {
+        Label label = new Label(text);
+        label.getStyleClass().add(stilklasse);
+        label.setWrapText(true);
+        label.setMaxWidth(310);
+        label.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE);
+        return label;
     }
 }

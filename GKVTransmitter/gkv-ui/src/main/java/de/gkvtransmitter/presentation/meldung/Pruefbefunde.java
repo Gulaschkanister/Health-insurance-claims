@@ -69,11 +69,25 @@ public final class Pruefbefunde {
     /**
      * Eine Zeile der Liste.
      *
-     * @param istFehler ob der Befund den Versand aufgehalten hat
-     * @param text      die Beanstandung in ganzen Saetzen
-     * @param ort       die Fundstelle, oder leer
+     * <p><b>{@code fundstelle} und {@code handlung} kamen am 18.09.2026 dazu.</b>
+     * Eine Beanstandung, die nur sagt, <em>dass</em> etwas nicht stimmt, ist
+     * die halbe Auskunft - "Die Abrechnungspositionsnummer hat 9 Stellen"
+     * laesst offen, wo das steht und was zu tun ist. Beides steht jetzt im
+     * {@code Befundkatalog}.</p>
+     *
+     * @param istFehler  ob der Befund den Versand aufgehalten hat
+     * @param text       die Beanstandung in ganzen Saetzen
+     * @param ort        die Stelle in der Datei, oder leer
+     * @param fundstelle Anlage und Abschnitt, oder leer
+     * @param handlung   was zu tun ist, oder leer
      */
-    public record Zeile(boolean istFehler, String text, String ort) {
+    public record Zeile(boolean istFehler, String text, String ort, String fundstelle,
+            String handlung) {
+
+        /** Eine Zeile ohne Katalogangaben - fuer Tests und fremde Berichte. */
+        public Zeile(boolean istFehler, String text, String ort) {
+            this(istFehler, text, ort, "", "");
+        }
     }
 
     private Pruefbefunde() {
@@ -89,12 +103,18 @@ public final class Pruefbefunde {
     public static List<Zeile> zeilen(ValidationReport bericht) {
         List<Zeile> zeilen = new ArrayList<>();
         for (ValidationMessage befund : bericht.getErrors()) {
-            zeilen.add(new Zeile(true, befund.text(), befund.ort()));
+            zeilen.add(zeile(true, befund));
         }
         for (ValidationMessage befund : bericht.getWarnings()) {
-            zeilen.add(new Zeile(false, befund.text(), befund.ort()));
+            zeilen.add(zeile(false, befund));
         }
         return List.copyOf(zeilen);
+    }
+
+    /** Eine Zeile samt dem, was der Befundkatalog dazu weiss. */
+    private static Zeile zeile(boolean istFehler, ValidationMessage befund) {
+        return new Zeile(istFehler, befund.text(), befund.ort(),
+                befund.fundstelle(), befund.handlung());
     }
 
     /** Eine Zeile fuer die Statusleiste, etwa "2 zu beheben, 1 Hinweis". */

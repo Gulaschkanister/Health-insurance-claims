@@ -14,6 +14,28 @@ import java.util.Objects;
  */
 public record ValidationMessage(ValidationSeverity severity, String code, String ort, String text) {
 
+    /**
+     * Was der Katalog zu diesem Befund sagt.
+     *
+     * <p>Fundstelle und Handlungsanweisung stehen nicht im Datensatz, sondern
+     * werden zu ihm nachgeschlagen: Sie haengen am <b>Code</b> und nicht am
+     * einzelnen Vorkommen, und ein Text, der an sechzig Stellen im Quelltext
+     * mitgeschleppt wird, laeuft irgendwo auseinander.</p>
+     */
+    public java.util.Optional<Befundkatalog.Eintrag> katalogeintrag() {
+        return Befundkatalog.standard().zu(code);
+    }
+
+    /** Die Fundstelle, oder leer. */
+    public String fundstelle() {
+        return katalogeintrag().map(Befundkatalog.Eintrag::fundstelle).orElse("");
+    }
+
+    /** Was zu tun ist, oder leer. */
+    public String handlung() {
+        return katalogeintrag().map(Befundkatalog.Eintrag::handlung).orElse("");
+    }
+
     public ValidationMessage {
         Objects.requireNonNull(severity, "severity must not be null");
         Objects.requireNonNull(code, "code must not be null");

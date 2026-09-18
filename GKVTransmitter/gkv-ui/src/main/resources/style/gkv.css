@@ -436,6 +436,20 @@
     -fx-font-size: 12px;
 }
 
+/*
+ * Was zu tun ist - zwischen Beanstandung und Fundstelle.
+ *
+ * Etwas dunkler als die Fundstelle darunter und etwas eingerueckt: Es
+ * gehoert zur Beanstandung darueber und ist die Zeile, die man wirklich
+ * liest. Eine Handlungsanweisung in derselben Farbe wie die Quellenangabe
+ * sieht aus wie Kleingedrucktes.
+ */
+.befund-handlung {
+    -fx-text-fill: -farbe-text;
+    -fx-font-size: 11.5px;
+    -fx-padding: 1 0 0 8;
+}
+
 .befund-ort {
     -fx-text-fill: -farbe-text-still;
     -fx-font-size: 10.5px;

@@ -41,7 +41,7 @@ anders als dort angenommen).
 | | Punkt | Stand |
 |---|---|---|
 | **A1** | Warnungen sichtbar machen | ✅ |
-| **A2** | Beanstandungen erklären statt nur benennen | ⬜ offen |
+| **A2** | Beanstandungen erklären statt nur benennen | ✅ |
 | **A3** | Positionsnummer gegen Anlage 3 § 8.2.6 | ✅ |
 | **B1** | Betriebsdaten | ✅ |
 | **B2** | Kostenträgerdatei einlesen | ✅ (ohne Aufrufer, siehe unten) |
@@ -58,7 +58,7 @@ anders als dort angenommen).
 | **F1–F6** | Dienstleisterprofil | ✅ vollständig |
 | **G1–G3** | Wartung | ✅ vollständig |
 
-Gemessen am 18.09.2026: **587 Tests grün** (289 Kern, 298 Oberfläche),
+Gemessen am 18.09.2026: **592 Tests grün** (294 Kern, 298 Oberfläche),
 Checkstyle **0** Warnungen.
 
 ## Drei Befunde, die beim Abarbeiten dazugekommen sind
@@ -122,7 +122,7 @@ Datenaustauschreferenzen.
 Warnung in der Meldungsecke steht; ein Lauf ohne Beanstandung zeigt außer der
 Erfolgsmeldung nichts.
 
-## A2. Beanstandungen erklären statt nur benennen
+## A2. Beanstandungen erklären statt nur benennen — ✅ erledigt am 18.09.2026
 
 | | |
 |---|---|
@@ -135,7 +135,53 @@ Jede Beanstandung bekommt eine **Fundstelle** (Anlage, Abschnitt) und eine
 `Information/` — es ist Nachschlagen, keine Beschaffung.
 
 **Fertig, wenn:** kein Fehlercode ohne Fundstelle existiert, durchgesetzt von
-einem Test, der über alle Regeln läuft.
+einem Test, der über alle Regeln läuft. — ✅
+
+| | |
+|---|---|
+| **Stand** | **umgesetzt**: `befunde/befunde.json` mit **65 Einträgen**, `Befundkatalog`, `BefundkatalogTest` |
+
+Jeder Befund trägt jetzt drei Zeilen statt einer: die Beanstandung, **was zu
+tun ist**, und **wo es steht**. Die Handlung vor der Fundstelle — wer eine
+Beanstandung liest, sucht zuerst die Handlung und erst danach den Beleg dafür.
+
+### Der Test liest den Quelltext, nicht eine Liste im Quelltext
+
+Eine von Hand gepflegte Liste geht auseinander, und zwar in der Richtung, die
+niemandem auffällt: Ein neuer Code wird ergänzt, die Liste nicht. **Der Test
+hat schon beim ersten Lauf drei Lücken gefunden** — und eine in sich selbst:
+
+| Gefunden | Was es war |
+|---|---|
+| `REGEL_ABGEBROCHEN` | beim Zusammenstellen übersehen |
+| `ENF_BETRAG_NULL`, `ENF_MENGE_NULL` | `LeistungspositionRegel` reicht ihre Codes an eine Hilfsmethode weiter — an der Aufrufstelle steht kein `.error` davor. **Ein Test, der nur die eine Schreibweise kennt, bestätigt eine Vollständigkeit, die es nicht gibt.** |
+| `BES_/GES_/ENF_BETRAG_UNGUELTIG`, `ENF_MENGE_UNGUELTIG` | vier weitere, die erst das breitere Muster fand |
+
+Gesucht wird deshalb nach der **Form des Codes** — Großbuchstaben mit
+mindestens einem Unterstrich — in den Paketen `validator` und `dispatch`.
+Segmentbezeichner wie `"ENF"` fallen heraus, sie haben keinen Unterstrich.
+
+Der Test läuft **in beide Richtungen**: Ein Eintrag ohne Regel ist ein Rest,
+der gepflegt aussieht und zu nichts gehört.
+
+### Was keine Fundstelle hat, sagt das
+
+Sechs der 65 stammen von dieser Anwendung und nicht aus einer Anlage — das
+**Prüfziffernverfahren der Institutionskennzeichen** etwa ist in den
+vorliegenden Unterlagen nicht beschrieben, es stammt aus dem IK-Verzeichnis der
+ARGE·IK. Sie tragen `quelle: anwendung` und schreiben das auch auf den
+Bildschirm, statt einen Abschnitt zu erfinden. *Was keine Fundstelle hat, ist
+eine Vermutung.*
+
+### Am Bild aufgefallen
+
+Mit drei Zeilen je Befund passte die Liste nicht mehr ins Fenster — eine `VBox`
+staucht dann ihre Kinder, und ein gestauchtes `Label` kürzt mit
+Auslassungspunkten. **Der Bericht wurde durch die Zugabe unvollständiger als
+vorher.** Ein `ScrollPane` wäre die naheliegende Antwort und war die falsche:
+Er hängt seinen Inhalt erst mit der Darstellung in den Knotenbaum, und damit
+fand kein Test mehr etwas — der Fallstrick steht seit Langem im Projekt.
+Richtig ist eine Mindesthöhe je Zeile.
 
 ## A3. Positionsnummer gegen Anlage 3 § 8.2.6 prüfen — ✅ erledigt am 17.09.2026
 
