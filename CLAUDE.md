@@ -74,6 +74,19 @@ plantuml -tpng Information/D05_Klassen_Persistenz.puml   # ein Diagramm neu zeic
   auf einen plausiblen Betrag; `Uebermittlungsart` fällt auf `ERPROBUNG`, nie
   auf `ECHT`. Beides sind Lehren aus echten Fehlern.
 - **Diagramme nur über `.puml` ändern.** Das PNG daneben ist abgeleitet.
+- **Kein sichtbarer Text im Quelltext.** Es gibt drei Sammlungen, und jede
+  beschreibt etwas anderes:
+
+  | Datei | Inhalt |
+  |---|---|
+  | `gkv-ui/…/messages/ui-messages.json` | was die Oberfläche sagt |
+  | `gkv-core/…/messages/kern-texte.json` | was die Fachlichkeit sagt (Wartung, Registrierungsblatt) |
+  | `gkv-core/…/befunde/befunde.json` | je Prüfcode **Text, Fundstelle und Handlungsanweisung** |
+
+  `BefundkatalogTest` und `KerntexteTest` halten die Sammlungen mit dem
+  Quelltext zusammen — ein Schlüssel ohne Eintrag lässt den Bau fehlschlagen.
+  Satzzeichen (`" · "`, `" — "`) stehen in `Textbau` und **nicht** in den
+  Sammlungen: Sie sind Satzbild, keine Sprache.
 - Zahlen veralten (Testanzahl, Checkstyle-Befunde). Im Zweifel messen, nicht
   aus der Dokumentation abschreiben.
 
@@ -81,6 +94,10 @@ plantuml -tpng Information/D05_Klassen_Persistenz.puml   # ein Diagramm neu zeic
 
 Projektsprache ist **Deutsch** — Dokumentation, Commit-Nachrichten, Meldungen
 der Oberfläche, Klassennamen teilweise. Java-Quelltextkommentare vermeiden
-Umlaute (`Pruefung`), Dokumentation schreibt sie aus. Die Dokumentation erklärt
+Umlaute (`Pruefung`), Dokumentation schreibt sie aus. **In den Textsammlungen
+gilt die Regel nicht** — dort stehen sie ausgeschrieben, denn der Anwender liest
+den Text und nicht den Quelltext. Die Literale hatten die Regel lange
+mitgeerbt: Auf dem Bildschirm stand „Fuer die Kasse" und
+„REGISTRIERUNGSBLATT FUER". Die Dokumentation erklärt
 **warum so und nicht anders** und behält die Sackgassen; ein Weg ohne Umwege
 sieht erfunden aus.
