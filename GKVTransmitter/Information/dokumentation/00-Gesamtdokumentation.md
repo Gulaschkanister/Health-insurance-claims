@@ -1311,3 +1311,610 @@ Textspalte. Nichts davon stand in einer Klasse.
 - **Wie die Abbildung überwacht wird.** Bisher gilt: nachsehen, was sie erzeugt
   hat. Das ist eine Gewohnheit, kein Verfahren — siehe Teil 21.
 
+# Teil 09 — Persistenz
+
+
+## Ausgangslage
+
+Ab hier wird gebaut. Der erste Baustein ist der Zugang zur Datenbank — nicht,
+weil er der interessanteste ist, sondern weil ohne ihn nichts anderes läuft.
+
+Die Entscheidungen dafür stehen: eine Datei-Datenbank (Teil 07), hinter einer
+Schnittstelle (Teil 05).
+
+## Ziel dieses Teils
+
+Den Zugang so bauen, dass die Fachlichkeit ihn benutzen kann, **ohne ihn zu
+kennen** — und dass er sich im Prüflauf ersetzen lässt.
+
+## Überlegungen
+
+### Was in die Schnittstelle gehört
+
+Die Versuchung ist, sie allgemein zu halten: „speichere irgendein Objekt", „lade
+irgendeine Liste". Das spart Methoden.
+
+Dagegen spricht, dass eine allgemeine Schnittstelle **nichts aussagt**. Wer sie
+liest, weiß nicht, was das Programm mit der Datenbank tut. Eine Schnittstelle mit
+sprechenden Methoden — Patienten laden, Gruppe speichern, nächste Nummer ziehen —
+ist zugleich eine Liste dessen, was überhaupt gebraucht wird.
+
+Sie wird dadurch länger. Das ist in Ordnung: **Sie wächst nur, wenn ein neuer
+Bedarf entsteht, und dann soll man das sehen.**
+
+### Wiederholung, die niemand sehen will
+
+Jeder Zugriff hat denselben Rahmen: Sitzung öffnen, Transaktion beginnen, Arbeit
+tun, festschreiben — und im Fehlerfall zurückrollen und die Sitzung schließen.
+
+Das sechsmal hinzuschreiben ist nicht nur mühsam, sondern gefährlich: **Beim
+sechsten Mal fehlt das Zurückrollen.** Und ein fehlendes Zurückrollen fällt nicht
+auf, solange nichts schiefgeht.
+
+Also bekommt der Rahmen eine eigene Stelle. Ein Aufruf übergibt nur noch, was
+zwischen Beginn und Ende geschehen soll, und einen Namen für den Fall, dass es
+schiefgeht:
+
+| Statt | Jetzt |
+|---|---|
+| Sitzung öffnen, Transaktion, Arbeit, festschreiben, Fehlerbehandlung, schließen | „lies dies" oder „schreib das", mit einem Namen für die Meldung |
+
+Der Name ist kein Schmuck. Wenn ein Zugriff scheitert, steht in der Meldung, was
+versucht wurde — nicht nur, dass etwas mit der Datenbank war.
+
+### Die Nummer, die nicht zweimal kommen darf
+
+Die laufende Nummer der Lieferung wird gelesen und dann erhöht. Genau dieses
+Muster — erst lesen, dann schreiben — bricht die Datenbank sofort ab, statt zu
+warten (Teil 07).
+
+Erwogen wurden drei Auswege:
+
+| Ausweg | Warum nicht |
+|---|---|
+| Die Wartezeit erhöhen | Hilft bei genau diesem Muster nicht |
+| Die Nummer im Arbeitsspeicher führen | Nach einem Neustart beginnt sie von vorn — der Fehler, den es zu vermeiden gilt |
+| Im Programm sicherstellen, dass immer nur einer sie zieht | — |
+
+Gewählt wurde der dritte. Die Vergabe ist die einzige Stelle im Programm, an der
+das nötig ist, und sie ist als solche gekennzeichnet.
+
+### Wie sich der Zugang im Prüflauf ersetzen lässt
+
+Weil die Fachlichkeit nur die Schnittstelle kennt, genügt für einen Prüflauf eine
+zweite Umsetzung, die alles im Arbeitsspeicher hält. Kein Dateipfad, keine
+Aufräumarbeit, kein Zustand zwischen zwei Läufen.
+
+Für die Prüfung des Zugangs selbst gilt aber das Gegenteil: **Dort wird gegen eine
+echte Datei geprüft, nicht gegen einen Ersatz.** Ein Ersatz würde beweisen, dass
+der Ersatz funktioniert. Ob die Datenbank den Datensatz wirklich annimmt, zeigt
+nur die Datenbank.
+
+## Entscheidung
+
+**Eine Schnittstelle mit sprechenden Methoden, eine Umsetzung darauf, und ein
+gemeinsamer Rahmen für alle Zugriffe.** Eigene Sitzungs- und Transaktionsblöcke
+kommen nicht mehr vor.
+
+Dazu drei Festlegungen:
+
+| Festlegung | Grund |
+|---|---|
+| Der Ablageort ist von außen einstellbar | Prüfläufe dürfen nie in die echte Ablage schreiben |
+| Ein fehlgeschlagener Zugriff wirft eine **eigene** Ausnahme | „Irgendwas mit der Datenbank" hilft niemandem; die Meldung trägt den Namen des Vorgangs |
+| Der Modus, der das Schema neu anlegt, ist **nie** voreingestellt | Er verwirft alle Daten |
+
+### Warum nicht der einfachere Weg
+
+Die Fachlichkeit hätte die Datenbank direkt ansprechen können. Das spart die
+Schnittstelle und eine ganze Klasse.
+
+Dagegen spricht Q5: **Ohne die Schnittstelle wäre kein Prüflauf ohne Datei
+möglich** — und damit würde jeder Fachprüflauf eine Datenbank anlegen, füllen und
+aufräumen. Das ist langsam genug, dass man es lässt.
+
+## Ergebnis
+
+Ein Zugang, der von außen wie eine Liste von Fachaufgaben aussieht und innen aus
+einem einzigen Muster besteht. Dazu Prüfläufe gegen eine echte Datei in einem
+Wegwerfverzeichnis.
+
+**Was dabei auffiel:** Der Einstellungsbereich des Programms brauchte zunächst
+eine eigene Datei — eine Ablage neben der Ablage. Beim Nachfragen zeigte sich,
+dass sie nichts konnte, was die Datenbank nicht auch kann. Sie wurde durch eine
+Tabelle mit zwei Spalten ersetzt.
+
+> **Ein zweiter Ablageort rechtfertigt sich nur, wenn er etwas kann, was der
+> erste nicht kann.**
+
+Verwendete Mittel:
+
+| Mittel | Wozu |
+|---|---|
+| Schnittstelle und Anschluss | die Fachlichkeit von der Datenbank lösen |
+| Gemeinsamer Rahmen für Zugriffe | Wiederholung und vergessene Fehlerbehandlung vermeiden |
+| Übergabe im Konstruktor, ohne Rahmenwerk | Abhängigkeiten sichtbar halten |
+
+## Offen geblieben
+
+- **Ob die Nummernvergabe auch bei zwei Programmfenstern hält.** Sie ist gegen
+  gleichzeitige Zugriffe im selben Programm geschützt, nicht gegen zwei
+  Programmstarts.
+- **Ob die Textspalte der Blaupause reicht** (aus Teil 07). Weiterhin ungeprüft.
+
+# Teil 10 — Domänenmodell
+
+
+## Ausgangslage
+
+Der Zugang zur Datenbank steht. Was fehlt, sind die Gegenstände, die durch ihn
+hindurchgehen: Personen, Gruppen, Blaupausen — und die Abrechnung, die alles
+zusammenführt.
+
+Der Entwurf dafür liegt seit Teil 06 vor. Hier wird er gebaut, und dabei zeigt
+sich, was der Entwurf nicht vorhergesehen hatte.
+
+## Ziel dieses Teils
+
+Die Klassen des Modells umsetzen, samt Prüfläufen — und die Stellen benennen, an
+denen die Umsetzung vom Entwurf abweicht.
+
+## Überlegungen
+
+### Wie Gruppen und Personen zusammenhängen
+
+Eine Gruppe enthält Teilnehmerinnen, und eine Person kann in mehreren Gruppen
+sein. Das ist eine Beziehung, die auf beiden Seiten vielfach ist.
+
+Zwei Möglichkeiten:
+
+| Möglichkeit | Folge |
+|---|---|
+| Die Gruppe kennt ihre Mitglieder, die Person kennt ihre Gruppen | Beide Seiten müssen beim Ändern gepflegt werden — vergisst man eine, widersprechen sie sich |
+| Nur die Gruppe kennt ihre Mitglieder | Die Frage „in welchen Gruppen ist diese Person?" braucht eine Abfrage statt eines Feldes |
+
+Gewählt wurde die zweite. **Eine Beziehung mit einer verantwortlichen Seite kann
+nicht in sich widersprüchlich werden.** Die Abfrage ist der Preis dafür, und sie
+kostet bei diesem Umfang nichts.
+
+### Was eine Abrechnung ist
+
+Der Entwurf beschreibt sie als Verbindung aus versicherter Person,
+Leistungserbringerin, Beschreibung und Anzahl. Genau so wurde sie gebaut — mit
+einem Zusatz, über den zu reden ist: **sie trägt den Zeitpunkt ihrer Entstehung.**
+
+Das klingt harmlos und ist die einzige Spur, die ein Abrechnungslauf heute
+hinterlässt. Die Lieferung selbst hinterlässt keine (Teil 06).
+
+### Die Rückfallebene, die zu freundlich war
+
+Die Werte einer Leistung stehen in der Blaupause, gemeinsam in einem Textfeld
+(Teil 06). Wenn dieses Feld unlesbar ist, hat das Programm zwei Möglichkeiten:
+abbrechen oder mit Vorbelegungen weitermachen.
+
+Gewählt wurde das Weitermachen, mit der Begründung: Die Nachricht durchläuft
+ohnehin die Prüfung, und ein Abbruch beim Erzeugen wäre für die Anwenderin
+schwerer zu verstehen als ein Prüfbefund.
+
+Die Begründung trägt — **aber nur, wenn die Vorbelegung selbst auffällig ist.**
+Und genau das war sie nicht:
+
+> Der Einzelbetrag stand in der Rückfallebene auf einem plausiblen Wert. Damit
+> wurde jeder Termin mit einem Betrag in fünfstelliger Höhe abgerechnet, ohne
+> dass eine Prüfung anschlug — er war ja formal gültig.
+
+Der Wert steht heute auf null. Ein Betrag von null fällt in jeder Summenprüfung
+auf; ein plausibler Betrag fällt nirgends auf.
+
+> **Eine Rückfallebene muss falsch aussehen, nicht plausibel. Ihr Zweck ist, dass
+> jemand sie bemerkt.**
+
+### Prüfläufe, die etwas beweisen
+
+Beim Bauen der Prüfläufe fiel ein zweites Muster auf. Ein Prüflauf, der nur
+feststellt, dass ein Wert nach dem Speichern noch da ist, beweist wenig. Nützlich
+sind die, die **eine Regel gegen eine Verletzung** stellen:
+
+| Prüflauf | Was er wirklich zeigt |
+|---|---|
+| Eine gespeicherte Person kommt unverändert zurück | dass die Ablage funktioniert |
+| Eine Gruppe ohne Namen wird abgelehnt | dass die Regel gilt |
+| Zwei Nummern hintereinander sind verschieden | dass der Zähler zählt |
+| Jeder Feldname, den die Blaupause liest, kommt in einer Beschreibung vor | **dass niemand einen Namen erfunden hat** |
+
+Der letzte ist der wertvollste, weil er einen Fehler findet, den kein Mensch
+sieht: Ein Feldname, den es nirgends gibt, liefert stillschweigend nichts.
+
+## Entscheidung
+
+**Das Modell aus Teil 06 wird unverändert umgesetzt**, mit drei ergänzenden
+Festlegungen:
+
+| Festlegung | Grund |
+|---|---|
+| Die Gruppe ist die verantwortliche Seite der Beziehung | Widersprüche unmöglich machen |
+| Die Rückfallebene der Leistungswerte steht auf null | Sie soll auffallen, nicht durchrutschen |
+| Die Liste der gelesenen Feldnamen ist öffentlich einsehbar | damit ein Prüflauf sie gegen die Beschreibungen halten kann |
+
+Die dritte Festlegung sieht wie ein Verstoß gegen guten Stil aus — eine
+Innerlichkeit wird nach außen gegeben. Sie ist es auch. **Der Preis ist geringer
+als der Fehler, den sie verhindert**, und der Grund steht als Kommentar an Ort und
+Stelle.
+
+### Warum nicht der einfachere Weg
+
+Man hätte auf die Rückfallebene ganz verzichten und bei unlesbarer Blaupause
+abbrechen können. Dann bräuchte es keine Diskussion über plausible Werte.
+
+Dagegen spricht die Anwenderin: Ein Abbruch mitten im Erzeugen nennt eine
+technische Ursache. Ein Prüfbefund nennt die betroffene Zeile und was fehlt — und
+das ist Q3 aus Teil 03.
+
+## Ergebnis
+
+Das Modell steht und ist geprüft. Die zwei bemerkenswerten Ergebnisse sind keine
+Klassen, sondern Einsichten:
+
+**Vorbelegungen sind gefährlicher als Lücken.** Eine Lücke wird beanstandet, eine
+plausible Vorbelegung nicht.
+
+**Ein Prüflauf, der nie fehlschlagen kann, ist kein Prüflauf.** Diese Regel wird
+in Teil 21 zum Maßstab für die ganze Teststrategie.
+
+Verwendete Mittel:
+
+| Mittel | Wozu |
+|---|---|
+| Wertobjekte für Leistungswerte | unveränderlich, mit klaren Feldern statt einer losen Sammlung |
+| Eine verantwortliche Seite je Beziehung | Widersprüche ausschließen |
+| Auffällige statt plausibler Rückfallwerte | Fehler sichtbar machen |
+
+## Offen geblieben
+
+- **Der fehlende Leistungsnachweis** aus Teil 06. Die Anzahl der Einheiten hängt
+  weiterhin an der Abrechnung.
+- **Die fehlende Lieferung.** Sie bleibt ein Vorgang ohne Spur.
+- **Ob die öffentliche Feldnamenliste dauerhaft bleibt.** Sie ist ein Zugeständnis
+  an die Prüfbarkeit — sauberer wäre, die Blaupause selbst prüfen zu lassen.
+
+# Teil 11 — Nachrichtenformat
+
+
+## Ausgangslage
+
+Das Domänenmodell steht (Teil 10): Personen, Gruppen, Blaupausen, Abrechnungen.
+Offen blieb dort ausdrücklich **die fehlende Lieferung** — die Abrechnung
+hinterlässt eine Spur in der Datenbank, aber noch keine Datei, die eine Kasse
+entgegennehmen könnte.
+
+Diese Datei ist kein eigener Entwurf dieses Projekts. Ihr Aufbau steht in der
+Anlage 3 zu den Richtlinien nach § 302 SGB V und ist zwischen den
+Leistungserbringern und den Kassen vereinbart, nicht frei wählbar. Was hier zu
+entscheiden ist, ist nicht *wie die Nachricht aussieht*, sondern *wie das
+Programm weiß, wie sie aussieht.*
+
+## Ziel dieses Teils
+
+Den Aufbau einer Lieferung — Segmente, Felder, Schachtelung, Zähler — so
+festhalten, dass ihn das Programm lesen kann, nicht nur ein Mensch. Dazu das
+Diagramm, das diese Schachtelung zeigt.
+
+## Überlegungen
+
+### Vorgegebene Form, freie Darstellung
+
+Die einzige Entscheidung, die dieses Projekt zum Format selbst trifft, ist
+keine: Reihenfolge, Feldzahl und Pflichtangaben sind vorgegeben. Die
+Gestaltungsfreiheit liegt ausschließlich in der **Darstellung im Programm** —
+und dort stellt sich dieselbe Frage wie in Teil 09 bei der Datenbank: Code oder
+Daten?
+
+| Möglichkeit | Folge |
+|---|---|
+| Jedes Segment als eigene Java-Klasse mit benannten Feldern | Lesbar, aber jede Ergänzung — ein weiterer Leistungsbereich, eine neue Fassung der Anlage 3 — verlangt eine neue Übersetzung |
+| Segmente und Felder generisch beschreiben, aus Daten geladen | Eine Ergänzung ist eine neue oder geänderte Datei, kein neuer Code |
+
+Gewählt wurde die zweite. Dreizehn Segmenttypen mit insgesamt weit über
+vierzig Feldern liegen als JSON unter `gkv-core/src/main/resources/segments/` —
+eine Datei je Segmenttyp, jede mit Position, Typ, Länge, Pflichtstatus,
+Beispiel und einer Beschreibung je Feld. Dieselbe Beschreibung bedient drei
+Abnehmer: die Erzeugung der Nachricht (Teil 12), ihre Prüfung (Teil 14) und die
+Erklärtexte unter den Eingabefeldern der Oberfläche. **Eine Quelle für drei
+Abnehmer verhindert, dass sie sich widersprechen** — dieselbe Begründung wie
+für die Einstellungstabelle in Teil 09.
+
+### Wie viel Typisierung in den Code gehört
+
+Die JSON-Beschreibung unterscheidet fein: `STRING`, `INTEGER`, `DECIMAL`,
+`COMPOSITE`, dazu Länge, Format und ein Prüfmuster. Im Code kommt davon nur
+ein grobes Dreier-Enum an — `FieldType.DATE`, `NUMBER`, `STRING`.
+
+Das ist kein Versehen, sondern zwei Ebenen mit unterschiedlichem Bedarf. Die
+feine Unterscheidung braucht, wer das Feld liest oder prüft — etwa, ob ein
+Betrag zwei Nachkommastellen mit Komma trägt. Das entscheidet ein Prüfwerk oder
+ein Mensch, der die Beschreibung liest, nicht die Objektstruktur, die ein Feld
+im Speicher hält. Für die hängt nur ab, ob sie als Datum, als Zahl oder als
+Text behandelt wird.
+
+### Warum das Kompositfeld keinen eigenen Zweig braucht
+
+Innerhalb eines Datenelements trennt der Doppelpunkt Komponenten — etwa
+`Abrechnungscode:Tarifkennzeichen` im `ENF`. Die naheliegende Abbildung wäre ein
+Baum: ein Feld, das Unterfelder enthält.
+
+Gebaut wurde stattdessen eine flache, geordnete Liste mit einem kombinierten
+Schlüssel: die Position des Feldes, mit einem Faktor multipliziert, plus die
+Position der Komponente. `Abrechnungscode` und `Tarifkennzeichen` landen so als
+zwei benachbarte Einträge unter Schlüsseln wie `200` und `201`, nicht als
+Unterbaum von `2`. **Eine Ordnung reicht, wenn danach nur die Reihenfolge
+zählt** — ein zweiter Baum hätte nichts zusätzlich ausgedrückt.
+
+### Was die Beschreibung nicht trägt
+
+Die JSON-Dateien legen die *Form* eines Feldes fest: Position, Typ, Länge,
+Pflichtstatus. Sie legen **nicht** fest, was zwischen Feldern gilt — etwa, dass
+entweder `INV` den Versichertenstatus trägt oder `NAD` die vollständige
+Anschrift, oder dass im `ENF` der Doppelpunkt ausschließlich innerhalb des
+einen Kompositfelds vorkommt und kein Feld verschoben werden darf. Solche
+Regeln stehen bislang nur als Fließtext in `note` und `validationRule` — lesbar
+für Menschen, wirkungslos für das Programm.
+
+Das ist eine bewusste Grenze und keine Lücke, die hier zu schließen wäre: Die
+*Form* eines Feldes ist Daten, weil sie sich aufzählen lässt. Eine Regel wie
+„entweder — oder" ist Verhalten, und Verhalten als Daten nachzubilden hieße,
+in JSON eine zweite Programmiersprache zu erfinden. Wo diese Regeln tatsächlich
+geprüft werden, ist Gegenstand von Teil 14.
+
+### Eine Sackgasse mit echten Folgen: der Leistungsbereich
+
+Das sechste Element des `UNB` trägt den **Leistungsbereich** — einen einzelnen
+Buchstaben nach Anlage 3, Abschnitt 8.1.14, der sich aus dem Abrechnungscode
+der Leistungszeile ergibt. Lange stand dort fest ein `H`.
+
+`H` ist der Sammelgruppenschlüssel für *Leistungserbringer von
+Rehabilitationssport* — für eine Hebamme falsch; richtig wäre `F`. Der Wert
+stammte aus der Referenzdatei `Valide.DTA`, die im selben Zug den
+Abrechnungscode `61` führt. Und `61` gehört tatsächlich zu `H` — die
+Referenzdatei war in sich stimmig, nur bildete sie nicht den Fall ab, an dem
+der Fehler sich zeigte.
+
+**Eine Referenzdatei, die fehlerfrei durchläuft, beweist Konsistenz — nicht,
+dass sie den richtigen Fall abbildet.** Aufgefallen wäre der Fehler erst bei
+der Kasse, in der Prüfstufe, die Schlüsselausprägungen gegen das
+Schlüsselverzeichnis hält: Die Lieferung wäre angenommen und zurückgewiesen
+worden, nicht bezahlt.
+
+Die Lösung ist im Kleinen dieselbe wie die Entscheidung im Großen für dieses
+Projektteil: keine Verzweigung im Code, sondern eine Tabelle — Abrechnungscode
+auf Buchstabe, vollständig nach Anlage 3 und mit einem eigenen Wert für „dazu
+findet sich nichts", statt eines erfundenen Buchstabens, der zufällig zu einem
+fremden Bereich gehört.
+
+### Was die Zähler zählen
+
+`UNT` zählt die Segmente der **eigenen** Nachricht, Kopf und Abschluss
+eingeschlossen, sechsstellig. `UNZ` zählt die **Nachrichten** der Übertragung,
+nicht ihre Segmente. Beide verschieben sich bei jeder Änderung an der
+Nachricht mit — ein ergänztes Segment ohne angepassten Zähler ist ein
+Syntaxfehler, und zwar einer, der die ganze Lieferung betrifft, nicht nur die
+eine Zeile.
+
+## Entscheidung
+
+**Der Nachrichtenaufbau liegt als Daten vor, nicht als Code je Segment.**
+Dreizehn JSON-Dateien, eine je Segmenttyp, gelesen über einen gemeinsamen
+Parser in zwei Klassen: `SegmentDefinition` für ein Segment, `FieldDefinition`
+für ein Feld. Komposita liegen in derselben flachen, geordneten Struktur wie
+einfache Felder. Die Typisierung im Code bleibt grob; die feine Form bleibt
+Beschreibung.
+
+| Festlegung | Grund |
+|---|---|
+| Segmentaufbau als JSON, nicht als Java-Klasse je Segment | Eine Ergänzung ist eine Datei, kein neuer Code |
+| Eine Quelle für Erzeugung, Prüfung und Oberflächentext | Verhindert widersprüchliche Abschriften derselben Regel |
+| Komposita ohne eigenen Baum, über einen kombinierten Positionsschlüssel | Eine Ordnung reicht, wenn nur die Reihenfolge zählt |
+| Feldübergreifende Regeln bleiben Text, nicht Struktur | Verhalten gehört in Code, nicht in eine zweite Sprache aus JSON |
+
+### Warum nicht der einfachere Weg
+
+Eine Java-Klasse je Segment wäre im eigenen Code bequemer zu lesen gewesen —
+kein Nachschlagen in einer Map, sondern ein benanntes Feld. Dagegen spricht,
+dass die Form nicht von diesem Projekt stammt, sondern von einer Anlage, die
+sich je Leistungsbereich und Fassung unterscheidet. Jede Klasse hätte bei jeder
+Ergänzung eine neue Übersetzung verlangt — genau das Risiko, das die
+Leistungsbereich-Tabelle im Kleinen schon zeigt.
+
+## Ergebnis
+
+Der Aufbau einer Lieferung liegt jetzt doppelt vor: maschinenlesbar in den
+JSON-Beschreibungen unter `resources/segments/`, und als Bild im
+Aufbaudiagramm.
+
+![Aufbau einer Lieferung](../GKVTransmitter_Nachrichtenaufbau.png)
+
+Eine Übertragung beginnt mit `UNB` und endet mit `UNZ`, dazwischen zwei
+Nachrichten mit eigenem `UNH`/`UNT`-Paar: **SLGA** trägt die Summen- und
+Begleitdaten, **SLLA** die Fall- und Leistungsdaten. Beide tragen dieselben
+vier Kennzeichen aus dem `FKT` — Erbringer, Kostenträger, Kasse,
+Rechnungssteller — und müssen sich darin mit der jeweils anderen Nachricht
+decken.
+
+## Offen geblieben
+
+- **Wovon das Tarifkennzeichen im `ENF` abhängt** — vom Dienstleister, von der
+  Kasse, oder ist es wirklich fest. Die Antwort entscheidet, ob es in die
+  Segmentbeschreibung, an `ServiceProvider` oder in eine eigene Zuordnung
+  gehört. Für einen einzigen Dienstleister mit einem Vertrag liefert die
+  heutige Lösung richtige Ergebnisse; mehr wurde noch nicht gebraucht.
+- **Die feldübergreifenden Pflichtkonventionen** — INV-oder-NAD, keine
+  Feldverschiebung — stehen nur als Text in der Beschreibung, nicht als
+  geprüfte Regel. Das wird erst in Teil 14 geschlossen.
+
+# Teil 12 — Nachrichtenerzeugung
+
+
+## Ausgangslage
+
+Der Aufbau einer Lieferung steht (Teil 11): Segmente, Felder, Schachtelung,
+Zähler — maschinenlesbar in den JSON-Beschreibungen und als Bild im
+Aufbaudiagramm. Was fehlt, ist der Schritt dazwischen. Das Programm weiß
+inzwischen, **wie** eine Nachricht aussieht; es hat noch keine erzeugt.
+
+Auf der einen Seite liegen Stammdaten: eine Teilnehmerin mit
+Versichertenkennzeichen, eine Hebamme mit Institutionskennzeichen, eine
+Blaupause mit dem Preis je Termin, eine Zahl wahrgenommener Termine. Auf der
+anderen Seite steht eine Textdatei, in der jedes Zeichen eine vereinbarte
+Bedeutung hat. Dieser Teil beschreibt den Weg von dort nach hier.
+
+## Ziel dieses Teils
+
+Aus einer Abrechnung eine vollständige Lieferung erzeugen — und zwar so, dass
+sich später **nachvollziehen lässt, woher jede einzelne Angabe kommt**. Das ist
+die eigentliche Anforderung: Eine Datei, die stimmt, deren Zustandekommen aber
+niemand erklären kann, ist im Streitfall wertlos.
+
+## Überlegungen
+
+### Wer setzt welchen Wert
+
+Die Felder einer Lieferung fallen in drei Gruppen, und die Unterscheidung
+entscheidet über den ganzen Entwurf:
+
+| Herkunft | Beispiele | Wer bestimmt sie |
+|---|---|---|
+| **Stammdaten** | Name, Geburtsdatum, Institutionskennzeichen | die Anwenderin, einmal erfasst |
+| **Abrechnungsdaten** | Terminzahl, Einzelbetrag, Positionsnummer | die Anwenderin, je Lauf oder je Blaupause |
+| **Abgeleitete Werte** | Summen, Segmentzähler, laufende Nummern, Dateiname | die Anwendung, aus den ersten beiden |
+
+Nur die ersten beiden Gruppen dürfen erfragt werden. **Ein Feld, das die
+Anwendung ohnehin berechnet und trotzdem im Formular steht, ist eine Falle**:
+Die Eingabe wird entgegengenommen und verworfen, und wer den Unterschied
+zwischen Eingabe und Ergebnis bemerkt, sucht den Fehler an der falschen Stelle.
+Dieses Projekt hatte den Fall — die Summenfelder standen in den
+Segmentbeschreibungen als ausfüllbar, obwohl sie beim Erzeugen berechnet
+werden.
+
+### Eine Vorlage füllen oder eine Nachricht bauen
+
+Zwei Wege lagen nahe.
+
+Der erste: **die Segmentbeschreibungen aus Teil 11 als Vorlage nehmen** und
+Feld für Feld befüllen. Das klingt folgerichtig, weil die Beschreibung ohnehin
+vorliegt. Es hat einen Haken, der erst beim Hinsehen auffällt: Die Beschreibung
+sagt, *welche Felder es gibt*, nicht, *in welcher Reihenfolge Nachrichten
+verschachtelt sind* und *welcher Zähler worauf zählt*. Ein Erzeuger, der nur
+Felder füllt, müsste die Schachtelung trotzdem kennen — sie stünde dann an zwei
+Stellen.
+
+Der zweite: **die Nachricht ausformulieren**, Segment für Segment, in der
+Reihenfolge, die die Anlage vorgibt. Die Beschreibung bleibt, wofür sie gemacht
+ist: für das Formular und für die Prüfung.
+
+### Der Rückfallwert ist die eigentliche Entscheidung
+
+Jedes Feld braucht eine Antwort auf die Frage: *Was steht hier, wenn die Angabe
+fehlt?* Drei Möglichkeiten gibt es, und die Wahl zwischen ihnen ist keine
+Geschmacksfrage.
+
+**Abbrechen.** Die Erzeugung schlägt fehl, sobald etwas fehlt. Sauber, aber im
+Betrieb unbrauchbar: Eine Abrechnung über fünfzehn Teilnehmerinnen bricht dann
+an der ersten fehlenden Hausnummer ab, ohne zu sagen, was sonst noch fehlt.
+
+**Einen plausiblen Wert einsetzen.** Bequem und **die gefährlichste der drei**.
+Ein erfundenes Geburtsdatum geht an die Kasse und sieht dort echt aus. Dieses
+Projekt hatte beide Fälle: einen Ersatz-Geburtstag und einen Ersatz-Einzelbetrag
+aus einer Beispieldatei. Der zweite hat jede Rechnung auf denselben Betrag
+lauten lassen — und weil die Datei in sich stimmig war, hielt sie keine Prüfung
+auf.
+
+**Einen Wert einsetzen, der auffällt.** Das Feld bleibt leer oder steht auf
+null, die Nachricht entsteht vollständig, und die **Prüfung vor dem Versand**
+hält sie an. Der Fehler wird sichtbar, ohne dass die Erzeugung darüber
+stolpert.
+
+### Warum alles auf einmal erzeugt wird
+
+Ein Lauf betrifft mehrere Teilnehmerinnen und mehrere Kassen. Man könnte jede
+Nachricht erzeugen, prüfen und sofort zustellen. Dagegen spricht ein Fall, den
+es wirklich gibt: Die fünfte Nachricht wird beanstandet, die ersten vier sind
+schon draußen. Sie müssten bei der Kasse storniert werden — und eine Stornierung
+ist ein eigenes Verfahren mit eigenen Anforderungen.
+
+## Entscheidung
+
+**Die Nachricht wird ausformuliert, nicht aus der Beschreibung gefüllt.** Ein
+einziger Erzeuger setzt die Segmente in der vorgegebenen Reihenfolge
+zusammen und rechnet dabei alle abgeleiteten Werte selbst aus. Die
+Segmentbeschreibungen aus Teil 11 bleiben für Formular und Prüfung zuständig.
+
+*Warum nicht der Vorlagenweg:* Er hätte die Schachtelung an zwei Stellen
+gebraucht — in der Beschreibung und im Erzeuger. Zwei Abschriften derselben
+Regel laufen auseinander, und zwar in der Richtung, die niemandem auffällt.
+
+**Rückfallwerte fallen so aus, dass die Prüfung sie fängt.** Kein erfundenes
+Datum, kein plausibler Betrag. Der Einzelbetrag fällt auf null, ein fehlendes
+Geburtsdatum bleibt leer.
+
+*Warum nicht der plausible Wert:* Er ist genau dann am schädlichsten, wenn
+niemand hinsieht. Eine Abrechnung, die nicht losgeht und sagt warum, ist besser
+als eine, die mit einer erfundenen Angabe losgeht.
+
+**Erst alle erzeugen und prüfen, dann zustellen.** Eine einzige beanstandete
+Nachricht hält den ganzen Lauf auf.
+
+*Warum nicht einzeln:* Weil ein halb zugestellter Lauf schlimmer ist als ein
+gar nicht zugestellter.
+
+**Was nur einmal vergeben werden darf, kommt aus der Datenhaltung.** Die
+laufende Nummer der Übermittlung und die Rechnungsnummer werden gesperrt
+gezogen und dauerhaft festgehalten — nicht aus einem Zähler, der beim
+Programmstart wieder bei eins beginnt.
+
+*Warum nicht im Arbeitsspeicher:* Eine doppelt vergebene Übermittlungsnummer
+ist ein dokumentierter Abweisungsgrund. Die zweite Abrechnung eines Monats
+trüge dieselbe wie die erste.
+
+## Ergebnis
+
+Aus einer Abrechnung entsteht eine vollständige Lieferung: ein Umschlag mit
+laufender Nummer, darin die Gesamtaufstellung mit Summen und die
+Leistungsaufstellung mit dem Einzelfall.
+
+![Nachrichtenerzeugung](../GKVTransmitter_Vision_Nachrichtenerzeugung.png)
+
+Die Zuständigkeiten sind getrennt:
+
+| Baustein | Aufgabe |
+|---|---|
+| **Leistungsparameter** | liest Betrag und Schlüssel aus der Blaupause; kennt die Rückfallwerte |
+| **Absender** | unterscheidet, *wer geleistet hat*, von *wer schickt* |
+| **Logischer Dateiname** | bildet die elf Stellen nach der Vorgabe, nicht frei |
+| **Rechnungsangaben** | Rechnungs- und Belegnummer, samt Bezug bei einer Korrektur |
+| **Erzeuger** | setzt daraus die Segmente zusammen und rechnet die Summen |
+
+Zwei Stellen verdienen einen eigenen Blick.
+
+**Summen und Mengen entstehen aus derselben Zahl.** Der Betrag in der
+Leistungszeile ist gerundet; die Kasse multipliziert genau diesen gerundeten
+Betrag mit der Menge. Wer die Fallsumme dagegen aus dem ungerundeten rechnet,
+bekommt eine Abweichung von einem Cent — und die eigene Prüfung hält daraufhin
+den ganzen Lauf auf, mit einer Meldung, die den Grund nicht nennt.
+
+**Der Leistungsbereich im Umschlag wird abgeleitet, nicht gesetzt.** Er ergibt
+sich aus dem Abrechnungscode der Leistungszeile. Das Projekt hatte dort lange
+einen festen Buchstaben stehen, der zu einem anderen Beruf gehörte — die
+Lieferung wäre angenommen und zurückgewiesen worden, nicht bezahlt.
+
+## Offen geblieben
+
+- **Die Prüfung selbst** ist hier nur als Tor erwähnt, nicht beschrieben. Sie
+  ist der Gegenstand von Teil 14.
+- **Der Weg zur Kasse** — an welche Stelle die fertige Datei geht und wie sie
+  dorthin kommt — bleibt offen bis Teil 16. Erzeugen und Zustellen sind
+  bewusst getrennt.
+- **Die Auftragsdatei**, die eine echte Übermittlung begleitet, fehlt. Ihre
+  Beschreibung liegt dem Projekt nicht vor; ohne sie ließe sich der
+  physikalische Dateiname nur raten. Das ist keine Lücke im Entwurf, sondern
+  eine in den Unterlagen — und sie wird so lange offen benannt, bis sie
+  geschlossen werden kann.
+

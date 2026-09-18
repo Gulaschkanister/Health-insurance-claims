@@ -54,9 +54,9 @@ anders als dort angenommen).
 | **D4** | Rechnungs- und Belegnummer | ✅ |
 | **D5** | Umsatzsteuer | ✅ mit F3 |
 | **D6** | Checkstyle | ✅ **0 Warnungen** |
-| **E1** | Teil 12 der Projektdokumentation | ⬜ offen |
+| **E1** | Teil 12 der Projektdokumentation | ✅ |
 | **E2** | Kostenrechnung | ✅ |
-| **E3** | Gesamtdokumentation neu erzeugen | ⛔ braucht LibreOffice, also Windows |
+| **E3** | Gesamtdokumentation neu erzeugen | 🟡 `.docx` erzeugt, **PDF** braucht LibreOffice (Windows) |
 | **F1–F6** | Dienstleisterprofil | ✅ vollständig |
 | **G1–G3** | Wartung | ✅ vollständig |
 
@@ -635,9 +635,9 @@ etwas, das wirklich unübersichtlich war:
 
 | | Was | Anmerkung |
 |---|---|---|
-| **E1** | **Teil 12 der Projektdokumentation** (Nachrichtenerzeugung) schreiben. | Teile 01–11 stehen. Bauplan und Stilregeln in `Schulprojekt.md`. |
+| **E1** ✅ | **Teil 12 der Projektdokumentation** (Nachrichtenerzeugung) schreiben. | Teile 01–11 stehen. Bauplan und Stilregeln in `Schulprojekt.md`. |
 | **E2** ✅ | **Kostenrechnung auf die richtige Kurszahl umstellen.** Das Kapitel „Was der eigene Weg wirklich kostet" rechnet mit **drei Kursen im Jahr**. Tatsächlich sind es rund **vierzig Kurstermine im Jahr** (ein Kurs über mehrere Wochen, etwa vierzig Wochen Kursbetrieb). Das Kapitel ist entsprechend neu zu rechnen — **und der Schluss ändert sich weniger, als die Zahl vermuten lässt**, siehe Kasten unten. | Der Einzelbetrag je Teilnehmerin und Termin steht in der Hebammenhilfe-Vergütungsvereinbarung und liegt **nicht** vor; die Rechnung bleibt bis dahin eine Formel mit einer Unbekannten. |
-| **E3** | **`00-Gesamtdokumentation` neu erzeugen** — sie steht noch auf dem Stand bis Teil 08. | `dokumentation/erzeugen.sh` braucht Pandoc **und** LibreOffice; letzteres fehlt in der WSL. **Unter Windows laufen lassen.** |
+| **E3** 🟡 | **`00-Gesamtdokumentation` neu erzeugen** — sie steht noch auf dem Stand bis Teil 08. | `dokumentation/erzeugen.sh` braucht Pandoc **und** LibreOffice; letzteres fehlt in der WSL. **Unter Windows laufen lassen.** |
 
 > ## Was bei vierzig Kursterminen herauskommt
 >
@@ -660,6 +660,40 @@ etwas, das wirklich unübersichtlich war:
 > als das, ist der eigene Weg trotz niedrigerer Gebühr teurer.** Deshalb ist
 > Block G keine Bequemlichkeit, sondern die Bedingung, unter der die Rechnung
 > überhaupt aufgeht.
+
+## E1. Teil 12 — Nachrichtenerzeugung — ✅ erledigt am 18.09.2026
+
+Geschrieben nach dem Bauplan aus `Schulprojekt.md`: Ausgangslage, Ziel,
+Überlegungen, **Entscheidung**, Ergebnis, Offen geblieben. Der Abschnitt
+*Entscheidung* nennt zu jeder Wahl ausdrücklich, **warum die Alternative
+nicht** — das ist der Unterschied zwischen einem Bautagebuch und einer
+Projektdokumentation.
+
+Vier Entscheidungen, jede mit der verworfenen Gegenseite:
+
+| Entschieden | Verworfen, weil |
+|---|---|
+| Die Nachricht wird **ausformuliert**, nicht aus der Segmentbeschreibung gefüllt | Der Vorlagenweg hätte die Schachtelung an zwei Stellen gebraucht — zwei Abschriften derselben Regel laufen auseinander |
+| **Rückfallwerte fallen so aus, dass die Prüfung sie fängt** | Ein plausibler Ersatzwert ist genau dann am schädlichsten, wenn niemand hinsieht |
+| Erst **alle** erzeugen und prüfen, dann zustellen | Ein halb zugestellter Lauf ist schlimmer als ein gar nicht zugestellter |
+| Laufende Nummern aus der **Datenhaltung** | Ein Zähler im Arbeitsspeicher beginnt beim Programmstart wieder bei eins |
+
+Der Teil erzählt dabei die drei Fehler nach, die das Projekt an dieser Stelle
+wirklich gemacht hat: der erfundene Einzelbetrag aus einer Beispieldatei, der
+feste Leistungsbereich eines fremden Berufs, und die Summen, die aus dem
+ungerundeten statt dem gerundeten Betrag entstanden. **Ein Weg ohne Umwege
+sieht erfunden aus.**
+
+## E3. Gesamtdokumentation — 🟡 zur Hälfte am 18.09.2026
+
+Die Annahme war, das ginge nur unter Windows. **Sie stimmt nur zur Hälfte:**
+`erzeugen.sh` baut die `.docx` mit Pandoc allein; LibreOffice braucht es erst
+für die PDF. Die Word-Fassungen sind damit hier erzeugt — je Teil eine und die
+**Gesamtfassung über alle zwölf Teile**, die zuvor auf dem Stand bis Teil 08
+stand.
+
+**Offen bleibt allein die PDF-Fassung.** Das Skript sagt das auch: „Kein
+LibreOffice gefunden — PDF übersprungen."
 
 ## E2. Kostenrechnung — ✅ erledigt am 18.09.2026
 
