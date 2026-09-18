@@ -1208,7 +1208,22 @@ D1 Trockenlauf · D3 Version · D4 Belegnummer · D6 Checkstyle    (unabhängig)
 Der Baum oben ist der ursprüngliche Plan; abgearbeitet wurde in der Reihenfolge
 A1 · A3 · B1 · B2 · C2 · C1 · F1 · F3+F4 · F6 · F2 · F5 · G1 · G2 · G3.
 
-## Was jetzt noch dran wäre
+## Was noch offen ist
+
+Stand 18.09.2026 sind **alle Punkte dieser Liste abgearbeitet** bis auf zwei,
+die von außen blockiert sind:
+
+| | Warum es nicht weitergeht |
+|---|---|
+| **B3** Auftragsdatei und physikalischer Dateiname | **GGT Anlage 4** liegt nicht vor. `VERFAHREN_KENNUNG` ist Pflicht und ließe sich nur raten. |
+| **E3** PDF der Gesamtdokumentation | braucht LibreOffice; die `.docx` sind erzeugt |
+
+Dazu die Beschaffungen, die kein Programm erledigt: eigenes Betriebsstätten-IK,
+Zertifikat, Anmeldung bei der Datenannahmestelle, Positionsnummernverzeichnis
+und Tarifkennzeichen aus dem Vertrag. Sie stehen unten unter „Ausdrücklich
+nicht in dieser Liste".
+
+## Wie es abgearbeitet wurde
 
 | Nächstes | Warum | Größe |
 |---|---|---|
