@@ -48,9 +48,22 @@ class DtaFactoryValidierungTest {
         return new Abrechnung(patient, provider, blueprint, termine);
     }
 
+    /**
+     * Mit vergebener Rechnungsnummer.
+     *
+     * <p>Die kurze Ueberladung setzt {@link Rechnungsangaben#OHNE} und damit
+     * die Nullnummer {@code 00000000} - <b>absichtlich</b>, denn
+     * {@code RechnungsangabenRegel} weist sie zurueck. Wer eine versandfaehige
+     * Nachricht will, muss eine Nummer vergeben; genau das prueft dieser
+     * Test mit.</p>
+     */
     private String erzeuge(int termine) {
         return DtaFactory.buildDtaFor(abrechnung(termine), 1L,
-                String.valueOf(LEISTUNGSERBRINGER_IK), String.valueOf(KASSEN_IK));
+                String.valueOf(LEISTUNGSERBRINGER_IK), String.valueOf(KASSEN_IK),
+                Leistungsparameter.ausBlueprint(abrechnung(termine).getBlueprint()),
+                Uebermittlungsart.ERPROBUNG,
+                Absender.ausLeistungserbringer(String.valueOf(LEISTUNGSERBRINGER_IK)),
+                new Rechnungsangaben(123L, 1));
     }
 
     @Test

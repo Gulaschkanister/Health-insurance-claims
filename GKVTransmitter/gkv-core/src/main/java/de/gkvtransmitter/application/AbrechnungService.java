@@ -71,7 +71,12 @@ public final class AbrechnungService {
                 // und danach abrechnet, soll die geaenderten benutzen.
                 datenbank::ladeBetriebsdaten,
                 // Pflichtdokumentation nach Anlage 1, Abschnitt 3 Absatz 2.
-                datenbank::protokolliere),
+                datenbank::protokolliere,
+                // Die Rechnungsnummer aus demselben gesperrten Nummernkreis
+                // wie die Datenaustauschreferenz - nur aus einer anderen
+                // Zeile. Sie zaehlen Verschiedenes, siehe Nummernkreis.
+                () -> datenbank.naechsteNummer(
+                        de.gkvtransmitter.repository.Nummernkreis.RECHNUNGSNUMMER)),
                 // Der Trockenlauf bekommt dieselben Betriebsdaten - sonst
                 // pruefte er eine Datei, die es so nie gaebe.
                 new Trockenlauf(datenbank::ladeBetriebsdaten));

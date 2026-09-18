@@ -103,6 +103,21 @@ public class Protokolleintrag {
     @Column(name = "sicherungskopie")
     private String sicherungskopie;
 
+    /**
+     * Die Rechnungsnummer aus dem {@code REC}.
+     *
+     * <p>Nicht aus Anhang 1 Abschnitt 4.5, sondern aus Abschnitt 7.3: Eine
+     * Korrekturrechnung verweist ueber {@code URI} auf Rechnungsnummer,
+     * Rechnungsdatum und Belegnummer der Ursprungsrechnung. <b>Ohne sie im
+     * Protokoll liesse sich keine versendete Rechnung mehr stornieren.</b></p>
+     */
+    @Column(name = "rechnungsnummer")
+    private long rechnungsnummer;
+
+    /** Die Belegnummer aus dem {@code INV} - eindeutig innerhalb der Rechnung. */
+    @Column(name = "belegnummer")
+    private int belegnummer;
+
     /** Wann bezahlt wurde; {@code null}, solange die Zahlung aussteht. */
     @Column(name = "bezahlt_am")
     private OffsetDateTime bezahltAm;
@@ -220,6 +235,22 @@ public class Protokolleintrag {
 
     public void setSicherungskopie(String sicherungskopie) {
         this.sicherungskopie = sicherungskopie;
+    }
+
+    public long getRechnungsnummer() {
+        return rechnungsnummer;
+    }
+
+    public void setRechnungsnummer(long rechnungsnummer) {
+        this.rechnungsnummer = rechnungsnummer;
+    }
+
+    public int getBelegnummer() {
+        return belegnummer;
+    }
+
+    public void setBelegnummer(int belegnummer) {
+        this.belegnummer = belegnummer;
     }
 
     public OffsetDateTime getBezahltAm() {

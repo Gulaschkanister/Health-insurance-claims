@@ -46,7 +46,25 @@ public interface DataRepository {
 
     List<Blueprint> getAllBlueprints();
 
-    long nextDtaInterchangeReference();
+    /**
+     * Die naechste Nummer eines Nummernkreises; jede wird nur einmal vergeben.
+     *
+     * <p>Verallgemeinert aus {@link #nextDtaInterchangeReference()}, das die
+     * gesperrte, gepruefte Vergabe seit je hatte - <b>fuer genau eine
+     * Nummer</b>. Die Rechnungsnummer brauchte dieselbe Zusicherung und
+     * bekam sie dadurch, statt eine zweite Mechanik daneben zu stellen.</p>
+     */
+    long naechsteNummer(Nummernkreis kreis);
+
+    /**
+     * Die naechste Datenaustauschreferenz.
+     *
+     * <p>Bleibt als eigener Name stehen: Sie hat Aufrufer und Tests, und der
+     * Name sagt an der Aufrufstelle mehr als ein Aufzaehlungswert.</p>
+     */
+    default long nextDtaInterchangeReference() {
+        return naechsteNummer(Nummernkreis.DATENAUSTAUSCHREFERENZ);
+    }
 
     /**
      * Die Angaben zur absendenden Stelle, oder {@code null}, solange keine

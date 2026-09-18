@@ -240,7 +240,7 @@ class EinstellungenTest {
         }
 
         @Override
-        public long nextDtaInterchangeReference() {
+        public long naechsteNummer(de.gkvtransmitter.repository.Nummernkreis kreis) {
             return 1;
         }
 

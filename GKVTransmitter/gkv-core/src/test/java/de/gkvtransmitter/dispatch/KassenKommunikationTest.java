@@ -143,6 +143,25 @@ class KassenKommunikationTest {
         }
     }
 
+    /**
+     * Eine Nachricht mit vergebener Rechnungsnummer.
+     *
+     * <p>Die kurzen {@code buildDtaFor}-Ueberladungen setzen
+     * {@link de.gkvtransmitter.dta.Rechnungsangaben#OHNE} und damit die
+     * Nullnummer {@code 00000000} - absichtlich, denn
+     * {@code RechnungsangabenRegel} weist sie zurueck. Wer eine annehmbare
+     * Lieferung braucht, vergibt eine Nummer.</p>
+     */
+    private static String dtaMitRechnungsnummer(de.gkvtransmitter.model.Abrechnung abrechnung,
+            int erbringerIk, int kassenIk) {
+        return de.gkvtransmitter.dta.DtaFactory.buildDtaFor(abrechnung, 1L,
+                String.valueOf(erbringerIk), String.valueOf(kassenIk),
+                de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(abrechnung.getBlueprint()),
+                de.gkvtransmitter.dta.Uebermittlungsart.ERPROBUNG,
+                de.gkvtransmitter.dta.Absender.ausLeistungserbringer(String.valueOf(erbringerIk)),
+                new de.gkvtransmitter.dta.Rechnungsangaben(123L, 1));
+    }
+
     @Nested
     @DisplayName("Simulierte Kasse")
     class Gegenstelle {
@@ -152,8 +171,7 @@ class KassenKommunikationTest {
         @Test
         @DisplayName("Eine korrekte Lieferung wird angenommen")
         void nimmtKorrekteLieferungAn() {
-            String dta = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(
-                    abrechnung(1, KASSEN_IK, 3), 1L, String.valueOf(ERBRINGER_IK), String.valueOf(KASSEN_IK));
+            String dta = dtaMitRechnungsnummer(abrechnung(1, KASSEN_IK, 3), ERBRINGER_IK, KASSEN_IK);
 
             BillingOfficeResponse antwort = kasse.empfange(dta);
 
@@ -172,8 +190,7 @@ class KassenKommunikationTest {
         @Test
         @DisplayName("Ein Strukturfehler wird als Syntaxfehler zurueckgemeldet")
         void meldetStrukturfehlerAlsSyntaxfehler() {
-            String dta = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(
-                    abrechnung(1, KASSEN_IK, 3), 1L, String.valueOf(ERBRINGER_IK), String.valueOf(KASSEN_IK));
+            String dta = dtaMitRechnungsnummer(abrechnung(1, KASSEN_IK, 3), ERBRINGER_IK, KASSEN_IK);
             String kaputt = dta.replaceFirst("UNZ\\+\\d+", "UNZ+000009");
 
             BillingOfficeResponse antwort = kasse.empfange(kaputt);
@@ -184,8 +201,7 @@ class KassenKommunikationTest {
         @Test
         @DisplayName("Ein inhaltlicher Fehler wird als Ablehnung zurueckgemeldet")
         void meldetInhaltsfehlerAlsAblehnung() {
-            String dta = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(
-                    abrechnung(1, KASSEN_IK, 3), 1L, String.valueOf(UNGUELTIGES_IK), String.valueOf(KASSEN_IK));
+            String dta = dtaMitRechnungsnummer(abrechnung(1, KASSEN_IK, 3), UNGUELTIGES_IK, KASSEN_IK);
 
             BillingOfficeResponse antwort = kasse.empfange(dta);
 
@@ -196,8 +212,7 @@ class KassenKommunikationTest {
         @Test
         @DisplayName("Das Antwortprotokoll nennt die Beanstandungen einzeln")
         void protokollNenntBeanstandungen() {
-            String dta = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(
-                    abrechnung(1, KASSEN_IK, 3), 1L, String.valueOf(UNGUELTIGES_IK), String.valueOf(KASSEN_IK));
+            String dta = dtaMitRechnungsnummer(abrechnung(1, KASSEN_IK, 3), UNGUELTIGES_IK, KASSEN_IK);
 
             String protokoll = kasse.empfange(dta).getRawContent();
 
@@ -208,8 +223,7 @@ class KassenKommunikationTest {
         @Test
         @DisplayName("Die Antwort laesst sich mit dem Auswerter wieder einordnen")
         void antwortIstAuswertbar() {
-            String dta = de.gkvtransmitter.dta.DtaFactory.buildDtaFor(
-                    abrechnung(1, KASSEN_IK, 3), 1L, String.valueOf(ERBRINGER_IK), String.valueOf(KASSEN_IK));
+            String dta = dtaMitRechnungsnummer(abrechnung(1, KASSEN_IK, 3), ERBRINGER_IK, KASSEN_IK);
             String protokoll = kasse.empfange(dta).getRawContent();
 
             BillingOfficeResponse eingeordnet = new BillingOfficeResponseParser().parse(protokoll);

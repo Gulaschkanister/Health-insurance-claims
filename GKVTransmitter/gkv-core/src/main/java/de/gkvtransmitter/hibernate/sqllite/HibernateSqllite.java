@@ -186,14 +186,18 @@ public final class HibernateSqllite implements DataRepository, AutoCloseable {
      * Datei ist ohnehin auf einen Schreiber beschraenkt.</p>
      */
     @Override
-    public long nextDtaInterchangeReference() {
+    public long naechsteNummer(de.gkvtransmitter.repository.Nummernkreis kreis) {
+        java.util.Objects.requireNonNull(kreis, "kreis must not be null");
+        // Eine Sperre fuer alle Kreise. Sie werden selten gezogen, und zwei
+        // Sperren nebeneinander waeren zwei Gelegenheiten, sich zu verhaken.
         referenzSperre.lock();
         try {
-            return runner.write("Datenaustauschreferenz vergeben", session -> {
-                DtaCounter counter = session.get(DtaCounter.class, 1L, LockMode.PESSIMISTIC_WRITE);
+            return runner.write(kreis.name() + " vergeben", session -> {
+                DtaCounter counter =
+                        session.get(DtaCounter.class, kreis.kennung(), LockMode.PESSIMISTIC_WRITE);
                 if (counter == null) {
                     counter = new DtaCounter();
-                    counter.setId(1L);
+                    counter.setId(kreis.kennung());
                     counter.setNextValue(1L);
                 }
                 long aktuell = counter.getNextValue() != null ? counter.getNextValue() : 1L;

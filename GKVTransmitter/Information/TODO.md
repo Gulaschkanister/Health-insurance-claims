@@ -51,7 +51,7 @@ anders als dort angenommen).
 | **D1** | Trockenlauf als Menüpunkt | ✅ |
 | **D2** | Zertifikats-Ablaufwarnung | ✅ mit G3 |
 | **D3** | Versionsangabe sichtbar machen | ✅ mit G1 |
-| **D4** | Belegnummer gegen Doppelvergabe | ⬜ offen |
+| **D4** | Rechnungs- und Belegnummer | ✅ |
 | **D5** | Umsatzsteuer | ✅ mit F3 |
 | **D6** | Checkstyle: die übrigen Warnungen | 🟡 von 10 auf 9, Beispiel in `ServiceProviderFieldPopulator` |
 | **E1–E3** | Dokumentation | ⬜ offen |
@@ -417,7 +417,7 @@ Jeder Punkt hier ist **S**, sofern nichts anderes steht.
 | **D1** ✅ | **Trockenlauf als Menüpunkt.** `SimulierterKassenTransport` existiert, ist aber nur über Tests erreichbar. Ein Knopf „einmal durchspielen, ohne zu senden". | Die beste Übung vor der Erprobung — und sie kostet nichts, weil das Gegenstück schon gebaut ist. | — |
 | **D2** ✅ | ~~**Zertifikats-Ablaufwarnung.**~~ **Erledigt mit G3.** Die Anwendung kennt das Datum aus B1 und erinnert rechtzeitig. | Einer der drei Punkte, die die Wartungslast klein halten. | B1 |
 | **D3** ✅ | ~~**Versionsangabe sichtbar machen.**~~ **Erledigt mit G1.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
-| **D4** | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
+| **D4** ✅ | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
 | **D5** ✅ | ~~**Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment.~~ **Erledigt mit F3 — und die Frage war falsch gestellt:** das `UST`-Segment trägt keinen Satz, sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt 5.5.2). | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
 | **D6** | **Checkstyle: die zehn übrigen Warnungen.** Nachgemessen am 17.09.2026: fünf in `gkv-core`, fünf in `gkv-ui`. **ParameterNumber** in `FieldDefinition`, `Person`, `Patient`, `ServiceProvider` (je 9) und `EditFormController` (12); **CyclomaticComplexity** in `BetragskonsistenzRegel` (11), `Feldbau` (13 und 12) sowie beiden `FieldPopulator` (je 11). Größe **M**. | Eine Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte — Builder oder ein `record` für die Anschrift. Eingriff in die Entitäten, also bewusst und nicht nebenbei. | — |
 
@@ -460,6 +460,55 @@ den Versandfall; jetzt gibt es `Lage.TROCKENLAUF` und dort steht
 
 Kein Test hat das gefunden — sie prüften Reihenfolge und Benennung der Befunde,
 nicht den Satz darüber. Jetzt prüft einer auch den.
+
+## D4. Rechnungs- und Belegnummer — ✅ erledigt am 18.09.2026
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Stand** | **umgesetzt**: Rechnungsnummer aus einem gesperrten Nummernkreis, Belegnummer je Rechnung, Regel dahinter |
+
+### Die Aufgabe war falsch gestellt
+
+Sie sprach von der **Belegnummer** und ihrer Sicherung „über Jahresgrenzen".
+Anlage 1, Abschnitt 5.5.2 verlangt dort weniger — und an anderer Stelle mehr:
+
+| Feld | Segment | Anlage 1, Abschnitt 5.5.2 | Vorher |
+|---|---|---|---|
+| **Sammel-Rechnungsnummer** | `REC` | `..14` AN, **Pflicht** | fest `00000000` |
+| Einzel-Rechnungsnummer | `REC` | auf `0`, solange keine Abrechnungsstelle absendet | `:0` — war richtig |
+| **Belegnummer** | `INV` | `..10` AN, Pflicht, „eindeutige Nummer **innerhalb der Gesamtrechnung**" | `HEB` + Jahr/Monat + Kennnummer |
+
+**Eindeutig über die Zeit muss die Rechnungsnummer sein, nicht die
+Belegnummer.** Die Belegnummer unterscheidet Belege *innerhalb* einer
+Rechnung; bei einer Datei mit einem Beleg ist sie schlicht die `1`. Die
+bisherige freie Bildung war also gleichzeitig zu aufwendig und an der falschen
+Stelle.
+
+### Der Rückfallwert fällt auf
+
+`Rechnungsangaben.OHNE` erzeugt genau die `00000000`, die vorher fest dastand —
+und die neue `RechnungsangabenRegel` weist sie als **Fehler** zurück. Dieselbe
+Entscheidung wie beim Einzelbetrag, der auf `0,00` fällt statt auf einen
+plausiblen Betrag: *ein erfundener Wert, der plausibel aussieht, ist schlimmer
+als einer, den das Tor abfängt.*
+
+Beim Einbau hat die Regel sofort **dreizehn Tests angehalten** — alle, die über
+die kurzen `buildDtaFor`-Überladungen bauten. Jeder davon hätte eine Datei mit
+Nullnummer erzeugt.
+
+### Damit ist C2 entsperrt
+
+Der `Protokolleintrag` führt jetzt **Rechnungsnummer und Belegnummer**. Genau
+darauf verweist eine Korrekturrechnung über das `URI`-Segment (Anlage 1,
+Abschnitt 7.3): Leistungserbringer-IK, Sammel- und Einzelrechnungsnummer,
+ursprüngliches Rechnungsdatum, ursprüngliche Belegnummer. **Alle fünf stehen
+jetzt fest.**
+
+> Nebenbei: `DataRepository.naechsteNummer(Nummernkreis)` verallgemeinert
+> `nextDtaInterchangeReference()`, das die gesperrte, geprüfte Vergabe seit je
+> hatte — für genau eine Nummer. Die Rechnungsnummer bekam dieselbe
+> Zusicherung, statt eine zweite Mechanik daneben zu stellen.
 
 ---
 

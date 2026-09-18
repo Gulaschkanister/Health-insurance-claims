@@ -158,11 +158,21 @@ class TestdatenTest {
                         // Versichertennummer im INV lauter Nullen und wuerde als
                         // fehlend beanstandet.
                         teilnehmerin.setId((int) referenz);
-                        String dta = DtaFactory.buildDtaFor(
-                                new Abrechnung(teilnehmerin, leiterin, blaupause, TERMINE),
-                                referenz++,
+                        // Mit vergebener Rechnungsnummer: Die kurze
+                        // Ueberladung setzt Rechnungsangaben.OHNE und damit
+                        // die Nullnummer, die RechnungsangabenRegel
+                        // zurueckweist - absichtlich.
+                        Abrechnung abrechnung =
+                                new Abrechnung(teilnehmerin, leiterin, blaupause, TERMINE);
+                        String dta = DtaFactory.buildDtaFor(abrechnung, referenz,
                                 String.valueOf(leiterin.getIk()),
-                                String.valueOf(teilnehmerin.getKassenIk()));
+                                String.valueOf(teilnehmerin.getKassenIk()),
+                                de.gkvtransmitter.dta.Leistungsparameter.ausBlueprint(blaupause),
+                                de.gkvtransmitter.dta.Uebermittlungsart.ERPROBUNG,
+                                de.gkvtransmitter.dta.Absender.ausLeistungserbringer(
+                                        String.valueOf(leiterin.getIk())),
+                                new de.gkvtransmitter.dta.Rechnungsangaben(referenz, 1));
+                        referenz++;
 
                         ValidationReport bericht = pruefung.pruefe(dta);
                         assertTrue(bericht.istVersandfaehig(),

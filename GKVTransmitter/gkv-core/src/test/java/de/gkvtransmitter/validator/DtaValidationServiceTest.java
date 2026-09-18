@@ -30,7 +30,7 @@ class DtaValidationServiceTest {
             "UNB+UNOC:3+123456780+987654324+20260308:1200+00001+H+HEB26030801+1'",
             "UNH+00001+SLGA:21:0:0'",
             "FKT+01++123456780+987654324+987654324+123456780'",
-            "REC+00000000:0+20260307+1'",
+            "REC+00000123:0+20260307+1'",
             "UST+19'",
             "GES+00+120000,00+120000,00'",
             "GES+99+120000,00+120000,00'",
@@ -38,7 +38,7 @@ class DtaValidationServiceTest {
             "UNT+000008+00001'",
             "UNH+00002+SLLA:21:0:0'",
             "FKT+01++123456780+987654324+987654324+123456780'",
-            "REC+00000000:0+20260307+1'",
+            "REC+00000123:0+20260307+1'",
             "INV+012345678901++1+HEB2403001'",
             "NAD+MUSTERMANN+ANNA+19900101+MUSTERSTRASSE 1+12345+MUSTERSTADT'",
             "ENF+01+61:00000+306050601+08,00+15000,00+20240301+0,00'",
@@ -483,7 +483,7 @@ class DtaValidationServiceTest {
         @DisplayName("Mit URI-Segment ist die Korrektur nicht mehr zu beanstanden")
         void korrekturMitUrsprungsangaben() {
             String korrektur = REFERENZ.replace("FKT+01+", "FKT+04+")
-                    .replace("REC+00000000:0+", "URI+123456780+00000000+0+20260307+HEB2403001'\nREC+00000000:0+");
+                    .replace("REC+00000123:0+", "URI+123456780+00000122+0+20260307+1'\nREC+00000123:0+");
 
             ValidationReport bericht = service.pruefe(korrektur);
 

@@ -156,9 +156,15 @@ class SpeicherRepository implements DataRepository {
         return List.copyOf(blaupausen);
     }
 
+    /** Je Nummernkreis ein eigener Zaehler - sie zaehlen Verschiedenes. */
+    private final java.util.Map<de.gkvtransmitter.repository.Nummernkreis, Long> zaehler =
+            new java.util.EnumMap<>(de.gkvtransmitter.repository.Nummernkreis.class);
+
     @Override
-    public long nextDtaInterchangeReference() {
-        return naechsteReferenz++;
+    public long naechsteNummer(de.gkvtransmitter.repository.Nummernkreis kreis) {
+        long aktuell = zaehler.getOrDefault(kreis, (long) naechsteReferenz);
+        zaehler.put(kreis, aktuell + 1);
+        return aktuell;
     }
 
     /** Die Einstellungen, wie sie in der Tabelle {@code einstellung} laegen. */

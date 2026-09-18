@@ -176,6 +176,39 @@ class DtaDispatchServiceTest {
         assertNotNull(erster.getSicherungskopie(),
                 "Die Kopie unter staging/ ist bis zur Bezahlung vorzuhalten");
         assertTrue(erster.wartetAufZahlung());
+        // Rechnungs- und Belegnummer gehoeren dazu: Eine Korrekturrechnung
+        // verweist ueber URI genau darauf (Anlage 1, Abschnitt 7.3). Ohne sie
+        // im Protokoll liesse sich keine versendete Rechnung stornieren.
+        assertTrue(erster.getRechnungsnummer() > 0,
+                "Ohne Rechnungsnummer im Protokoll ist keine Korrektur moeglich");
+        assertEquals(1, erster.getBelegnummer());
+    }
+
+    /**
+     * Zwei Lieferungen tragen zwei Rechnungsnummern.
+     *
+     * <p>Zwei Rechnungen mit derselben Nummer sind fuer die Kasse eine - und
+     * eine Korrektur laesst sich keiner von beiden zuordnen.</p>
+     */
+    @Test
+    @DisplayName("Keine Rechnungsnummer wird zweimal vergeben")
+    void rechnungsnummernSindEindeutig() throws Exception {
+        Map<Integer, BillingOfficeEndpoint> endpunkte = new LinkedHashMap<>();
+        endpunkte.put(108310400,
+                BillingOfficeEndpoint.fileEndpoint(108310400, "Test-Kasse", tempDir.resolve("ziel")));
+        List<de.gkvtransmitter.entity.Protokolleintrag> protokoll = new java.util.ArrayList<>();
+        DtaDispatchService mitProtokoll = new DtaDispatchService(
+                new BillingOfficeEndpointRegistry(endpunkte, tempDir.resolve("fallback")),
+                new FileBillingOfficeTransport(), DtaValidationService.standard(),
+                new DtaDispatchService.LaufenderZaehler(),
+                de.gkvtransmitter.dta.Uebermittlungsart.ERPROBUNG, () -> null, protokoll::add);
+
+        mitProtokoll.generateAndRoute(zweiAbrechnungen(), tempDir);
+
+        assertEquals(2, protokoll.stream()
+                        .map(de.gkvtransmitter.entity.Protokolleintrag::getRechnungsnummer)
+                        .distinct().count(),
+                "Zwei Abrechnungen, zwei Rechnungsnummern");
     }
 
     /** Die erste Zeile der zuerst gefundenen Datei im Ordner. */

@@ -109,6 +109,24 @@ public final class DtaFactory {
      */
     public static String buildDtaFor(Abrechnung a, long interchangeRefValue, String senderIk, String receiverIk,
             Leistungsparameter leistung, Uebermittlungsart art, Absender absender) {
+        return buildDtaFor(a, interchangeRefValue, senderIk, receiverIk, leistung, art, absender,
+                Rechnungsangaben.OHNE);
+    }
+
+    /**
+     * Erzeugt die Nachricht mit vergebenen Rechnungsnummern.
+     *
+     * <p>{@code REC} und {@code INV} trugen bis zum 18.09.2026 feste Werte:
+     * {@code 00000000:0} und eine frei gebildete Belegnummer. Beide sind nach
+     * Anlage 1, Abschnitt 5.5.2 Pflichtangaben, und auf Rechnungsnummer und
+     * Rechnungsdatum verweist jede spaetere Korrektur.</p>
+     *
+     * @param rechnung Rechnungs- und Belegnummer; {@link Rechnungsangaben#OHNE}
+     *        laesst die Pruefung anschlagen, statt eine Nummer zu erfinden
+     */
+    public static String buildDtaFor(Abrechnung a, long interchangeRefValue, String senderIk, String receiverIk,
+            Leistungsparameter leistung, Uebermittlungsart art, Absender absender,
+            Rechnungsangaben rechnung) {
         LocalDateTime now = a.getCreatedAt();
         LocalDate serviceDate = now.toLocalDate();
         String interchangeRef = String.format("%05d", interchangeRefValue);
@@ -148,7 +166,7 @@ public final class DtaFactory {
         List<String> slga = new ArrayList<>();
         slga.add(String.format("UNH+%s+SLGA:%s'", slgaRef, NACHRICHTENVERSION));
         slga.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
-        slga.add(String.format("REC+00000000:0+%s+1'", serviceDate.minusDays(1).format(BASIC_DATE)));
+        slga.add(rechnungssegment(rechnung, serviceDate));
         umsatzsteuersegment(a.getProvider()).ifPresent(slga::add);
         slga.add(String.format("GES+00+%s+%s'", sum, sum));
         slga.add(String.format("GES+99+%s+%s'", sum, sum));
@@ -162,8 +180,8 @@ public final class DtaFactory {
         List<String> slla = new ArrayList<>();
         slla.add(String.format("UNH+%s+SLLA:%s'", sllaRef, NACHRICHTENVERSION));
         slla.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
-        slla.add(String.format("REC+00000000:0+%s+1'", serviceDate.minusDays(1).format(BASIC_DATE)));
-        slla.add(buildInvSegment(a.getPatient(), serviceDate));
+        slla.add(rechnungssegment(rechnung, serviceDate));
+        slla.add(buildInvSegment(a.getPatient(), rechnung));
         slla.add(buildNadSegment(a.getPatient()));
         slla.add(buildEnfSegment(a, menge, leistung));
         slla.add(String.format("BES+%s'", sum));
@@ -223,11 +241,32 @@ public final class DtaFactory {
         return String.format("NAM+%s+%s+DR'", last, first);
     }
 
-    private static String buildInvSegment(Patient patient, LocalDate serviceDate) {
-        String versichertennummer = zeroPad(patient.getId(), 12);
-        String belegnummer = "HEB" + serviceDate.format(DateTimeFormatter.ofPattern("yyMM"))
-                + zeroPad(patient.getId(), 3);
-        return String.format("INV+%s++1+%s'", versichertennummer, belegnummer);
+    /**
+     * Das {@code REC}: Rechnungsnummer, Rechnungsdatum, Rechnungsart.
+     *
+     * <p>Das Rechnungsdatum ist der Vortag des Leistungsdatums, wie bisher -
+     * eine Rechnung kann nicht nach der Leistung datieren, die sie abrechnet.
+     * Die Rechnungsart {@code 1} steht fuer die Erstrechnung nach Anlage 3,
+     * Abschnitt 8.1.4.</p>
+     */
+    private static String rechnungssegment(Rechnungsangaben rechnung, LocalDate serviceDate) {
+        return String.format("REC+%s+%s+1'", rechnung.rechnungsnummerFeld(),
+                serviceDate.minusDays(1).format(BASIC_DATE));
+    }
+
+    /**
+     * Das {@code INV}: Versichertennummer, Beleginformation, Belegnummer.
+     *
+     * <p>Die Belegnummer stand hier als {@code "HEB" + Jahr/Monat +
+     * Kennnummer der Teilnehmerin} - frei gebildet und ohne Bezug zu
+     * irgendetwas Vergebenem. Anlage 1, Abschnitt 5.5.2 verlangt eine
+     * "eindeutige Nummer innerhalb der Gesamtrechnung", also <b>weniger</b>
+     * als die freie Bildung vorgab: Eindeutig ueber die Zeit ist die
+     * Rechnungsnummer im {@code REC}, nicht die Belegnummer.</p>
+     */
+    private static String buildInvSegment(Patient patient, Rechnungsangaben rechnung) {
+        return String.format("INV+%s++1+%s'", zeroPad(patient.getId(), 12),
+                rechnung.belegnummerFeld());
     }
 
     /**

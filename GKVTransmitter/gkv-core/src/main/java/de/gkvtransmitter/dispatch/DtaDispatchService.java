@@ -45,6 +45,8 @@ public class DtaDispatchService {
     private final Betriebsangaben betriebsangaben;
     /** Wohin das Uebermittlungsprotokoll geht, siehe {@link Protokollfuehrung}. */
     private final Protokollfuehrung protokoll;
+    /** Woher die Rechnungsnummern kommen, siehe {@link Rechnungsnummern}. */
+    private final Rechnungsnummern rechnungsnummern;
     private final BillingOfficeResponseParser antwortAuswertung = new BillingOfficeResponseParser();
 
     /**
@@ -87,6 +89,22 @@ public class DtaDispatchService {
     public interface Protokollfuehrung {
         /** Nimmt einen Eintrag auf. */
         void vermerke(Protokolleintrag eintrag);
+    }
+
+    /**
+     * Woher die Rechnungsnummern kommen.
+     *
+     * <p>Getrennt von den {@link Datenaustauschreferenzen}, weil sie
+     * Verschiedenes zaehlen: Jene unterscheidet <b>Uebermittlungen</b>, diese
+     * <b>Rechnungen</b>. Auf die Rechnungsnummer und das Rechnungsdatum
+     * verweist jede spaetere Korrektur (Anlage 1, Abschnitt 7.3) - waeren es
+     * dieselben Zahlen, liesse sich eine erneut uebermittelte Rechnung nicht
+     * von einer neuen unterscheiden.</p>
+     */
+    @FunctionalInterface
+    public interface Rechnungsnummern {
+        /** Die naechste Rechnungsnummer; jede darf nur einmal vergeben werden. */
+        long naechste();
     }
 
     public DtaDispatchService() {
@@ -133,6 +151,21 @@ public class DtaDispatchService {
     public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
             DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art,
             Betriebsangaben betriebsangaben, Protokollfuehrung protokoll) {
+        this(endpointRegistry, transport, validierung, referenzen, art, betriebsangaben, protokoll,
+                new LaufenderZaehler()::naechste);
+    }
+
+    /**
+     * @param rechnungsnummern woher die Rechnungsnummern kommen; ohne Angabe
+     *        zaehlt ein Zaehler im Arbeitsspeicher - fuer Tests, nicht fuer den
+     *        Betrieb, siehe {@link LaufenderZaehler}
+     */
+    public DtaDispatchService(BillingOfficeEndpointRegistry endpointRegistry, BillingOfficeTransport transport,
+            DtaValidationService validierung, Datenaustauschreferenzen referenzen, Uebermittlungsart art,
+            Betriebsangaben betriebsangaben, Protokollfuehrung protokoll,
+            Rechnungsnummern rechnungsnummern) {
+        this.rechnungsnummern =
+                Objects.requireNonNull(rechnungsnummern, "rechnungsnummern must not be null");
         this.protokoll = Objects.requireNonNull(protokoll, "protokoll must not be null");
         this.endpointRegistry = Objects.requireNonNull(endpointRegistry, "endpointRegistry must not be null");
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
@@ -180,7 +213,8 @@ public class DtaDispatchService {
      * @param dateiname  der vorgesehene Dateiname
      */
     private record ErzeugteNachricht(Abrechnung abrechnung, String inhalt, String dateiname,
-            long referenz, String absenderIk, String empfaengerIk) {
+            long referenz, String absenderIk, String empfaengerIk,
+            de.gkvtransmitter.dta.Rechnungsangaben rechnung) {
 
         int kassenIk() {
             return abrechnung.getPatient().getKassenIk();
@@ -254,13 +288,19 @@ public class DtaDispatchService {
             // aussen - hier stand eine lokale Variable, die bei jedem Lauf
             // wieder bei 1 begann. Siehe LaufenderZaehler.
             long sequence = referenzen.naechste();
+            // Eine Datei ist eine Gesamtrechnung mit einem Beleg: Die
+            // Belegnummer ist "eindeutig innerhalb der Gesamtrechnung"
+            // (Anlage 1, Abschnitt 5.5.2), also hier immer die 1. Eindeutig
+            // ueber die Zeit ist die Rechnungsnummer.
+            de.gkvtransmitter.dta.Rechnungsangaben rechnung =
+                    new de.gkvtransmitter.dta.Rechnungsangaben(rechnungsnummern.naechste(), 1);
             String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk,
-                    leistungsparameter(abrechnung), art, absender(senderIk));
+                    leistungsparameter(abrechnung), art, absender(senderIk), rechnung);
             String filename = String.format("patient_%d_%s.dta",
                     patient.getId(), LocalDateTime.now().format(FILE_TIME));
 
             erzeugt.add(new ErzeugteNachricht(abrechnung, content, filename, sequence,
-                    absender(senderIk).ik(), receiverIk));
+                    absender(senderIk).ik(), receiverIk, rechnung));
         }
         return erzeugt;
     }
@@ -472,6 +512,11 @@ public class DtaDispatchService {
         eintrag.setFehlerfrei(fehler == null);
         eintrag.setFehlerstatus(fehler);
         eintrag.setSicherungskopie(kopie == null ? null : kopie.toString());
+        // Rechnungs- und Belegnummer gehoeren ins Protokoll, weil eine
+        // Korrektur genau darauf verweist (Anlage 1, Abschnitt 7.3). Ohne sie
+        // stuende im URI-Segment nichts, worauf die Kasse zurueckfinden kann.
+        eintrag.setRechnungsnummer(nachricht.rechnung().rechnungsnummer());
+        eintrag.setBelegnummer(nachricht.rechnung().belegnummer());
         protokoll.vermerke(eintrag);
     }
 
