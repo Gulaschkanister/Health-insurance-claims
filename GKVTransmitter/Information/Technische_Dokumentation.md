@@ -175,12 +175,13 @@ Strategie-Muster als Tor vor dem Versand.
 bericht)`. Eine Regel darf dabei **nicht abbrechen**, wenn sie etwas nicht
 findet — eine fehlende Angabe ist selbst ein Befund, den sie in den
 `ValidationReport.Builder` einträgt, keine Ausnahme, die die Prüfung beendet.
-`DtaValidationService.standard()` reiht acht Regeln in einer bewusst
+`DtaValidationService.standard()` reiht **zehn Regeln** in einer bewusst
 gewählten Reihenfolge: erst die formale Struktur (`SegmentSyntaxRegel`), dann
 der Rahmen der Übertragung und der einzelnen Nachrichten
 (`NachrichtenRahmenRegel`, `NachrichtenAbschlussRegel`), dann die Inhalte
 (Institutionskennzeichen, Versichertenangaben, Leistungsposition,
-Positionsnummer, Betragskonsistenz). So steht bei einer kaputten Datei die
+Positionsnummer, Verarbeitungskennzeichen, Rechnungsangaben,
+Betragskonsistenz). So steht bei einer kaputten Datei die
 grundlegende Ursache oben im Bericht, nicht eine Folgemeldung.
 
 `ValidationReport` sammelt **alle** Befunde einer Prüfung statt beim ersten
@@ -190,6 +191,15 @@ einen stabilen `code` (etwa `UNZ_ANZAHL`), getrennt von der Beschreibung,
 damit sich Befunde auswerten lassen, ohne Meldungstexte zu vergleichen. Die
 Gewichtung `ValidationSeverity` entscheidet, was zählt: Nur `ERROR` hält den
 Versand auf, `WARNING` weist auf etwas hin, ohne ihn zu blockieren.
+
+Zu jedem Code nennt der **`Befundkatalog`** die **Fundstelle** in den Anlagen
+und **was zu tun ist** — eine Beanstandung, die nur sagt, *dass* etwas nicht
+stimmt, ist die halbe Auskunft. `BefundkatalogTest` hält den Katalog mit dem
+Quelltext zusammen, in beide Richtungen: Ein Code ohne Eintrag und ein Eintrag
+ohne Code lassen den Bau fehlschlagen. **Sechs der 65 Einträge stammen von
+dieser Anwendung und nicht aus einer Anlage** — das Prüfziffernverfahren der
+Institutionskennzeichen etwa ist in den vorliegenden Unterlagen nicht
+beschrieben. Sie sagen das, statt einen Abschnitt zu erfinden.
 
 # 6. Versand
 

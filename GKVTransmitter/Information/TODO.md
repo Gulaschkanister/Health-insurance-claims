@@ -54,7 +54,9 @@ anders als dort angenommen).
 | **D4** | Rechnungs- und Belegnummer | ✅ |
 | **D5** | Umsatzsteuer | ✅ mit F3 |
 | **D6** | Checkstyle | ✅ **0 Warnungen** |
-| **E1–E3** | Dokumentation | ⬜ offen |
+| **E1** | Teil 12 der Projektdokumentation | ⬜ offen |
+| **E2** | Kostenrechnung | ✅ |
+| **E3** | Gesamtdokumentation neu erzeugen | ⛔ braucht LibreOffice, also Windows |
 | **F1–F6** | Dienstleisterprofil | ✅ vollständig |
 | **G1–G3** | Wartung | ✅ vollständig |
 
@@ -634,7 +636,7 @@ etwas, das wirklich unübersichtlich war:
 | | Was | Anmerkung |
 |---|---|---|
 | **E1** | **Teil 12 der Projektdokumentation** (Nachrichtenerzeugung) schreiben. | Teile 01–11 stehen. Bauplan und Stilregeln in `Schulprojekt.md`. |
-| **E2** | **Kostenrechnung auf die richtige Kurszahl umstellen.** Das Kapitel „Was der eigene Weg wirklich kostet" rechnet mit **drei Kursen im Jahr**. Tatsächlich sind es rund **vierzig Kurstermine im Jahr** (ein Kurs über mehrere Wochen, etwa vierzig Wochen Kursbetrieb). Das Kapitel ist entsprechend neu zu rechnen — **und der Schluss ändert sich weniger, als die Zahl vermuten lässt**, siehe Kasten unten. | Der Einzelbetrag je Teilnehmerin und Termin steht in der Hebammenhilfe-Vergütungsvereinbarung und liegt **nicht** vor; die Rechnung bleibt bis dahin eine Formel mit einer Unbekannten. |
+| **E2** ✅ | **Kostenrechnung auf die richtige Kurszahl umstellen.** Das Kapitel „Was der eigene Weg wirklich kostet" rechnet mit **drei Kursen im Jahr**. Tatsächlich sind es rund **vierzig Kurstermine im Jahr** (ein Kurs über mehrere Wochen, etwa vierzig Wochen Kursbetrieb). Das Kapitel ist entsprechend neu zu rechnen — **und der Schluss ändert sich weniger, als die Zahl vermuten lässt**, siehe Kasten unten. | Der Einzelbetrag je Teilnehmerin und Termin steht in der Hebammenhilfe-Vergütungsvereinbarung und liegt **nicht** vor; die Rechnung bleibt bis dahin eine Formel mit einer Unbekannten. |
 | **E3** | **`00-Gesamtdokumentation` neu erzeugen** — sie steht noch auf dem Stand bis Teil 08. | `dokumentation/erzeugen.sh` braucht Pandoc **und** LibreOffice; letzteres fehlt in der WSL. **Unter Windows laufen lassen.** |
 
 > ## Was bei vierzig Kursterminen herauskommt
@@ -658,6 +660,36 @@ etwas, das wirklich unübersichtlich war:
 > als das, ist der eigene Weg trotz niedrigerer Gebühr teurer.** Deshalb ist
 > Block G keine Bequemlichkeit, sondern die Bedingung, unter der die Rechnung
 > überhaupt aufgeht.
+
+## E2. Kostenrechnung — ✅ erledigt am 18.09.2026
+
+**Die Aufgabe war falsch gestellt.** Sie sagte, das Kapitel „Was der eigene Weg
+wirklich kostet" rechne mit drei Kursen im Jahr. Es rechnet mit **gar nichts** —
+das Kapitel war rein beschreibend und enthielt keine einzige Zahl. Die einzige
+Stelle mit „drei Kursen" war ein Beispielsatz in Teil 01 („Aus ‚März, diese drei
+Kurse' wird eine fertige Datei"), der einen *Monat* meint und keine Jahreszahl;
+er heißt jetzt „diese Kursgruppe".
+
+Der Kasten oben steht damit jetzt auch in der Dokumentation, samt der Einordnung,
+die er braucht: Der Einzelbetrag ist die Unbekannte, und was die Rechnung
+trotzdem zeigt, ist die **Größenordnung des Ergebnisses** — die sich über den
+ganzen plausiblen Bereich nicht ändert.
+
+### Dabei drei veraltete Aussagen gefunden
+
+Eine Dokumentation, die behauptet, etwas fehle, das es gibt, ist schlechter als
+keine:
+
+| Stand laut Dokument | Wirklichkeit |
+|---|---|
+| „Beides ist im Programm bisher nicht abgebildet" (Protokoll und Sicherungskopie) | seit C1 am 17.09. gebaut |
+| „acht Regeln" | zehn |
+| „Zuordnung zur Datenannahmestelle: **fehlt**" | `Kostentraegerdatei` liest sie seit B2 — **hat in der Anwendung aber noch keinen Aufrufer**, und genau so steht es jetzt da |
+
+Die drei Punkte „Was die Wartung klein hält, und deshalb vor dem Echtbetrieb
+gebaut gehört" sind seit Block G gebaut; der Satz sagt das jetzt.
+
+`Technische_Dokumentation.docx` und `.pdf` sind neu erzeugt.
 
 ---
 

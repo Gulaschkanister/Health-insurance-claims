@@ -296,15 +296,15 @@ Zweitens: **auch die Erprobungsdatei trägt den physikalischen Namen einer Testd
 | Schritt | Stand |
 |---|---|
 | Nutzdaten erzeugen (SLGA + SLLA) | vollständig |
-| Prüfstufen 1 bis 3 vorab selbst durchlaufen | weitgehend, acht Regeln |
+| Prüfstufen 1 bis 3 vorab selbst durchlaufen | weitgehend, **zehn Regeln** |
 | Datenaustauschreferenz fortlaufend und dauerhaft vergeben | vollständig |
 | Art der Datei (Test / Erprobung / Echt) | einstellbar |
 | Leistungsbereich im `UNB` aus dem Abrechnungscode | **seit 07.09.2026** |
 | Logischer Dateiname nach Anhang 1 | **seit 07.09.2026** |
-| Physikalischer Dateiname | fehlt — gehört zur Auftragsdatei |
+| Physikalischer Dateiname | fehlt — gehört zur Auftragsdatei, deren Beschreibung (GGT Anlage 4) nicht vorliegt |
 | Auftragsdatei | **fehlt** |
 | Verschlüsselung | **fehlt** |
-| Zuordnung zur Datenannahmestelle statt zur Kasse | **fehlt** |
+| Zuordnung zur Datenannahmestelle statt zur Kasse | Kostenträgerdatei wird gelesen (`Kostentraegerdatei`), in der Anwendung aber noch nicht aufgerufen |
 | Übertragung selbst | dateibasiert, kein realer Weg |
 
 Die eigene Prüfung vor dem Versand ist kein Beiwerk: der Absender hat sicherzustellen, dass **nur geprüfte Datensätze übermittelt werden** (Anlage 1, Abschnitt 3 Absatz 3). Genau dafür ist die Prüfstufe im Programm das Tor vor dem Versand.
@@ -344,13 +344,31 @@ Was sich tatsächlich bewegt, und wie oft:
 
 Bei einer Abrechnungsstelle ist das **im Preis enthalten** — sie muss dem Verfahren folgen, nicht die Leistungserbringerin. Das ist der eigentliche Gegenwert der drei Prozent, nicht der Briefversand.
 
-**Was die Wartung klein hält**, und deshalb vor dem Echtbetrieb gebaut gehört:
+**Was die Wartung klein hält** — am 17. und 18.09.2026 gebaut:
 
-1. **Kostenträgerdatei einlesen statt Endpunkte pflegen** — aus vier Pflegeterminen im Jahr wird ein Dateiaustausch.
-2. **Ablaufwarnung für das Zertifikat** — die Anwendung kennt das Datum, sie kann rechtzeitig daran erinnern.
-3. **Versionsangabe in der Nachricht sichtbar machen** — der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, mit welcher Version er sendet, merkt einen Wechsel.
+1. **Kostenträgerdatei einlesen statt Endpunkte pflegen** — aus vier Pflegeterminen im Jahr wird ein Dateiaustausch. `Kostentraegerdatei` liest sie; in der Anwendung ruft sie allerdings noch niemand auf.
+2. **Ablaufwarnung für das Zertifikat** — die Seite „Wartung" meldet beim Start, was innerhalb von sechs Wochen ansteht.
+3. **Versionsangabe sichtbar machen** — die Seite „Stand der Unterlagen" nennt die Version, mit der die Anwendung **tatsächlich sendet**, neben den Fassungen, die vorliegen. Dazu ein Knopf, der auf `gkv-datenaustausch.de` nach Neuerem sieht.
 
-Ohne diese drei ist der eigene Weg jedes Jahr Handarbeit. Mit ihnen bleibt eine Aufgabe im Jahr: das Zertifikat erneuern.
+Ohne diese drei wäre der eigene Weg jedes Jahr Handarbeit. Mit ihnen bleibt **eine Aufgabe im Jahr**: das Zertifikat erneuern.
+
+### Was das in Zahlen heißt
+
+Die Wartung ist nicht Beiwerk der Rechnung, sie ist die Rechnung. Der Maßstab ist der Kursbetrieb, nicht die Zahl der Kurse: ein Kurs läuft über mehrere Wochen, bei etwa vierzig Wochen Kursbetrieb sind das rund **vierzig Kurstermine im Jahr**.
+
+`Jahresumsatz = 40 Termine × Teilnehmerinnen × Einzelbetrag`, die Gebühr einer Abrechnungsstelle sind **3 %**, das Zertifikat kostet **79 € einmalig und 49 € jährlich** (zzgl. USt):
+
+| Teiln. | €/Termin | Umsatz/Jahr | Gebühr 3 % | Ersparnis nach Zertifikat |
+|---:|---:|---:|---:|---:|
+| 8 | 10 | 3.200 € | 96 € | **47 €** |
+| 10 | 15 | 6.000 € | 180 € | **131 €** |
+| 12 | 20 | 9.600 € | 288 € | **239 €** |
+
+**Gleichstand ab rund 1.630 € Jahresumsatz** (im ersten Jahr rund 2.630 €). Bei vierzig Terminen wird das in jedem Fall überschritten — der eigene Weg ist also billiger, **aber um fünfzig bis zweihundertvierzig Euro im Jahr.**
+
+> **Der Einzelbetrag ist die Unbekannte.** Er steht in der Hebammenhilfe-Vergütungsvereinbarung, die dem Projekt nicht vorliegt. Die Spalte „€/Termin" nennt deshalb Größenordnungen und keine Vertragswerte; die Rechnung bleibt bis dahin eine Formel mit einer Unbekannten. Was sie trotzdem zeigt, ist die **Größenordnung des Ergebnisses** — und die ändert sich über den ganzen plausiblen Bereich nicht.
+>
+> **Das entscheidet die Frage nicht, sondern verschiebt sie.** Eine Ersparnis in dieser Größe ist ein bis drei Arbeitsstunden wert. **Kostet die Pflege mehr als das, ist der eigene Weg trotz niedrigerer Gebühr teurer.** Deshalb sind die drei Punkte oben keine Bequemlichkeit, sondern die Bedingung, unter der die Rechnung überhaupt aufgeht.
 
 ## Was noch zu beschaffen ist
 
@@ -370,7 +388,9 @@ Die Technische Anlage verlangt zweierlei, das nicht in der Datei steht:
 - Über den Datenaustausch ist eine **Dokumentation** zu führen und **mindestens zwei Jahre** aufzubewahren. Anhang 1, Abschnitt 4.5 nennt die Mindestinhalte: physikalischer Dateiname, Erstellungsdatum, laufende Nummer, Kommunikationspartner, Beginn und Ende der Übermittlung, Dateigröße, Verarbeitungshinweise, Senden oder Empfangen, fehlerfrei oder fehlerhaft und im Fehlerfall der Fehlerstatus.
 - Eine **Sicherungskopie** der Daten ist bis zur Bezahlung vorzuhalten, damit sich eine verlorene oder zurückgewiesene Lieferung rekonstruieren lässt.
 
-Beides ist im Programm bisher nicht abgebildet und gehört zum Weg in den Echtbetrieb. Die geforderte Dokumentation ist dabei fast ein Nebenprodukt: die Angaben entstehen ohnehin beim Versand, sie werden nur nirgends festgehalten.
+**Beides ist seit dem 17.09.2026 abgebildet.** Die Entität `Protokolleintrag` bildet jeden der zehn Pflichtinhalte in einem eigenen Feld ab; geschrieben wird beim Versand, gezeigt unter „Übermittlungen". Auch ein **Fehlschlag** wird protokolliert — ein Protokoll, das nur die gelungenen Fälle kennt, belegt nichts, und Abschnitt 4.5 verlangt ausdrücklich „fehlerfrei/fehlerhaft" samt Fehlerstatus.
+
+Der eigentliche Gewinn ist der Zustand **bezahlt**: Ohne einen Zeitpunkt dafür weiß niemand, wann die Sicherungskopien weg dürfen — und niemand sieht, worauf noch Geld aussteht.
 # Aufbau des Programms
 
 ## Zwei Module
