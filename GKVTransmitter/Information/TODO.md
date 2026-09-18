@@ -53,13 +53,13 @@ anders als dort angenommen).
 | **D3** | Versionsangabe sichtbar machen | ✅ mit G1 |
 | **D4** | Rechnungs- und Belegnummer | ✅ |
 | **D5** | Umsatzsteuer | ✅ mit F3 |
-| **D6** | Checkstyle: die übrigen Warnungen | 🟡 von 10 auf 9, Beispiel in `ServiceProviderFieldPopulator` |
+| **D6** | Checkstyle | ✅ **0 Warnungen** |
 | **E1–E3** | Dokumentation | ⬜ offen |
 | **F1–F6** | Dienstleisterprofil | ✅ vollständig |
 | **G1–G3** | Wartung | ✅ vollständig |
 
-Gemessen am 17.09.2026: **549 Tests grün** (264 Kern, 285 Oberfläche),
-Checkstyle **9** Warnungen.
+Gemessen am 18.09.2026: **587 Tests grün** (289 Kern, 298 Oberfläche),
+Checkstyle **0** Warnungen.
 
 ## Drei Befunde, die beim Abarbeiten dazugekommen sind
 
@@ -467,7 +467,7 @@ Jeder Punkt hier ist **S**, sofern nichts anderes steht.
 | **D3** ✅ | ~~**Versionsangabe sichtbar machen.**~~ **Erledigt mit G1.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
 | **D4** ✅ | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
 | **D5** ✅ | ~~**Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment.~~ **Erledigt mit F3 — und die Frage war falsch gestellt:** das `UST`-Segment trägt keinen Satz, sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt 5.5.2). | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
-| **D6** | **Checkstyle: die zehn übrigen Warnungen.** Nachgemessen am 17.09.2026: fünf in `gkv-core`, fünf in `gkv-ui`. **ParameterNumber** in `FieldDefinition`, `Person`, `Patient`, `ServiceProvider` (je 9) und `EditFormController` (12); **CyclomaticComplexity** in `BetragskonsistenzRegel` (11), `Feldbau` (13 und 12) sowie beiden `FieldPopulator` (je 11). Größe **M**. | Eine Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte — Builder oder ein `record` für die Anschrift. Eingriff in die Entitäten, also bewusst und nicht nebenbei. | — |
+| **D6** ✅ | **Checkstyle: die zehn übrigen Warnungen.** Nachgemessen am 17.09.2026: fünf in `gkv-core`, fünf in `gkv-ui`. **ParameterNumber** in `FieldDefinition`, `Person`, `Patient`, `ServiceProvider` (je 9) und `EditFormController` (12); **CyclomaticComplexity** in `BetragskonsistenzRegel` (11), `Feldbau` (13 und 12) sowie beiden `FieldPopulator` (je 11). Größe **M**. | Eine Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte — Builder oder ein `record` für die Anschrift. Eingriff in die Entitäten, also bewusst und nicht nebenbei. | — |
 
 ## D1. Trockenlauf — ✅ erledigt am 18.09.2026
 
@@ -557,6 +557,29 @@ jetzt fest.**
 > `nextDtaInterchangeReference()`, das die gesperrte, geprüfte Vergabe seit je
 > hatte — für genau eine Nummer. Die Rechnungsnummer bekam dieselbe
 > Zusicherung, statt eine zweite Mechanik daneben zu stellen.
+
+## D6. Checkstyle — ✅ erledigt am 18.09.2026
+
+| | |
+|---|---|
+| **Größe** | M |
+| **Stand** | **0 Warnungen** (von 10 am 17.09.) |
+
+Kein Unterdrücken, kein Anheben der Grenzen — jeder Befund war ein Hinweis auf
+etwas, das wirklich unübersichtlich war:
+
+| Befund | Was daraus wurde |
+|---|---|
+| `Person`, `Patient`, `ServiceProvider` — je 9 Parameter | **`Anschrift`** als `@Embeddable`-Record. Vier der neun beschrieben die Anschrift; `new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345, …)` ließ sich ohne Blick auf die Signatur nicht lesen — **und `"DE"` an der Stelle der Hausnummer fällt dort nicht auf.** 48 Aufrufstellen umgeschrieben. |
+| `FieldDefinition` — 9 Parameter | **`Feldform`**-Record — und ein Nebenbefund: von den vier Konstruktoren hatte **drei nie jemand aufgerufen**. Sie hielten die neun Parameter am Leben, ohne gebraucht zu werden. |
+| `EditFormController` — 12 Parameter | **`Formularbausteine`** und **`Entitaetszugriff`**. Darunter waren drei `Consumer<T>` und ein `Supplier<List<T>>`; **zwei vertauschte hätte der Übersetzer nicht bemerkt** — es hätte gespeichert, was zu löschen war. |
+| `Feldbau` — Komplexität 14 und 12 | `nachArt` und `eigeneRegel` herausgelöst |
+| `BetragskonsistenzRegel` — 11 | `summeDerFaelle` und `vergleicheGes` herausgelöst |
+| `PatientFieldPopulator` — 11 | Tabelle statt `switch`, wie beim Dienstleister am 17.09. |
+
+> **Die Spalten der Datenbank bleiben dieselben.** `Anschrift` ist
+> `@Embeddable`; eine Umbenennung hätte bestehende Datenbanken leerlaufen
+> lassen — Hibernate legt fehlende Spalten an, aber es füllt sie nicht.
 
 ---
 

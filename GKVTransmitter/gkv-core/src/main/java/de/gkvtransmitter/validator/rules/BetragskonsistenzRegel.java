@@ -134,15 +134,37 @@ public final class BetragskonsistenzRegel implements ValidationRule {
             return;
         }
 
+        Optional<BigDecimal> summe = summeDerFaelle(besSegmente, bericht);
+        if (summe.isEmpty()) {
+            return;
+        }
+        vergleicheGes(gesSegmente, summe.get(), bericht);
+    }
+
+    /**
+     * Die Summe aller Fallsummen.
+     *
+     * <p>Herausgeloest, weil {@code pruefeGesGegenBes} mit beiden Schleifen auf
+     * zyklomatische Komplexitaet 11 kam. Leer heisst: ein Betrag war unlesbar,
+     * das ist bereits gemeldet, und weiterrechnen hiesse eine Abweichung
+     * melden, die aus dem eigenen Rechenfehler stammt.</p>
+     */
+    private Optional<BigDecimal> summeDerFaelle(List<DtaSegment> besSegmente,
+            ValidationReport.Builder bericht) {
         BigDecimal summeDerFaelle = BigDecimal.ZERO;
         for (DtaSegment bes : besSegmente) {
             Optional<BigDecimal> betrag = betrag(bes, BES_BETRAG, bericht, "BES_BETRAG_UNGUELTIG");
             if (betrag.isEmpty()) {
-                return;
+                return Optional.empty();
             }
             summeDerFaelle = summeDerFaelle.add(betrag.get());
         }
+        return Optional.of(summeDerFaelle);
+    }
 
+    /** Haelt jede Gesamtsumme gegen die Summe der Faelle. */
+    private void vergleicheGes(List<DtaSegment> gesSegmente, BigDecimal summeDerFaelle,
+            ValidationReport.Builder bericht) {
         for (DtaSegment ges : gesSegmente) {
             String schluessel = ges.element(GES_SCHLUESSEL).trim();
             boolean istGesamtsumme = SCHLUESSEL_GESAMTSUMME.equals(schluessel);

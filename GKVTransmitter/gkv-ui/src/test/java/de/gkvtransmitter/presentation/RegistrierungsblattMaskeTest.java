@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.util.AppMessages;
@@ -67,8 +68,7 @@ class RegistrierungsblattMaskeTest {
         betrieb.setZertifikatBis("2027-03-31");
         datenbank.speichereBetriebsdaten(betrieb);
 
-        ServiceProvider person = new ServiceProvider("Maria", "Hebamme", "Kurweg", "DE", "3",
-                28203, 261914007, 101560000, LocalDate.of(1980, 1, 9));
+        ServiceProvider person = new ServiceProvider("Maria", "Hebamme", new Anschrift("Kurweg", "3", 28203, "DE"), 261914007, 101560000, LocalDate.of(1980, 1, 9));
         person.setId(1);
         person.setAbrechnungscode("50");
         person.setSteuernummer("60/123/45678");

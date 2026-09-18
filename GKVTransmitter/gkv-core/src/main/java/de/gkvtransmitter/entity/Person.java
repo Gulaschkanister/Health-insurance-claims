@@ -43,19 +43,33 @@ public class Person {
 
 
 
-    public Person(String firstname, String lastname, String street, String country, String housenumber, int plz,
+    /**
+     * Eine Person mit gebuendelter Anschrift.
+     *
+     * <p>Die vier Angaben zur Anschrift stehen zusammen in {@link Anschrift}.
+     * Zuvor trug dieser Konstruktor neun Parameter, davon vier Zeichenketten
+     * und eine Zahl in fester Reihenfolge - <b>"DE" an der Stelle der
+     * Hausnummer faellt dort nicht auf</b>.</p>
+     */
+    public Person(String firstname, String lastname, Anschrift anschrift,
             int ik, int kassenIk, LocalDate birthDate) {
         this.firstname = firstname;
         this.lastname = lastname;
-        this.street = street;
-        this.country = country;
-        this.housenumber = housenumber;
-        this.plz = plz;
+        Anschrift wohnort = anschrift == null ? new Anschrift() : anschrift;
+        this.street = wohnort.strasse();
+        this.country = wohnort.land();
+        this.housenumber = wohnort.hausnummer();
+        this.plz = wohnort.plz();
         this.ik = ik;
         this.kassenIk = kassenIk;
         this.birthDate = birthDate;
         // Load tag configuration from JSON
         this.tags = TagConfigLoader.loadTagConfig("/tags/person-tags.json");
+    }
+
+    /** Die Anschrift als Buendel, aus den einzelnen Feldern. */
+    public Anschrift anschrift() {
+        return new Anschrift(street, housenumber, plz, country);
     }
 
     public TagList getTagList(String name) {

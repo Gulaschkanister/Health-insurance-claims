@@ -28,6 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -64,13 +65,11 @@ class HibernateSqlliteTest {
     }
 
     private static Patient patient(String vorname, String nachname) {
-        return new Patient(vorname, nachname, "Musterstrasse", "DE", "1",
-                12345, 101, 108310400, LocalDate.of(1990, 1, 1));
+        return new Patient(vorname, nachname, new Anschrift("Musterstrasse", "1", 12345, "DE"), 101, 108310400, LocalDate.of(1990, 1, 1));
     }
 
     private static ServiceProvider provider(String vorname, String nachname) {
-        return new ServiceProvider(vorname, nachname, "Praxisweg", "DE", "2",
-                54321, 260326822, 108310400, LocalDate.of(1980, 5, 5));
+        return new ServiceProvider(vorname, nachname, new Anschrift("Praxisweg", "2", 54321, "DE"), 260326822, 108310400, LocalDate.of(1980, 5, 5));
     }
 
     // --- Grundlegendes Speichern und Laden -------------------------------

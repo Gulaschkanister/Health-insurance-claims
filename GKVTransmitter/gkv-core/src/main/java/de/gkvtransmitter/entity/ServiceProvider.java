@@ -120,10 +120,9 @@ public class ServiceProvider extends Person {
         super();
     }
 
-    public ServiceProvider(String firstname, String lastname, String street, String country, String housenumber,
-            int plz,
+    public ServiceProvider(String firstname, String lastname, Anschrift anschrift,
             int ik, int kassenIk, LocalDate birthDate) {
-        super(firstname, lastname, street, country, housenumber, plz, ik, kassenIk, birthDate);
+        super(firstname, lastname, anschrift, ik, kassenIk, birthDate);
     }
 
     public String getAbrechnungscode() {

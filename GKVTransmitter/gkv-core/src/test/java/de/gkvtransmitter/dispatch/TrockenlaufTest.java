@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import de.gkvtransmitter.dta.Testblaupause;
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -32,13 +33,11 @@ import de.gkvtransmitter.model.Abrechnung;
 class TrockenlaufTest {
 
     private static Abrechnung abrechnung(int termine) {
-        ServiceProvider erbringer = new ServiceProvider("Maria", "Hebamme", "Kurweg", "DE", "3",
-                28203, 261914007, 101560000, LocalDate.of(1980, 1, 9));
+        ServiceProvider erbringer = new ServiceProvider("Maria", "Hebamme", new Anschrift("Kurweg", "3", 28203, "DE"), 261914007, 101560000, LocalDate.of(1980, 1, 9));
         erbringer.setId(2);
         erbringer.setAbrechnungscode("50");
         Blueprint blaupause = Testblaupause.mitPreis();
-        Patient anna = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
-                108310400, 108310400, LocalDate.of(1990, 1, 1));
+        Patient anna = new Patient("Anna", "Beispiel", new Anschrift("Musterstrasse", "1", 12345, "DE"), 108310400, 108310400, LocalDate.of(1990, 1, 1));
         anna.setId(1);
         return new Abrechnung(anna, erbringer, blaupause, termine);
     }

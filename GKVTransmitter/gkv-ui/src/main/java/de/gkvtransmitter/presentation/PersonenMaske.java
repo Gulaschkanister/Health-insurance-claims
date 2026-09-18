@@ -9,10 +9,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.Person;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.controller.EditFormController;
+import de.gkvtransmitter.presentation.controller.Entitaetszugriff;
+import de.gkvtransmitter.presentation.controller.Formularbausteine;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
 import de.gkvtransmitter.presentation.populator.ServiceProviderFieldPopulator;
@@ -172,30 +175,33 @@ public class PersonenMaske {
         return person.getFirstname() + " " + person.getLastname() + " " + person.getPlz();
     }
 
+    /** Das Werkzeug ist fuer beide Rollen dasselbe. */
+    private Formularbausteine formularbausteine() {
+        return new Formularbausteine(bausteine, texte, meldungen,
+                feldname -> feldbau.erzeugeFeld(feldname, feldbeschreibung(feldname)));
+    }
+
     private void zeigeTeilnehmerform(Patient teilnehmer) {
-        EditFormController<Patient> steuerung = new EditFormController<>(bausteine, texte, meldungen, teilnehmerFelder,
-                () -> List.of(teilnehmer),
-                gepruefteSpeicherung(datenbank::savePatient),
-                datenbank::deletePatient,
-                false,
-                feldname -> feldbau.erzeugeFeld(feldname, feldbeschreibung(feldname)),
-                "Patient",
-                unbenutzt -> { },
-                erneut -> rahmen.zeige(erneut.buildEditForm()));
-        rahmen.zeige(steuerung.buildEditForm());
+        zeigeForm(new Entitaetszugriff<>(teilnehmerFelder, () -> List.of(teilnehmer),
+                gepruefteSpeicherung(datenbank::savePatient), datenbank::deletePatient,
+                "Patient", false));
     }
 
     private void zeigeDienstleisterform(ServiceProvider dienstleister) {
-        EditFormController<ServiceProvider> steuerung = new EditFormController<>(bausteine, texte, meldungen,
-                dienstleisterFelder,
-                () -> List.of(dienstleister),
+        zeigeForm(new Entitaetszugriff<>(dienstleisterFelder, () -> List.of(dienstleister),
                 gepruefteSpeicherung(datenbank::saveServiceProvider),
-                datenbank::deleteServiceProvider,
-                false,
-                feldname -> feldbau.erzeugeFeld(feldname, feldbeschreibung(feldname)),
-                "ServiceProvider",
-                unbenutzt -> { },
-                erneut -> rahmen.zeige(erneut.buildEditForm()));
+                datenbank::deleteServiceProvider, "ServiceProvider", false));
+    }
+
+    /**
+     * Zeigt das Formular zum Bearbeiten.
+     *
+     * <p>Fuer beide Rollen derselbe Ablauf - er unterschied sich zuvor nur in
+     * drei von zwoelf Parametern, und die standen zwischen neun gleichen.</p>
+     */
+    private <T> void zeigeForm(Entitaetszugriff<T> zugriff) {
+        EditFormController<T> steuerung = new EditFormController<>(formularbausteine(), zugriff,
+                unbenutzt -> { }, erneut -> rahmen.zeige(erneut.buildEditForm()));
         rahmen.zeige(steuerung.buildEditForm());
     }
 
@@ -312,13 +318,13 @@ public class PersonenMaske {
 
         try {
             if (alsDienstleister) {
-                ServiceProvider dienstleister = new ServiceProvider(vorname, nachname, strasse, land,
-                        hausnummer, plz, ik, kassenIk, geburtstag);
+                ServiceProvider dienstleister = new ServiceProvider(vorname, nachname,
+                        new Anschrift(strasse, hausnummer, plz, land), ik, kassenIk, geburtstag);
                 uebernimmZusatzfelder(felder, dienstleister);
                 datenbank.saveServiceProvider(dienstleister);
             } else {
-                datenbank.savePatient(new Patient(vorname, nachname, strasse, land,
-                        hausnummer, plz, ik, kassenIk, geburtstag));
+                datenbank.savePatient(new Patient(vorname, nachname,
+                        new Anschrift(strasse, hausnummer, plz, land), ik, kassenIk, geburtstag));
             }
         } catch (RuntimeException e) {
             meldungen.fehler(e.getMessage());

@@ -22,8 +22,7 @@ class TaetigkeitszeitraumTest {
     private static final LocalDate HEUTE = LocalDate.of(2026, 9, 17);
 
     private static ServiceProvider erbringer() {
-        return new ServiceProvider("Maria", "Hebamme", "Kurweg", "DE", "3",
-                28203, 261914007, 101560000, LocalDate.of(1980, 1, 9));
+        return new ServiceProvider("Maria", "Hebamme", new Anschrift("Kurweg", "3", 28203, "DE"), 261914007, 101560000, LocalDate.of(1980, 1, 9));
     }
 
     /**

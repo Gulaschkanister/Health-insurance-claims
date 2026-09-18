@@ -404,23 +404,28 @@ class EditFormControllerTest {
     }
 
     private EditFormController<Eintrag> steuerung(boolean mitLoeschen, String art) {
-        return new EditFormController<>(
-                new JavaFxUiFactory(), texte, meldungen, new EintragFelder(),
-                () -> bestand,
-                eintrag -> {
-                    if (speicherfehler != null) {
-                        throw speicherfehler;
-                    }
-                    gespeichert.add(eintrag);
-                },
-                geloescht::add,
-                mitLoeschen,
-                feldname -> {
-                    TextField feld = new TextField();
-                    feld.setId(feldname);
-                    return feld;
-                },
-                art,
+        de.gkvtransmitter.presentation.controller.Formularbausteine bausteine =
+                new de.gkvtransmitter.presentation.controller.Formularbausteine(
+                        new JavaFxUiFactory(), texte, meldungen,
+                        feldname -> {
+                            TextField feld = new TextField();
+                            feld.setId(feldname);
+                            return feld;
+                        });
+        de.gkvtransmitter.presentation.controller.Entitaetszugriff<Eintrag> zugriff =
+                new de.gkvtransmitter.presentation.controller.Entitaetszugriff<>(
+                        new EintragFelder(),
+                        () -> bestand,
+                        eintrag -> {
+                            if (speicherfehler != null) {
+                                throw speicherfehler;
+                            }
+                            gespeichert.add(eintrag);
+                        },
+                        geloescht::add,
+                        art,
+                        mitLoeschen);
+        return new EditFormController<>(bausteine, zugriff,
                 fertig -> {
                     behaelter = fertig;
                     wieOftFormularFertig++;

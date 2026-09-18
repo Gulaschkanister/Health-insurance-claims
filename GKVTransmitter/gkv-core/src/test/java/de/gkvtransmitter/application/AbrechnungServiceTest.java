@@ -21,6 +21,7 @@ import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.dispatch.FileBillingOfficeTransport;
 import de.gkvtransmitter.dta.Testblaupause;
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -146,15 +147,13 @@ class AbrechnungServiceTest {
     }
 
     private Patient patient(int id, int kassenIk) {
-        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
-                108310400, kassenIk, LocalDate.of(1990, 1, 1));
+        Patient patient = new Patient("Anna", "Beispiel", new Anschrift("Musterstrasse", "1", 12345, "DE"), 108310400, kassenIk, LocalDate.of(1990, 1, 1));
         patient.setId(id);
         return patient;
     }
 
     private ServiceProvider provider(int id) {
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321,
-                104940005, 108310400, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", new Anschrift("Musterweg", "2", 54321, "DE"), 104940005, 108310400, LocalDate.of(1985, 2, 2));
         provider.setId(id);
         return provider;
     }

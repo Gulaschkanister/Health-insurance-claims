@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -54,10 +55,12 @@ public final class Testdaten {
      */
     public static List<ServiceProvider> dienstleister() {
         return List.of(
-                new ServiceProvider("Martina", "Sander", "Lindenweg", "DE", "12",
-                        28195, IK_HEBAMME_SANDER, IK_AOK_BREMEN, LocalDate.of(1979, 4, 22)),
-                new ServiceProvider("Kerstin", "Vogt", "Am Deich", "DE", "3a",
-                        28203, IK_HEBAMME_VOGT, IK_AOK_BREMEN, LocalDate.of(1985, 11, 8)));
+                new ServiceProvider("Martina", "Sander",
+                        new Anschrift("Lindenweg", "12", 28195, "DE"),
+                        IK_HEBAMME_SANDER, IK_AOK_BREMEN, LocalDate.of(1979, 4, 22)),
+                new ServiceProvider("Kerstin", "Vogt",
+                        new Anschrift("Am Deich", "3a", 28203, "DE"),
+                        IK_HEBAMME_VOGT, IK_AOK_BREMEN, LocalDate.of(1985, 11, 8)));
     }
 
     /**
@@ -119,7 +122,8 @@ public final class Testdaten {
         // Das eigene IK einer versicherten Person ist das ihrer Kasse: sie ist
         // keine Leistungserbringerin. Ein erfundener zweiter Wert stuende sonst
         // im FKT und wuerde beanstandet.
-        return new Patient(vorname, nachname, strasse, "DE", hausnummer, plz, kassenIk, kassenIk, geboren);
+        return new Patient(vorname, nachname, new Anschrift(strasse, hausnummer, plz, "DE"),
+                kassenIk, kassenIk, geboren);
     }
 
     private static PersonGroup gruppe(String name, List<Patient> teilnehmerinnen, ServiceProvider leiterin) {

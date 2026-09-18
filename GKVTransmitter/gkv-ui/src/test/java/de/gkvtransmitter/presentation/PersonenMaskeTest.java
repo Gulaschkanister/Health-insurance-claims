@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.populator.PatientFieldPopulator;
@@ -658,14 +659,14 @@ class PersonenMaskeTest {
     // --- Testdaten -------------------------------------------------------
 
     private static Patient patient(int id, String vorname) {
-        Patient person = new Patient(vorname, "Muster", "Musterweg", "DE", "1", 12345, 101, KASSEN_IK, null);
+        Patient person = new Patient(vorname, "Muster", new Anschrift("Musterweg", "1", 12345, "DE"), 101, KASSEN_IK, null);
         person.setId(id);
         return person;
     }
 
     private static ServiceProvider dienstleister(int id, String vorname) {
         ServiceProvider person =
-                new ServiceProvider(vorname, "Muster", "Musterstr.", "DE", "1", 12345, 1001, KASSEN_IK, null);
+                new ServiceProvider(vorname, "Muster", new Anschrift("Musterstr.", "1", 12345, "DE"), 1001, KASSEN_IK, null);
         person.setId(id);
         return person;
     }

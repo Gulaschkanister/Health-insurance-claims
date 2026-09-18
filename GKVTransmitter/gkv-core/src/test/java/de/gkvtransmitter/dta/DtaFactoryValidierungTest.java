@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -38,11 +39,9 @@ class DtaFactoryValidierungTest {
     private final DtaValidationService validierung = DtaValidationService.standard();
 
     private static Abrechnung abrechnung(int termine) {
-        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1",
-                12345, 111111111, KASSEN_IK, LocalDate.of(1990, 1, 1));
+        Patient patient = new Patient("Anna", "Beispiel", new Anschrift("Musterstrasse", "1", 12345, "DE"), 111111111, KASSEN_IK, LocalDate.of(1990, 1, 1));
         patient.setId(1);
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2",
-                54321, LEISTUNGSERBRINGER_IK, KASSEN_IK, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", new Anschrift("Musterweg", "2", 54321, "DE"), LEISTUNGSERBRINGER_IK, KASSEN_IK, LocalDate.of(1985, 2, 2));
         provider.setId(2);
         Blueprint blueprint = Testblaupause.mitPreis();
         return new Abrechnung(patient, provider, blueprint, termine);

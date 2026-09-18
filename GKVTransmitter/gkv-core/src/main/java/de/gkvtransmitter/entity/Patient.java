@@ -15,9 +15,9 @@ public class Patient extends Person {
 
 
 
-    public Patient(String firstname, String lastname, String street, String country, String housenumber, int plz,
+    public Patient(String firstname, String lastname, Anschrift anschrift,
             int ik, int kassenIk, LocalDate birthDate) {
-        super(firstname, lastname, street, country, housenumber, plz, ik, kassenIk, birthDate);
+        super(firstname, lastname, anschrift, ik, kassenIk, birthDate);
     }
 
 }

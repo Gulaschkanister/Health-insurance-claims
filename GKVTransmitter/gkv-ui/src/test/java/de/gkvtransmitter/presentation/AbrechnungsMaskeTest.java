@@ -25,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 import de.gkvtransmitter.dispatch.DispatchBatch;
 import de.gkvtransmitter.dispatch.DtaValidierungsException;
 import de.gkvtransmitter.dispatch.Versandergebnis;
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
@@ -1025,7 +1026,7 @@ class AbrechnungsMaskeTest {
     // --- Testdaten -------------------------------------------------------
 
     private static Patient patient(int id, String vorname) {
-        Patient person = new Patient(vorname, "Muster", "Musterweg", "DE", "1", 12345, 101, KASSEN_IK, null);
+        Patient person = new Patient(vorname, "Muster", new Anschrift("Musterweg", "1", 12345, "DE"), 101, KASSEN_IK, null);
         person.setId(id);
         return person;
     }
@@ -1034,7 +1035,7 @@ class AbrechnungsMaskeTest {
         PersonGroup gruppe = new PersonGroup(name);
         gruppe.setPatients(new LinkedHashSet<>(List.of(teilnehmer)));
         ServiceProvider dienstleister =
-                new ServiceProvider("Max", "Muster", "Musterstr.", "DE", "1", 12345, 1001, KASSEN_IK, null);
+                new ServiceProvider("Max", "Muster", new Anschrift("Musterstr.", "1", 12345, "DE"), 1001, KASSEN_IK, null);
         dienstleister.setId(99);
         gruppe.setServiceProviders(new LinkedHashSet<>(List.of(dienstleister)));
         return gruppe;

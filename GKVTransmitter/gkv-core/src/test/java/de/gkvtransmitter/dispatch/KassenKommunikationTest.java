@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import de.gkvtransmitter.dta.Testblaupause;
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -44,11 +45,9 @@ class KassenKommunikationTest {
     Path tempDir;
 
     private static Abrechnung abrechnung(int patientId, int kassenIk, int termine) {
-        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1",
-                12345, ERBRINGER_IK, kassenIk, LocalDate.of(1990, 1, 1));
+        Patient patient = new Patient("Anna", "Beispiel", new Anschrift("Musterstrasse", "1", 12345, "DE"), ERBRINGER_IK, kassenIk, LocalDate.of(1990, 1, 1));
         patient.setId(patientId);
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2",
-                54321, ERBRINGER_IK, kassenIk, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", new Anschrift("Musterweg", "2", 54321, "DE"), ERBRINGER_IK, kassenIk, LocalDate.of(1985, 2, 2));
         provider.setId(99);
         Blueprint blueprint = Testblaupause.mitPreis();
         return new Abrechnung(patient, provider, blueprint, termine);

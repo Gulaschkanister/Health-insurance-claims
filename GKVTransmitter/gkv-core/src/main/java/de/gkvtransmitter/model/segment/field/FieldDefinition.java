@@ -21,29 +21,31 @@ public class FieldDefinition {
     /** Was in das Feld gehoert, aus der Segmentdefinition. Kann leer sein. */
     private final String beschreibung;
 
-    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
-            InputOption inputType) {
-        this(position, type, isMandatory, maxLength, name, inputType, false, null, "");
-    }
-
-    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
-            InputOption inputType, boolean internal) {
-        this(position, type, isMandatory, maxLength, name, inputType, internal, null, "");
-    }
-
-    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
-            InputOption inputType, boolean internal, PersonRole personRole) {
-        this(position, type, isMandatory, maxLength, name, inputType, internal, personRole, "");
-    }
-
-    public FieldDefinition(int position, FieldType type, boolean isMandatory, int maxLength, String name,
-            InputOption inputType, boolean internal, PersonRole personRole, String beschreibung) {
+    /**
+     * Ein Feld einer Segmentdefinition.
+     *
+     * <p><b>Hier standen vier Konstruktoren</b>, der breiteste mit neun
+     * Parametern - und <b>drei davon hatte nie jemand aufgerufen</b>. Sie
+     * hielten die neun Parameter am Leben, ohne dass etwas davon gebraucht
+     * wurde. Die vier Angaben zur Form des Wertes stehen jetzt in
+     * {@link Feldform}.</p>
+     *
+     * @param position     Stelle im Segment, ab 1
+     * @param name         Feldname aus der Segmentdefinition
+     * @param form         was fuer ein Wert hineingehoert
+     * @param internal     {@code true}, wenn die Anwendung das Feld selbst
+     *                     setzt und es nicht im Blaupausenformular erscheint
+     * @param personRole   welche Person das Feld betrifft, oder {@code null}
+     * @param beschreibung was hineingehoert, aus der Segmentdefinition
+     */
+    public FieldDefinition(int position, String name, Feldform form, boolean internal,
+            PersonRole personRole, String beschreibung) {
         this.position = position;
-        this.type = type;
-        this.isMandatory = isMandatory;
-        this.maxLength = maxLength;
+        this.type = form.type();
+        this.isMandatory = form.isMandatory();
+        this.maxLength = form.maxLength();
         this.name = name;
-        this.inputType = inputType;
+        this.inputType = form.inputType();
         this.internal = internal;
         this.personRole = personRole;
         this.beschreibung = beschreibung == null ? "" : beschreibung;

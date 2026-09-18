@@ -454,8 +454,10 @@ public class JsonParserFactory implements ParserFactory<Invoice>, Factory {
         boolean internal = fieldNode.path("internal").asBoolean(false);
         PersonRole personRole = parsePersonRole(fieldNode.path("person").asText(""));
         String beschreibung = fieldNode.path("description").asText("");
-        return new FieldDefinition(position, fieldType, mandatory, maxLength, name, inputType, internal,
-                personRole, beschreibung);
+        return new FieldDefinition(position, name,
+                new de.gkvtransmitter.model.segment.field.Feldform(
+                        fieldType, mandatory, maxLength, inputType),
+                internal, personRole, beschreibung);
     }
 
     private PersonRole parsePersonRole(String rawPersonRole) {

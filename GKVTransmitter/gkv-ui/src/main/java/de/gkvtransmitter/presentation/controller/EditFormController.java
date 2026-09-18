@@ -51,29 +51,32 @@ public class EditFormController<T> {
 
     private VBox formContainer;
 
-    public EditFormController(
-            UiFactory componentFactory,
-            AppMessages messages,
-            Meldungen meldungen,
-            EntityFieldPopulator<T> populator,
-            Supplier<List<T>> entityLoader,
-            Consumer<T> entitySaver,
-            Consumer<T> entityDeleter,
-            boolean showDeleteButton,
-            Function<String, Node> fieldBuilder,
-            String entityTypeName,
-            Consumer<VBox> onFormReady,
-            Consumer<EditFormController<T>> onChanged) {
-        this.componentFactory = componentFactory;
-        this.messages = messages;
-        this.meldungen = meldungen;
-        this.populator = populator;
-        this.entityLoader = entityLoader;
-        this.entitySaver = entitySaver;
-        this.entityDeleter = entityDeleter;
-        this.showDeleteButton = showDeleteButton;
-        this.fieldBuilder = fieldBuilder;
-        this.entityTypeName = entityTypeName;
+    /**
+     * Ein Formular zum Bearbeiten.
+     *
+     * <p><b>Hier standen zwoelf Parameter</b>, darunter drei
+     * {@code Consumer<T>} und ein {@code Supplier<List<T>>}. An der
+     * Aufrufstelle war nicht mehr zu sehen, welcher welcher ist, und zwei
+     * vertauschte faellt dem Uebersetzer nicht auf - es haette gespeichert,
+     * was geloescht werden sollte. Vier davon beschreiben das Werkzeug
+     * ({@link Formularbausteine}), sechs die Entitaetsart
+     * ({@link Entitaetszugriff}).</p>
+     *
+     * @param onFormReady wohin das fertige Formular geht
+     * @param onChanged   was nach einer Aenderung geschieht
+     */
+    public EditFormController(Formularbausteine bausteine, Entitaetszugriff<T> zugriff,
+            Consumer<VBox> onFormReady, Consumer<EditFormController<T>> onChanged) {
+        this.componentFactory = bausteine.bausteine();
+        this.messages = bausteine.texte();
+        this.meldungen = bausteine.meldungen();
+        this.fieldBuilder = bausteine.feldbau();
+        this.populator = zugriff.felder();
+        this.entityLoader = zugriff.laden();
+        this.entitySaver = zugriff.speichern();
+        this.entityDeleter = zugriff.loeschen();
+        this.entityTypeName = zugriff.typname();
+        this.showDeleteButton = zugriff.mitLoeschen();
         this.onFormReady = onFormReady;
         this.onChanged = onChanged;
     }

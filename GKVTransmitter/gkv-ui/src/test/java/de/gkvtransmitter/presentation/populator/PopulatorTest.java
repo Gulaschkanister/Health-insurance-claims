@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.Feldbau;
@@ -163,8 +164,7 @@ class PopulatorTest {
         void hinUndZurueck() {
             JavaFxLaufzeit.aufFxFaden(() -> {
                 ServiceProviderFieldPopulator populator = new ServiceProviderFieldPopulator();
-                ServiceProvider maria = new ServiceProvider("Maria", "Hebamme", "Kurweg", "DE",
-                        "3", 28203, IK, IK, LocalDate.of(1980, 1, 9));
+                ServiceProvider maria = new ServiceProvider("Maria", "Hebamme", new Anschrift("Kurweg", "3", 28203, "DE"), IK, IK, LocalDate.of(1980, 1, 9));
 
                 ServiceProvider zurueck = new ServiceProvider();
                 for (String feldname : FELDER) {
@@ -289,8 +289,7 @@ class PopulatorTest {
             "plz", "ik", "kassenIk", "birthDate");
 
     private static Patient teilnehmer() {
-        return new Patient("Anna", "Berger", "Hauptstrasse", "DE", "12a", 28195,
-                IK, KASSEN_IK, LocalDate.of(1992, 4, 17));
+        return new Patient("Anna", "Berger", new Anschrift("Hauptstrasse", "12a", 28195, "DE"), IK, KASSEN_IK, LocalDate.of(1992, 4, 17));
     }
 
     /** Was in dem Feld steht, nachdem der Populator es gefuellt hat. */

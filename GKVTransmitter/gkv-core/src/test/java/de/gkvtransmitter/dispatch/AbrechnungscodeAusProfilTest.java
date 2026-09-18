@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import de.gkvtransmitter.dta.Testblaupause;
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -49,15 +50,13 @@ class AbrechnungscodeAusProfilTest {
 
     private static Abrechnung abrechnung(ServiceProvider erbringer) {
         Blueprint blaupause = Testblaupause.mitPreis();
-        Patient anna = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
-                KASSE, KASSE, LocalDate.of(1990, 1, 1));
+        Patient anna = new Patient("Anna", "Beispiel", new Anschrift("Musterstrasse", "1", 12345, "DE"), KASSE, KASSE, LocalDate.of(1990, 1, 1));
         anna.setId(1);
         return new Abrechnung(anna, erbringer, blaupause, 1);
     }
 
     private static ServiceProvider hebamme() {
-        ServiceProvider erbringer = new ServiceProvider("Maria", "Hebamme", "Kurweg", "DE", "3",
-                28203, 104940005, 101560000, LocalDate.of(1980, 1, 9));
+        ServiceProvider erbringer = new ServiceProvider("Maria", "Hebamme", new Anschrift("Kurweg", "3", 28203, "DE"), 104940005, 101560000, LocalDate.of(1980, 1, 9));
         erbringer.setId(10);
         return erbringer;
     }

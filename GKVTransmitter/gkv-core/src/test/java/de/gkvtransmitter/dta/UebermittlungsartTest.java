@@ -9,6 +9,7 @@ import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import de.gkvtransmitter.entity.Anschrift;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.ServiceProvider;
@@ -87,11 +88,9 @@ class UebermittlungsartTest {
     }
 
     private Abrechnung abrechnung() {
-        Patient patient = new Patient("Anna", "Beispiel", "Musterstrasse", "DE", "1", 12345,
-                108310400, 101560000, LocalDate.of(1990, 1, 1));
+        Patient patient = new Patient("Anna", "Beispiel", new Anschrift("Musterstrasse", "1", 12345, "DE"), 108310400, 101560000, LocalDate.of(1990, 1, 1));
         patient.setId(1);
-        ServiceProvider provider = new ServiceProvider("Max", "Muster", "Musterweg", "DE", "2", 54321,
-                104940005, 101560000, LocalDate.of(1985, 2, 2));
+        ServiceProvider provider = new ServiceProvider("Max", "Muster", new Anschrift("Musterweg", "2", 54321, "DE"), 104940005, 101560000, LocalDate.of(1985, 2, 2));
         provider.setId(2);
         Blueprint blaupause = new Blueprint("Test", "test-template",
                 Testblaupause.MIT_PREIS, OffsetDateTime.now());

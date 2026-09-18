@@ -435,7 +435,18 @@ public class Feldbau {
         if (beschreibung == null) {
             return bausteine.createTextField();
         }
+        return nachArt(feldname, art, grenze);
+    }
 
+    /**
+     * Das Bedienelement zu einer Eingabeart.
+     *
+     * <p>Herausgeloest, weil {@code bedienelementFuer} mit den Vorschlaegen
+     * davor auf zyklomatische Komplexitaet 14 kam. Die Verzweigung selbst ist
+     * nicht zu vereinfachen - es sind neun Eingabearten -, aber sie muss nicht
+     * mit der Vorentscheidung in einer Methode stehen.</p>
+     */
+    private Node nachArt(String feldname, InputOption art, int grenze) {
         return switch (art) {
             case STRING -> textfeld(grenze);
             case NUMBER -> grenze > ZAEHLERGRENZE ? textfeld(grenze) : zaehler(Integer.class);
@@ -630,6 +641,29 @@ public class Feldbau {
             return Optional.empty();
         }
         String bereinigt = wert.trim();
+        Optional<String> eigeneRegel = eigeneRegel(feldname, bereinigt);
+        if (eigeneRegel.isPresent()) {
+            return eigeneRegel;
+        }
+        Optional<String> zuLang = zuLang(beschreibung, bereinigt);
+        if (zuLang.isPresent()) {
+            return zuLang;
+        }
+        if (beschreibung == null) {
+            return Optional.empty();
+        }
+        return allgemeineRegel(feldname, beschreibung, bereinigt);
+    }
+
+    /**
+     * Die Regeln, die an einem bestimmten Feld haengen.
+     *
+     * <p>Sie gehen der allgemeinen Pruefung vor, weil sie mehr sagen: "Die
+     * Pruefziffer stimmt nicht" ist eine Auskunft, "ungueltiger Wert" nicht.
+     * Herausgeloest, weil {@code pruefe} mit allen zusammen auf zyklomatische
+     * Komplexitaet 12 kam.</p>
+     */
+    private Optional<String> eigeneRegel(String feldname, String bereinigt) {
         if (istKennzeichen(feldname)) {
             return beanstandeKennzeichen(bereinigt);
         }
@@ -639,19 +673,18 @@ public class Feldbau {
         if ("plz".equalsIgnoreCase(feldname) && !bereinigt.matches("\\d{5}")) {
             return Optional.of(texte.get("msg.invalidPlz"));
         }
-        Optional<String> zuLang = zuLang(beschreibung, bereinigt);
-        if (zuLang.isPresent()) {
-            return zuLang;
-        }
-        if (beschreibung == null) {
-            return Optional.empty();
-        }
+        return Optional.empty();
+    }
+
+    /** Was {@link FieldValidator} zur Eingabeart sagt. */
+    private Optional<String> allgemeineRegel(String feldname, TagList beschreibung, String bereinigt) {
         FieldValidator.Feldbefund befund = FieldValidator.validate(feldname, bereinigt,
                 beschreibung.getInputOption(), javatyp(beschreibung.getInputOption()));
         if (befund == null || befund.isValid) {
             return Optional.empty();
         }
-        return Optional.of(befund.errorMessage == null ? texte.get("msg.invalidValue") : befund.errorMessage);
+        return Optional.of(
+                befund.errorMessage == null ? texte.get("msg.invalidValue") : befund.errorMessage);
     }
 
     /**
