@@ -371,7 +371,10 @@ public class View {
     private void createAbrechnung() {
         AbrechnungsMaske maske = new AbrechnungsMaske(componentFactory, messages, meldungen,
                 controller.getDatabase(), abrechnungService::createAndDispatch,
-                Anwendungsverzeichnis::versandordner);
+                Anwendungsverzeichnis::versandordner,
+                // Der Uebungsweg: SimulierterKassenTransport gab es seit
+                // Langem und war nur aus Tests erreichbar.
+                abrechnungService::probelauf);
         hauptfenster.zeige(maske.erzeuge());
     }
 

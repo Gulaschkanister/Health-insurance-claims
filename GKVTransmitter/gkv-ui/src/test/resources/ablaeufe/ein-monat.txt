@@ -85,5 +85,13 @@ erwarte Anna Berger
 erwarte Geburtsvorbereitungskurs
 klick abrechnung-alle
 bild vor-der-abrechnung
+
+# Erst durchspielen, dann senden. Der Trockenlauf hinterlaesst nichts:
+# keinen Protokolleintrag, keine verbrauchte Datenaustauschreferenz, keine
+# Datei im Versandordner.
+klick abrechnung-trockenlauf
+bild nach-dem-trockenlauf
+erwarte-nicht Prüfung nicht bestanden
+
 klick abrechnung-start
 erwarte-nicht Prüfung nicht bestanden

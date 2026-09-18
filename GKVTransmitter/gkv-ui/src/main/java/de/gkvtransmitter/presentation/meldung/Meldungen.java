@@ -38,6 +38,16 @@ public interface Meldungen {
     void pruefbericht(ValidationReport bericht);
 
     /**
+     * Derselbe Bericht, aber mit Blick darauf, ob etwas hinausging.
+     *
+     * <p>Als {@code default}, damit jede vorhandene Umsetzung unveraendert
+     * bleibt: Der Versand ist der Regelfall, der Trockenlauf die Ausnahme.</p>
+     */
+    default void pruefbericht(ValidationReport bericht, Pruefbefunde.Lage lage) {
+        pruefbericht(bericht);
+    }
+
+    /**
      * Stellt eine Rueckfrage.
      *
      * @param bejahenBeschriftung was auf der bestaetigenden Schaltflaeche steht,

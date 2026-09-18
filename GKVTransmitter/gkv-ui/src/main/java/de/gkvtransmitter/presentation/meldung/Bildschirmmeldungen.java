@@ -44,6 +44,11 @@ public class Bildschirmmeldungen implements Meldungen {
 
     @Override
     public void pruefbericht(ValidationReport bericht) {
+        pruefbericht(bericht, Pruefbefunde.Lage.VERSAND);
+    }
+
+    @Override
+    public void pruefbericht(ValidationReport bericht, Pruefbefunde.Lage lage) {
         VBox liste = new VBox(6);
         for (Pruefbefunde.Zeile zeile : Pruefbefunde.zeilen(bericht)) {
             liste.getChildren().add(befund(zeile));
@@ -53,7 +58,8 @@ public class Bildschirmmeldungen implements Meldungen {
         // eine Warnung, die nach sechs Sekunden verschwindet, ist keine.
         Art art = bericht.hatFehler() ? Art.FEHLER : Art.HINWEIS;
         ecke.zeigeBleibend(art, Pruefbefunde.titel(bericht),
-                Pruefbefunde.einleitung(bericht) + " " + Pruefbefunde.kurzfassung(bericht), liste);
+                Pruefbefunde.einleitung(bericht, lage) + " " + Pruefbefunde.kurzfassung(bericht),
+                liste);
     }
 
     @Override

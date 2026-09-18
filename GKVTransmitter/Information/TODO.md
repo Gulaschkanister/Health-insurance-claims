@@ -48,7 +48,7 @@ anders als dort angenommen).
 | **B3** | Auftragsdatei und physikalischer Dateiname | ⛔ zurückgestellt, GGT Anlage 4 fehlt |
 | **C1** | Übermittlungsprotokoll und Sicherungskopie | ✅ |
 | **C2** | Verarbeitungskennzeichen | 🟡 zur Hälfte — Prüfen ja, Korrekturrechnung erzeugen nein |
-| **D1** | Trockenlauf als Menüpunkt | ⬜ offen |
+| **D1** | Trockenlauf als Menüpunkt | ✅ |
 | **D2** | Zertifikats-Ablaufwarnung | ✅ mit G3 |
 | **D3** | Versionsangabe sichtbar machen | ✅ mit G1 |
 | **D4** | Belegnummer gegen Doppelvergabe | ⬜ offen |
@@ -414,12 +414,52 @@ Jeder Punkt hier ist **S**, sofern nichts anderes steht.
 
 | | Was | Warum jetzt | Hängt an |
 |---|---|---|---|
-| **D1** | **Trockenlauf als Menüpunkt.** `SimulierterKassenTransport` existiert, ist aber nur über Tests erreichbar. Ein Knopf „einmal durchspielen, ohne zu senden". | Die beste Übung vor der Erprobung — und sie kostet nichts, weil das Gegenstück schon gebaut ist. | — |
+| **D1** ✅ | **Trockenlauf als Menüpunkt.** `SimulierterKassenTransport` existiert, ist aber nur über Tests erreichbar. Ein Knopf „einmal durchspielen, ohne zu senden". | Die beste Übung vor der Erprobung — und sie kostet nichts, weil das Gegenstück schon gebaut ist. | — |
 | **D2** ✅ | ~~**Zertifikats-Ablaufwarnung.**~~ **Erledigt mit G3.** Die Anwendung kennt das Datum aus B1 und erinnert rechtzeitig. | Einer der drei Punkte, die die Wartungslast klein halten. | B1 |
 | **D3** ✅ | ~~**Versionsangabe sichtbar machen.**~~ **Erledigt mit G1.** Der Nachrichtentyp trägt sie bereits (`SLGA:21:0:0`); wer sieht, womit er sendet, merkt einen Wechsel. | Ebenfalls Wartungslast. Anlage 3 **V22 gilt ab 01.02.2027** — das Projekt steht auf V21. | — |
 | **D4** | **Belegnummer gegen Doppelvergabe sichern.** Heute frei gebildet (`HEB` + Jahr/Monat + laufende Nummer), ohne Garantie über Jahresgrenzen. | Vor dem Echtbetrieb ohnehin fällig, und die Zählerlogik aus `DtaCounter` liegt vor. | — |
 | **D5** ✅ | ~~**Umsatzsteuersatz einstellbar** statt fest `19` im `UST`-Segment.~~ **Erledigt mit F3 — und die Frage war falsch gestellt:** das `UST`-Segment trägt keinen Satz, sondern Steuernummer und Befreiungskennzeichen (Anlage 1, Abschnitt 5.5.2). | Ob für Hebammenleistungen überhaupt Umsatzsteuer anfällt (§ 4 Nr. 14 UStG), ist eine Frage an einen Menschen — **dass der Wert einstellbar sein muss, ist keine.** | B1 oder Einstellungen |
 | **D6** | **Checkstyle: die zehn übrigen Warnungen.** Nachgemessen am 17.09.2026: fünf in `gkv-core`, fünf in `gkv-ui`. **ParameterNumber** in `FieldDefinition`, `Person`, `Patient`, `ServiceProvider` (je 9) und `EditFormController` (12); **CyclomaticComplexity** in `BetragskonsistenzRegel` (11), `Feldbau` (13 und 12) sowie beiden `FieldPopulator` (je 11). Größe **M**. | Eine Person hat mehr Eigenschaften, als ein Konstruktor tragen sollte — Builder oder ein `record` für die Anschrift. Eingriff in die Entitäten, also bewusst und nicht nebenbei. | — |
+
+## D1. Trockenlauf — ✅ erledigt am 18.09.2026
+
+| | |
+|---|---|
+| **Größe** | S |
+| **Stand** | **umgesetzt**: Knopf „Einmal durchspielen" neben „Abrechnung starten" |
+
+`SimulierteKassenGegenstelle` und `SimulierterKassenTransport` gab es seit
+Langem — **erreichbar waren sie nur aus Tests.** Wer vor dem ersten Echtversand
+wissen wollte, ob eine Lieferung durchkommt, musste einen Test schreiben.
+
+### Ein Trockenlauf darf nichts hinterlassen
+
+Das ist die eigentliche Schwierigkeit, und drei Dinge gehören dazu:
+
+| | Warum |
+|---|---|
+| **Kein Protokolleintrag** | Das Übermittlungsprotokoll ist Pflichtdokumentation nach Anlage 1 Abschnitt 3 Absatz 2 und zwei Jahre aufzubewahren. Eine Übung darin wäre eine Falschaussage. |
+| **Keine verbrauchte Datenaustauschreferenz** | Jede darf nur einmal vergeben werden; eine im Trockenlauf verbrauchte hinterließe eine Lücke in der echten Folge. |
+| **Keine Datei im Versandordner** | Alles landet in einem eigenen Verzeichnis unter `java.io.tmpdir`, das man ansehen und wegwerfen kann. |
+
+Dazu: Die erzeugten Dateien weisen sich mit `Übermittlungsart TEST` aus —
+sollte je eine irgendwo landen, soll sie es selbst sagen. Dieselbe Überlegung
+wie bei der Rückfallebene, die nie auf `ECHT` fällt.
+
+**Versand und Trockenlauf stellen die Abrechnungen über dieselbe Methode
+zusammen** und prüfen dieselben Voraussetzungen. Zwei Wege, die in diesem Punkt
+auseinanderlaufen, ergäben einen Trockenlauf, der etwas anderes durchspielt als
+das, was hinausginge — also keinen.
+
+### Am Bild aufgefallen: die Meldung log
+
+Der Trockenlauf zeigte seinen Prüfbericht mit der Einleitung **„Die Abrechnung
+wurde versendet."** Versendet wurde nichts. `Pruefbefunde.einleitung` kannte nur
+den Versandfall; jetzt gibt es `Lage.TROCKENLAUF` und dort steht
+„Durchgespielt, nicht versendet."
+
+Kein Test hat das gefunden — sie prüften Reihenfolge und Benennung der Befunde,
+nicht den Satz darüber. Jetzt prüft einer auch den.
 
 ---
 

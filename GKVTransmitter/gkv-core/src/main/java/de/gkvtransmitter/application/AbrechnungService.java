@@ -9,6 +9,7 @@ import java.util.Objects;
 import de.gkvtransmitter.dispatch.BillingOfficeEndpointRegistry;
 import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.dispatch.FileBillingOfficeTransport;
+import de.gkvtransmitter.dispatch.Trockenlauf;
 import de.gkvtransmitter.dispatch.Versandergebnis;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
@@ -23,6 +24,8 @@ import de.gkvtransmitter.validator.DtaValidationService;
 public final class AbrechnungService {
 
     private final DtaDispatchService dispatchService;
+    /** Der Uebungsweg; siehe {@link #probelauf}. */
+    private final Trockenlauf trockenlauf;
 
     /**
      * Der Dienst, wie ihn die Anwendung benutzt.
@@ -68,11 +71,25 @@ public final class AbrechnungService {
                 // und danach abrechnet, soll die geaenderten benutzen.
                 datenbank::ladeBetriebsdaten,
                 // Pflichtdokumentation nach Anlage 1, Abschnitt 3 Absatz 2.
-                datenbank::protokolliere));
+                datenbank::protokolliere),
+                // Der Trockenlauf bekommt dieselben Betriebsdaten - sonst
+                // pruefte er eine Datei, die es so nie gaebe.
+                new Trockenlauf(datenbank::ladeBetriebsdaten));
     }
 
+    /**
+     * Ohne eigenen Trockenlauf - fuer Tests, die nur den Versand betrachten.
+     *
+     * <p>Der Uebungsweg laeuft dann ohne Betriebsdaten; er meldet das als
+     * Hinweis, so wie der Versand es auch taete.</p>
+     */
     public AbrechnungService(DtaDispatchService dispatchService) {
+        this(dispatchService, new Trockenlauf(() -> null));
+    }
+
+    public AbrechnungService(DtaDispatchService dispatchService, Trockenlauf trockenlauf) {
         this.dispatchService = Objects.requireNonNull(dispatchService, "dispatchService must not be null");
+        this.trockenlauf = Objects.requireNonNull(trockenlauf, "trockenlauf must not be null");
     }
 
     /**
@@ -84,11 +101,25 @@ public final class AbrechnungService {
      */
     public Versandergebnis createAndDispatch(List<Patient> selectedPatients,
             PersonGroup group, Blueprint blueprint, Map<Integer, Integer> appointments, Path outputDirectory) {
+        Objects.requireNonNull(outputDirectory, "outputDirectory must not be null");
+        return dispatchService.generateAndRoute(
+                baueAbrechnungen(selectedPatients, group, blueprint, appointments), outputDirectory);
+    }
+
+    /**
+     * Stellt die Abrechnungen zusammen.
+     *
+     * <p>Herausgeloest, damit Versand und Trockenlauf <b>dieselbe</b>
+     * Zusammenstellung benutzen. Zwei Wege, die sich in diesem Punkt
+     * unterscheiden koennten, waeren ein Trockenlauf, der etwas anderes prueft
+     * als das, was hinausgeht - also keiner.</p>
+     */
+    private List<Abrechnung> baueAbrechnungen(List<Patient> selectedPatients, PersonGroup group,
+            Blueprint blueprint, Map<Integer, Integer> appointments) {
         Objects.requireNonNull(selectedPatients, "selectedPatients must not be null");
         Objects.requireNonNull(group, "group must not be null");
         Objects.requireNonNull(blueprint, "blueprint must not be null");
         Objects.requireNonNull(appointments, "appointments must not be null");
-        Objects.requireNonNull(outputDirectory, "outputDirectory must not be null");
         if (selectedPatients.isEmpty()) {
             throw new IllegalArgumentException("At least one patient must be selected");
         }
@@ -104,7 +135,23 @@ public final class AbrechnungService {
             }
             abrechnungen.add(new Abrechnung(patient, provider, blueprint, appointmentCount));
         }
-        return dispatchService.generateAndRoute(abrechnungen, outputDirectory);
+        return abrechnungen;
+    }
+
+    /**
+     * Spielt die Abrechnungen durch, ohne etwas zu versenden.
+     *
+     * <p>Derselbe Weg wie {@link #createAndDispatch}, nur mit einer simulierten
+     * Gegenstelle und in einem eigenen Verzeichnis - <b>und ohne Spuren</b>:
+     * kein Protokolleintrag, keine verbrauchte Datenaustauschreferenz, keine
+     * Datei im Versandordner. Siehe {@link Trockenlauf}.</p>
+     *
+     * <p>Wirft nicht. Eine nicht bestandene Pruefung ist hier kein Fehlschlag,
+     * sondern das Ergebnis - genau dafuer spielt man durch.</p>
+     */
+    public Trockenlauf.Ergebnis probelauf(List<Patient> selectedPatients, PersonGroup group,
+            Blueprint blueprint, Map<Integer, Integer> appointments) {
+        return trockenlauf.spiele(baueAbrechnungen(selectedPatients, group, blueprint, appointments));
     }
 
     private ServiceProvider findProvider(PersonGroup group) {

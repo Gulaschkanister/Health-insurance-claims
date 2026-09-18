@@ -17,6 +17,21 @@ import de.gkvtransmitter.validator.ValidationReport;
 public final class Pruefbefunde {
 
     /**
+     * Wozu der Bericht gehoert.
+     *
+     * <p><b>Ohne diese Unterscheidung log die Meldung.</b> Der Trockenlauf
+     * zeigte seinen Bericht mit der Einleitung „Die Abrechnung wurde
+     * versendet." - und versendet wurde nichts. Aufgefallen ist das nicht in
+     * einem Test, sondern am Bildschirmfoto des Ablaufs.</p>
+     */
+    public enum Lage {
+        /** Der Bericht erklaert, was mit einer echten Lieferung geschehen ist. */
+        VERSAND,
+        /** Der Bericht gehoert zu einem Trockenlauf - es ging nichts hinaus. */
+        TROCKENLAUF
+    }
+
+    /**
      * Ueberschrift der Meldung.
      *
      * <p>Ein Bericht kann auf zwei Weisen zustande kommen: als Grund, warum
@@ -30,6 +45,22 @@ public final class Pruefbefunde {
 
     /** Was unter der Ueberschrift steht, bevor die Liste beginnt. */
     public static String einleitung(ValidationReport bericht) {
+        return einleitung(bericht, Lage.VERSAND);
+    }
+
+    /**
+     * Dasselbe, aber mit Blick darauf, ob ueberhaupt etwas hinausging.
+     *
+     * <p>Beim Trockenlauf ist die Frage „versendet oder nicht" gar nicht
+     * gestellt - er versendet nie. Gesagt werden muss stattdessen, <b>was
+     * geschehen waere</b>.</p>
+     */
+    public static String einleitung(ValidationReport bericht, Lage lage) {
+        if (lage == Lage.TROCKENLAUF) {
+            return bericht.hatFehler()
+                    ? "So wäre nichts hinausgegangen — versendet wurde ohnehin nichts."
+                    : "Durchgespielt, nicht versendet.";
+        }
         return bericht.hatFehler()
                 ? "Die Abrechnung wurde nicht versendet."
                 : "Die Abrechnung wurde versendet.";

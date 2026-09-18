@@ -52,6 +52,71 @@ class AbrechnungServiceTest {
         assertTrue(Files.list(tempDirectory.resolve("endpoint")).findAny().isPresent());
     }
 
+    /**
+     * Ein Trockenlauf hinterlaesst nichts.
+     *
+     * <p>Das ist die eigentliche Schwierigkeit an D1, und hier wird sie
+     * gemessen, wo sie zaehlt: an einer echten Datenbank. Das
+     * Uebermittlungsprotokoll ist Pflichtdokumentation nach Anlage 1,
+     * Abschnitt 3 Absatz 2 und zwei Jahre aufzubewahren - <b>eine Uebung darin
+     * waere eine Falschaussage</b>. Der Versand daneben muss dagegen
+     * schreiben, sonst prueft dieser Test nur, dass ueberhaupt nichts
+     * geschieht.</p>
+     */
+    @Test
+    void probelaufHinterlaesstKeinenProtokolleintrag() throws Exception {
+        Path dbDatei = tempDirectory.resolve("probelauf.db");
+        try (de.gkvtransmitter.hibernate.sqllite.HibernateSqllite datenbank =
+                de.gkvtransmitter.hibernate.sqllite.HibernateSqllite.open(
+                        de.gkvtransmitter.hibernate.sqllite.DatabaseSettings.forFile(dbDatei))) {
+            Patient patient = patient(1, 108310400);
+            PersonGroup group = new PersonGroup("Kurs");
+            group.getPatients().add(patient);
+            group.getServiceProviders().add(provider(2));
+            Blueprint blueprint = Testblaupause.mitPreis();
+            AbrechnungService service = new AbrechnungService(datenbank);
+
+            service.probelauf(List.of(patient), group, blueprint, Map.of(1, 2));
+
+            assertTrue(datenbank.ladeProtokoll().isEmpty(),
+                    "Eine Uebung gehoert nicht in die Pflichtdokumentation");
+
+            service.createAndDispatch(List.of(patient), group, blueprint, Map.of(1, 2),
+                    tempDirectory.resolve("echt"));
+
+            assertEquals(1, datenbank.ladeProtokoll().size(),
+                    "Der echte Versand muss dagegen schreiben - sonst misst der Test nichts");
+        }
+    }
+
+    /**
+     * Der Trockenlauf prueft dasselbe, was hinausginge.
+     *
+     * <p>Beide Wege stellen die Abrechnungen ueber dieselbe Methode zusammen.
+     * Zwei, die auseinanderliefen, ergaeben einen Trockenlauf, der etwas
+     * anderes durchspielt als den Versand - also keinen.</p>
+     */
+    @Test
+    void probelaufBeanstandetDasselbeWieDerVersand() {
+        Patient patient = patient(1, 108310400);
+        PersonGroup group = new PersonGroup("Kurs");
+        group.getPatients().add(patient);
+        group.getServiceProviders().add(provider(2));
+        AbrechnungService service = new AbrechnungService(
+                new DtaDispatchService(new BillingOfficeEndpointRegistry(
+                        new LinkedHashMap<>(), tempDirectory.resolve("fallback")),
+                        new FileBillingOfficeTransport()));
+
+        de.gkvtransmitter.dispatch.Trockenlauf.Ergebnis ergebnis = service.probelauf(
+                List.of(patient), group, Testblaupause.ohnePreis(), Map.of(1, 2));
+
+        assertTrue(ergebnis.bericht().hatFehler(), ergebnis.bericht().alsText());
+        assertThrows(de.gkvtransmitter.dispatch.DtaValidierungsException.class,
+                () -> service.createAndDispatch(List.of(patient), group, Testblaupause.ohnePreis(),
+                        Map.of(1, 2), tempDirectory),
+                "Was der Trockenlauf beanstandet, muss auch den Versand aufhalten");
+    }
+
     @Test
     void rejectsNegativeAppointmentCount() {
         Patient patient = patient(1, 108310400);

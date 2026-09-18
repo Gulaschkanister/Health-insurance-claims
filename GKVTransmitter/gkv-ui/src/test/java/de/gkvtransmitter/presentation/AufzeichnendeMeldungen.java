@@ -101,6 +101,20 @@ class AufzeichnendeMeldungen implements Meldungen {
         return meldungen.get(0);
     }
 
+    /**
+     * Die zuletzt gezeigte Meldung.
+     *
+     * <p>Fuer Ablaeufe, die mehr als eine hinterlassen - der Pruefbericht kommt
+     * vor der Erfolgsmeldung, damit diese als Letztes stehenbleibt. {@link
+     * #einzige()} waere dort zu streng.</p>
+     */
+    Meldung letzte() {
+        if (meldungen.isEmpty()) {
+            throw new AssertionError("Es wurde keine Meldung gezeigt");
+        }
+        return meldungen.get(meldungen.size() - 1);
+    }
+
     boolean leer() {
         return meldungen.isEmpty();
     }

@@ -55,6 +55,8 @@ public class AbrechnungsMaske {
     public static final String ID_GRUPPE = "abrechnung-gruppe";
     /** Kennung der Schaltflaeche, die den Lauf anstoesst. */
     public static final String ID_START = "abrechnung-start";
+    /** Kennung der Schaltflaeche, die den Lauf nur durchspielt. */
+    public static final String ID_TROCKEN = "abrechnung-trockenlauf";
     /** Kennung des Bereichs mit den Teilnehmerlisten. */
     public static final String ID_TEILNEHMERLISTE = "abrechnung-teilnehmerliste";
     /** Vorsatz der Auswahlkaestchen je Teilnehmer, gefolgt von dessen Kennnummer. */
@@ -80,15 +82,28 @@ public class AbrechnungsMaske {
     private final DataRepository datenbank;
     private final Abrechnungslauf abrechnungslauf;
     private final Supplier<Path> versandordner;
+    /** Der Uebungsweg, oder {@code null}: dann fehlt der Knopf. */
+    private final Probelauf probelauf;
 
     public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
             DataRepository datenbank, Abrechnungslauf abrechnungslauf, Supplier<Path> versandordner) {
+        this(bausteine, texte, meldungen, datenbank, abrechnungslauf, versandordner, null);
+    }
+
+    /**
+     * @param probelauf der Uebungsweg; ohne ihn fehlt der Knopf, statt einen
+     *        anzubieten, hinter dem nichts liegt
+     */
+    public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
+            DataRepository datenbank, Abrechnungslauf abrechnungslauf, Supplier<Path> versandordner,
+            Probelauf probelauf) {
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
         this.meldungen = Objects.requireNonNull(meldungen, "meldungen must not be null");
         this.datenbank = Objects.requireNonNull(datenbank, "datenbank must not be null");
         this.abrechnungslauf = Objects.requireNonNull(abrechnungslauf, "abrechnungslauf must not be null");
         this.versandordner = Objects.requireNonNull(versandordner, "versandordner must not be null");
+        this.probelauf = probelauf;
     }
 
     /**
@@ -129,8 +144,23 @@ public class AbrechnungsMaske {
         start.getStyleClass().add("schaltflaeche-haupt");
         start.setOnAction(ereignis -> starteAbrechnung(blaupausen, blaupauseAuswahl, gruppeAuswahl, liste));
 
+        HBox schaltflaechen = new HBox(10, start);
+        if (probelauf != null) {
+            // Links der Versand, rechts die Uebung: Der Hauptknopf bleibt, wo
+            // er war. Ein Trockenlauf, der aussieht wie der Versand, wird
+            // irgendwann mit ihm verwechselt - in die falsche Richtung.
+            Button trocken = bausteine.createButton(texte.get("button.dryRun"));
+            trocken.setId(ID_TROCKEN);
+            trocken.getStyleClass().add("schaltflaeche-still");
+            trocken.setOnAction(ereignis ->
+                    spieleDurch(blaupausen, blaupauseAuswahl, gruppeAuswahl, liste));
+            schaltflaechen.getChildren().add(trocken);
+        }
+        schaltflaechen.setAlignment(Pos.CENTER_LEFT);
+
         wurzel.getChildren().addAll(blaupauseBeschriftung, blaupauseAuswahl,
-                gruppeBeschriftung, gruppeAuswahl, teilnehmerBeschriftung, liste.bereich(), start);
+                gruppeBeschriftung, gruppeAuswahl, teilnehmerBeschriftung, liste.bereich(),
+                schaltflaechen);
         return wurzel;
     }
 
@@ -172,6 +202,39 @@ public class AbrechnungsMaske {
             return java.util.Optional.empty();
         }
         return java.util.Optional.of(gruppe.getServiceProviders().iterator().next());
+    }
+
+    /**
+     * Was dastehen muss, ehe etwas losgeht.
+     *
+     * <p>Die Reihenfolge folgt dem Aufbau der Maske von oben nach unten: erst
+     * ob ueberhaupt Blaupausen vorliegen, dann ob eine gewaehlt ist, dann die
+     * Gruppe, dann die Teilnehmer.</p>
+     *
+     * <p>Fuer Versand <b>und</b> Trockenlauf dieselbe Pruefung. Zwei, die
+     * auseinanderliefen, ergaeben einen Trockenlauf, der etwas anderes
+     * durchspielt als das, was hinausginge.</p>
+     */
+    private boolean voraussetzungenErfuellt(List<Blueprint> blaupausen,
+            ComboBox<Blueprint> blaupauseAuswahl, ComboBox<PersonGroup> gruppeAuswahl,
+            Teilnehmerliste liste) {
+        if (blaupausen == null || blaupausen.isEmpty()) {
+            meldungen.hinweis(texte.get("msg.noBlueprints"));
+            return false;
+        }
+        if (blaupauseAuswahl.getValue() == null) {
+            meldungen.hinweis(texte.get("msg.selectBlueprintRequired"));
+            return false;
+        }
+        if (gruppeAuswahl.getValue() == null) {
+            meldungen.hinweis(texte.get("msg.selectGroupRequired"));
+            return false;
+        }
+        if (liste.gewaehlteTeilnehmer().isEmpty()) {
+            meldungen.hinweis(texte.get("msg.noParticipantsSelected"));
+            return false;
+        }
+        return true;
     }
 
     /** Eine Beschriftung ueber einem Eingabefeld. */
@@ -222,24 +285,10 @@ public class AbrechnungsMaske {
      */
     private void starteAbrechnung(List<Blueprint> blaupausen, ComboBox<Blueprint> blaupauseAuswahl,
             ComboBox<PersonGroup> gruppeAuswahl, Teilnehmerliste liste) {
-        if (blaupausen == null || blaupausen.isEmpty()) {
-            meldungen.hinweis(texte.get("msg.noBlueprints"));
+        if (!voraussetzungenErfuellt(blaupausen, blaupauseAuswahl, gruppeAuswahl, liste)) {
             return;
         }
-        if (blaupauseAuswahl.getValue() == null) {
-            meldungen.hinweis(texte.get("msg.selectBlueprintRequired"));
-            return;
-        }
-        if (gruppeAuswahl.getValue() == null) {
-            meldungen.hinweis(texte.get("msg.selectGroupRequired"));
-            return;
-        }
-
         List<Patient> gewaehlte = liste.gewaehlteTeilnehmer();
-        if (gewaehlte.isEmpty()) {
-            meldungen.hinweis(texte.get("msg.noParticipantsSelected"));
-            return;
-        }
 
         Versandergebnis ergebnis;
         try {
@@ -262,6 +311,59 @@ public class AbrechnungsMaske {
             meldungen.pruefbericht(ergebnis.bericht());
         }
         meldungen.erfolg(fasseZusammen(ergebnis.lieferungen()));
+    }
+
+    /**
+     * Spielt den Lauf durch, ohne zu senden.
+     *
+     * <p>Dieselben Voraussetzungen wie beim Versand - wer ohne Blaupause
+     * durchspielt, bekommt nicht das Ergebnis des Laufs, sondern das Ergebnis
+     * eines unvollstaendigen Formulars, und das hilft niemandem.</p>
+     *
+     * <p><b>Der Pruefbericht kommt in jedem Fall</b>, auch wenn alles in
+     * Ordnung war: Beim Versand ist "nichts zu melden" die stille Regel, hier
+     * ist es die Antwort auf die Frage, die gestellt wurde.</p>
+     */
+    private void spieleDurch(List<Blueprint> blaupausen, ComboBox<Blueprint> blaupauseAuswahl,
+            ComboBox<PersonGroup> gruppeAuswahl, Teilnehmerliste liste) {
+        if (!voraussetzungenErfuellt(blaupausen, blaupauseAuswahl, gruppeAuswahl, liste)) {
+            return;
+        }
+        de.gkvtransmitter.dispatch.Trockenlauf.Ergebnis ergebnis = probelauf.spiele(
+                liste.gewaehlteTeilnehmer(), gruppeAuswahl.getValue(),
+                blaupauseAuswahl.getValue(), liste.termine());
+
+        if (ergebnis.hatBefunde()) {
+            // Mit der Lage: Ohne sie stand ueber dem Bericht eines
+            // Trockenlaufs "Die Abrechnung wurde versendet." - und versendet
+            // wurde nichts.
+            meldungen.pruefbericht(ergebnis.bericht(),
+                    de.gkvtransmitter.presentation.meldung.Pruefbefunde.Lage.TROCKENLAUF);
+        }
+        if (!ergebnis.bestanden()) {
+            meldungen.fehler(texte.get("msg.dryRunFailed"));
+            return;
+        }
+        meldungen.erfolg(fasseProbelaufZusammen(ergebnis));
+    }
+
+    /** Was der Trockenlauf ergeben hat, in Worten. */
+    private String fasseProbelaufZusammen(de.gkvtransmitter.dispatch.Trockenlauf.Ergebnis ergebnis) {
+        StringBuilder text = new StringBuilder();
+        text.append(ergebnis.dateien() == 1
+                        ? texte.get("msg.dryRunOne")
+                        : String.format(texte.get("msg.dryRun"), ergebnis.dateien()))
+                .append(System.lineSeparator());
+        for (Map.Entry<Integer, de.gkvtransmitter.dispatch.BillingOfficeResponse> antwort
+                : de.gkvtransmitter.dispatch.Trockenlauf.geordnet(ergebnis.antworten())) {
+            text.append(texte.get("field.kassenIk")).append(": ").append(antwort.getKey())
+                    .append(" · ").append(antwort.getValue().getType())
+                    .append(System.lineSeparator());
+        }
+        // Mit dem Ordner: Wer die erzeugte Datei ansehen will, soll sie finden.
+        text.append(System.lineSeparator())
+                .append(String.format(texte.get("msg.dryRunFolder"), ergebnis.ordner()));
+        return text.toString();
     }
 
     /** Listet die erzeugten Dateien je Krankenkasse auf. */

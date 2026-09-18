@@ -677,6 +677,108 @@ class AbrechnungsMaskeTest {
         }
     }
 
+    /**
+     * Der Trockenlauf.
+     *
+     * <p>{@code SimulierterKassenTransport} gab es seit Langem und war nur
+     * aus Tests erreichbar. Geprueft wird hier, dass der Knopf dieselben
+     * Voraussetzungen verlangt wie der Versand - ein Trockenlauf, der etwas
+     * anderes durchspielt als das, was hinausginge, ist keiner.</p>
+     */
+    @Nested
+    @DisplayName("Trockenlauf")
+    class Trockenlaeufe {
+
+        private final java.util.List<java.util.List<Patient>> gespielt = new java.util.ArrayList<>();
+        private de.gkvtransmitter.dispatch.Trockenlauf.Ergebnis antwort =
+                new de.gkvtransmitter.dispatch.Trockenlauf.Ergebnis(
+                        de.gkvtransmitter.validator.ValidationReport.leer(), true,
+                        java.util.Map.of(), 1, java.nio.file.Path.of("/tmp/uebung"));
+
+        private Region maskeMitProbelauf() {
+            return new AbrechnungsMaske(new JavaFxUiFactory(), texte, meldungen, datenbank,
+                    (teilnehmer, gruppe, blaupause, termine, ordner) -> {
+                        throw new AssertionError("Ein Trockenlauf darf nicht versenden");
+                    },
+                    () -> zielordner,
+                    (teilnehmer, gruppe, blaupause, termine) -> {
+                        gespielt.add(java.util.List.copyOf(teilnehmer));
+                        return antwort;
+                    }).erzeuge();
+        }
+
+        @Test
+        @DisplayName("Ohne Probelauf fehlt der Knopf, statt ins Leere zu fuehren")
+        void ohneProbelaufKeinKnopf() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> assertNull(
+                    maskeAufbauen().lookup("#" + AbrechnungsMaske.ID_TROCKEN)));
+        }
+
+        /**
+         * Dieselbe Sperre und dieselbe Reihenfolge wie beim Versand.
+         *
+         * <p>Erst die Blaupause, dann die Gruppe, dann die Teilnehmer - so
+         * steht die Maske von oben nach unten. Ohne jede Auswahl kommt
+         * deshalb die Meldung zur Blaupause und nicht die zur Gruppe.</p>
+         */
+        @Test
+        @DisplayName("Ohne Auswahl wird nichts durchgespielt")
+        void ohneAuswahlNichts() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitProbelauf();
+                knopf(maske, AbrechnungsMaske.ID_TROCKEN).fire();
+
+                assertTrue(gespielt.isEmpty(), "Dieselbe Sperre wie beim Versand");
+                assertEquals(texte.get("msg.selectBlueprintRequired"), meldungen.einzige().text());
+            });
+        }
+
+        @Test
+        @DisplayName("Mit vollstaendiger Auswahl wird durchgespielt und nicht versendet")
+        void spieltDurch() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitProbelauf();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                knopf(maske, AbrechnungsMaske.ID_TROCKEN).fire();
+
+                assertEquals(1, gespielt.size());
+                assertEquals(AufzeichnendeMeldungen.Art.ERFOLG, meldungen.letzte().art());
+            });
+        }
+
+        /**
+         * Eine nicht bestandene Pruefung ist das Ergebnis, kein Absturz.
+         *
+         * <p>Genau dafuer spielt man durch - und der Bericht muss dabei auf den
+         * Schirm, sonst weiss niemand, woran es lag.</p>
+         */
+        @Test
+        @DisplayName("Eine Beanstandung erscheint als Bericht und als Fehlermeldung")
+        void beanstandungWirdGezeigt() {
+            antwort = new de.gkvtransmitter.dispatch.Trockenlauf.Ergebnis(
+                    de.gkvtransmitter.validator.ValidationReport.builder()
+                            .error("TEST", "ENF", "Einzelbetrag fehlt").build(),
+                    false, java.util.Map.of(), 0, java.nio.file.Path.of("/tmp/uebung"));
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitProbelauf();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                knopf(maske, AbrechnungsMaske.ID_TROCKEN).fire();
+
+                assertEquals(AufzeichnendeMeldungen.Art.FEHLER, meldungen.letzte().art());
+                assertEquals(texte.get("msg.dryRunFailed"), meldungen.letzte().text());
+            });
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private ComboBox<PersonGroup> gruppeAuswahl(Region maske) {
         return (ComboBox<PersonGroup>) maske.lookup("#" + AbrechnungsMaske.ID_GRUPPE);

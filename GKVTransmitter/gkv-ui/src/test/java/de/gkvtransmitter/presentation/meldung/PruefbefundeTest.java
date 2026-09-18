@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import de.gkvtransmitter.validator.ValidationReport;
@@ -74,5 +75,46 @@ class PruefbefundeTest {
                 .build());
 
         assertEquals("2 Hinweise", kurz);
+    }
+
+    /**
+     * Ein Trockenlauf versendet nichts - und darf das nicht behaupten.
+     *
+     * <p><b>Genau das stand dort.</b> Der Bericht des Trockenlaufs trug die
+     * Einleitung „Die Abrechnung wurde versendet."; versendet wurde nichts.
+     * Aufgefallen ist es am Bildschirmfoto des Ablaufs, nicht in einem Test -
+     * deshalb steht jetzt einer hier.</p>
+     */
+    @Nested
+    @DisplayName("Die Einleitung")
+    class DieEinleitung {
+
+        private final ValidationReport hinweise = ValidationReport.builder()
+                .warning("W", "UNB", "Ein Hinweis").build();
+        private final ValidationReport fehler = ValidationReport.builder()
+                .error("E", "ENF", "Ein Fehler").build();
+
+        @Test
+        @DisplayName("behauptet beim Trockenlauf keinen Versand")
+        void trockenlaufBehauptetKeinenVersand() {
+            String text = Pruefbefunde.einleitung(hinweise, Pruefbefunde.Lage.TROCKENLAUF);
+
+            assertFalse(text.contains("wurde versendet"), text);
+            assertTrue(text.contains("Durchgespielt"), text);
+        }
+
+        @Test
+        @DisplayName("sagt beim Trockenlauf auch im Fehlerfall, dass ohnehin nichts hinausging")
+        void trockenlaufMitFehler() {
+            assertTrue(Pruefbefunde.einleitung(fehler, Pruefbefunde.Lage.TROCKENLAUF)
+                    .contains("ohnehin nichts"));
+        }
+
+        @Test
+        @DisplayName("bleibt beim Versand, wie sie war")
+        void versandUnveraendert() {
+            assertEquals("Die Abrechnung wurde versendet.", Pruefbefunde.einleitung(hinweise));
+            assertEquals("Die Abrechnung wurde nicht versendet.", Pruefbefunde.einleitung(fehler));
+        }
     }
 }
