@@ -92,8 +92,10 @@ public final class BetragskonsistenzRegel implements ValidationRule {
 
         for (DtaSegment segment : document.getSegments()) {
             if (ENF.equals(segment.tag())) {
-                Optional<BigDecimal> betrag = betrag(segment, ENF_BETRAG, bericht, "ENF_BETRAG_UNGUELTIG");
-                Optional<BigDecimal> menge = betrag(segment, ENF_MENGE, bericht, "ENF_MENGE_UNGUELTIG");
+                Optional<BigDecimal> betrag = betrag(segment, ENF_BETRAG, bericht,
+                        "ENF_BETRAG_FEHLT", "ENF_BETRAG_UNGUELTIG");
+                Optional<BigDecimal> menge = betrag(segment, ENF_MENGE, bericht,
+                        "ENF_MENGE_FEHLT", "ENF_MENGE_UNGUELTIG");
                 if (betrag.isEmpty() || menge.isEmpty()) {
                     return;
                 }
@@ -115,14 +117,12 @@ public final class BetragskonsistenzRegel implements ValidationRule {
     }
 
     private void vergleiche(DtaSegment bes, BigDecimal summeDerPosten, ValidationReport.Builder bericht) {
-        Optional<BigDecimal> fallsumme = betrag(bes, BES_BETRAG, bericht, "BES_BETRAG_UNGUELTIG");
+        Optional<BigDecimal> fallsumme = betrag(bes, BES_BETRAG, bericht, "BES_BETRAG_FEHLT", "BES_BETRAG_UNGUELTIG");
         if (fallsumme.isEmpty()) {
             return;
         }
         if (fallsumme.get().compareTo(summeDerPosten) != 0) {
-            bericht.error("BETRAG_ENF_BES", bes.ort(),
-                    "Die Rechnungssumme im BES (%s) entspricht nicht der Summe der Leistungspositionen (%s)."
-                            .formatted(formatiere(fallsumme.get()), formatiere(summeDerPosten)));
+            bericht.fehler("BETRAG_ENF_BES", bes.ort(), formatiere(fallsumme.get()), formatiere(summeDerPosten));
         }
     }
 
@@ -153,7 +153,7 @@ public final class BetragskonsistenzRegel implements ValidationRule {
             ValidationReport.Builder bericht) {
         BigDecimal summeDerFaelle = BigDecimal.ZERO;
         for (DtaSegment bes : besSegmente) {
-            Optional<BigDecimal> betrag = betrag(bes, BES_BETRAG, bericht, "BES_BETRAG_UNGUELTIG");
+            Optional<BigDecimal> betrag = betrag(bes, BES_BETRAG, bericht, "BES_BETRAG_FEHLT", "BES_BETRAG_UNGUELTIG");
             if (betrag.isEmpty()) {
                 return Optional.empty();
             }
@@ -173,37 +173,40 @@ public final class BetragskonsistenzRegel implements ValidationRule {
                 continue;
             }
 
-            Optional<BigDecimal> gesamt = betrag(ges, GES_BETRAG, bericht, "GES_BETRAG_UNGUELTIG");
+            Optional<BigDecimal> gesamt = betrag(ges, GES_BETRAG, bericht, "GES_BETRAG_FEHLT", "GES_BETRAG_UNGUELTIG");
             if (gesamt.isEmpty() || gesamt.get().compareTo(summeDerFaelle) == 0) {
                 continue;
             }
 
-            String meldung = "Die Summe im GES %s (%s) entspricht nicht der Summe der Rechnungen (%s)."
-                    .formatted(schluessel, formatiere(gesamt.get()), formatiere(summeDerFaelle));
-
+            // Beide Befunde beschreiben dieselbe Abweichung und bekommen
+            // deshalb dieselben Werte; der Katalog haengt beim Schluessel 99
+            // den Satz an, dass das der Pruefvorgabe entsprechen kann.
+            String kennung = istGesamtsumme ? "BETRAG_GES_BES" : "BETRAG_GES99_ABWEICHUNG";
             if (istGesamtsumme) {
-                bericht.error("BETRAG_GES_BES", ges.ort(), meldung);
+                bericht.fehler(kennung, ges.ort(), schluessel,
+                        formatiere(gesamt.get()), formatiere(summeDerFaelle));
             } else {
-                bericht.warning("BETRAG_GES99_ABWEICHUNG", ges.ort(),
-                        meldung + " Bei Schluessel 99 kann das der Pruefvorgabe entsprechen.");
+                bericht.warnung(kennung, ges.ort(), schluessel,
+                        formatiere(gesamt.get()), formatiere(summeDerFaelle));
             }
         }
     }
 
+    /**
+     * @param codeFehlt      wenn gar kein Betrag dasteht
+     * @param codeUngueltig  wenn dort etwas steht, das keiner ist
+     */
     private Optional<BigDecimal> betrag(DtaSegment segment, int position,
-            ValidationReport.Builder bericht, String code) {
+            ValidationReport.Builder bericht, String codeFehlt, String codeUngueltig) {
         String roh = segment.element(position).trim();
         if (roh.isEmpty()) {
-            bericht.error(code, segment.ort(),
-                    "Im Segment %s fehlt ein Betrag an Position %d.".formatted(segment.tag(), position + 1));
+            bericht.fehler(codeFehlt, segment.ort(), segment.tag(), position + 1);
             return Optional.empty();
         }
         try {
             return Optional.of(lese(roh));
         } catch (ParseException e) {
-            bericht.error(code, segment.ort(),
-                    "Der Wert '%s' im Segment %s ist kein gueltiger Betrag."
-                            .formatted(roh, segment.tag()));
+            bericht.fehler(codeUngueltig, segment.ort(), roh, segment.tag());
             return Optional.empty();
         }
     }

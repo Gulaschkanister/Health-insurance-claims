@@ -79,11 +79,7 @@ public final class PositionsnummerRegel implements ValidationRule {
                 continue;
             }
             if (position.length() < KUERZESTE || position.length() > LAENGSTE) {
-                bericht.warning("POSITION_HEBAMME_LAENGE", enf.ort(),
-                        "Die Abrechnungspositionsnummer " + position + " hat " + position.length()
-                                + " Stellen. Fuer Hebammenhilfe sind vier oder fuenf vorgesehen"
-                                + " (Anlage 3, Abschnitt 8.2.6). Die Kasse weist die Zeile in"
-                                + " Pruefstufe 3 zurueck.");
+                bericht.warnung("POSITION_HEBAMME_LAENGE", enf.ort(), position, position.length());
                 continue;
             }
             pruefeAufbau(position, enf, bericht);
@@ -104,11 +100,7 @@ public final class PositionsnummerRegel implements ValidationRule {
         }
         char zuschlag = position.charAt(STELLE_ZUSCHLAG);
         if (zuschlag != '0' && zuschlag != '1') {
-            bericht.warning("POSITION_HEBAMME_ZUSCHLAG", enf.ort(),
-                    "Die Abrechnungspositionsnummer " + position + " traegt an vierter Stelle '"
-                            + zuschlag + "'. Dort steht der Zuschlag nach § 3 der Anlage 1.1 zum"
-                            + " Vertrag nach § 134a SGB V, und der kennt nur 0 (kein Zuschlag)"
-                            + " oder 1 (mit Zuschlag) - Anlage 3, Abschnitt 8.2.6.");
+            bericht.warnung("POSITION_HEBAMME_ZUSCHLAG", enf.ort(), position, zuschlag);
         }
     }
 
@@ -129,12 +121,7 @@ public final class PositionsnummerRegel implements ValidationRule {
         if (leistungsdatum == null || !leistungsdatum.isAfter(LETZTER_TAG_VIERSTELLIG)) {
             return;
         }
-        bericht.warning("POSITION_HEBAMME_VIERSTELLIG", enf.ort(),
-                "Die Abrechnungspositionsnummer " + position + " ist vierstellig, das Leistungsdatum"
-                        + " liegt aber nach dem 31.10.2025. Seither gilt das fuenfstellige"
-                        + " Verzeichnis; vier Stellen sind nur noch bei Betriebskostenpauschalen"
-                        + " fuer von Hebammen geleitete Einrichtungen vorgesehen"
-                        + " (Anlage 3, Abschnitt 8.2.6).");
+        bericht.warnung("POSITION_HEBAMME_VIERSTELLIG", enf.ort(), position);
     }
 
     /**

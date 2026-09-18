@@ -130,9 +130,7 @@ public final class Trockenlauf {
             // Auch das ist ein Ergebnis: Im Trockenlauf kann nur der eigene
             // Ordner klemmen, und das soll man sehen statt als Absturz.
             return new Ergebnis(ValidationReport.builder()
-                    .error("TROCKENLAUF_ORDNER", ordner.toString(),
-                            "Der Uebungsordner liess sich nicht beschreiben: "
-                                    + nichtZugestellt.getMessage())
+                    .fehler("TROCKENLAUF_ORDNER", ordner.toString(), nichtZugestellt.getMessage())
                     .build(), false, Map.of(), 0, ordner);
         }
     }

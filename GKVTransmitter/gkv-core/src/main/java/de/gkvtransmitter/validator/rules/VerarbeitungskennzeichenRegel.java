@@ -88,16 +88,9 @@ public final class VerarbeitungskennzeichenRegel implements ValidationRule {
         for (DtaSegment fkt : fkts) {
             String kennzeichen = fkt.element(FKT_KENNZEICHEN).trim();
             if (kennzeichen.isEmpty()) {
-                bericht.error("FKT_KENNZEICHEN_FEHLT", fkt.ort(),
-                        "Im FKT-Segment fehlt das Verarbeitungskennzeichen. Es ist eine"
-                                + " Pflichtangabe (Anlage 3, Abschnitt 8.1.7).");
+                bericht.fehler("FKT_KENNZEICHEN_FEHLT", fkt.ort());
             } else if (!ERLAUBT.contains(kennzeichen)) {
-                bericht.error("FKT_KENNZEICHEN_UNBEKANNT", fkt.ort(),
-                        "Das Verarbeitungskennzeichen '" + kennzeichen + "' gibt es nicht."
-                                + " Zulaessig sind 01 (Abrechnung ohne Besonderheiten),"
-                                + " 02 (Nachforderung), 03 (Zuzahlungsforderung),"
-                                + " 04 (Korrekturrechnung) und 10 (Wiederaufnahme)"
-                                + " - Anlage 3, Abschnitt 8.1.7.");
+                bericht.fehler("FKT_KENNZEICHEN_UNBEKANNT", fkt.ort(), kennzeichen);
             }
         }
     }
@@ -115,12 +108,8 @@ public final class VerarbeitungskennzeichenRegel implements ValidationRule {
         for (DtaSegment fkt : fkts) {
             String kennzeichen = fkt.element(FKT_KENNZEICHEN).trim();
             if (!kennzeichen.equals(erstes)) {
-                bericht.error("FKT_KENNZEICHEN_UNEINHEITLICH", fkt.ort(),
-                        "Diese Datei fuehrt zwei verschiedene Verarbeitungskennzeichen: '"
-                                + erstes + "' (" + bedeutung(erstes) + ") und '" + kennzeichen
-                                + "' (" + bedeutung(kennzeichen) + "). Je Verarbeitungskennzeichen"
-                                + " ist eine eigene Datei zu uebermitteln"
-                                + " (Anlage 1, Abschnitt 7.3).");
+                bericht.fehler("FKT_KENNZEICHEN_UNEINHEITLICH",
+                        fkt.ort(), erstes, bedeutung(erstes), kennzeichen, bedeutung(kennzeichen));
                 return;
             }
         }
@@ -151,11 +140,7 @@ public final class VerarbeitungskennzeichenRegel implements ValidationRule {
             de.gkvtransmitter.dta.Verarbeitungskennzeichen kennzeichen =
                     de.gkvtransmitter.dta.Verarbeitungskennzeichen.zuSchluessel(schluessel);
             if (kennzeichen != null && !kennzeichen.zulaessigFuerHebammen()) {
-                bericht.error("FKT_KENNZEICHEN_LEISTUNGSBEREICH", fkt.ort(),
-                        "Das Verarbeitungskennzeichen '" + schluessel + "' ("
-                                + kennzeichen.bedeutung() + ") ist fuer Hebammen nicht zulaessig."
-                                + " Anlage 1, Abschnitt 7.1 laesst im Leistungsbereich Hebammen"
-                                + " nur 02 (Nachforderung) und 04 (Korrekturrechnung) zu.");
+                bericht.fehler("FKT_KENNZEICHEN_LEISTUNGSBEREICH", fkt.ort(), schluessel, kennzeichen.bedeutung());
                 return;
             }
         }
@@ -189,12 +174,7 @@ public final class VerarbeitungskennzeichenRegel implements ValidationRule {
             return;
         }
         if (document.mitTag(URI).isEmpty()) {
-            bericht.error("URI_FEHLT", fkts.get(0).ort(),
-                    "Das Verarbeitungskennzeichen '" + kennzeichen + "' (" + bedeutung(kennzeichen)
-                            + ") verlangt das URI-Segment mit den Angaben der Ursprungsrechnung:"
-                            + " Leistungserbringer-IK, Sammel- und Einzelrechnungsnummer,"
-                            + " Rechnungsdatum und Belegnummer. Ohne sie kann die Kasse die"
-                            + " Korrektur nicht zuordnen (Anlage 1, Abschnitt 7.3).");
+            bericht.fehler("URI_FEHLT", fkts.get(0).ort(), kennzeichen, bedeutung(kennzeichen));
         }
     }
 }

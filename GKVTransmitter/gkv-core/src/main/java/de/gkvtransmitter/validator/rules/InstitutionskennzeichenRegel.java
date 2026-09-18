@@ -45,25 +45,19 @@ public final class InstitutionskennzeichenRegel implements ValidationRule {
         String wert = unb.komponente(position, 0).trim();
 
         if (wert.isEmpty()) {
-            bericht.error("IK_FEHLT", unb.ort(),
-                    "Im UNB-Segment fehlt das Institutionskennzeichen des " + rolle + "s.");
+            bericht.fehler("IK_FEHLT", unb.ort(), rolle);
             return;
         }
         if (wert.length() != Institutionskennzeichen.LAENGE) {
-            bericht.error("IK_LAENGE", unb.ort(),
-                    "Das %s-IK '%s' hat %d Stellen, erwartet werden %d."
-                            .formatted(rolle, wert, wert.length(), Institutionskennzeichen.LAENGE));
+            bericht.fehler("IK_LAENGE", unb.ort(), rolle, wert, wert.length(), Institutionskennzeichen.LAENGE);
             return;
         }
         if (!wert.chars().allMatch(Character::isDigit)) {
-            bericht.error("IK_ZIFFERN", unb.ort(),
-                    "Das %s-IK '%s' enthaelt Zeichen, die keine Ziffern sind.".formatted(rolle, wert));
+            bericht.fehler("IK_ZIFFERN", unb.ort(), rolle, wert);
             return;
         }
         if (!Institutionskennzeichen.istGueltig(wert)) {
-            bericht.error("IK_PRUEFZIFFER", unb.ort(),
-                    "Das %s-IK '%s' hat eine falsche Pruefziffer, erwartet wurde %d an letzter Stelle."
-                            .formatted(rolle, wert, Institutionskennzeichen.berechnePruefziffer(wert)));
+            bericht.fehler("IK_PRUEFZIFFER", unb.ort(), rolle, wert, Institutionskennzeichen.berechnePruefziffer(wert));
         }
     }
 }

@@ -44,7 +44,7 @@ public final class SegmentSyntaxRegel implements ValidationRule {
     @Override
     public void pruefe(DtaDocument document, ValidationReport.Builder bericht) {
         if (document.istLeer()) {
-            bericht.error("SYNTAX_LEER", "", "Die Nachricht enthaelt kein einziges Segment.");
+            bericht.fehler("SYNTAX_LEER", "");
             return;
         }
 
@@ -56,8 +56,7 @@ public final class SegmentSyntaxRegel implements ValidationRule {
 
     private void pruefeAbschluss(DtaSegment segment, ValidationReport.Builder bericht) {
         if (!segment.raw().endsWith(String.valueOf(DtaDocument.SEGMENT_ENDE))) {
-            bericht.error("SYNTAX_ABSCHLUSS", segment.ort(),
-                    "Das Segment ist nicht mit %c abgeschlossen.".formatted(DtaDocument.SEGMENT_ENDE));
+            bericht.fehler("SYNTAX_ABSCHLUSS", segment.ort(), DtaDocument.SEGMENT_ENDE);
         }
     }
 
@@ -65,19 +64,14 @@ public final class SegmentSyntaxRegel implements ValidationRule {
         String tag = segment.tag();
 
         if (!BEZEICHNER.matcher(tag).matches()) {
-            bericht.error("SYNTAX_BEZEICHNER", segment.ort(),
-                    "'%s' ist kein gueltiger Segmentbezeichner, erwartet werden drei Grossbuchstaben."
-                            .formatted(tag));
+            bericht.fehler("SYNTAX_BEZEICHNER", segment.ort(), tag);
             return;
         }
         if (!BEKANNTE_SEGMENTE.contains(tag)) {
-            bericht.warning("SYNTAX_UNBEKANNT", segment.ort(),
-                    "Das Segment %s ist im Programm nicht hinterlegt und wird nicht inhaltlich geprueft."
-                            .formatted(tag));
+            bericht.warnung("SYNTAX_UNBEKANNT", segment.ort(), tag);
         }
         if (segment.elementAnzahl() == 0) {
-            bericht.warning("SYNTAX_OHNE_INHALT", segment.ort(),
-                    "Das Segment %s enthaelt keine Datenelemente.".formatted(tag));
+            bericht.warnung("SYNTAX_OHNE_INHALT", segment.ort(), tag);
         }
     }
 }

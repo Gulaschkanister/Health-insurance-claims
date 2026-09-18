@@ -38,12 +38,19 @@ public final class Befundkatalog {
     /**
      * Was zu einem Code zu wissen ist.
      *
+     * @param text        die Beanstandung als Formatzeichenkette
      * @param fundstelle  Anlage und Abschnitt, oder der Hinweis, dass es keine gibt
      * @param handlung    was zu tun ist, in ganzen Saetzen
      * @param ausAnlage   ob die Angabe aus den Unterlagen stammt
      * @param pruefstufe  in welcher Stufe die Kasse das faende, oder leer
      */
-    public record Eintrag(String fundstelle, String handlung, boolean ausAnlage, String pruefstufe) {
+    public record Eintrag(String text, String fundstelle, String handlung, boolean ausAnlage,
+            String pruefstufe) {
+
+        /** Der Text mit eingesetzten Werten. */
+        public String text(Object... werte) {
+            return werte.length == 0 ? text : String.format(text, werte);
+        }
     }
 
     private final Map<String, Eintrag> eintraege;
@@ -73,7 +80,8 @@ public final class Befundkatalog {
             }
             JsonNode wurzel = MAPPER.readTree(quelle).path("befunde");
             wurzel.fields().forEachRemaining(eintrag -> gelesen.put(eintrag.getKey(),
-                    new Eintrag(text(eintrag.getValue(), "fundstelle"),
+                    new Eintrag(text(eintrag.getValue(), "text"),
+                            text(eintrag.getValue(), "fundstelle"),
                             text(eintrag.getValue(), "handlung"),
                             "anlage".equals(text(eintrag.getValue(), "quelle")),
                             text(eintrag.getValue(), "pruefstufe"))));
@@ -81,6 +89,17 @@ public final class Befundkatalog {
             return new Befundkatalog(Map.of());
         }
         return new Befundkatalog(gelesen);
+    }
+
+    /**
+     * Der Beanstandungstext zu einem Code, mit eingesetzten Werten.
+     *
+     * <p>Fehlt der Eintrag, kommt der Code selbst zurueck - wie bei
+     * {@code AppMessages}. Das ist im Entwickeln nuetzlich und faellt auf;
+     * {@code BefundkatalogTest} laesst es gar nicht erst so weit kommen.</p>
+     */
+    public String text(String code, Object... werte) {
+        return zu(code).map(eintrag -> eintrag.text(werte)).orElse(code);
     }
 
     /** Der Eintrag zu einem Code, oder leer. */

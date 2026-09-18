@@ -48,21 +48,17 @@ public final class NachrichtenRahmenRegel implements ValidationRule {
         List<DtaSegment> unzSegmente = document.mitTag(UNZ);
 
         if (unbSegmente.isEmpty()) {
-            bericht.error("RAHMEN_UNB_FEHLT", "",
-                    "Die Uebertragung enthaelt kein UNB-Segment und hat damit keinen Kopf.");
+            bericht.fehler("RAHMEN_UNB_FEHLT", "");
         } else if (unbSegmente.size() > 1) {
-            bericht.error("RAHMEN_UNB_MEHRFACH", unbSegmente.get(1).ort(),
-                    "Eine Uebertragung darf nur ein UNB-Segment enthalten, gefunden: " + unbSegmente.size() + ".");
+            bericht.fehler("RAHMEN_UNB_MEHRFACH", unbSegmente.get(1).ort(), unbSegmente.size());
         }
 
         if (unzSegmente.isEmpty()) {
-            bericht.error("RAHMEN_UNZ_FEHLT", "",
-                    "Die Uebertragung enthaelt kein UNZ-Segment und ist damit nicht abgeschlossen.");
+            bericht.fehler("RAHMEN_UNZ_FEHLT", "");
             return;
         }
         if (unzSegmente.size() > 1) {
-            bericht.error("RAHMEN_UNZ_MEHRFACH", unzSegmente.get(1).ort(),
-                    "Eine Uebertragung darf nur ein UNZ-Segment enthalten, gefunden: " + unzSegmente.size() + ".");
+            bericht.fehler("RAHMEN_UNZ_MEHRFACH", unzSegmente.get(1).ort(), unzSegmente.size());
         }
 
         DtaSegment unz = unzSegmente.get(unzSegmente.size() - 1);
@@ -77,12 +73,10 @@ public final class NachrichtenRahmenRegel implements ValidationRule {
     private void pruefeReihenfolge(DtaDocument document, DtaSegment unz, ValidationReport.Builder bericht) {
         List<DtaSegment> alle = document.getSegments();
         if (!alle.isEmpty() && !alle.get(0).tag().equals(UNB)) {
-            bericht.error("RAHMEN_UNB_NICHT_ZUERST", alle.get(0).ort(),
-                    "Die Uebertragung muss mit UNB beginnen, gefunden wurde " + alle.get(0).tag() + ".");
+            bericht.fehler("RAHMEN_UNB_NICHT_ZUERST", alle.get(0).ort(), alle.get(0).tag());
         }
         if (!alle.isEmpty() && !alle.get(alle.size() - 1).equals(unz)) {
-            bericht.error("RAHMEN_UNZ_NICHT_ZULETZT", unz.ort(),
-                    "Das UNZ-Segment muss das letzte Segment der Uebertragung sein.");
+            bericht.fehler("RAHMEN_UNZ_NICHT_ZULETZT", unz.ort());
         }
     }
 
@@ -91,20 +85,16 @@ public final class NachrichtenRahmenRegel implements ValidationRule {
         int tatsaechlich = document.anzahlMitTag(UNH);
 
         if (angabe.isBlank()) {
-            bericht.error("UNZ_ANZAHL_FEHLT", unz.ort(),
-                    "Im UNZ-Segment fehlt die Anzahl der enthaltenen Nachrichten.");
+            bericht.fehler("UNZ_ANZAHL_FEHLT", unz.ort());
             return;
         }
         try {
             int angegeben = Integer.parseInt(angabe.trim());
             if (angegeben != tatsaechlich) {
-                bericht.error("UNZ_ANZAHL", unz.ort(),
-                        "Das UNZ-Segment nennt %d Nachrichten, enthalten sind aber %d."
-                                .formatted(angegeben, tatsaechlich));
+                bericht.fehler("UNZ_ANZAHL", unz.ort(), angegeben, tatsaechlich);
             }
         } catch (NumberFormatException e) {
-            bericht.error("UNZ_ANZAHL_UNGUELTIG", unz.ort(),
-                    "Die Nachrichtenanzahl im UNZ-Segment ist keine Zahl: " + angabe + ".");
+            bericht.fehler("UNZ_ANZAHL_UNGUELTIG", unz.ort(), angabe);
         }
     }
 
@@ -113,14 +103,11 @@ public final class NachrichtenRahmenRegel implements ValidationRule {
         String imFuss = unz.element(UNZ_REFERENZ).trim();
 
         if (imKopf.isEmpty()) {
-            bericht.error("UNB_REFERENZ_FEHLT", unb.ort(),
-                    "Im UNB-Segment fehlt die Datenaustauschreferenz.");
+            bericht.fehler("UNB_REFERENZ_FEHLT", unb.ort());
             return;
         }
         if (!imKopf.equals(imFuss)) {
-            bericht.error("RAHMEN_REFERENZ", unz.ort(),
-                    "Die Datenaustauschreferenz im UNZ (%s) weicht von der im UNB (%s) ab."
-                            .formatted(imFuss, imKopf));
+            bericht.fehler("RAHMEN_REFERENZ", unz.ort(), imFuss, imKopf);
         }
     }
 }

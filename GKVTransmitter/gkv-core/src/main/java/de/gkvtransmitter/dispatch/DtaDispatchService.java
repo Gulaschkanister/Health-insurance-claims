@@ -371,11 +371,7 @@ public class DtaDispatchService {
         for (String paar : abrechnungen.stream().map(DtaDispatchService::codeabweichung)
                 .filter(Objects::nonNull).distinct().toList()) {
             String[] teile = paar.split(" ");
-            bericht.info("ABRECHNUNGSCODE_AUS_PROFIL", "ENF",
-                    "Die Blaupause nennt den Abrechnungscode " + teile[1] + ", der Dienstleister "
-                            + teile[0] + ". Gesendet wird " + teile[0] + ", weil der Code zum Beruf"
-                            + " gehoert und nicht zur Kursart. Stimmt das nicht, gehoert er im"
-                            + " Dienstleisterprofil geaendert.");
+            bericht.hinweis("ABRECHNUNGSCODE_AUS_PROFIL", "ENF", teile[1], teile[0], teile[0]);
             etwasGemeldet = true;
         }
         return etwasGemeldet ? bericht.build() : ValidationReport.leer();
@@ -409,11 +405,7 @@ public class DtaDispatchService {
                 .filter(erbringer -> !erbringer.hatSteuerangaben())
                 .map(erbringer -> (erbringer.getFirstname() + " " + erbringer.getLastname()).strip())
                 .distinct().toList()) {
-            bericht.warning("STEUERNUMMER_FEHLT", "UST",
-                    "Fuer " + name + " ist keine Steuernummer hinterlegt. Das UST-Segment bleibt"
-                            + " deshalb weg. Es ist konditional, die Datei ist also gueltig - aber"
-                            + " § 14 Abs. 1a UStG verlangt die Steuernummer auf der Rechnung. Sie"
-                            + " gehoert ins Dienstleisterprofil.");
+            bericht.warnung("STEUERNUMMER_FEHLT", "UST", name);
             etwasGemeldet = true;
         }
         return etwasGemeldet ? bericht.build() : ValidationReport.leer();
@@ -459,11 +451,7 @@ public class DtaDispatchService {
         boolean etwasGemeldet = false;
         for (int kassenIk : nachrichten.stream().map(ErzeugteNachricht::kassenIk).distinct().toList()) {
             if (!endpointRegistry.kenntKasse(kassenIk)) {
-                bericht.warning("ANNAHMESTELLE_UNBEKANNT", "Kasse " + kassenIk,
-                        "Fuer die Kasse " + kassenIk + " ist kein Ziel hinterlegt. Die Datei landet"
-                                + " im Sammelordner und ist damit nicht zugestellt. Zustaendig ist"
-                                + " die Datenannahmestelle mit Entschluesselungsbefugnis aus der"
-                                + " Kostentraegerdatei.");
+                bericht.warnung("ANNAHMESTELLE_UNBEKANNT", "Kasse " + kassenIk, kassenIk);
                 etwasGemeldet = true;
             }
         }
@@ -476,11 +464,7 @@ public class DtaDispatchService {
             return ValidationReport.leer();
         }
         return ValidationReport.builder()
-                .warning("BETRIEBSDATEN_FEHLEN", "UNB",
-                        "Es sind keine Betriebsdaten erfasst. Als Absender steht deshalb das IK des"
-                                + " Leistungserbringers in der Datei. Das stimmt, solange die"
-                                + " Leistungserbringerin selbst abrechnet - sonst gehoert unter"
-                                + " \"Betriebsdaten\" das eigene Institutionskennzeichen hinterlegt.")
+                .warnung("BETRIEBSDATEN_FEHLEN", "UNB")
                 .build();
     }
 

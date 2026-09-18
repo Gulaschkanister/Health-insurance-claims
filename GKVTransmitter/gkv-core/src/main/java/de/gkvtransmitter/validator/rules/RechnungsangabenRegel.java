@@ -78,29 +78,17 @@ public final class RechnungsangabenRegel implements ValidationRule {
         String sammelnummer = feld.contains(":") ? feld.substring(0, feld.indexOf(':')) : feld;
 
         if (sammelnummer.isEmpty()) {
-            bericht.error("RECHNUNGSNUMMER_FEHLT", rec.ort(),
-                    "Im REC-Segment fehlt die Sammel-Rechnungsnummer. Sie ist Pflicht"
-                            + " (Anlage 1, Abschnitt 5.5.2) und die Angabe, auf die sich eine"
-                            + " spaetere Korrektur bezieht.");
+            bericht.fehler("RECHNUNGSNUMMER_FEHLT", rec.ort());
             return;
         }
         if (sammelnummer.chars().allMatch(zeichen -> zeichen == '0')) {
-            bericht.error("RECHNUNGSNUMMER_NULL", rec.ort(),
-                    "Die Sammel-Rechnungsnummer besteht nur aus Nullen. Sie wurde nicht"
-                            + " vergeben - jede Rechnung traegt dann dieselbe Nummer, und eine"
-                            + " Korrektur laesst sich keiner davon zuordnen.");
+            bericht.fehler("RECHNUNGSNUMMER_NULL", rec.ort());
         }
         if (sammelnummer.length() > MAX_RECHNUNGSNUMMER) {
-            bericht.error("RECHNUNGSNUMMER_ZU_LANG", rec.ort(),
-                    "Die Sammel-Rechnungsnummer hat " + sammelnummer.length()
-                            + " Stellen; hoechstens " + MAX_RECHNUNGSNUMMER
-                            + " sind zulaessig (Anlage 1, Abschnitt 5.5.2).");
+            bericht.fehler("RECHNUNGSNUMMER_ZU_LANG", rec.ort(), sammelnummer.length(), MAX_RECHNUNGSNUMMER);
         }
         if (rec.element(REC_DATUM).trim().isEmpty()) {
-            bericht.error("RECHNUNGSDATUM_FEHLT", rec.ort(),
-                    "Im REC-Segment fehlt das Rechnungsdatum. Es ist Pflicht und gehoert"
-                            + " zusammen mit der Rechnungsnummer zu den Angaben, auf die eine"
-                            + " Korrektur verweist.");
+            bericht.fehler("RECHNUNGSDATUM_FEHLT", rec.ort());
         }
     }
 
@@ -108,16 +96,11 @@ public final class RechnungsangabenRegel implements ValidationRule {
     private static void pruefeBelegnummer(DtaSegment inv, ValidationReport.Builder bericht) {
         String belegnummer = inv.element(INV_BELEGNUMMER).trim();
         if (belegnummer.isEmpty()) {
-            bericht.error("BELEGNUMMER_FEHLT", inv.ort(),
-                    "Im INV-Segment fehlt die Belegnummer. Sie ist Pflicht und muss"
-                            + " innerhalb der Gesamtrechnung eindeutig sein"
-                            + " (Anlage 1, Abschnitt 5.5.2).");
+            bericht.fehler("BELEGNUMMER_FEHLT", inv.ort());
             return;
         }
         if (belegnummer.length() > MAX_BELEGNUMMER) {
-            bericht.error("BELEGNUMMER_ZU_LANG", inv.ort(),
-                    "Die Belegnummer '" + belegnummer + "' hat " + belegnummer.length()
-                            + " Stellen; hoechstens " + MAX_BELEGNUMMER + " sind zulaessig.");
+            bericht.fehler("BELEGNUMMER_ZU_LANG", inv.ort(), belegnummer, belegnummer.length(), MAX_BELEGNUMMER);
         }
     }
 
@@ -133,10 +116,7 @@ public final class RechnungsangabenRegel implements ValidationRule {
         for (DtaSegment inv : invs) {
             String belegnummer = inv.element(INV_BELEGNUMMER).trim();
             if (!belegnummer.isEmpty() && !gesehen.add(belegnummer)) {
-                bericht.error("BELEGNUMMER_DOPPELT", inv.ort(),
-                        "Die Belegnummer '" + belegnummer + "' kommt in dieser Rechnung mehrfach"
-                                + " vor. Sie muss innerhalb der Gesamtrechnung eindeutig sein"
-                                + " (Anlage 1, Abschnitt 5.5.2).");
+                bericht.fehler("BELEGNUMMER_DOPPELT", inv.ort(), belegnummer);
             }
         }
     }

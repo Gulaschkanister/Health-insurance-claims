@@ -54,12 +54,10 @@ public final class VersichertenangabenRegel implements ValidationRule {
 
     private void pruefeName(DtaSegment nad, ValidationReport.Builder bericht) {
         if (nad.element(NAD_NACHNAME).trim().isEmpty()) {
-            bericht.error("VERSICHERTER_NACHNAME", nad.ort(),
-                    "Im NAD-Segment fehlt der Nachname der versicherten Person.");
+            bericht.fehler("VERSICHERTER_NACHNAME", nad.ort());
         }
         if (nad.element(NAD_VORNAME).trim().isEmpty()) {
-            bericht.error("VERSICHERTER_VORNAME", nad.ort(),
-                    "Im NAD-Segment fehlt der Vorname der versicherten Person.");
+            bericht.fehler("VERSICHERTER_VORNAME", nad.ort());
         }
     }
 
@@ -76,8 +74,7 @@ public final class VersichertenangabenRegel implements ValidationRule {
             // Meldung wirklich einen Lauf auf - dann muss sie auch sagen, bei
             // wem nachzutragen ist. Eine Zeilennummer allein hilft niemandem,
             // der zwanzig Teilnehmerinnen abrechnet.
-            bericht.error("VERSICHERTER_GEBURTSDATUM", nad.ort(),
-                    "Im NAD-Segment fehlt das Geburtsdatum%s.".formatted(wessen(nad)));
+            bericht.fehler("VERSICHERTER_GEBURTSDATUM", nad.ort(), wessen(nad));
             return;
         }
         try {
@@ -85,29 +82,23 @@ public final class VersichertenangabenRegel implements ValidationRule {
             LocalDate heute = LocalDate.now();
 
             if (geburtsdatum.isAfter(heute)) {
-                bericht.error("GEBURTSDATUM_ZUKUNFT", nad.ort(),
-                        "Das Geburtsdatum %s liegt in der Zukunft.".formatted(roh));
+                bericht.fehler("GEBURTSDATUM_ZUKUNFT", nad.ort(), roh);
             } else if (geburtsdatum.isBefore(heute.minusYears(AUFFAELLIGES_ALTER))) {
-                bericht.warning("GEBURTSDATUM_ALT", nad.ort(),
-                        "Das Geburtsdatum %s ergibt ein Alter ueber %d Jahren - bitte pruefen."
-                                .formatted(roh, AUFFAELLIGES_ALTER));
+                bericht.warnung("GEBURTSDATUM_ALT", nad.ort(), roh, AUFFAELLIGES_ALTER);
             }
         } catch (DateTimeParseException e) {
-            bericht.error("GEBURTSDATUM_FORMAT", nad.ort(),
-                    "Das Geburtsdatum '%s' entspricht nicht dem Format JJJJMMTT.".formatted(roh));
+            bericht.fehler("GEBURTSDATUM_FORMAT", nad.ort(), roh);
         }
     }
 
     private void pruefeVersichertennummer(DtaSegment inv, ValidationReport.Builder bericht) {
         String nummer = inv.komponente(INV_VERSICHERTENNUMMER, 0).trim();
         if (nummer.isEmpty()) {
-            bericht.error("VERSICHERTENNUMMER_FEHLT", inv.ort(),
-                    "Im INV-Segment fehlt die Versichertennummer.");
+            bericht.fehler("VERSICHERTENNUMMER_FEHLT", inv.ort());
             return;
         }
         if (nummer.chars().allMatch(z -> z == '0')) {
-            bericht.error("VERSICHERTENNUMMER_NULL", inv.ort(),
-                    "Die Versichertennummer besteht nur aus Nullen und kann keiner Person zugeordnet werden.");
+            bericht.fehler("VERSICHERTENNUMMER_NULL", inv.ort());
         }
     }
 }

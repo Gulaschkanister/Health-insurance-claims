@@ -46,9 +46,8 @@ public final class NachrichtenAbschlussRegel implements ValidationRule {
         for (DtaSegment segment : segmente) {
             if (segment.tag().equals(UNH)) {
                 if (!offeneKoepfe.isEmpty()) {
-                    bericht.error("NACHRICHT_NICHT_GESCHLOSSEN", segment.ort(),
-                            "Eine neue Nachricht beginnt, obwohl die vorherige (%s) kein UNT hat."
-                                    .formatted(offeneKoepfe.get(offeneKoepfe.size() - 1).element(UNH_NUMMER)));
+                    bericht.fehler("NACHRICHT_NICHT_GESCHLOSSEN", segment.ort(),
+                            offeneKoepfe.get(offeneKoepfe.size() - 1).element(UNH_NUMMER));
                     offeneKoepfe.clear();
                 }
                 offeneKoepfe.add(segment);
@@ -62,8 +61,7 @@ public final class NachrichtenAbschlussRegel implements ValidationRule {
 
             if (segment.tag().equals(UNT)) {
                 if (offeneKoepfe.isEmpty()) {
-                    bericht.error("UNT_OHNE_UNH", segment.ort(),
-                            "Ein UNT-Segment schliesst eine Nachricht ab, die nie mit UNH begonnen wurde.");
+                    bericht.fehler("UNT_OHNE_UNH", segment.ort());
                     continue;
                 }
                 pruefeAbschluss(offeneKoepfe.get(0), segment, segmenteSeitKopf, bericht);
@@ -73,9 +71,7 @@ public final class NachrichtenAbschlussRegel implements ValidationRule {
         }
 
         for (DtaSegment offen : offeneKoepfe) {
-            bericht.error("UNH_OHNE_UNT", offen.ort(),
-                    "Die Nachricht %s wird nicht mit einem UNT-Segment abgeschlossen."
-                            .formatted(offen.element(UNH_NUMMER)));
+            bericht.fehler("UNH_OHNE_UNT", offen.ort(), offen.element(UNH_NUMMER));
         }
     }
 
@@ -84,27 +80,21 @@ public final class NachrichtenAbschlussRegel implements ValidationRule {
         String nummerFuss = unt.element(UNT_NUMMER).trim();
 
         if (!nummerKopf.equals(nummerFuss)) {
-            bericht.error("NACHRICHT_NUMMER", unt.ort(),
-                    "Die Nachrichtennummer im UNT (%s) weicht von der im UNH (%s) ab."
-                            .formatted(nummerFuss, nummerKopf));
+            bericht.fehler("NACHRICHT_NUMMER", unt.ort(), nummerFuss, nummerKopf);
         }
 
         String angabe = unt.element(UNT_ANZAHL).trim();
         if (angabe.isEmpty()) {
-            bericht.error("UNT_ANZAHL_FEHLT", unt.ort(),
-                    "Im UNT-Segment fehlt die Anzahl der Segmente dieser Nachricht.");
+            bericht.fehler("UNT_ANZAHL_FEHLT", unt.ort());
             return;
         }
         try {
             int angegeben = Integer.parseInt(angabe);
             if (angegeben != gezaehlt) {
-                bericht.error("UNT_ANZAHL", unt.ort(),
-                        "Das UNT-Segment nennt %d Segmente, gezaehlt wurden aber %d (UNH und UNT eingerechnet)."
-                                .formatted(angegeben, gezaehlt));
+                bericht.fehler("UNT_ANZAHL", unt.ort(), angegeben, gezaehlt);
             }
         } catch (NumberFormatException e) {
-            bericht.error("UNT_ANZAHL_UNGUELTIG", unt.ort(),
-                    "Die Segmentanzahl im UNT-Segment ist keine Zahl: " + angabe + ".");
+            bericht.fehler("UNT_ANZAHL_UNGUELTIG", unt.ort(), angabe);
         }
     }
 }

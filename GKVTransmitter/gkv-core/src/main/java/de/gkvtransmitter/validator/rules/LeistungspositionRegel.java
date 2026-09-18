@@ -56,13 +56,8 @@ public final class LeistungspositionRegel implements ValidationRule {
     @Override
     public void pruefe(DtaDocument document, ValidationReport.Builder bericht) {
         for (DtaSegment enf : document.mitTag(ENF)) {
-            pruefeWert(enf, ENF_BETRAG, bericht, "ENF_BETRAG_NULL",
-                    "Der Einzelbetrag der Leistungsposition ist 0,00."
-                            + " Die Blaupause fuehrt keinen Preis - so abgerechnet waere die"
-                            + " Forderung null.");
-            pruefeWert(enf, ENF_MENGE, bericht, "ENF_MENGE_NULL",
-                    "Die Menge der Leistungsposition ist 0,00."
-                            + " Ohne Termine gibt es nichts abzurechnen.");
+            pruefeWert(enf, ENF_BETRAG, bericht, "ENF_BETRAG_NULL");
+            pruefeWert(enf, ENF_MENGE, bericht, "ENF_MENGE_NULL");
         }
     }
 
@@ -74,10 +69,10 @@ public final class LeistungspositionRegel implements ValidationRule {
      * Beanstandungen zur selben Stelle machen den Bericht nur laenger.</p>
      */
     private void pruefeWert(DtaSegment enf, int position, ValidationReport.Builder bericht,
-            String code, String meldung) {
+            String code) {
         Optional<BigDecimal> wert = lese(enf.element(position).trim());
         if (wert.isPresent() && wert.get().compareTo(BigDecimal.ZERO) == 0) {
-            bericht.error(code, enf.ort(), meldung);
+            bericht.fehler(code, enf.ort());
         }
     }
 

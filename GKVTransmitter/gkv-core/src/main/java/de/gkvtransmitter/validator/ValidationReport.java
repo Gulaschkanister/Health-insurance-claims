@@ -103,6 +103,36 @@ public final class ValidationReport {
             return this;
         }
 
+        /**
+         * Eine Beanstandung, deren Text aus dem {@link Befundkatalog} kommt.
+         *
+         * <p><b>Der Text stand bis zum 18.09.2026 in der Regel selbst</b> -
+         * und damit ein Satz eines Befunds im Quelltext, waehrend seine beiden
+         * anderen (Fundstelle und Handlungsanweisung) schon in
+         * {@code befunde/befunde.json} standen. Drei Saetze zu einer Sache an
+         * zwei Orten: Wer einen umformulierte, fand die anderen nicht.</p>
+         *
+         * <p>Eigene Namen und keine Ueberladung von {@code error}: Eine
+         * Ueberladung mit {@code Object...} haette die bisherigen Aufrufe
+         * stillschweigend weiterlaufen lassen, und der dritte Wert waere
+         * weiterhin als Text durchgereicht worden statt als Wert.</p>
+         *
+         * @param werte was in die Formatzeichenkette eingesetzt wird
+         */
+        public Builder fehler(String code, String ort, Object... werte) {
+            return error(code, ort, Befundkatalog.standard().text(code, werte));
+        }
+
+        /** Eine Warnung, siehe {@link #fehler}. */
+        public Builder warnung(String code, String ort, Object... werte) {
+            return warning(code, ort, Befundkatalog.standard().text(code, werte));
+        }
+
+        /** Ein Hinweis, siehe {@link #fehler}. */
+        public Builder hinweis(String code, String ort, Object... werte) {
+            return info(code, ort, Befundkatalog.standard().text(code, werte));
+        }
+
         public Builder error(String code, String ort, String text) {
             return add(ValidationMessage.error(code, ort, text));
         }

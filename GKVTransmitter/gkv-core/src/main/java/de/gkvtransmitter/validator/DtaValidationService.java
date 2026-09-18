@@ -86,9 +86,7 @@ public final class DtaValidationService {
                 regel.pruefe(document, bericht);
             } catch (RuntimeException e) {
                 // Eine fehlerhafte Regel darf die uebrigen nicht mitreissen.
-                bericht.error("REGEL_ABGEBROCHEN", regel.getName(),
-                        "Die Regel '%s' konnte nicht ausgefuehrt werden: %s"
-                                .formatted(regel.getName(), e.getMessage()));
+                bericht.fehler("REGEL_ABGEBROCHEN", regel.getName(), regel.getName(), e.getMessage());
             }
         }
         return bericht.build();
