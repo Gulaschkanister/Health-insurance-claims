@@ -1,6 +1,7 @@
 package de.gkvtransmitter.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,6 +87,19 @@ class AbrechnungServiceTest {
 
             assertEquals(1, datenbank.ladeProtokoll().size(),
                     "Der echte Versand muss dagegen schreiben - sonst misst der Test nichts");
+
+            // Und der Eintrag muss als Ursprung einer Korrektur taugen: Ohne
+            // Rechnungsnummer und Rechnungsdatum stuende im URI-Segment
+            // nichts, worauf die Kasse zurueckfinden kann.
+            de.gkvtransmitter.entity.Protokolleintrag eintrag = datenbank.ladeProtokoll().get(0);
+            assertTrue(eintrag.getRechnungsnummer() > 0, "Rechnungsnummer fehlt");
+            assertNotNull(eintrag.getRechnungsdatum(), "Rechnungsdatum fehlt");
+            assertTrue(eintrag.korrigierbar(),
+                    "Eine angenommene Lieferung muss sich korrigieren lassen"
+                            + " - Rechnungsnummer " + eintrag.getRechnungsnummer()
+                            + ", Datum " + eintrag.getRechnungsdatum()
+                            + ", fehlerfrei " + eintrag.istFehlerfrei()
+                            + ", Richtung " + eintrag.getRichtung());
         }
     }
 

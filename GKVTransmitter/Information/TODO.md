@@ -47,7 +47,7 @@ anders als dort angenommen).
 | **B2** | Kostenträgerdatei einlesen | ✅ (ohne Aufrufer, siehe unten) |
 | **B3** | Auftragsdatei und physikalischer Dateiname | ⛔ zurückgestellt, GGT Anlage 4 fehlt |
 | **C1** | Übermittlungsprotokoll und Sicherungskopie | ✅ |
-| **C2** | Verarbeitungskennzeichen | 🟡 zur Hälfte — Prüfen ja, Korrekturrechnung erzeugen nein |
+| **C2** | Verarbeitungskennzeichen | ✅ |
 | **D1** | Trockenlauf als Menüpunkt | ✅ |
 | **D2** | Zertifikats-Ablaufwarnung | ✅ mit G3 |
 | **D3** | Versionsangabe sichtbar machen | ✅ mit G1 |
@@ -357,14 +357,14 @@ Sicherungskopien unter `staging/` weg dürfen (Absatz 4).
 **Fertig, wenn:** jede erzeugte und jede zugestellte Datei einen
 Protokolleintrag hat und eine Übersicht zeigt, was noch auf Zahlung wartet.
 
-## C2. Verarbeitungskennzeichen: Korrektur und Nachforderung — 🟡 zur Hälfte (17.09.2026)
+## C2. Verarbeitungskennzeichen: Korrektur und Nachforderung — ✅ erledigt am 18.09.2026
 
 | | |
 |---|---|
 | **Umsetzungsplan** | 1.4 |
 | **Größe** | S |
 | **Hängt an** | nichts |
-| **Stand** | **Prüfung gebaut**: `VerarbeitungskennzeichenRegel` hält den Wert gegen Anlage 3 § 8.1.7 und Anlage 1 § 7.3. **Das Erzeugen einer Korrekturrechnung fehlt** — Grund unten |
+| **Stand** | **vollständig**: Prüfung (17.09.) und Erzeugen (18.09., entsperrt durch D4) |
 
 **Was die Regel prüft** (alles nachgelesen, nicht angenommen):
 
@@ -374,7 +374,55 @@ Protokolleintrag hat und eine Übersicht zeigt, was noch auf Zahlung wartet.
 | `FKT_KENNZEICHEN_UNEINHEITLICH` — „Innerhalb einer Datei dürfen nicht verschiedene Verarbeitungskennzeichen genutzt werden" | Anlage 1, Abschnitt 7.3 |
 | `URI_FEHLT` — bei Kennzeichen ≠ `01` sind die Ursprungsangaben zu übermitteln | Anlage 1, Abschnitt 7.3 |
 
-> **Warum das Erzeugen noch nicht geht.** Eine Korrekturrechnung braucht das
+### Das Erzeugen — nachgetragen am 18.09.2026
+
+Mit D4 stehen Rechnungsnummer, Rechnungsdatum und Belegnummer im
+Übermittlungsprotokoll. Die Abrechnungsmaske führt jetzt **„Art der
+Abrechnung"** und **„Bezieht sich auf"**; das `FKT` trägt den gewählten Wert
+und das `URI` die Ursprungsangaben.
+
+> ### Zwei Festlegungen aus Anlage 1, Abschnitt 7 — beide gelesen, nicht geraten
+>
+> **1. Für Hebammen sind nur `02` und `04` zulässig.** Abschnitt 7.1 führt die
+> Leistungsbereiche einzeln auf:
+>
+> | Leistungsbereich | verpflichtend ab | zulässig |
+> |---|---|---|
+> | Heilmittel | 01.07.2020 | 02, 03, 04 |
+> | Heilmittel (Physiotherapie) | 01.10.2025 | 02, 03, 04, 10 |
+> | **Hebammen** | **01.10.2025** | **02, 04** |
+>
+> Zuzahlungsforderung (`03`) und Wiederaufnahme (`10`) gehören also **nicht**
+> hierher, so naheliegend sie aussehen. Sie stehen deshalb gar nicht erst in
+> der Auswahl — eine Wahl, die die Prüfung danach zurückweist, ist eine Falle —
+> und `FKT_KENNZEICHEN_LEISTUNGSBEREICH` fängt sie zusätzlich in einer fremden
+> Datei ab.
+>
+> **Dieselbe Tabelle nennt den Stichtag: seit dem 01.10.2025 verpflichtend.**
+> Die feste `FKT+01` war keine Vereinfachung, sondern eine Lücke.
+>
+> **2. Eine zurückgewiesene Rechnung ist kein Fall für das Korrekturverfahren.**
+> Abschnitt 7.2: *„Voraussetzung für die Anwendung des Korrekturverfahrens ist
+> der erfolgreiche Dateneingang der den Nachtrag betreffenden Ursprungsrechnung
+> beim Kostenträger [...] dass die Ursprungsrechnung die Prüfstufen 1–3 bei der
+> Datenannahme fehlerfrei durchlaufen hat."*
+>
+> **Damit war das „Fertig, wenn" dieser Aufgabe falsch gestellt.** Es sagte:
+> „eine zurückgewiesene Abrechnung als Korrekturrechnung neu erzeugen". Eine
+> zurückgewiesene Rechnung wird als **Erstabrechnung erneut** gesendet;
+> korrigiert wird nur, was angekommen ist. Die Auswahl „Bezieht sich auf"
+> führt deshalb nur Lieferungen, die `korrigierbar()` sind.
+
+Das `URI` steht **zwischen `INV` und `NAD`** — Abschnitt 7.3 sagt genau das —
+und trägt vier Angaben: ursprüngliches Leistungserbringer-IK, ursprüngliche
+Rechnungsnummer (Sammel- und Einzelnummer), ursprüngliches Rechnungsdatum,
+ursprüngliche Belegnummer. Alle vier kommen aus dem Protokoll.
+
+**Fertig, wenn:** ~~eine zurückgewiesene Abrechnung~~ **eine angenommene
+Rechnung** als Korrekturrechnung neu erzeugt werden kann und die Prüfung den
+Wert gegen Abschnitt 7.1 hält. — ✅
+
+> **Warum das Erzeugen bis zum 18.09.2026 nicht ging.** Eine Korrekturrechnung braucht das
 > `URI`-Segment mit **Leistungserbringer-IK, Sammel- und
 > Einzelrechnungsnummer, Rechnungsdatum und Belegnummer der
 > Ursprungsrechnung**. Das Programm hält davon nichts fest: `DtaFactory`

@@ -779,6 +779,171 @@ class AbrechnungsMaskeTest {
         }
     }
 
+    /**
+     * Nachforderung und Korrekturrechnung.
+     *
+     * <p>Fuer Hebammen ist das Verfahren nach Anlage 1, Abschnitt 7.1 seit dem
+     * 01.10.2025 <b>verpflichtend</b>. Ohne es gibt es keinen Weg, eine
+     * bereits angenommene Rechnung zu berichtigen.</p>
+     */
+    @Nested
+    @DisplayName("Korrekturrechnung")
+    class Korrekturen {
+
+        private final java.util.List<de.gkvtransmitter.dta.Verarbeitungskennzeichen> gesendet =
+                new java.util.ArrayList<>();
+
+        private de.gkvtransmitter.entity.Protokolleintrag ursprung(boolean fehlerfrei) {
+            de.gkvtransmitter.entity.Protokolleintrag eintrag =
+                    new de.gkvtransmitter.entity.Protokolleintrag();
+            eintrag.setId(1L);
+            eintrag.setDateiname("patient_1.dta");
+            eintrag.setErstelltAm(java.time.OffsetDateTime.now());
+            eintrag.setAbsenderIk("261914007");
+            eintrag.setRechnungsnummer(41L);
+            eintrag.setBelegnummer(1);
+            eintrag.setRechnungsdatum(java.time.LocalDate.of(2026, 3, 6));
+            eintrag.setFehlerfrei(fehlerfrei);
+            return eintrag;
+        }
+
+        private Region maskeMitKorrektur() {
+            return new AbrechnungsMaske(new JavaFxUiFactory(), texte, meldungen, datenbank,
+                    (teilnehmer, gruppe, blaupause, termine, ordner) -> {
+                        gesendet.add(de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG);
+                        return new de.gkvtransmitter.dispatch.Versandergebnis(
+                                java.util.List.of(),
+                                de.gkvtransmitter.validator.ValidationReport.leer());
+                    },
+                    () -> zielordner, null,
+                    (teilnehmer, gruppe, blaupause, termine, ordner, art, bezug) -> {
+                        gesendet.add(art);
+                        return new de.gkvtransmitter.dispatch.Versandergebnis(
+                                java.util.List.of(),
+                                de.gkvtransmitter.validator.ValidationReport.leer());
+                    }).erzeuge();
+        }
+
+        @SuppressWarnings("unchecked")
+        private ComboBox<de.gkvtransmitter.dta.Verarbeitungskennzeichen> artAuswahl(Region maske) {
+            return (ComboBox<de.gkvtransmitter.dta.Verarbeitungskennzeichen>)
+                    maske.lookup("#" + AbrechnungsMaske.ID_ART);
+        }
+
+        @SuppressWarnings("unchecked")
+        private ComboBox<de.gkvtransmitter.entity.Protokolleintrag> bezugAuswahl(Region maske) {
+            return (ComboBox<de.gkvtransmitter.entity.Protokolleintrag>)
+                    maske.lookup("#" + AbrechnungsMaske.ID_BEZUG);
+        }
+
+        /**
+         * Nur die drei Werte, die eine Hebamme senden darf.
+         *
+         * <p>Zuzahlungsforderung und Wiederaufnahme stehen gar nicht erst in
+         * der Liste: Eine Auswahl, die die Pruefung anschliessend
+         * zurueckweist, ist eine Falle (Anlage 1, Abschnitt 7.1).</p>
+         */
+        @Test
+        @DisplayName("bietet nur die fuer Hebammen zulaessigen Kennzeichen an")
+        void nurZulaessigeKennzeichen() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")));
+            JavaFxLaufzeit.aufFxFaden(() -> assertEquals(
+                    java.util.List.of(de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG,
+                            de.gkvtransmitter.dta.Verarbeitungskennzeichen.NACHFORDERUNG,
+                            de.gkvtransmitter.dta.Verarbeitungskennzeichen.KORREKTURRECHNUNG),
+                    artAuswahl(maskeMitKorrektur()).getItems()));
+        }
+
+        @Test
+        @DisplayName("Der Bezug ist erst waehlbar, wenn eine Korrektur gewaehlt ist")
+        void bezugErstBeiKorrektur() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")))
+                    .mitProtokolleintrag(ursprung(true));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitKorrektur();
+
+                assertTrue(bezugAuswahl(maske).isDisabled(), "Bei einer Erstabrechnung gesperrt");
+                artAuswahl(maske).setValue(
+                        de.gkvtransmitter.dta.Verarbeitungskennzeichen.KORREKTURRECHNUNG);
+                assertFalse(bezugAuswahl(maske).isDisabled());
+            });
+        }
+
+        /**
+         * Eine fehlgeschlagene Uebermittlung steht nicht zur Auswahl.
+         *
+         * <p>Anlage 1, Abschnitt 7.2 setzt den erfolgreichen Dateneingang der
+         * Ursprungsrechnung voraus - was nie ankam, wird als Erstabrechnung
+         * erneut gesendet und nicht korrigiert.</p>
+         */
+        @Test
+        @DisplayName("Eine fehlgeschlagene Lieferung steht nicht zur Auswahl")
+        void fehlgeschlageneNichtWaehlbar() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")))
+                    .mitProtokolleintrag(ursprung(false));
+            JavaFxLaufzeit.aufFxFaden(() ->
+                    assertTrue(bezugAuswahl(maskeMitKorrektur()).getItems().isEmpty(),
+                            "Anlage 1, Abschnitt 7.2"));
+        }
+
+        @Test
+        @DisplayName("Ohne gewaehlten Bezug wird nicht versendet")
+        void ohneBezugKeinVersand() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")))
+                    .mitProtokolleintrag(ursprung(true));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitKorrektur();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+                artAuswahl(maske).setValue(
+                        de.gkvtransmitter.dta.Verarbeitungskennzeichen.KORREKTURRECHNUNG);
+
+                knopf(maske, AbrechnungsMaske.ID_START).fire();
+
+                assertTrue(gesendet.isEmpty(), "Ohne Ursprungsangaben geht nichts hinaus");
+                assertEquals(texte.get("msg.correctionReferenceRequired"),
+                        meldungen.letzte().text());
+            });
+        }
+
+        @Test
+        @DisplayName("Mit Bezug geht die Korrektur ueber den Korrekturweg hinaus")
+        void mitBezugWirdKorrigiert() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")))
+                    .mitProtokolleintrag(ursprung(true));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitKorrektur();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+                artAuswahl(maske).setValue(
+                        de.gkvtransmitter.dta.Verarbeitungskennzeichen.KORREKTURRECHNUNG);
+                bezugAuswahl(maske).setValue(bezugAuswahl(maske).getItems().get(0));
+
+                knopf(maske, AbrechnungsMaske.ID_START).fire();
+
+                assertEquals(java.util.List.of(
+                        de.gkvtransmitter.dta.Verarbeitungskennzeichen.KORREKTURRECHNUNG), gesendet);
+            });
+        }
+
+        @Test
+        @DisplayName("Eine Erstabrechnung geht weiter den gewohnten Weg")
+        void erstabrechnungUnveraendert() {
+            datenbank.mitBlaupause(blaupause()).mitGruppe(gruppe("Kurs", patient(1, "Anna")))
+                    .mitProtokolleintrag(ursprung(true));
+            JavaFxLaufzeit.aufFxFaden(() -> {
+                Region maske = maskeMitKorrektur();
+                gruppeWaehlen(maske, 0);
+                knopf(maske, AbrechnungsMaske.ID_ALLE).fire();
+
+                knopf(maske, AbrechnungsMaske.ID_START).fire();
+
+                assertEquals(java.util.List.of(
+                        de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG), gesendet);
+            });
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private ComboBox<PersonGroup> gruppeAuswahl(Region maske) {
         return (ComboBox<PersonGroup>) maske.lookup("#" + AbrechnungsMaske.ID_GRUPPE);

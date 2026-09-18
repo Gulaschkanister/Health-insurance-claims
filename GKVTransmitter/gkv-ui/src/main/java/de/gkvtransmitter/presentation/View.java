@@ -374,7 +374,10 @@ public class View {
                 Anwendungsverzeichnis::versandordner,
                 // Der Uebungsweg: SimulierterKassenTransport gab es seit
                 // Langem und war nur aus Tests erreichbar.
-                abrechnungService::probelauf);
+                abrechnungService::probelauf,
+                // Nachforderung und Korrekturrechnung: fuer Hebammen seit dem
+                // 01.10.2025 verpflichtend (Anlage 1, Abschnitt 7.1).
+                abrechnungService::createAndDispatchKorrektur);
         hauptfenster.zeige(maske.erzeuge());
     }
 

@@ -118,6 +118,27 @@ public class Protokolleintrag {
     @Column(name = "belegnummer")
     private int belegnummer;
 
+    /**
+     * Das Rechnungsdatum aus dem {@code REC}.
+     *
+     * <p>Nicht dasselbe wie {@link #erstelltAm}: Das ist der Zeitpunkt der
+     * Uebermittlung, dies das Datum der Rechnung. Eine Korrektur verweist auf
+     * dieses.</p>
+     */
+    @Column(name = "rechnungsdatum")
+    private java.time.LocalDate rechnungsdatum;
+
+    /**
+     * Wofuer diese Lieferung stand, Anlage 3 Abschnitt 8.1.7.
+     *
+     * <p>Gebraucht, weil sich Korrekturen ketten lassen: Auf eine
+     * Nachforderung ({@code 02}) ist wieder eine Korrekturrechnung moeglich
+     * (Anlage 1, Abschnitt 7.2). Ohne das Kennzeichen liesse sich nicht sagen,
+     * worauf ein Bezug zulaessig ist.</p>
+     */
+    @Column(name = "verarbeitungskennzeichen")
+    private String verarbeitungskennzeichen = "01";
+
     /** Wann bezahlt wurde; {@code null}, solange die Zahlung aussteht. */
     @Column(name = "bezahlt_am")
     private OffsetDateTime bezahltAm;
@@ -251,6 +272,37 @@ public class Protokolleintrag {
 
     public void setBelegnummer(int belegnummer) {
         this.belegnummer = belegnummer;
+    }
+
+    public java.time.LocalDate getRechnungsdatum() {
+        return rechnungsdatum;
+    }
+
+    public void setRechnungsdatum(java.time.LocalDate rechnungsdatum) {
+        this.rechnungsdatum = rechnungsdatum;
+    }
+
+    public String getVerarbeitungskennzeichen() {
+        return verarbeitungskennzeichen;
+    }
+
+    public void setVerarbeitungskennzeichen(String verarbeitungskennzeichen) {
+        this.verarbeitungskennzeichen = verarbeitungskennzeichen;
+    }
+
+    /**
+     * Ob sich auf diese Lieferung eine Korrektur beziehen darf.
+     *
+     * <p>Anlage 1, Abschnitt 7.2: Voraussetzung ist der <b>erfolgreiche
+     * Dateneingang</b> der Ursprungsrechnung - sie muss "die Pruefstufen 1-3
+     * bei der Datenannahme fehlerfrei durchlaufen" haben. Was hier als
+     * fehlerhaft vermerkt ist, wurde nie angenommen und ist deshalb kein Fall
+     * fuer das Korrekturverfahren, sondern fuer eine erneute
+     * Erstabrechnung.</p>
+     */
+    public boolean korrigierbar() {
+        return fehlerfrei && richtung == Richtung.SENDEN && rechnungsnummer > 0
+                && rechnungsdatum != null;
     }
 
     public OffsetDateTime getBezahltAm() {

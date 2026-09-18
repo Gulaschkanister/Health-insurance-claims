@@ -253,10 +253,25 @@ public class DtaDispatchService {
      *                                  wird - in dem Fall wurde nichts versendet
      */
     public Versandergebnis generateAndRoute(List<Abrechnung> abrechnungen, Path outDir) {
+        return generateAndRoute(abrechnungen, outDir,
+                de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG, null);
+    }
+
+    /**
+     * Dasselbe, aber als Korrektur zu einer frueheren Rechnung.
+     *
+     * <p>Jede erzeugte Nachricht traegt dann das angegebene
+     * Verarbeitungskennzeichen im {@code FKT} und das {@code URI} mit den
+     * Ursprungsangaben zwischen {@code INV} und {@code NAD} - Anlage 1,
+     * Abschnitt 7.3.</p>
+     */
+    public Versandergebnis generateAndRoute(List<Abrechnung> abrechnungen, Path outDir,
+            de.gkvtransmitter.dta.Verarbeitungskennzeichen kennzeichen,
+            de.gkvtransmitter.dta.Korrekturbezug bezug) {
         Objects.requireNonNull(abrechnungen, "abrechnungen must not be null");
         Objects.requireNonNull(outDir, "outDir must not be null");
 
-        List<ErzeugteNachricht> nachrichten = erzeuge(abrechnungen);
+        List<ErzeugteNachricht> nachrichten = erzeuge(abrechnungen, kennzeichen, bezug);
 
         // Erst pruefen, dann zustellen. Eine einzige beanstandete Nachricht
         // haelt den gesamten Lauf auf.
@@ -278,6 +293,18 @@ public class DtaDispatchService {
     }
 
     private List<ErzeugteNachricht> erzeuge(List<Abrechnung> abrechnungen) {
+        return erzeuge(abrechnungen,
+                de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG, null);
+    }
+
+    /**
+     * @param kennzeichen das Verarbeitungskennzeichen; nicht zu verwechseln mit
+     *        dem Feld {@code art}, das die <em>Uebermittlungsart</em> traegt -
+     *        Test, Erprobung oder Echt
+     */
+    private List<ErzeugteNachricht> erzeuge(List<Abrechnung> abrechnungen,
+            de.gkvtransmitter.dta.Verarbeitungskennzeichen kennzeichen,
+            de.gkvtransmitter.dta.Korrekturbezug bezug) {
         List<ErzeugteNachricht> erzeugt = new ArrayList<>();
 
         for (Abrechnung abrechnung : abrechnungen) {
@@ -294,6 +321,9 @@ public class DtaDispatchService {
             // ueber die Zeit ist die Rechnungsnummer.
             de.gkvtransmitter.dta.Rechnungsangaben rechnung =
                     new de.gkvtransmitter.dta.Rechnungsangaben(rechnungsnummern.naechste(), 1);
+            if (bezug != null && kennzeichen != null && kennzeichen.brauchtUrsprungsangaben()) {
+                rechnung = rechnung.alsKorrektur(kennzeichen, bezug);
+            }
             String content = DtaFactory.buildDtaFor(abrechnung, sequence, senderIk, receiverIk,
                     leistungsparameter(abrechnung), art, absender(senderIk), rechnung);
             String filename = String.format("patient_%d_%s.dta",
@@ -517,6 +547,9 @@ public class DtaDispatchService {
         // stuende im URI-Segment nichts, worauf die Kasse zurueckfinden kann.
         eintrag.setRechnungsnummer(nachricht.rechnung().rechnungsnummer());
         eintrag.setBelegnummer(nachricht.rechnung().belegnummer());
+        eintrag.setRechnungsdatum(DtaFactory.rechnungsdatum(
+                nachricht.abrechnung().getCreatedAt().toLocalDate()));
+        eintrag.setVerarbeitungskennzeichen(nachricht.rechnung().kennzeichenSchluessel());
         protokoll.vermerke(eintrag);
     }
 

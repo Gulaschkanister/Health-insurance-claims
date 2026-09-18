@@ -10,10 +10,13 @@ import de.gkvtransmitter.dispatch.BillingOfficeEndpointRegistry;
 import de.gkvtransmitter.dispatch.DtaDispatchService;
 import de.gkvtransmitter.dispatch.FileBillingOfficeTransport;
 import de.gkvtransmitter.dispatch.Trockenlauf;
+import de.gkvtransmitter.dta.Korrekturbezug;
+import de.gkvtransmitter.dta.Verarbeitungskennzeichen;
 import de.gkvtransmitter.dispatch.Versandergebnis;
 import de.gkvtransmitter.entity.Blueprint;
 import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
+import de.gkvtransmitter.entity.Protokolleintrag;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.hibernate.sqllite.HibernateSqllite;
 import de.gkvtransmitter.model.Abrechnung;
@@ -157,6 +160,42 @@ public final class AbrechnungService {
     public Trockenlauf.Ergebnis probelauf(List<Patient> selectedPatients, PersonGroup group,
             Blueprint blueprint, Map<Integer, Integer> appointments) {
         return trockenlauf.spiele(baueAbrechnungen(selectedPatients, group, blueprint, appointments));
+    }
+
+    /**
+     * Erzeugt und versendet die Abrechnungen als Korrektur zu einer frueheren.
+     *
+     * <p>Anlage 1, Abschnitt 7.2 setzt voraus, dass die Ursprungsrechnung
+     * "die Pruefstufen 1-3 bei der Datenannahme fehlerfrei durchlaufen hat" -
+     * deshalb {@link Protokolleintrag#korrigierbar()}. Eine
+     * <em>zurueckgewiesene</em> Rechnung gehoert nicht hierher, sie wird als
+     * Erstabrechnung erneut gesendet.</p>
+     *
+     * @param art     {@code 02} oder {@code 04}; fuer Hebammen sind nur diese
+     *                beiden zulaessig (Anlage 1, Abschnitt 7.1)
+     * @param bezieht die Ursprungslieferung aus dem Uebermittlungsprotokoll
+     */
+    public Versandergebnis createAndDispatchKorrektur(List<Patient> selectedPatients,
+            PersonGroup group, Blueprint blueprint, Map<Integer, Integer> appointments,
+            Path outputDirectory, Verarbeitungskennzeichen art, Protokolleintrag bezieht) {
+        Objects.requireNonNull(outputDirectory, "outputDirectory must not be null");
+        Objects.requireNonNull(art, "art must not be null");
+        Objects.requireNonNull(bezieht, "bezieht must not be null");
+        if (!bezieht.korrigierbar()) {
+            throw new IllegalArgumentException(
+                    "Auf diese Lieferung laesst sich keine Korrektur beziehen: Anlage 1,"
+                            + " Abschnitt 7.2 setzt den erfolgreichen Dateneingang der"
+                            + " Ursprungsrechnung voraus.");
+        }
+        Korrekturbezug bezug = Korrekturbezug.ausProtokoll(bezieht);
+        if (bezug == null) {
+            throw new IllegalArgumentException(
+                    "Der Protokolleintrag fuehrt keine Rechnungsnummer - er stammt aus der Zeit"
+                            + " vor dem 18.09.2026 und laesst sich nicht als Ursprung angeben.");
+        }
+        return dispatchService.generateAndRoute(
+                baueAbrechnungen(selectedPatients, group, blueprint, appointments),
+                outputDirectory, art, bezug);
     }
 
     private ServiceProvider findProvider(PersonGroup group) {

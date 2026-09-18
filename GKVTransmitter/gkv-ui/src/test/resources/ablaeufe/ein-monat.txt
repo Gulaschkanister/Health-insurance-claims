@@ -95,3 +95,24 @@ erwarte-nicht Prüfung nicht bestanden
 
 klick abrechnung-start
 erwarte-nicht Prüfung nicht bestanden
+
+# --- 6. Eine Korrekturrechnung darauf ------------------------------------
+# Fuer Hebammen ist das Korrekturverfahren nach Anlage 1 Abschnitt 7.1 seit
+# dem 01.10.2025 verpflichtend. Die Ursprungslieferung steht jetzt im
+# Uebermittlungsprotokoll und laesst sich als Bezug waehlen.
+#
+# Der Umweg ueber "Uebermittlungen" ist noetig: Ein bereits offener Bereich
+# wird nicht neu aufgebaut, und die Maske haette die eben versendete
+# Lieferung noch nicht gekannt.
+oeffne Übermittlungen
+erwarte wartet auf Zahlung
+oeffne Abrechnung
+setze abrechnung-gruppe Kurs Maerz
+setze abrechnung-art 04 — Korrekturrechnung
+klick abrechnung-alle
+bild vor-der-korrektur
+# Ein leeres Auswahlfeld sagt nichts - eine ComboBox ohne getroffene Wahl
+# zeigt keinen Text. Nachweisbar ist stattdessen, dass der Hinweis auf eine
+# fehlende Ursprungslieferung NICHT dasteht: Er erscheint genau dann, wenn
+# keine Lieferung korrigierbar ist.
+erwarte-nicht Es liegt noch keine Lieferung vor

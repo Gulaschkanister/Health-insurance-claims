@@ -80,6 +80,7 @@ public final class VerarbeitungskennzeichenRegel implements ValidationRule {
         pruefeWerte(fkts, bericht);
         pruefeEinheitlichkeit(fkts, bericht);
         pruefeUrsprungsangaben(document, fkts, bericht);
+        pruefeLeistungsbereich(document, fkts, bericht);
     }
 
     /** Jeder Wert muss im Schluesselverzeichnis stehen. */
@@ -123,6 +124,53 @@ public final class VerarbeitungskennzeichenRegel implements ValidationRule {
                 return;
             }
         }
+    }
+
+    /**
+     * Nicht jeder Wert ist in jedem Leistungsbereich zulaessig.
+     *
+     * <p>Anlage 1, Abschnitt 7.1 fuehrt sie einzeln auf. <b>Fuer Hebammen sind
+     * es nur {@code 02} (Nachforderung) und {@code 04} (Korrekturrechnung)</b>
+     * - Zuzahlungsforderung {@code 03} und Wiederaufnahme {@code 10} gehoeren
+     * nicht dazu, so naheliegend sie aussehen. Dieselbe Tabelle nennt den
+     * Stichtag: fuer Hebammen ist das Verfahren seit dem <b>01.10.2025
+     * verpflichtend</b>.</p>
+     *
+     * <p>Der Leistungsbereich ergibt sich aus dem Abrechnungscode der
+     * Leistungszeile, also aus dem {@code ENF} - derselben Stelle, aus der
+     * auch {@code Leistungsbereich} den Sammelgruppenschluessel ableitet.</p>
+     */
+    private static void pruefeLeistungsbereich(DtaDocument document, List<DtaSegment> fkts,
+            ValidationReport.Builder bericht) {
+        String abrechnungscode = abrechnungscodeAus(document);
+        if (!de.gkvtransmitter.dta.Verarbeitungskennzeichen.istHebamme(abrechnungscode)) {
+            return;
+        }
+        for (DtaSegment fkt : fkts) {
+            String schluessel = fkt.element(FKT_KENNZEICHEN).trim();
+            de.gkvtransmitter.dta.Verarbeitungskennzeichen kennzeichen =
+                    de.gkvtransmitter.dta.Verarbeitungskennzeichen.zuSchluessel(schluessel);
+            if (kennzeichen != null && !kennzeichen.zulaessigFuerHebammen()) {
+                bericht.error("FKT_KENNZEICHEN_LEISTUNGSBEREICH", fkt.ort(),
+                        "Das Verarbeitungskennzeichen '" + schluessel + "' ("
+                                + kennzeichen.bedeutung() + ") ist fuer Hebammen nicht zulaessig."
+                                + " Anlage 1, Abschnitt 7.1 laesst im Leistungsbereich Hebammen"
+                                + " nur 02 (Nachforderung) und 04 (Korrekturrechnung) zu.");
+                return;
+            }
+        }
+    }
+
+    /** Der Abrechnungscode aus der Leistungserbringergruppe des {@code ENF}. */
+    private static String abrechnungscodeAus(DtaDocument document) {
+        List<DtaSegment> enfs = document.mitTag("ENF");
+        if (enfs.isEmpty()) {
+            return null;
+        }
+        // ENF+<Leistungsart>+<Abrechnungscode>:<Tarifkennzeichen>+...
+        String gruppe = enfs.get(0).element(1).trim();
+        int trenner = gruppe.indexOf(':');
+        return trenner < 0 ? gruppe : gruppe.substring(0, trenner);
     }
 
     /**

@@ -165,7 +165,7 @@ public final class DtaFactory {
         String slgaRef = "00001";
         List<String> slga = new ArrayList<>();
         slga.add(String.format("UNH+%s+SLGA:%s'", slgaRef, NACHRICHTENVERSION));
-        slga.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
+        slga.add(fktSegment(rechnung, senderIk, receiverIk));
         slga.add(rechnungssegment(rechnung, serviceDate));
         umsatzsteuersegment(a.getProvider()).ifPresent(slga::add);
         slga.add(String.format("GES+00+%s+%s'", sum, sum));
@@ -179,9 +179,15 @@ public final class DtaFactory {
         String sllaRef = "00002";
         List<String> slla = new ArrayList<>();
         slla.add(String.format("UNH+%s+SLLA:%s'", sllaRef, NACHRICHTENVERSION));
-        slla.add(String.format("FKT+01++%s+%s+%s+%s'", senderIk, receiverIk, receiverIk, senderIk));
+        slla.add(fktSegment(rechnung, senderIk, receiverIk));
         slla.add(rechnungssegment(rechnung, serviceDate));
         slla.add(buildInvSegment(a.getPatient(), rechnung));
+        // Das URI steht zwischen INV und NAD - Anlage 1, Abschnitt 7.3, und
+        // zwar nur dort: "URI darf nur angegeben werden bei Uebermittlung
+        // einer Rechnung mit Verarbeitungskennzeichen ungleich 01".
+        if (rechnung.istKorrektur()) {
+            slla.add(rechnung.bezug().alsSegment());
+        }
         slla.add(buildNadSegment(a.getPatient()));
         slla.add(buildEnfSegment(a, menge, leistung));
         slla.add(String.format("BES+%s'", sum));
@@ -242,6 +248,31 @@ public final class DtaFactory {
     }
 
     /**
+     * Das {@code FKT} mit dem Verarbeitungskennzeichen.
+     *
+     * <p>Hier stand fest {@code FKT+01}. Fuer Hebammen ist das
+     * Korrekturverfahren nach Anlage 1, Abschnitt 7.1 <b>seit dem 01.10.2025
+     * verpflichtend</b> - die feste 01 war also keine Vereinfachung, sondern
+     * eine Luecke.</p>
+     */
+    private static String fktSegment(Rechnungsangaben rechnung, String senderIk, String receiverIk) {
+        return String.format("FKT+%s++%s+%s+%s+%s'", rechnung.kennzeichenSchluessel(),
+                senderIk, receiverIk, receiverIk, senderIk);
+    }
+
+    /**
+     * Das Rechnungsdatum zu einem Leistungsdatum.
+     *
+     * <p>Der Vortag: Eine Rechnung kann nicht nach der Leistung datieren, die
+     * sie abrechnet. Oeffentlich, weil das Uebermittlungsprotokoll dasselbe
+     * Datum festhalten muss - eine Korrektur verweist darauf, und zwei
+     * Rechenwege dafuer waeren zwei Gelegenheiten, auseinanderzulaufen.</p>
+     */
+    public static LocalDate rechnungsdatum(LocalDate leistungsdatum) {
+        return leistungsdatum.minusDays(1);
+    }
+
+    /**
      * Das {@code REC}: Rechnungsnummer, Rechnungsdatum, Rechnungsart.
      *
      * <p>Das Rechnungsdatum ist der Vortag des Leistungsdatums, wie bisher -
@@ -251,7 +282,7 @@ public final class DtaFactory {
      */
     private static String rechnungssegment(Rechnungsangaben rechnung, LocalDate serviceDate) {
         return String.format("REC+%s+%s+1'", rechnung.rechnungsnummerFeld(),
-                serviceDate.minusDays(1).format(BASIC_DATE));
+                rechnungsdatum(serviceDate).format(BASIC_DATE));
     }
 
     /**

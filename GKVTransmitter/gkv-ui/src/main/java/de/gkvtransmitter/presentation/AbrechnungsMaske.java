@@ -57,6 +57,10 @@ public class AbrechnungsMaske {
     public static final String ID_START = "abrechnung-start";
     /** Kennung der Schaltflaeche, die den Lauf nur durchspielt. */
     public static final String ID_TROCKEN = "abrechnung-trockenlauf";
+    /** Kennung der Auswahl, wofuer die Rechnung steht. */
+    public static final String ID_ART = "abrechnung-art";
+    /** Kennung der Auswahl, auf welche Lieferung sich eine Korrektur bezieht. */
+    public static final String ID_BEZUG = "abrechnung-bezug";
     /** Kennung des Bereichs mit den Teilnehmerlisten. */
     public static final String ID_TEILNEHMERLISTE = "abrechnung-teilnehmerliste";
     /** Vorsatz der Auswahlkaestchen je Teilnehmer, gefolgt von dessen Kennnummer. */
@@ -84,6 +88,8 @@ public class AbrechnungsMaske {
     private final Supplier<Path> versandordner;
     /** Der Uebungsweg, oder {@code null}: dann fehlt der Knopf. */
     private final Probelauf probelauf;
+    /** Der Korrekturweg, oder {@code null}: dann fehlt die Auswahl. */
+    private final Korrekturlauf korrekturlauf;
 
     public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
             DataRepository datenbank, Abrechnungslauf abrechnungslauf, Supplier<Path> versandordner) {
@@ -97,6 +103,18 @@ public class AbrechnungsMaske {
     public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
             DataRepository datenbank, Abrechnungslauf abrechnungslauf, Supplier<Path> versandordner,
             Probelauf probelauf) {
+        this(bausteine, texte, meldungen, datenbank, abrechnungslauf, versandordner, probelauf, null);
+    }
+
+    /**
+     * @param korrekturlauf der Weg fuer Nachforderung und Korrekturrechnung;
+     *        ohne ihn fehlt die Auswahl, statt eine anzubieten, hinter der
+     *        nichts liegt
+     */
+    public AbrechnungsMaske(UiFactory bausteine, AppMessages texte, Meldungen meldungen,
+            DataRepository datenbank, Abrechnungslauf abrechnungslauf, Supplier<Path> versandordner,
+            Probelauf probelauf, Korrekturlauf korrekturlauf) {
+        this.korrekturlauf = korrekturlauf;
         this.bausteine = Objects.requireNonNull(bausteine, "bausteine must not be null");
         this.texte = Objects.requireNonNull(texte, "texte must not be null");
         this.meldungen = Objects.requireNonNull(meldungen, "meldungen must not be null");
@@ -105,6 +123,10 @@ public class AbrechnungsMaske {
         this.versandordner = Objects.requireNonNull(versandordner, "versandordner must not be null");
         this.probelauf = probelauf;
     }
+
+    /** Die Auswahl, wofuer die Rechnung steht, und worauf sie sich bezieht. */
+    private ComboBox<de.gkvtransmitter.dta.Verarbeitungskennzeichen> artAuswahl;
+    private ComboBox<de.gkvtransmitter.entity.Protokolleintrag> bezugAuswahl;
 
     /**
      * Baut die Maske auf.
@@ -126,6 +148,8 @@ public class AbrechnungsMaske {
 
         Label gruppeBeschriftung = beschriftung(texte.get("label.selectGroupForSettlement"));
         ComboBox<PersonGroup> gruppeAuswahl = auswahlfeld(ID_GRUPPE, gruppen, PersonGroup::getName);
+
+        Region korrekturbereich = korrekturbereich();
 
         Label teilnehmerBeschriftung = beschriftung(texte.get("label.selectPatients"));
 
@@ -159,9 +183,89 @@ public class AbrechnungsMaske {
         schaltflaechen.setAlignment(Pos.CENTER_LEFT);
 
         wurzel.getChildren().addAll(blaupauseBeschriftung, blaupauseAuswahl,
-                gruppeBeschriftung, gruppeAuswahl, teilnehmerBeschriftung, liste.bereich(),
-                schaltflaechen);
+                gruppeBeschriftung, gruppeAuswahl);
+        if (korrekturbereich != null) {
+            wurzel.getChildren().add(korrekturbereich);
+        }
+        wurzel.getChildren().addAll(teilnehmerBeschriftung, liste.bereich(), schaltflaechen);
         return wurzel;
+    }
+
+    /**
+     * Wofuer die Rechnung steht - und worauf sie sich bezieht.
+     *
+     * <p>Fuer Hebammen sind nach Anlage 1, Abschnitt 7.1 nur drei Werte
+     * zulaessig: {@code 01} Erstabrechnung, {@code 02} Nachforderung,
+     * {@code 04} Korrekturrechnung. Zuzahlungsforderung und Wiederaufnahme
+     * stehen deshalb gar nicht erst in der Liste - eine Auswahl, die die
+     * Pruefung anschliessend zurueckweist, ist eine Falle.</p>
+     *
+     * <p>Die zweite Auswahl fuehrt die Lieferungen aus dem
+     * Uebermittlungsprotokoll, auf die sich eine Korrektur beziehen
+     * <em>darf</em>: Anlage 1, Abschnitt 7.2 setzt den erfolgreichen
+     * Dateneingang voraus, eine fehlgeschlagene Uebermittlung gehoert also
+     * nicht hinein.</p>
+     *
+     * @return der Bereich, oder {@code null}, wenn kein Korrekturweg vorliegt
+     */
+    private Region korrekturbereich() {
+        if (korrekturlauf == null) {
+            return null;
+        }
+        artAuswahl = new ComboBox<>();
+        artAuswahl.setId(ID_ART);
+        artAuswahl.setPrefWidth(400);
+        artAuswahl.getItems().addAll(de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG,
+                de.gkvtransmitter.dta.Verarbeitungskennzeichen.NACHFORDERUNG,
+                de.gkvtransmitter.dta.Verarbeitungskennzeichen.KORREKTURRECHNUNG);
+        artAuswahl.setConverter(new StringConverter<>() {
+            @Override
+            public String toString(de.gkvtransmitter.dta.Verarbeitungskennzeichen art) {
+                return art == null ? "" : art.schluessel() + " — " + art.bedeutung();
+            }
+
+            @Override
+            public de.gkvtransmitter.dta.Verarbeitungskennzeichen fromString(String text) {
+                return null;
+            }
+        });
+        artAuswahl.setValue(de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG);
+
+        List<de.gkvtransmitter.entity.Protokolleintrag> korrigierbare =
+                datenbank.ladeProtokoll().stream()
+                        .filter(de.gkvtransmitter.entity.Protokolleintrag::korrigierbar)
+                        .toList();
+        bezugAuswahl = auswahlfeld(ID_BEZUG, korrigierbare, AbrechnungsMaske::bezugsname);
+        bezugAuswahl.setDisable(true);
+
+        // Der Bezug wird erst waehlbar, wenn eine Korrektur gewaehlt ist. Ein
+        // Feld, das bei einer Erstabrechnung ausgefuellt werden kann, laedt
+        // dazu ein, ein URI zu erzeugen, das dort nicht stehen darf.
+        artAuswahl.valueProperty().addListener((wert, alt, neu) -> {
+            boolean korrektur = neu != null && neu.brauchtUrsprungsangaben();
+            bezugAuswahl.setDisable(!korrektur);
+            if (!korrektur) {
+                bezugAuswahl.setValue(null);
+            }
+        });
+
+        VBox bereich = new VBox(6, beschriftung(texte.get("label.settlementType")), artAuswahl,
+                beschriftung(texte.get("label.correctionReference")), bezugAuswahl);
+        if (korrigierbare.isEmpty()) {
+            Label leer = bausteine.createLabel(texte.get("msg.noCorrectableDelivery"));
+            leer.getStyleClass().add("feld-hinweis");
+            leer.setWrapText(true);
+            bereich.getChildren().add(leer);
+        }
+        return bereich;
+    }
+
+    /** Wie eine Ursprungslieferung in der Auswahl heisst. */
+    private static String bezugsname(de.gkvtransmitter.entity.Protokolleintrag eintrag) {
+        return String.format("%08d", eintrag.getRechnungsnummer())
+                + " · " + eintrag.getRechnungsdatum()
+                        .format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                + " · " + eintrag.getDateiname();
     }
 
     /**
@@ -290,10 +394,27 @@ public class AbrechnungsMaske {
         }
         List<Patient> gewaehlte = liste.gewaehlteTeilnehmer();
 
+        de.gkvtransmitter.dta.Verarbeitungskennzeichen art = gewaehlteArt();
+        if (art.brauchtUrsprungsangaben() && bezugAuswahl.getValue() == null) {
+            // Anlage 1, Abschnitt 7.3: Ohne Ursprungsangaben kann die Kasse
+            // die Korrektur nicht zuordnen. Hier abfangen und nicht erst in
+            // der Pruefung - dort stuende ein Segmentname statt einer
+            // Handlungsanweisung.
+            meldungen.hinweis(texte.get("msg.correctionReferenceRequired"));
+            return;
+        }
+
         Versandergebnis ergebnis;
         try {
-            ergebnis = abrechnungslauf.starte(gewaehlte, gruppeAuswahl.getValue(),
-                    blaupauseAuswahl.getValue(), liste.termine(), versandordner.get());
+            ergebnis = art.brauchtUrsprungsangaben()
+                    ? korrekturlauf.starte(gewaehlte, gruppeAuswahl.getValue(),
+                            blaupauseAuswahl.getValue(), liste.termine(), versandordner.get(),
+                            art, bezugAuswahl.getValue())
+                    : abrechnungslauf.starte(gewaehlte, gruppeAuswahl.getValue(),
+                            blaupauseAuswahl.getValue(), liste.termine(), versandordner.get());
+        } catch (IllegalArgumentException nichtKorrigierbar) {
+            meldungen.fehler(nichtKorrigierbar.getMessage());
+            return;
         } catch (DtaValidierungsException e) {
             // Beanstandungen vollstaendig anzeigen: die Anwenderin soll alle
             // auf einmal sehen und nicht nach jeder Korrektur neu anstossen.
@@ -364,6 +485,14 @@ public class AbrechnungsMaske {
         text.append(System.lineSeparator())
                 .append(String.format(texte.get("msg.dryRunFolder"), ergebnis.ordner()));
         return text.toString();
+    }
+
+    /** Wofuer die Rechnung steht; ohne Korrekturweg immer die Erstabrechnung. */
+    private de.gkvtransmitter.dta.Verarbeitungskennzeichen gewaehlteArt() {
+        if (artAuswahl == null || artAuswahl.getValue() == null) {
+            return de.gkvtransmitter.dta.Verarbeitungskennzeichen.ERSTABRECHNUNG;
+        }
+        return artAuswahl.getValue();
     }
 
     /** Listet die erzeugten Dateien je Krankenkasse auf. */

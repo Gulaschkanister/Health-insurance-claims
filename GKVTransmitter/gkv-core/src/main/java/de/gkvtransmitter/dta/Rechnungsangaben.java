@@ -29,8 +29,29 @@ package de.gkvtransmitter.dta;
  *
  * @param rechnungsnummer aus dem Nummernkreis der Datenbank
  * @param belegnummer     laufend innerhalb dieser Rechnung, beginnend bei 1
+ * @param kennzeichen     wofuer die Rechnung steht, Anlage 3 Abschnitt 8.1.7
+ * @param bezug           worauf sich eine Korrektur bezieht, sonst {@code null}
  */
-public record Rechnungsangaben(long rechnungsnummer, int belegnummer) {
+public record Rechnungsangaben(long rechnungsnummer, int belegnummer,
+        Verarbeitungskennzeichen kennzeichen, Korrekturbezug bezug) {
+
+    /** Eine Erstabrechnung ohne Bezug - der Regelfall. */
+    public Rechnungsangaben(long rechnungsnummer, int belegnummer) {
+        this(rechnungsnummer, belegnummer, Verarbeitungskennzeichen.ERSTABRECHNUNG, null);
+    }
+
+    /**
+     * Dieselbe Rechnung als Korrektur zu einer frueheren.
+     *
+     * <p>Anlage 1, Abschnitt 7.3: Das {@code URI} darf nur bei einem
+     * Kennzeichen ungleich {@code 01} stehen - und dort muss es stehen.
+     * Deshalb kommen beide zusammen oder gar nicht.</p>
+     */
+    public Rechnungsangaben alsKorrektur(Verarbeitungskennzeichen art, Korrekturbezug worauf) {
+        return new Rechnungsangaben(rechnungsnummer, belegnummer,
+                java.util.Objects.requireNonNull(art, "art must not be null"),
+                java.util.Objects.requireNonNull(worauf, "worauf must not be null"));
+    }
 
     /**
      * Was gilt, wenn niemand eine Nummer vergeben hat.
@@ -65,6 +86,17 @@ public record Rechnungsangaben(long rechnungsnummer, int belegnummer) {
 
     /** Dieselbe Rechnung, naechster Beleg. */
     public Rechnungsangaben naechsterBeleg() {
-        return new Rechnungsangaben(rechnungsnummer, belegnummer + 1);
+        return new Rechnungsangaben(rechnungsnummer, belegnummer + 1, kennzeichen, bezug);
+    }
+
+    /** Ob ein {@code URI}-Segment mitzugeben ist. */
+    public boolean istKorrektur() {
+        return kennzeichen != null && kennzeichen.brauchtUrsprungsangaben() && bezug != null;
+    }
+
+    /** Der Wert fuer das {@code FKT}. */
+    public String kennzeichenSchluessel() {
+        return kennzeichen == null
+                ? Verarbeitungskennzeichen.ERSTABRECHNUNG.schluessel() : kennzeichen.schluessel();
     }
 }
