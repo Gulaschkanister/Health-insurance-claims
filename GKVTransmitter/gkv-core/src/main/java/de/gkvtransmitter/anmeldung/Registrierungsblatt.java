@@ -10,6 +10,7 @@ import de.gkvtransmitter.dta.DtaFactory;
 import de.gkvtransmitter.dta.Leistungsbereich;
 import de.gkvtransmitter.entity.Betriebsdaten;
 import de.gkvtransmitter.entity.ServiceProvider;
+import de.gkvtransmitter.util.Kerntexte;
 
 /**
  * Alles, was bei der Anmeldung zum Datenaustausch gefragt wird, auf einem
@@ -61,59 +62,58 @@ public final class Registrierungsblatt {
     }
 
     private void kopf(StringBuilder blatt) {
-        blatt.append("REGISTRIERUNGSBLATT FUER DEN DATENAUSTAUSCH NACH § 302 SGB V")
-                .append(System.lineSeparator())
-                .append("Stand: ").append(stand.format(TAG))
-                .append(" · erzeugt von GKV-Abrechnung")
-                .append(System.lineSeparator()).append(System.lineSeparator())
-                .append("Anlage 1, Abschnitt 2 Absatz 1: \"Die Einzelheiten zur Durchfuehrung der")
-                .append(System.lineSeparator())
-                .append("Datenuebermittlung sind rechtzeitig vor der erstmaligen Durchfuehrung [...]")
-                .append(System.lineSeparator())
-                .append("zwischen dem Absender und dem Empfaenger der Daten abzustimmen.\"")
-                .append(System.lineSeparator()).append(System.lineSeparator())
-                .append("Ein Formular gibt die Anlage dafuer nicht vor. Dieses Blatt sammelt, was")
-                .append(System.lineSeparator())
-                .append("bei dieser Abstimmung zur Hand sein muss - es ist kein Antrag.")
-                .append(System.lineSeparator());
+        zeileAus(blatt, Kerntexte.get("blatt.titel"));
+        zeileAus(blatt, Kerntexte.format("blatt.stand", stand.format(TAG)));
+        blatt.append(System.lineSeparator());
+        zeileAus(blatt, Kerntexte.get("blatt.zitat"));
+        blatt.append(System.lineSeparator());
+        zeileAus(blatt, Kerntexte.get("blatt.kein_antrag"));
+    }
+
+    /** Ein Textblock samt Zeilenumbruch am Ende. */
+    private static void zeileAus(StringBuilder blatt, String text) {
+        blatt.append(text).append(System.lineSeparator());
     }
 
     private void absender(StringBuilder blatt) {
-        abschnitt(blatt, "1  ABSENDER DER DATEIEN");
+        abschnitt(blatt, Kerntexte.get("blatt.absender"));
         if (betrieb == null) {
-            blatt.append("   (keine Betriebsdaten erfasst)").append(System.lineSeparator());
+            blatt.append("   ").append(Kerntexte.get("blatt.absender.leer"))
+                    .append(System.lineSeparator());
             return;
         }
-        zeile(blatt, "Praxis / Betrieb", betrieb.getPraxisname());
-        zeile(blatt, "Strasse, Hausnummer", zusammen(betrieb.getStrasse(), betrieb.getHausnummer()));
-        zeile(blatt, "PLZ, Ort", zusammen(betrieb.getPlz(), betrieb.getOrt()));
-        zeile(blatt, "Institutionskennzeichen", betrieb.getIk());
-        zeile(blatt, "Abrechnet", betrieb.istSelbstabrechner()
-                ? "selbst (Leistungserbringer)" : "ueber eine Abrechnungsstelle");
-        zeile(blatt, "Steuernummer", betrieb.getSteuernummer());
-        zeile(blatt, "Ansprechpartner", betrieb.getAnsprechpartner());
-        zeile(blatt, "Telefon", betrieb.getTelefon());
-        zeile(blatt, "E-Mail", betrieb.getEmail());
-        zeile(blatt, "Zertifikat gueltig bis", betrieb.getZertifikatBis());
+        zeile(blatt, "blatt.feld.praxis", betrieb.getPraxisname());
+        zeile(blatt, "blatt.feld.strasse", zusammen(betrieb.getStrasse(), betrieb.getHausnummer()));
+        zeile(blatt, "blatt.feld.ort", zusammen(betrieb.getPlz(), betrieb.getOrt()));
+        zeile(blatt, "blatt.feld.ik", betrieb.getIk());
+        zeile(blatt, "blatt.feld.abrechnet", Kerntexte.get(betrieb.istSelbstabrechner()
+                ? "blatt.wert.selbstabrechner" : "blatt.wert.abrechnungsstelle"));
+        zeile(blatt, "blatt.feld.steuernummer", betrieb.getSteuernummer());
+        zeile(blatt, "blatt.feld.ansprechpartner", betrieb.getAnsprechpartner());
+        zeile(blatt, "blatt.feld.telefon", betrieb.getTelefon());
+        zeile(blatt, "blatt.feld.email", betrieb.getEmail());
+        zeile(blatt, "blatt.feld.zertifikat", betrieb.getZertifikatBis());
     }
 
     private void erbringer(StringBuilder blatt) {
-        abschnitt(blatt, "2  LEISTUNGSERBRINGER");
+        abschnitt(blatt, Kerntexte.get("blatt.erbringer"));
         if (leistungserbringer.isEmpty()) {
-            blatt.append("   (keine erfasst)").append(System.lineSeparator());
+            blatt.append("   ").append(Kerntexte.get("blatt.erbringer.leer"))
+                    .append(System.lineSeparator());
             return;
         }
         for (ServiceProvider person : leistungserbringer) {
             blatt.append(System.lineSeparator());
-            zeile(blatt, "Name", (person.getFirstname() + " " + person.getLastname()).strip());
-            zeile(blatt, "Institutionskennzeichen", String.format("%09d", Math.max(person.getIk(), 0)));
-            zeile(blatt, "Abrechnungscode", abrechnungscode(person));
-            zeile(blatt, "Steuernummer", person.getSteuernummer());
-            zeile(blatt, "Umsatzsteuer", person.istUmsatzsteuerbefreit()
-                    ? "befreit nach § 4 UStG" : "nicht befreit");
-            zeile(blatt, "Ansprechpartner", person.getAnsprechpartner());
-            zeile(blatt, "Telefon", person.getTelefon());
-            zeile(blatt, "E-Mail", person.getEmail());
+            zeile(blatt, "blatt.feld.name",
+                    (person.getFirstname() + " " + person.getLastname()).strip());
+            zeile(blatt, "blatt.feld.ik", String.format("%09d", Math.max(person.getIk(), 0)));
+            zeile(blatt, "blatt.feld.abrechnungscode", abrechnungscode(person));
+            zeile(blatt, "blatt.feld.steuernummer", person.getSteuernummer());
+            zeile(blatt, "blatt.feld.umsatzsteuer", Kerntexte.get(person.istUmsatzsteuerbefreit()
+                    ? "blatt.wert.ust_befreit" : "blatt.wert.ust_pflichtig"));
+            zeile(blatt, "blatt.feld.ansprechpartner", person.getAnsprechpartner());
+            zeile(blatt, "blatt.feld.telefon", person.getTelefon());
+            zeile(blatt, "blatt.feld.email", person.getEmail());
         }
     }
 
@@ -123,15 +123,16 @@ public final class Registrierungsblatt {
             return null;
         }
         String code = person.getAbrechnungscode().trim();
-        return code + " (Leistungsbereich " + Leistungsbereich.zuAbrechnungscode(code) + ")";
+        return Kerntexte.format("blatt.wert.leistungsbereich", code,
+                Leistungsbereich.zuAbrechnungscode(code));
     }
 
     private void verfahren(StringBuilder blatt) {
-        abschnitt(blatt, "3  VERFAHREN, MIT DEM DIESE ANWENDUNG SENDET");
-        zeile(blatt, "Zeichensatz (UNB)", DtaFactory.ZEICHENSATZ);
-        zeile(blatt, "Nachrichtentypen", "SLGA:" + DtaFactory.NACHRICHTENVERSION
-                + " und SLLA:" + DtaFactory.NACHRICHTENVERSION);
-        zeile(blatt, "Richtlinie", "Anlage 1 zu den Richtlinien nach § 302 SGB V");
+        abschnitt(blatt, Kerntexte.get("blatt.verfahren"));
+        zeile(blatt, "blatt.feld.zeichensatz", DtaFactory.ZEICHENSATZ);
+        zeile(blatt, "blatt.feld.nachrichtentypen",
+                Kerntexte.format("blatt.wert.nachrichtentypen", DtaFactory.NACHRICHTENVERSION));
+        zeile(blatt, "blatt.feld.richtlinie", Kerntexte.get("blatt.wert.richtlinie"));
     }
 
     /**
@@ -143,9 +144,9 @@ public final class Registrierungsblatt {
      */
     private void luecken(StringBuilder blatt) {
         List<String> fehlend = fehlendeAngaben();
-        abschnitt(blatt, "4  WAS NOCH FEHLT");
+        abschnitt(blatt, Kerntexte.get("blatt.luecken"));
         if (fehlend.isEmpty()) {
-            blatt.append("   Alle Angaben, die diese Anwendung fuehrt, sind vorhanden.")
+            blatt.append("   ").append(Kerntexte.get("blatt.luecken.keine"))
                     .append(System.lineSeparator());
             return;
         }
@@ -158,34 +159,35 @@ public final class Registrierungsblatt {
     public List<String> fehlendeAngaben() {
         List<String> fehlend = new ArrayList<>();
         if (betrieb == null) {
-            fehlend.add("Betriebsdaten: nicht erfasst");
+            fehlend.add(Kerntexte.get("blatt.fehlt.betriebsdaten"));
             return fehlend;
         }
-        pruefe(fehlend, "Betriebsdaten: Praxisname", betrieb.getPraxisname());
-        pruefe(fehlend, "Betriebsdaten: Institutionskennzeichen", betrieb.getIk());
-        pruefe(fehlend, "Betriebsdaten: Steuernummer", betrieb.getSteuernummer());
-        pruefe(fehlend, "Betriebsdaten: Ansprechpartner", betrieb.getAnsprechpartner());
-        pruefe(fehlend, "Betriebsdaten: Telefon", betrieb.getTelefon());
-        pruefe(fehlend, "Betriebsdaten: E-Mail", betrieb.getEmail());
-        pruefe(fehlend, "Betriebsdaten: Ablaufdatum des Zertifikats", betrieb.getZertifikatBis());
+        pruefe(fehlend, "blatt.fehlt.praxisname", betrieb.getPraxisname());
+        pruefe(fehlend, "blatt.fehlt.ik", betrieb.getIk());
+        pruefe(fehlend, "blatt.fehlt.steuernummer", betrieb.getSteuernummer());
+        pruefe(fehlend, "blatt.fehlt.ansprechpartner", betrieb.getAnsprechpartner());
+        pruefe(fehlend, "blatt.fehlt.telefon", betrieb.getTelefon());
+        pruefe(fehlend, "blatt.fehlt.email", betrieb.getEmail());
+        pruefe(fehlend, "blatt.fehlt.zertifikat", betrieb.getZertifikatBis());
         if (leistungserbringer.isEmpty()) {
-            fehlend.add("Leistungserbringer: keiner erfasst");
+            fehlend.add(Kerntexte.get("blatt.fehlt.erbringer"));
         }
         for (ServiceProvider person : leistungserbringer) {
             String name = (person.getFirstname() + " " + person.getLastname()).strip();
             if (!person.hatAbrechnungscode()) {
-                fehlend.add(name + ": Abrechnungscode");
+                fehlend.add(Kerntexte.format("blatt.fehlt.erbringer_code", name));
             }
             if (!person.hatSteuerangaben()) {
-                fehlend.add(name + ": Steuernummer");
+                fehlend.add(Kerntexte.format("blatt.fehlt.erbringer_steuer", name));
             }
         }
         return fehlend;
     }
 
-    private static void pruefe(List<String> fehlend, String bezeichnung, String wert) {
+    /** Traegt eine Luecke ein, wenn der Wert fehlt. */
+    private static void pruefe(List<String> fehlend, String schluessel, String wert) {
         if (wert == null || wert.isBlank()) {
-            fehlend.add(bezeichnung);
+            fehlend.add(Kerntexte.get(schluessel));
         }
     }
 
@@ -201,12 +203,16 @@ public final class Registrierungsblatt {
      * soll sehen, <em>dass</em> dort etwas hingehoert. Ein weggelassenes Feld
      * faellt niemandem auf.</p>
      */
-    private static void zeile(StringBuilder blatt, String bezeichnung, String wert) {
-        String gefuellt = wert == null || wert.isBlank() ? "________________________" : wert.trim();
+    private static void zeile(StringBuilder blatt, String schluessel, String wert) {
+        String bezeichnung = Kerntexte.get(schluessel);
+        String gefuellt = wert == null || wert.isBlank() ? LINIE : wert.trim();
         blatt.append("   ").append(bezeichnung)
                 .append(" ".repeat(Math.max(1, SPALTE - bezeichnung.length())))
                 .append(gefuellt).append(System.lineSeparator());
     }
+
+    /** Die Linie, auf die ein fehlender Wert von Hand einzutragen ist. */
+    private static final String LINIE = "________________________";
 
     private static String zusammen(String erstes, String zweites) {
         String links = erstes == null ? "" : erstes.trim();

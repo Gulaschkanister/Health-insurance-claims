@@ -22,8 +22,22 @@ import javafx.scene.layout.VBox;
 public class Bildschirmmeldungen implements Meldungen {
 
     private final Benachrichtigungen ecke;
+    private final de.gkvtransmitter.util.AppMessages texte;
+    private final Pruefbefunde befunde;
 
+    /**
+     * Ohne eigene Texte - fuer Tests und fuer den Aufbau vor dem Laden.
+     *
+     * <p>Laedt die mitgelieferte Textsammlung selbst. Die Oberflaeche gibt
+     * ihre eigene mit, damit nicht zwei Sammlungen nebeneinanderstehen.</p>
+     */
     public Bildschirmmeldungen(Benachrichtigungen ecke) {
+        this(ecke, new de.gkvtransmitter.util.AppMessages("/messages/ui-messages.json"));
+    }
+
+    public Bildschirmmeldungen(Benachrichtigungen ecke, de.gkvtransmitter.util.AppMessages texte) {
+        this.texte = java.util.Objects.requireNonNull(texte, "texte must not be null");
+        this.befunde = new Pruefbefunde(texte);
         this.ecke = Objects.requireNonNull(ecke, "ecke must not be null");
     }
 
@@ -50,15 +64,15 @@ public class Bildschirmmeldungen implements Meldungen {
     @Override
     public void pruefbericht(ValidationReport bericht, Pruefbefunde.Lage lage) {
         VBox liste = new VBox(6);
-        for (Pruefbefunde.Zeile zeile : Pruefbefunde.zeilen(bericht)) {
+        for (Pruefbefunde.Zeile zeile : befunde.zeilen(bericht)) {
             liste.getChildren().add(befund(zeile));
         }
         // Rot nur, wenn der Lauf tatsaechlich aufgehalten wurde. Ein Bericht
         // aus reinen Hinweisen ist kein Fehler - er bleibt aber stehen, denn
         // eine Warnung, die nach sechs Sekunden verschwindet, ist keine.
         Art art = bericht.hatFehler() ? Art.FEHLER : Art.HINWEIS;
-        ecke.zeigeBleibend(art, Pruefbefunde.titel(bericht),
-                Pruefbefunde.einleitung(bericht, lage) + " " + Pruefbefunde.kurzfassung(bericht),
+        ecke.zeigeBleibend(art, befunde.titel(bericht),
+                befunde.einleitung(bericht, lage) + " " + befunde.kurzfassung(bericht),
                 liste);
     }
 
@@ -66,7 +80,7 @@ public class Bildschirmmeldungen implements Meldungen {
     public void frageNach(String frage, String bejahenBeschriftung, Runnable wennBejaht) {
         Button bejahen = new Button(bejahenBeschriftung);
         bejahen.getStyleClass().add("schaltflaeche-gefahr");
-        Button abbrechen = new Button("Abbrechen");
+        Button abbrechen = new Button(texte.get("button.cancelQuestion"));
         abbrechen.getStyleClass().add("schaltflaeche-still");
 
         HBox schaltflaechen = new HBox(8, bejahen, abbrechen);
@@ -74,7 +88,8 @@ public class Bildschirmmeldungen implements Meldungen {
 
         // Die Karte wird beim Klick geschlossen, gleich welche Antwort kommt.
         // Sonst bliebe die Frage stehen, nachdem sie beantwortet ist.
-        Node karte = ecke.zeigeBleibend(Art.HINWEIS, "Rückfrage", frage, schaltflaechen);
+        Node karte = ecke.zeigeBleibend(Art.HINWEIS, texte.get("dialog.question"), frage,
+                schaltflaechen);
         bejahen.setOnAction(ereignis -> {
             ecke.entferne(karte);
             wennBejaht.run();
@@ -84,12 +99,12 @@ public class Bildschirmmeldungen implements Meldungen {
 
     /** Eine Zeile des Pruefberichts: Beanstandung, darunter die Fundstelle. */
     private Node befund(Pruefbefunde.Zeile zeile) {
-        VBox eintrag = new VBox(1, zeilentext((zeile.istFehler() ? "• " : "– ") + zeile.text(),
-                "befund"));
+        String marke = zeile.istFehler() ? Textbau.MARKE_FEHLER : Textbau.MARKE_HINWEIS;
+        VBox eintrag = new VBox(1, zeilentext(marke + zeile.text(), "befund"));
         // Was zu tun ist, vor der Fundstelle: Wer eine Beanstandung liest,
         // sucht zuerst die Handlung und erst danach den Beleg dafuer.
         if (!zeile.handlung().isBlank()) {
-            eintrag.getChildren().add(zeilentext("→ " + zeile.handlung(), "befund-handlung"));
+            eintrag.getChildren().add(zeilentext(Textbau.MARKE_HANDLUNG + zeile.handlung(), "befund-handlung"));
         }
         String herkunft = herkunft(zeile);
         if (!herkunft.isBlank()) {
@@ -104,7 +119,7 @@ public class Bildschirmmeldungen implements Meldungen {
             return zeile.ort();
         }
         return zeile.ort().isBlank()
-                ? zeile.fundstelle() : zeile.ort() + "  ·  " + zeile.fundstelle();
+                ? zeile.fundstelle() : zeile.ort() + Textbau.WEITER + zeile.fundstelle();
     }
 
     /**

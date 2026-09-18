@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.validator.ValidationReport;
 
 /**
@@ -21,10 +22,21 @@ import de.gkvtransmitter.validator.ValidationReport;
 @DisplayName("Aufbereitung des Pruefberichts")
 class PruefbefundeTest {
 
+    /**
+     * Die Texte kommen seit dem 18.09.2026 aus {@code ui-messages.json}.
+     *
+     * <p>Damit ist {@code Pruefbefunde} kein Sammelbecken statischer Methoden
+     * mehr - dieser Bereich war der letzte, der eine eigene Sammlung deutscher
+     * Woerter im Quelltext mitfuehrte.</p>
+     */
+    private final AppMessages texte = new AppMessages("/messages/ui-messages.json");
+
+    private final Pruefbefunde befunde = new Pruefbefunde(texte);
+
     @Test
     @DisplayName("Fehler stehen vor den Hinweisen")
     void fehlerZuerst() {
-        List<Pruefbefunde.Zeile> zeilen = Pruefbefunde.zeilen(ValidationReport.builder()
+        List<Pruefbefunde.Zeile> zeilen = befunde.zeilen(ValidationReport.builder()
                 .warning("BETRAG", "", "Der Betrag ist auffaellig hoch.")
                 .error("UNZ_ANZAHL", "UNZ", "Die Zahl der Nachrichten stimmt nicht.")
                 .build());
@@ -38,7 +50,7 @@ class PruefbefundeTest {
     @Test
     @DisplayName("Die Fundstelle wird mitgefuehrt, auch wenn es keine gibt")
     void fundstelle() {
-        List<Pruefbefunde.Zeile> zeilen = Pruefbefunde.zeilen(ValidationReport.builder()
+        List<Pruefbefunde.Zeile> zeilen = befunde.zeilen(ValidationReport.builder()
                 .error("UNZ_ANZAHL", "UNZ (Zeile 18)", "Die Zahl stimmt nicht.")
                 .error("IK", "", "Das IK ist ungueltig.")
                 .build());
@@ -50,14 +62,14 @@ class PruefbefundeTest {
     @Test
     @DisplayName("Ein Bericht ohne Beanstandungen liefert keine Zeilen")
     void ohneBefund() {
-        assertTrue(Pruefbefunde.zeilen(ValidationReport.leer()).isEmpty());
-        assertEquals("Keine Beanstandungen", Pruefbefunde.kurzfassung(ValidationReport.leer()));
+        assertTrue(befunde.zeilen(ValidationReport.leer()).isEmpty());
+        assertEquals("Keine Beanstandungen", befunde.kurzfassung(ValidationReport.leer()));
     }
 
     @Test
     @DisplayName("Die Kurzfassung nennt Fehler und Hinweise getrennt")
     void kurzfassung() {
-        String kurz = Pruefbefunde.kurzfassung(ValidationReport.builder()
+        String kurz = befunde.kurzfassung(ValidationReport.builder()
                 .error("A", "", "eins")
                 .error("B", "", "zwei")
                 .warning("C", "", "drei")
@@ -69,7 +81,7 @@ class PruefbefundeTest {
     @Test
     @DisplayName("Mehrere Hinweise werden in der Mehrzahl genannt")
     void mehrzahl() {
-        String kurz = Pruefbefunde.kurzfassung(ValidationReport.builder()
+        String kurz = befunde.kurzfassung(ValidationReport.builder()
                 .warning("C", "", "eins")
                 .warning("D", "", "zwei")
                 .build());
@@ -97,7 +109,7 @@ class PruefbefundeTest {
         @Test
         @DisplayName("behauptet beim Trockenlauf keinen Versand")
         void trockenlaufBehauptetKeinenVersand() {
-            String text = Pruefbefunde.einleitung(hinweise, Pruefbefunde.Lage.TROCKENLAUF);
+            String text = befunde.einleitung(hinweise, Pruefbefunde.Lage.TROCKENLAUF);
 
             assertFalse(text.contains("wurde versendet"), text);
             assertTrue(text.contains("Durchgespielt"), text);
@@ -106,15 +118,15 @@ class PruefbefundeTest {
         @Test
         @DisplayName("sagt beim Trockenlauf auch im Fehlerfall, dass ohnehin nichts hinausging")
         void trockenlaufMitFehler() {
-            assertTrue(Pruefbefunde.einleitung(fehler, Pruefbefunde.Lage.TROCKENLAUF)
+            assertTrue(befunde.einleitung(fehler, Pruefbefunde.Lage.TROCKENLAUF)
                     .contains("ohnehin nichts"));
         }
 
         @Test
         @DisplayName("bleibt beim Versand, wie sie war")
         void versandUnveraendert() {
-            assertEquals("Die Abrechnung wurde versendet.", Pruefbefunde.einleitung(hinweise));
-            assertEquals("Die Abrechnung wurde nicht versendet.", Pruefbefunde.einleitung(fehler));
+            assertEquals("Die Abrechnung wurde versendet.", befunde.einleitung(hinweise));
+            assertEquals("Die Abrechnung wurde nicht versendet.", befunde.einleitung(fehler));
         }
     }
 }

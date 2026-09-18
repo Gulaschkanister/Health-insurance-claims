@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import de.gkvtransmitter.entity.Protokolleintrag;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
+import de.gkvtransmitter.presentation.meldung.Textbau;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.scene.control.Button;
@@ -145,15 +146,18 @@ public class ProtokollMaske {
     private String beschreibung(Protokolleintrag eintrag) {
         StringBuilder text = new StringBuilder();
         if (eintrag.getErstelltAm() != null) {
-            text.append(eintrag.getErstelltAm().format(ZEITPUNKT)).append(" · ");
+            text.append(eintrag.getErstelltAm().format(ZEITPUNKT)).append(Textbau.PUNKT);
         }
         text.append(texte.get("field.kassenIk")).append(' ').append(eintrag.getEmpfaengerIk())
-                .append(" · Nr. ").append(eintrag.getLaufendeNummer())
-                .append(" · ").append(eintrag.getGroesseBytes()).append(" Byte · ");
+                .append(Textbau.PUNKT)
+                .append(String.format(texte.get("log.number"), eintrag.getLaufendeNummer()))
+                .append(Textbau.PUNKT)
+                .append(String.format(texte.get("log.size"), eintrag.getGroesseBytes()))
+                .append(Textbau.PUNKT);
         if (!eintrag.istFehlerfrei()) {
             text.append(texte.get("log.failed"));
             if (eintrag.getFehlerstatus() != null) {
-                text.append(": ").append(eintrag.getFehlerstatus());
+                text.append(Textbau.DOPPELPUNKT).append(eintrag.getFehlerstatus());
             }
         } else if (eintrag.getBezahltAm() != null) {
             text.append(String.format(texte.get("log.paid"),

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 import de.gkvtransmitter.repository.DataRepository;
+import de.gkvtransmitter.presentation.meldung.Textbau;
 import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.wartung.Faelligkeit;
 import de.gkvtransmitter.wartung.Unterlagenstand;
@@ -105,7 +106,7 @@ public class WartungsMaske {
         kopfzeile.getStyleClass().add("feld-beschriftung");
         kopfzeile.setWrapText(true);
 
-        Label unterzeile = bausteine.createLabel(faelligkeit.rhythmus() + "  ·  " + faelligkeit.woher());
+        Label unterzeile = bausteine.createLabel(faelligkeit.rhythmus() + Textbau.WEITER + faelligkeit.woher());
         unterzeile.getStyleClass().add("feld-hinweis");
         unterzeile.setWrapText(true);
 

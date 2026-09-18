@@ -24,6 +24,18 @@ import de.gkvtransmitter.entity.ServiceProvider;
  */
 public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceProvider> {
 
+    /**
+     * Die Beschriftungen, die dieser Populator selbst bildet.
+     *
+     * <p>Nur eine: der Anzeigename mit laufender Nummer, der in der
+     * Ueberschrift des Bearbeitungsformulars steht. Er hiess bis zum
+     * 18.09.2026 fest {@code "Name (ID: 7)"} - <b>"ID" ist kein deutsches
+     * Wort und stand als einziges englisches in der Oberflaeche.</b></p>
+     */
+    private static final de.gkvtransmitter.util.AppMessages BESCHRIFTUNG =
+            new de.gkvtransmitter.util.AppMessages("/messages/ui-messages.json");
+
+
     /** Woher der Wert eines Feldes kommt. */
     private static final Map<String, Function<ServiceProvider, String>> LESER = Map.ofEntries(
             Map.entry("firstname", ServiceProvider::getFirstname),
@@ -99,7 +111,8 @@ public class ServiceProviderFieldPopulator extends EntityFieldPopulator<ServiceP
 
     @Override
     public String getDisplayName(ServiceProvider serviceProvider) {
-        return getPlainName(serviceProvider) + " (ID: " + serviceProvider.getId() + ")";
+return String.format(BESCHRIFTUNG.get("label.entryId"), getPlainName(serviceProvider),
+                serviceProvider.getId());
     }
 
     @Override

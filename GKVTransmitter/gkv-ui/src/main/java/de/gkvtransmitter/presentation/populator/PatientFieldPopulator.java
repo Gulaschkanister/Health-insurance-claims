@@ -15,6 +15,18 @@ import de.gkvtransmitter.entity.Patient;
 public class PatientFieldPopulator extends EntityFieldPopulator<Patient> {
 
     /**
+     * Die Beschriftungen, die dieser Populator selbst bildet.
+     *
+     * <p>Nur eine: der Anzeigename mit laufender Nummer, der in der
+     * Ueberschrift des Bearbeitungsformulars steht. Er hiess bis zum
+     * 18.09.2026 fest {@code "Name (ID: 7)"} - <b>"ID" ist kein deutsches
+     * Wort und stand als einziges englisches in der Oberflaeche.</b></p>
+     */
+    private static final de.gkvtransmitter.util.AppMessages BESCHRIFTUNG =
+            new de.gkvtransmitter.util.AppMessages("/messages/ui-messages.json");
+
+
+    /**
      * Woher der Wert eines Feldes kommt.
      *
      * <p>Eine Tabelle statt einer Verzweigung - dieselbe Umstellung wie bei
@@ -76,7 +88,8 @@ public class PatientFieldPopulator extends EntityFieldPopulator<Patient> {
 
     @Override
     public String getDisplayName(Patient patient) {
-        return getPlainName(patient) + " (ID: " + patient.getId() + ")";
+return String.format(BESCHRIFTUNG.get("label.entryId"), getPlainName(patient),
+                patient.getId());
     }
 
     @Override

@@ -10,6 +10,7 @@ import de.gkvtransmitter.presentation.meldung.Meldungen;
 import de.gkvtransmitter.wartung.Unterlage;
 import de.gkvtransmitter.wartung.Unterlagenpruefung;
 import de.gkvtransmitter.wartung.Unterlagenstand;
+import de.gkvtransmitter.presentation.meldung.Textbau;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -236,7 +237,8 @@ public class UnterlagenMaske {
 
     private Region zeile(Unterlage unterlage) {
         Label kopfzeile = bausteine.createLabel(
-                unterlage.titel() + "  ·  " + texte.get("documents.version") + " " + unterlage.version());
+                unterlage.titel() + Textbau.WEITER + texte.get("documents.version")
+                        + " " + unterlage.version());
         kopfzeile.getStyleClass().add("feld-beschriftung");
         kopfzeile.setWrapText(true);
 
@@ -262,14 +264,14 @@ public class UnterlagenMaske {
         StringBuilder text = new StringBuilder();
         if (unterlage.stand() != null) {
             text.append(texte.get("documents.asOf")).append(' ')
-                    .append(unterlage.stand().format(TAG)).append("  ·  ");
+                    .append(unterlage.stand().format(TAG)).append(Textbau.WEITER);
         }
         if (unterlage.anzuwendenAb() != null) {
             text.append(texte.get("documents.from")).append(' ')
                     .append(unterlage.anzuwendenAb().format(TAG));
         }
         if (unterlage.gueltigBis() != null) {
-            text.append("  ·  ").append(texte.get("documents.until")).append(' ')
+            text.append(Textbau.WEITER).append(texte.get("documents.until")).append(' ')
                     .append(unterlage.gueltigBis().format(TAG));
         }
         if (unterlage.datei() != null) {

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 
 import de.gkvtransmitter.entity.Betriebsdaten;
+import de.gkvtransmitter.util.Kerntexte;
 
 /**
  * Was wann faellig ist - aus dem, was das Programm ohnehin weiss.
@@ -74,10 +75,10 @@ public final class Wartungskalender {
      */
     private Faelligkeit zertifikat() {
         LocalDate ablauf = datumAus(betrieb == null ? null : betrieb.getZertifikatBis());
-        return new Faelligkeit("Zertifikat erneuern", "jaehrlich, Antrag 1-2 Wochen vorher", ablauf,
-                ablauf != null
-                        ? "Ablaufdatum aus den Betriebsdaten"
-                        : "Kein Ablaufdatum erfasst - unter \"Betriebsdaten\" nachtragen");
+        return new Faelligkeit(Kerntexte.get("wartung.zertifikat"),
+                Kerntexte.get("wartung.zertifikat.rhythmus"), ablauf,
+                Kerntexte.get(ablauf != null
+                        ? "wartung.zertifikat.quelle" : "wartung.zertifikat.ohneDatum"));
     }
 
     /**
@@ -91,15 +92,18 @@ public final class Wartungskalender {
         List<Faelligkeit> faelligkeiten = new ArrayList<>();
         for (Unterlage abgelaufen : unterlagen.abgelaufene(heute)) {
             faelligkeiten.add(new Faelligkeit(
-                    abgelaufen.titel() + " Version " + abgelaufen.version() + " abgelaufen",
-                    "einmalig", abgelaufen.gueltigBis(),
-                    "Deckblatt der Nachfolgefassung"));
+                    Kerntexte.format("wartung.unterlage.abgelaufen",
+                            abgelaufen.titel(), abgelaufen.version()),
+                    Kerntexte.get("wartung.unterlage.abgelaufen.rhythmus"),
+                    abgelaufen.gueltigBis(),
+                    Kerntexte.get("wartung.unterlage.abgelaufen.quelle")));
         }
         for (Unterlage bevorstehend : unterlagen.bevorstehende(heute)) {
             faelligkeiten.add(new Faelligkeit(
-                    bevorstehend.titel() + " Version " + bevorstehend.version() + " anwenden",
-                    "bei neuer Fassung, 3 Monate Uebergangsfrist", bevorstehend.anzuwendenAb(),
-                    "Deckblatt der vorliegenden Fassung"));
+                    Kerntexte.format("wartung.unterlage.anwenden",
+                            bevorstehend.titel(), bevorstehend.version()),
+                    Kerntexte.get("wartung.unterlage.rhythmus"), bevorstehend.anzuwendenAb(),
+                    Kerntexte.get("wartung.unterlage.quelle")));
         }
         return faelligkeiten;
     }
@@ -116,15 +120,16 @@ public final class Wartungskalender {
      * keiner.</p>
      */
     private Faelligkeit kostentraegerdatei() {
-        return new Faelligkeit("Kostentraegerdatei erneuern", "vierteljaehrlich", null,
-                "Kein Datum bekannt - die Anwendung liest die Datei noch nicht ein");
+        return new Faelligkeit(Kerntexte.get("wartung.kostentraeger"),
+                Kerntexte.get("wartung.kostentraeger.rhythmus"), null,
+                Kerntexte.get("wartung.kostentraeger.quelle"));
     }
 
     /** Ein Merkposten ohne Datum: Das Verzeichnis liegt dem Projekt nicht vor. */
     private Faelligkeit positionsnummern() {
-        return new Faelligkeit("Positionsnummernverzeichnis pruefen", "bei Vertragsaenderung", null,
-                "Kein Datum bekannt - das Verzeichnis der Hebammenhilfe-Verguetungsvereinbarung"
-                        + " liegt dem Projekt nicht vor");
+        return new Faelligkeit(Kerntexte.get("wartung.positionsnummern"),
+                Kerntexte.get("wartung.positionsnummern.rhythmus"), null,
+                Kerntexte.get("wartung.positionsnummern.quelle"));
     }
 
     /** {@code yyyy-MM-dd}, oder {@code null} - ein Kalender stuerzt nicht ab. */

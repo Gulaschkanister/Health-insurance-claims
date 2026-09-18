@@ -2,7 +2,9 @@ package de.gkvtransmitter.presentation.meldung;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import de.gkvtransmitter.util.AppMessages;
 import de.gkvtransmitter.validator.ValidationMessage;
 import de.gkvtransmitter.validator.ValidationReport;
 
@@ -13,6 +15,12 @@ import de.gkvtransmitter.validator.ValidationReport;
  * zuerst kommt und wie sie heisst, laesst sich so ohne laufendes JavaFX
  * pruefen. Wie die Zeilen dann aussehen, entscheidet
  * {@link Bildschirmmeldungen}.</p>
+ *
+ * <p><b>Die Saetze standen bis zum 18.09.2026 hier im Quelltext.</b> Sie
+ * gehoeren in {@code ui-messages.json} wie jeder andere Text der Oberflaeche -
+ * dieser Bereich war der letzte, der eine eigene Sammlung deutscher Woerter
+ * mitfuehrte. Deshalb ist die Klasse jetzt kein Sammelbecken statischer
+ * Methoden mehr, sondern hat ihre Texte im Konstruktor.</p>
  */
 public final class Pruefbefunde {
 
@@ -29,41 +37,6 @@ public final class Pruefbefunde {
         VERSAND,
         /** Der Bericht gehoert zu einem Trockenlauf - es ging nichts hinaus. */
         TROCKENLAUF
-    }
-
-    /**
-     * Ueberschrift der Meldung.
-     *
-     * <p>Ein Bericht kann auf zwei Weisen zustande kommen: als Grund, warum
-     * nichts hinausging - oder als Anmerkung zu etwas, das hinausgegangen ist.
-     * Beides mit „Prüfung nicht bestanden" zu ueberschreiben waere im zweiten
-     * Fall schlicht falsch.</p>
-     */
-    public static String titel(ValidationReport bericht) {
-        return bericht.hatFehler() ? "Prüfung nicht bestanden" : "Hinweise zur Abrechnung";
-    }
-
-    /** Was unter der Ueberschrift steht, bevor die Liste beginnt. */
-    public static String einleitung(ValidationReport bericht) {
-        return einleitung(bericht, Lage.VERSAND);
-    }
-
-    /**
-     * Dasselbe, aber mit Blick darauf, ob ueberhaupt etwas hinausging.
-     *
-     * <p>Beim Trockenlauf ist die Frage „versendet oder nicht" gar nicht
-     * gestellt - er versendet nie. Gesagt werden muss stattdessen, <b>was
-     * geschehen waere</b>.</p>
-     */
-    public static String einleitung(ValidationReport bericht, Lage lage) {
-        if (lage == Lage.TROCKENLAUF) {
-            return bericht.hatFehler()
-                    ? "So wäre nichts hinausgegangen — versendet wurde ohnehin nichts."
-                    : "Durchgespielt, nicht versendet.";
-        }
-        return bericht.hatFehler()
-                ? "Die Abrechnung wurde nicht versendet."
-                : "Die Abrechnung wurde versendet.";
     }
 
     /**
@@ -90,7 +63,41 @@ public final class Pruefbefunde {
         }
     }
 
-    private Pruefbefunde() {
+    private final AppMessages texte;
+
+    public Pruefbefunde(AppMessages texte) {
+        this.texte = Objects.requireNonNull(texte, "texte must not be null");
+    }
+
+    /**
+     * Ueberschrift der Meldung.
+     *
+     * <p>Ein Bericht kann auf zwei Weisen zustande kommen: als Grund, warum
+     * nichts hinausging - oder als Anmerkung zu etwas, das hinausgegangen ist.
+     * Beides mit „Prüfung nicht bestanden" zu ueberschreiben waere im zweiten
+     * Fall schlicht falsch.</p>
+     */
+    public String titel(ValidationReport bericht) {
+        return texte.get(bericht.hatFehler() ? "report.titleFailed" : "report.titleNotes");
+    }
+
+    /** Was unter der Ueberschrift steht, bevor die Liste beginnt. */
+    public String einleitung(ValidationReport bericht) {
+        return einleitung(bericht, Lage.VERSAND);
+    }
+
+    /**
+     * Dasselbe, aber mit Blick darauf, ob ueberhaupt etwas hinausging.
+     *
+     * <p>Beim Trockenlauf ist die Frage „versendet oder nicht" gar nicht
+     * gestellt - er versendet nie. Gesagt werden muss stattdessen, <b>was
+     * geschehen waere</b>.</p>
+     */
+    public String einleitung(ValidationReport bericht, Lage lage) {
+        if (lage == Lage.TROCKENLAUF) {
+            return texte.get(bericht.hatFehler() ? "report.dryRunFailed" : "report.dryRun");
+        }
+        return texte.get(bericht.hatFehler() ? "report.sentNot" : "report.sent");
     }
 
     /**
@@ -100,7 +107,7 @@ public final class Pruefbefunde {
      * aufgehalten und muessen behoben werden, Warnungen sind Hinweise. Ohne die
      * Trennung waere aus der Liste nicht ersichtlich, was zu tun ist.</p>
      */
-    public static List<Zeile> zeilen(ValidationReport bericht) {
+    public List<Zeile> zeilen(ValidationReport bericht) {
         List<Zeile> zeilen = new ArrayList<>();
         for (ValidationMessage befund : bericht.getErrors()) {
             zeilen.add(zeile(true, befund));
@@ -118,19 +125,22 @@ public final class Pruefbefunde {
     }
 
     /** Eine Zeile fuer die Statusleiste, etwa "2 zu beheben, 1 Hinweis". */
-    public static String kurzfassung(ValidationReport bericht) {
+    public String kurzfassung(ValidationReport bericht) {
         int fehler = bericht.getErrors().size();
         int hinweise = bericht.getWarnings().size();
         if (fehler == 0 && hinweise == 0) {
-            return "Keine Beanstandungen";
+            return texte.get("report.none");
         }
         List<String> teile = new ArrayList<>();
         if (fehler > 0) {
-            teile.add(fehler + " zu beheben");
+            teile.add(String.format(texte.get("report.toFix"), fehler));
         }
         if (hinweise > 0) {
-            teile.add(hinweise + (hinweise == 1 ? " Hinweis" : " Hinweise"));
+            // Einzahl und Mehrzahl getrennt - eine Eins vor einer Mehrzahl ist
+            // im Projekt schon dreimal vorgekommen.
+            teile.add(hinweise == 1
+                    ? texte.get("report.noteOne") : String.format(texte.get("report.notes"), hinweise));
         }
-        return String.join(", ", teile);
+        return String.join(Textbau.AUFZAEHLUNG, teile);
     }
 }

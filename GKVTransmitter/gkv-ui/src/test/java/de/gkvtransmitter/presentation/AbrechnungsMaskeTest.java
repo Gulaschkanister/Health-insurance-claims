@@ -266,7 +266,7 @@ class AbrechnungsMaskeTest {
                                 "Die Zahl der Nachrichten stimmt nicht.",
                                 "Das IK der Kasse ist ungueltig.",
                                 "Der Rechnungsbetrag ist auffaellig hoch."),
-                        Pruefbefunde.zeilen(meldungen.letzterPruefbericht()).stream()
+                        new de.gkvtransmitter.presentation.meldung.Pruefbefunde(texte).zeilen(meldungen.letzterPruefbericht()).stream()
                                 .map(Pruefbefunde.Zeile::text).toList(),
                         "Erst die Fehler, dann die Hinweise");
             });
@@ -339,7 +339,7 @@ class AbrechnungsMaskeTest {
                         meldungen.alle().stream().map(AufzeichnendeMeldungen.Meldung::art).toList());
                 assertEquals(
                         List.of("Die Abrechnungspositionsnummer hat neun Stellen."),
-                        Pruefbefunde.zeilen(meldungen.letzterPruefbericht()).stream()
+                        new de.gkvtransmitter.presentation.meldung.Pruefbefunde(texte).zeilen(meldungen.letzterPruefbericht()).stream()
                                 .map(Pruefbefunde.Zeile::text).toList());
             });
         }

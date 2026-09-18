@@ -7,6 +7,19 @@ import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Die Texte, die die Anwendung ausgibt.
+ *
+ * <p><b>Liegt seit dem 18.09.2026 im Kern und nicht mehr in der
+ * Oberflaeche.</b> Sie hat mit JavaFX nie etwas zu tun gehabt - sie liest eine
+ * JSON-Datei in eine Abbildung -, und der Kern gibt selbst Text aus: den
+ * Wartungskalender, das Registrierungsblatt, die Beanstandungen. Solange sie
+ * im Oberflaechenmodul lag, musste jede dieser Stellen ihre deutschen Woerter
+ * im Quelltext mitfuehren, weil der Kern kein JavaFX sehen darf.</p>
+ *
+ * <p>Der Paketname bleibt {@code de.gkvtransmitter.util} - der Umzug aendert
+ * keine einzige Einfuhrzeile.</p>
+ */
 public class AppMessages {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

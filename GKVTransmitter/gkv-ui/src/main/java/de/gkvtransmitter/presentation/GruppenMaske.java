@@ -383,7 +383,7 @@ public class GruppenMaske {
     }
 
     private String anzeigename(PersonGroup gruppe) {
-        return gruppe.getName() + " (ID: " + gruppe.getId() + ")";
+        return String.format(texte.get("label.entryId"), gruppe.getName(), gruppe.getId());
     }
 
     private static <T> List<T> sicher(List<T> liste) {
@@ -391,7 +391,8 @@ public class GruppenMaske {
     }
 
     /** Benennt eine Person so, wie sie in den Listen erscheint. */
-    private static String personenname(Person person) {
-        return person.getFirstname() + " " + person.getLastname() + " (ID: " + person.getId() + ")";
+    private String personenname(Person person) {
+        return String.format(texte.get("label.entryId"),
+                person.getFirstname() + " " + person.getLastname(), person.getId());
     }
 }

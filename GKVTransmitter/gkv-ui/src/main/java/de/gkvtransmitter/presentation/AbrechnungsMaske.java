@@ -19,6 +19,7 @@ import de.gkvtransmitter.entity.Patient;
 import de.gkvtransmitter.entity.PersonGroup;
 import de.gkvtransmitter.entity.ServiceProvider;
 import de.gkvtransmitter.presentation.meldung.Meldungen;
+import de.gkvtransmitter.presentation.meldung.Textbau;
 import de.gkvtransmitter.repository.DataRepository;
 import de.gkvtransmitter.util.AppMessages;
 import javafx.geometry.Pos;
@@ -221,7 +222,7 @@ public class AbrechnungsMaske {
         artAuswahl.setConverter(new StringConverter<>() {
             @Override
             public String toString(de.gkvtransmitter.dta.Verarbeitungskennzeichen art) {
-                return art == null ? "" : art.schluessel() + " — " + art.bedeutung();
+                return art == null ? "" : art.schluessel() + Textbau.STRICH + art.bedeutung();
             }
 
             @Override
@@ -263,9 +264,9 @@ public class AbrechnungsMaske {
     /** Wie eine Ursprungslieferung in der Auswahl heisst. */
     private static String bezugsname(de.gkvtransmitter.entity.Protokolleintrag eintrag) {
         return String.format("%08d", eintrag.getRechnungsnummer())
-                + " · " + eintrag.getRechnungsdatum()
+                + Textbau.PUNKT + eintrag.getRechnungsdatum()
                         .format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-                + " · " + eintrag.getDateiname();
+                + Textbau.PUNKT + eintrag.getDateiname();
     }
 
     /**
@@ -477,8 +478,9 @@ public class AbrechnungsMaske {
                 .append(System.lineSeparator());
         for (Map.Entry<Integer, de.gkvtransmitter.dispatch.BillingOfficeResponse> antwort
                 : de.gkvtransmitter.dispatch.Trockenlauf.geordnet(ergebnis.antworten())) {
-            text.append(texte.get("field.kassenIk")).append(": ").append(antwort.getKey())
-                    .append(" · ").append(antwort.getValue().getType())
+            text.append(texte.get("field.kassenIk")).append(Textbau.DOPPELPUNKT)
+                    .append(antwort.getKey()).append(Textbau.PUNKT)
+                    .append(antwort.getValue().getType())
                     .append(System.lineSeparator());
         }
         // Mit dem Ordner: Wer die erzeugte Datei ansehen will, soll sie finden.
@@ -507,7 +509,8 @@ public class AbrechnungsMaske {
                         : String.format(texte.get("msg.batchesCreated"), lieferungen.size()))
                 .append(System.lineSeparator());
         for (DispatchBatch lieferung : lieferungen) {
-            text.append(texte.get("field.kassenIk")).append(": ").append(lieferung.getKassenIk())
+            text.append(texte.get("field.kassenIk")).append(Textbau.DOPPELPUNKT)
+                    .append(lieferung.getKassenIk())
                     .append(System.lineSeparator());
             for (Path datei : lieferung.getFiles()) {
                 text.append(datei).append(System.lineSeparator());
@@ -602,7 +605,7 @@ public class AbrechnungsMaske {
             String namen = dienstleister.stream()
                     .map(person -> anzeigename(person.getFirstname(), person.getLastname()))
                     .collect(Collectors.joining(", "));
-            Label zeile = bausteine.createLabel(texte.get("label.providers") + ": " + namen);
+            Label zeile = bausteine.createLabel(texte.get("label.providers") + Textbau.DOPPELPUNKT + namen);
             zeile.setId(ID_DIENSTLEISTER);
             zeile.getStyleClass().add("zeile-still");
             return zeile;
@@ -747,7 +750,7 @@ public class AbrechnungsMaske {
             if (ueblich <= 0 || ueblich == angehakt) {
                 return "";
             }
-            return " · " + String.format(texte.get("msg.unusualGroupSize"), ueblich);
+            return Textbau.PUNKT + String.format(texte.get("msg.unusualGroupSize"), ueblich);
         }
 
         private List<Patient> gewaehlteTeilnehmer() {
